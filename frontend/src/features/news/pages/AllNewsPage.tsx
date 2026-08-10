@@ -1,5 +1,10 @@
+import { Card, EmptyState } from "../../../components/ui";
+
 export const AllNewsPage = () => (
-  <main className="mx-auto max-w-6xl px-6 py-8">
-    <h1 className="text-2xl font-semibold text-slate-950">All News</h1>
-  </main>
+  <Card>
+    <EmptyState
+      title="Not yet built"
+      description="The full incident list for every status will appear here."
+    />
+  </Card>
 );

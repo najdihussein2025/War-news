@@ -51,9 +51,11 @@ const persistAuth = (state: StoredAuthState) => {
   localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(state));
 };
 
+const initialAuthState = readStoredAuth();
+
 export const useAuthStore = create<AuthState>((set) => ({
-  ...emptyAuthState,
-  isAuthenticated: false,
+  ...initialAuthState,
+  isAuthenticated: Boolean(initialAuthState.token),
   login: ({ user, role, token }) => {
     const nextState = { user, role, token };
     persistAuth(nextState);

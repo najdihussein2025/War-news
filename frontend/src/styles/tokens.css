@@ -1,0 +1,125 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Primitive colors */
+  --gray-50: #f4f1ea;
+  --gray-100: #ebe7df;
+  --gray-200: #d8d2c8;
+  --gray-300: #a89f92;
+  --gray-400: #8d857a;
+  --gray-500: #6f7680;
+  --gray-600: #5d6672;
+  --gray-700: #3d4854;
+  --gray-800: #25313d;
+  --gray-900: #18212b;
+
+  --accent-50: #eaf2f4;
+  --accent-100: #d5e5ea;
+  --accent-500: #245c73;
+  --accent-600: #1d4a5d;
+  --accent-700: #173b4a;
+
+  --red-50: #f8eaea;
+  --red-600: #9b2c2c;
+  --red-700: #7c2323;
+  --green-600: #2f6b4f;
+  --yellow-600: #8a5a12;
+
+  /* Semantic colors */
+  --color-surface: var(--gray-50);
+  --color-surface-raised: #fffcf6;
+  --color-surface-muted: var(--gray-100);
+  --color-text-primary: var(--gray-900);
+  --color-text-muted: var(--gray-600);
+  --color-text-inverse: #fffcf6;
+  --color-border: var(--gray-300);
+  --color-border-strong: var(--gray-500);
+  --color-accent: var(--accent-500);
+  --color-accent-hover: var(--accent-600);
+  --color-accent-active: var(--accent-700);
+  --color-danger: var(--red-600);
+  --color-danger-hover: var(--red-700);
+  --color-success: var(--green-600);
+  --color-warning: var(--yellow-600);
+  --color-focus-ring: var(--accent-500);
+
+  /* Component tokens */
+  --input-bg: var(--color-surface-raised);
+  --input-border: var(--color-border);
+  --input-border-hover: var(--color-border-strong);
+  --input-border-focus: var(--color-accent);
+  --button-primary-bg: var(--color-accent);
+  --button-primary-bg-hover: var(--color-accent-hover);
+  --button-primary-bg-active: var(--color-accent-active);
+  --button-primary-text: var(--color-text-inverse);
+  --card-bg: var(--color-surface-raised);
+  --card-border: var(--color-border);
+  --shadow-raised: 0 1px 2px rgba(24, 33, 43, 0.06), 0 8px 24px rgba(24, 33, 43, 0.08);
+  --shadow-overlay: 0 2px 8px rgba(24, 33, 43, 0.10), 0 18px 48px rgba(24, 33, 43, 0.12);
+
+  /* Spacing tokens */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 2rem;
+  --space-8: 2.5rem;
+  --space-9: 3rem;
+  --space-10: 4rem;
+}
+
+html {
+  font-family: "Noto Sans", "Noto Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-2));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-card-enter {
+    animation: card-enter 180ms ease-out both;
+  }
+}
