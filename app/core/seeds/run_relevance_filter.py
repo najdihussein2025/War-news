@@ -1,11 +1,14 @@
-from app.actions.news import filter_pending_messages
 from app.core.database import SessionLocal
+from app.core.news_action_factory import build_filter_relevance_action
+from app.dtos.news import FilterPendingMessagesData
 
 
 def main() -> None:
     db = SessionLocal()
     try:
-        summary = filter_pending_messages(db=db)
+        summary = build_filter_relevance_action(db).execute(
+            FilterPendingMessagesData()
+        )
         print("Relevance filter summary")
         print(f"processed: {summary.processed}")
         print(f"relevant: {summary.relevant}")

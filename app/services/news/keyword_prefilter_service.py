@@ -1,19 +1,18 @@
 from dataclasses import dataclass
 
-from sqlalchemy.orm import Session
-
-from app.core.database import SessionLocal
 from app.core.text_normalization import normalize_arabic_text, normalize_english_text
-from app.repositories.news import ConditionRepository, VillageRepository
+from app.interfaces.news import (
+    ConditionRepositoryInterface,
+    KeywordPrefilterInterface,
+    VillageRepositoryInterface,
+)
+from app.models.news import Condition, Village
 
 
 @dataclass(frozen=True)
 class _KeywordCache:
     arabic_keywords: frozenset[str]
     english_keywords: frozenset[str]
-
-
-_keyword_cache: _KeywordCache | None = None
 
 
 def _add_arabic_keyword(keywords: set[str], value: str | None) -> None:
@@ -32,54 +31,56 @@ def _add_english_keyword(keywords: set[str], value: str | None) -> None:
         keywords.add(normalized)
 
 
-def _load_keyword_cache(db: Session) -> _KeywordCache:
-    arabic_keywords: set[str] = set()
-    english_keywords: set[str] = set()
+class KeywordPrefilterService(KeywordPrefilterInterface):
+    def __init__(
+        self,
+        village_repository: VillageRepositoryInterface,
+        condition_repository: ConditionRepositoryInterface,
+    ) -> None:
+        self.village_repository = village_repository
+        self.condition_repository = condition_repository
+        self._cache: _KeywordCache | None = None
 
-    for village in VillageRepository().list_active(db):
-        _add_english_keyword(english_keywords, village.acs_name)
-        _add_english_keyword(english_keywords, village.ref_name_en)
-        _add_arabic_keyword(arabic_keywords, village.ref_name_ar)
+    def has_candidate_keywords(self, text: str) -> bool:
+        cache = self._get_keyword_cache()
+        normalized_arabic_text = normalize_arabic_text(text)
+        normalized_english_text = normalize_english_text(text)
 
-    for condition in ConditionRepository().list_active(db):
-        _add_english_keyword(english_keywords, condition.action_en)
-        _add_arabic_keyword(arabic_keywords, condition.action_ar)
+        return any(
+            keyword in normalized_arabic_text for keyword in cache.arabic_keywords
+        ) or any(
+            keyword in normalized_english_text for keyword in cache.english_keywords
+        )
 
-    return _KeywordCache(
-        arabic_keywords=frozenset(arabic_keywords),
-        english_keywords=frozenset(english_keywords),
-    )
+    def clear_cache(self) -> None:
+        self._cache = None
 
+    def _get_keyword_cache(self) -> _KeywordCache:
+        if self._cache is None:
+            self._cache = self._load_keyword_cache(
+                villages=self.village_repository.list_active(),
+                conditions=self.condition_repository.list_active(),
+            )
+        return self._cache
 
-def _get_keyword_cache(db: Session | None = None) -> _KeywordCache:
-    global _keyword_cache
-    if _keyword_cache is not None:
-        return _keyword_cache
+    @staticmethod
+    def _load_keyword_cache(
+        villages: list[Village],
+        conditions: list[Condition],
+    ) -> _KeywordCache:
+        arabic_keywords: set[str] = set()
+        english_keywords: set[str] = set()
 
-    if db is not None:
-        _keyword_cache = _load_keyword_cache(db)
-        return _keyword_cache
+        for village in villages:
+            _add_english_keyword(english_keywords, village.acs_name)
+            _add_english_keyword(english_keywords, village.ref_name_en)
+            _add_arabic_keyword(arabic_keywords, village.ref_name_ar)
 
-    local_db = SessionLocal()
-    try:
-        _keyword_cache = _load_keyword_cache(local_db)
-        return _keyword_cache
-    finally:
-        local_db.close()
+        for condition in conditions:
+            _add_english_keyword(english_keywords, condition.action_en)
+            _add_arabic_keyword(arabic_keywords, condition.action_ar)
 
-
-def clear_keyword_cache() -> None:
-    global _keyword_cache
-    _keyword_cache = None
-
-
-def has_candidate_keywords(text: str, db: Session | None = None) -> bool:
-    cache = _get_keyword_cache(db)
-    normalized_arabic_text = normalize_arabic_text(text)
-    normalized_english_text = normalize_english_text(text)
-
-    return any(
-        keyword in normalized_arabic_text for keyword in cache.arabic_keywords
-    ) or any(
-        keyword in normalized_english_text for keyword in cache.english_keywords
-    )
+        return _KeywordCache(
+            arabic_keywords=frozenset(arabic_keywords),
+            english_keywords=frozenset(english_keywords),
+        )

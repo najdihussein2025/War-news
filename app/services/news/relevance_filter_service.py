@@ -1,17 +1,14 @@
 from datetime import datetime, timezone
 
-from sqlalchemy.orm import Session
-
 from app.dtos.news import RelevanceClassificationResult
-from app.interfaces.news import RelevanceClassifierInterface
+from app.interfaces.news import KeywordPrefilterInterface, RelevanceClassifierInterface
 from app.models.news import MessageStatus
-from app.services.news.keyword_prefilter_service import has_candidate_keywords
 
 
 def classify_message(
     raw_text: str | None,
     classifier: RelevanceClassifierInterface,
-    db: Session,
+    keyword_prefilter: KeywordPrefilterInterface,
 ) -> RelevanceClassificationResult:
     if raw_text is None or not raw_text.strip():
         return RelevanceClassificationResult(
@@ -22,7 +19,7 @@ def classify_message(
             classified_at=datetime.now(timezone.utc),
         )
 
-    if not has_candidate_keywords(raw_text, db):
+    if not keyword_prefilter.has_candidate_keywords(raw_text):
         return RelevanceClassificationResult(
             relevant=False,
             confidence=1.0,
@@ -34,7 +31,7 @@ def classify_message(
     return classifier.classify(raw_text)
 
 
-def status_for_result(result: RelevanceClassificationResult) -> str:
+def status_for_result(result: RelevanceClassificationResult) -> MessageStatus:
     if result.relevant:
-        return MessageStatus.parsed.value
-    return MessageStatus.rejected.value
+        return MessageStatus.parsed
+    return MessageStatus.rejected

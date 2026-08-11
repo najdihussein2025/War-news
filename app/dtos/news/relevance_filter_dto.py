@@ -1,9 +1,11 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class RelevanceClassificationResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     relevant: bool
     confidence: float = Field(ge=0.0, le=1.0)
     reasoning: str
@@ -11,7 +13,15 @@ class RelevanceClassificationResult(BaseModel):
     classified_at: datetime
 
 
+class FilterPendingMessagesData(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    batch_size: int = Field(default=200, ge=1)
+
+
 class FilterBatchSummary(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     processed: int
     relevant: int
     rejected: int

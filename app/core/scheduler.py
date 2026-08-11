@@ -2,12 +2,12 @@ import logging
 from datetime import datetime, timezone
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from sqlalchemy import select
 
-from app.actions.ingest_source_action import ingest_source
 from app.core.config import settings
 from app.core.database import SessionLocal
-from app.models.news.source import Source
+from app.core.news_action_factory import build_ingest_source_action
+from app.dtos.news import IngestSourceData
+from app.repositories.news import SourceRepository
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -19,11 +19,8 @@ _scheduler: BackgroundScheduler | None = None
 def _run_cnrs_ingestion() -> None:
     db = SessionLocal()
     try:
-        source = db.scalar(
-            select(Source).where(
-                Source.external_id == CNRS_SOURCE_EXTERNAL_ID,
-                Source.is_active.is_(True),
-            )
+        source = SourceRepository(db).get_active_by_external_id(
+            CNRS_SOURCE_EXTERNAL_ID
         )
         if source is None:
             logger.warning(
@@ -38,20 +35,21 @@ def _run_cnrs_ingestion() -> None:
             second=0,
             microsecond=0,
         )
-        summary = ingest_source(
-            db=db,
-            source_id=source.id,
-            min_message_datetime=min_message_datetime,
+        summary = build_ingest_source_action(db).execute(
+            IngestSourceData(
+                source_id=source.id,
+                min_message_datetime=min_message_datetime,
+            )
         )
         logger.info(
             "CNRS ingestion poll complete: fetched=%s inserted=%s "
             "skipped_duplicate=%s total_skipped_before_cutoff=%s failed=%s final_cursor=%s",
-            summary["fetched"],
-            summary["inserted"],
-            summary["skipped_duplicate"],
-            summary["total_skipped_before_cutoff"],
-            summary["failed"],
-            summary["final_cursor"],
+            summary.fetched,
+            summary.inserted,
+            summary.skipped_duplicate,
+            summary.skipped_before_cutoff,
+            summary.failed,
+            summary.final_cursor,
         )
     except Exception:
         logger.exception("CNRS ingestion poll failed")

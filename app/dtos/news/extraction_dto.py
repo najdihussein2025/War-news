@@ -1,9 +1,11 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ExtractedCandidate(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     location_text: str
     action_en: str
     deaths: int | None
@@ -19,12 +21,22 @@ class ExtractedCandidate(BaseModel):
 
 
 class ExtractionResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     candidates: list[ExtractedCandidate]
     model: str
     extracted_at: datetime
 
 
+class ExtractPendingMessagesData(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    batch_size: int = Field(default=50, ge=1)
+
+
 class ExtractionBatchSummary(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     processed: int
     incidents_created: int
     incidents_merged: int

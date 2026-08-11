@@ -1,11 +1,14 @@
-from app.actions.news import extract_pending_messages
 from app.core.database import SessionLocal
+from app.core.news_action_factory import build_extract_incidents_action
+from app.dtos.news import ExtractPendingMessagesData
 
 
 def main() -> None:
     db = SessionLocal()
     try:
-        summary = extract_pending_messages(db=db, batch_size=10)
+        summary = build_extract_incidents_action(db).execute(
+            ExtractPendingMessagesData(batch_size=10)
+        )
         print(summary.model_dump())
     finally:
         db.close()

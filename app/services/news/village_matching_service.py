@@ -1,32 +1,27 @@
-from sqlalchemy import desc, func, literal, select
-from sqlalchemy.orm import Session
-
 from app.core.text_normalization import normalize_arabic_text
+from app.interfaces.news import VillageMatchingInterface, VillageRepositoryInterface
 from app.models.news import Village
 
 # Initial pg_trgm cutoff; tune after reviewing real extraction audit results.
 VILLAGE_MATCH_THRESHOLD = 0.35
 
 
-def match_village(location_text: str, db: Session) -> Village | None:
-    normalized_location = normalize_arabic_text(location_text)
-    if not normalized_location:
-        return None
+class VillageMatchingService(VillageMatchingInterface):
+    def __init__(self, village_repository: VillageRepositoryInterface) -> None:
+        self.village_repository = village_repository
 
-    acs_similarity = func.similarity(Village.acs_name, literal(normalized_location))
-    ref_similarity = func.similarity(Village.ref_name_ar, literal(normalized_location))
-    best_similarity = func.greatest(acs_similarity, ref_similarity).label("score")
+    def match(self, location_text: str) -> Village | None:
+        normalized_location = normalize_arabic_text(location_text)
+        if not normalized_location:
+            return None
 
-    row = db.execute(
-        select(Village, best_similarity)
-        .where(Village.is_active.is_(True))
-        .order_by(desc(best_similarity))
-        .limit(1)
-    ).first()
-    if row is None:
-        return None
+        result = self.village_repository.find_best_match_by_normalized_name(
+            normalized_location
+        )
+        if result is None:
+            return None
 
-    village, score = row
-    if score is None or score < VILLAGE_MATCH_THRESHOLD:
-        return None
-    return village
+        village, score = result
+        if score < VILLAGE_MATCH_THRESHOLD:
+            return None
+        return village
