@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -12,16 +13,18 @@ import { ShellContext } from "../../../app/AppShell";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { Button, Card, EmptyState, FormField, Input, Label } from "../../../components/ui";
 import { cn } from "../../../lib/cn";
+import { createAccount } from "../api";
 import { useUsers } from "../../../mocks/useUsers";
 import type { MockUser, MockUserRole } from "../../../mocks/mockUsers";
 
-type SortKey = "username" | "full_name" | "email" | "role" | "last_login_at" | "is_active";
+type SortKey = "username" | "full_name" | "role" | "last_login_at" | "is_active";
 type SortDirection = "asc" | "desc";
 type DialogMode = "create" | "edit";
+type ConfirmAction = "active" | "delete";
 type UserFormState = {
   username: string;
   full_name: string;
-  email: string;
+  password: string;
   role: MockUserRole;
   is_active: boolean;
 };
@@ -32,8 +35,8 @@ const focusableSelector =
 const emptyForm: UserFormState = {
   username: "",
   full_name: "",
-  email: "",
-  role: "admin",
+  password: "",
+  role: "super_admin",
   is_active: true,
 };
 
@@ -155,6 +158,11 @@ const Dialog = ({
   onClose: () => void;
 }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     const focusableElements = Array.from(
@@ -164,7 +172,7 @@ const Dialog = ({
 
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -186,7 +194,7 @@ const Dialog = ({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 p-4">
@@ -255,12 +263,16 @@ const AccountForm = ({
   onChange,
   onSubmit,
   onCancel,
+  isSubmitting,
+  submitError,
 }: {
   mode: DialogMode;
   value: UserFormState;
   onChange: (nextValue: UserFormState) => void;
-  onSubmit: () => void;
+  onSubmit: () => void | Promise<void>;
   onCancel: () => void;
+  isSubmitting: boolean;
+  submitError: string | null;
 }) => {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -285,15 +297,19 @@ const AccountForm = ({
           required
         />
       </FormField>
-      <FormField id="account-email" label="Email">
-        <Input
-          id="account-email"
-          type="email"
-          value={value.email}
-          onChange={(event) => onChange({ ...value, email: event.target.value })}
-          required
-        />
-      </FormField>
+      {mode === "create" ? (
+        <FormField id="account-password" label="Password">
+          <Input
+            id="account-password"
+            type="password"
+            value={value.password}
+            onChange={(event) => onChange({ ...value, password: event.target.value })}
+            minLength={8}
+            autoComplete="new-password"
+            required
+          />
+        </FormField>
+      ) : null}
       <div className="space-y-2">
         <Label htmlFor="account-role">Role</Label>
         <select
@@ -306,7 +322,8 @@ const AccountForm = ({
           <option value="admin">Admin</option>
         </select>
       </div>
-      <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-surface p-3">
+      {mode === "edit" ? (
+        <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-surface p-3">
         <div>
           <p className="text-small font-semibold text-text-primary">Active account</p>
           <p className="text-caption text-text-muted">Inactive users cannot access protected tools later.</p>
@@ -323,12 +340,20 @@ const AccountForm = ({
         >
           <span className="h-4 w-4 rounded-full bg-accent" />
         </button>
-      </div>
+        </div>
+      ) : null}
+      {submitError ? (
+        <p className="text-small font-medium text-danger" role="alert">
+          {submitError}
+        </p>
+      ) : null}
       <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-        <Button type="button" variant="secondary" onClick={onCancel}>
+        <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
-        <Button type="submit">{mode === "create" ? "Create user" : "Save changes"}</Button>
+        <Button type="submit" isLoading={isSubmitting} loadingText="Creating user">
+          {mode === "create" ? "Create user" : "Save changes"}
+        </Button>
       </div>
     </form>
   );
@@ -347,7 +372,10 @@ export const AccountsPage = () => {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [formState, setFormState] = useState<UserFormState>(emptyForm);
   const [confirmUser, setConfirmUser] = useState<MockUser | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [localToast, setLocalToast] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
 
   const showToast = (message: string) => {
@@ -363,6 +391,7 @@ export const AccountsPage = () => {
   const openCreateDialog = () => {
     returnFocusRef.current = document.activeElement as HTMLElement | null;
     setFormState(emptyForm);
+    setSubmitError(null);
     setEditingUserId(null);
     setDialogMode("create");
   };
@@ -384,11 +413,12 @@ export const AccountsPage = () => {
     });
   }, [sort, users]);
 
-  const closeDialog = () => {
+  const closeDialog = useCallback(() => {
     setDialogMode(null);
     setConfirmUser(null);
+    setConfirmAction(null);
     window.setTimeout(() => returnFocusRef.current?.focus(), 0);
-  };
+  }, []);
 
   const handleSort = (key: SortKey) => {
     setSort((current) => ({
@@ -404,29 +434,58 @@ export const AccountsPage = () => {
     setFormState({
       username: user.username,
       full_name: user.full_name,
-      email: user.email,
+      password: "",
       role: user.role,
       is_active: user.is_active,
     });
     setDialogMode("edit");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (dialogMode === "create") {
-      const timestamp = now.toISOString();
-      setUsers((current) => [
-        {
-          id: `usr_${Date.now()}`,
-          ...formState,
-          last_login_at: null,
-          created_at: timestamp,
-        },
-        ...current,
-      ]);
-      showToast(`${formState.full_name} was added.`);
+      setIsSubmitting(true);
+      setSubmitError(null);
+      try {
+        const account = await createAccount({
+          username: formState.username.trim(),
+          full_name: formState.full_name.trim(),
+          password: formState.password,
+          role_id: formState.role === "super_admin" ? 1 : 2,
+        });
+        setUsers((current) => [
+          {
+            id: account.id,
+            username: account.username,
+            full_name: account.full_name,
+            role: account.role.name,
+            is_active: account.is_active,
+            last_login_at: account.last_login_at,
+            created_at: account.created_at,
+          },
+          ...current,
+        ]);
+        showToast(`${account.full_name} was saved.`);
+        closeDialog();
+      } catch (error) {
+        const detail = (error as { response?: { data?: { detail?: string } } }).response?.data?.detail;
+        setSubmitError(detail ?? "Could not save the user. Please try again.");
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
     } else if (dialogMode === "edit" && editingUserId) {
       setUsers((current) =>
-        current.map((user) => (user.id === editingUserId ? { ...user, ...formState } : user)),
+        current.map((user) =>
+          user.id === editingUserId
+            ? {
+                ...user,
+                username: formState.username,
+                full_name: formState.full_name,
+                role: formState.role,
+                is_active: formState.is_active,
+              }
+            : user,
+        ),
       );
       showToast(`${formState.full_name} was updated.`);
     }
@@ -437,6 +496,14 @@ export const AccountsPage = () => {
   const requestActiveChange = (user: MockUser) => {
     returnFocusRef.current = document.activeElement as HTMLElement | null;
     setOpenMenuId(null);
+    setConfirmAction("active");
+    setConfirmUser(user);
+  };
+
+  const requestDelete = (user: MockUser) => {
+    returnFocusRef.current = document.activeElement as HTMLElement | null;
+    setOpenMenuId(null);
+    setConfirmAction("delete");
     setConfirmUser(user);
   };
 
@@ -456,6 +523,16 @@ export const AccountsPage = () => {
     closeDialog();
   };
 
+  const confirmDelete = () => {
+    if (!confirmUser) {
+      return;
+    }
+
+    setUsers((current) => current.filter((user) => user.id !== confirmUser.id));
+    showToast(`${confirmUser.full_name} was deleted.`);
+    closeDialog();
+  };
+
   const handleMenuKeyDown = (event: KeyboardEvent<HTMLButtonElement>, userId: string) => {
     if (event.key === "Escape") {
       setOpenMenuId(null);
@@ -467,18 +544,34 @@ export const AccountsPage = () => {
 
   if (users.length === 0) {
     return (
-      <Card>
-        <EmptyState
-          title="No users yet"
-          description="Create the first Super Admin or Admin account."
-          className="min-h-80"
-        />
-        <div className="flex justify-center border-t border-border px-6 py-5">
-          <Button type="button" onClick={openCreateDialog}>
-            New User
-          </Button>
-        </div>
-      </Card>
+      <>
+        <Card>
+          <EmptyState
+            title="No users yet"
+            description="Create the first Super Admin or Admin account."
+            className="min-h-80"
+          />
+          <div className="flex justify-center border-t border-border px-6 py-5">
+            <Button type="button" onClick={openCreateDialog}>
+              New User
+            </Button>
+          </div>
+        </Card>
+
+        {dialogMode === "create" ? (
+          <Dialog title="New User" onClose={closeDialog}>
+            <AccountForm
+              mode="create"
+              value={formState}
+              onChange={setFormState}
+              onSubmit={handleSubmit}
+              onCancel={closeDialog}
+              isSubmitting={isSubmitting}
+              submitError={submitError}
+            />
+          </Dialog>
+        ) : null}
+      </>
     );
   }
 
@@ -490,8 +583,8 @@ export const AccountsPage = () => {
         </div>
       ) : null}
 
-      <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
+      <Card className="min-h-[360px] overflow-visible">
+        <div className="min-h-[360px] overflow-x-auto">
           <table className="min-w-[980px] w-full border-collapse">
             <thead className="sticky top-0 z-10 bg-surface-raised">
               <tr className="border-b border-border">
@@ -503,11 +596,6 @@ export const AccountsPage = () => {
                 <th className="px-4 py-3 text-left">
                   <SortButton sortKey="full_name" activeSort={sort} onSort={handleSort}>
                     Full name
-                  </SortButton>
-                </th>
-                <th className="px-4 py-3 text-left">
-                  <SortButton sortKey="email" activeSort={sort} onSort={handleSort}>
-                    Email
                   </SortButton>
                 </th>
                 <th className="px-4 py-3 text-left">
@@ -540,7 +628,6 @@ export const AccountsPage = () => {
                     {user.username}
                   </td>
                   <td className="px-4 py-4 text-small text-text-primary">{user.full_name}</td>
-                  <td className="px-4 py-4 text-small text-text-muted">{user.email}</td>
                   <td className="px-4 py-4">
                     <RoleBadge role={user.role} />
                   </td>
@@ -562,7 +649,7 @@ export const AccountsPage = () => {
                       <MoreIcon className="h-4 w-4" />
                     </button>
                     {openMenuId === user.id ? (
-                      <div className="absolute right-4 top-14 z-20 w-44 rounded-lg border border-border bg-surface-raised p-1 text-left shadow-overlay">
+                      <div className="absolute right-4 top-14 z-20 w-56 rounded-lg border border-border bg-surface-raised p-1.5 text-left shadow-overlay">
                         <button
                           type="button"
                           className="block w-full rounded-md px-3 py-2 text-left text-small font-medium text-text-primary hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
@@ -576,6 +663,13 @@ export const AccountsPage = () => {
                           onClick={() => requestActiveChange(user)}
                         >
                           {user.is_active ? "Deactivate" : "Reactivate"}
+                        </button>
+                        <button
+                          type="button"
+                          className="mt-1 block w-full rounded-md border-t border-border px-3 py-2 text-left text-small font-medium text-danger hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+                          onClick={() => requestDelete(user)}
+                        >
+                          Delete
                         </button>
                       </div>
                     ) : null}
@@ -595,19 +689,35 @@ export const AccountsPage = () => {
             onChange={setFormState}
             onSubmit={handleSubmit}
             onCancel={closeDialog}
+            isSubmitting={isSubmitting}
+            submitError={submitError}
           />
         </Dialog>
       ) : null}
 
       {confirmUser ? (
         <Dialog
-          title={`${confirmUser.is_active ? "Deactivate" : "Reactivate"} ${confirmUser.full_name}?`}
+          title={
+            confirmAction === "delete"
+              ? `Delete ${confirmUser.full_name}?`
+              : `${confirmUser.is_active ? "Deactivate" : "Reactivate"} ${confirmUser.full_name}?`
+          }
           onClose={closeDialog}
         >
           <div className="space-y-5">
             <p className="text-small text-text-muted">
-              This will mark <span className="font-semibold text-text-primary">{confirmUser.full_name}</span>{" "}
-              as {confirmUser.is_active ? "inactive" : "active"} in the mocked account list.
+              {confirmAction === "delete" ? (
+                <>
+                  This will permanently remove{" "}
+                  <span className="font-semibold text-text-primary">{confirmUser.full_name}</span>.
+                </>
+              ) : (
+                <>
+                  This will mark{" "}
+                  <span className="font-semibold text-text-primary">{confirmUser.full_name}</span>{" "}
+                  as {confirmUser.is_active ? "inactive" : "active"}.
+                </>
+              )}
             </p>
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <Button type="button" variant="secondary" onClick={closeDialog}>
@@ -615,10 +725,14 @@ export const AccountsPage = () => {
               </Button>
               <Button
                 type="button"
-                variant={confirmUser.is_active ? "destructive" : "primary"}
-                onClick={confirmActiveChange}
+                variant={confirmAction === "delete" || confirmUser.is_active ? "destructive" : "primary"}
+                onClick={confirmAction === "delete" ? confirmDelete : confirmActiveChange}
               >
-                {confirmUser.is_active ? "Deactivate" : "Reactivate"}
+                {confirmAction === "delete"
+                  ? "Delete user"
+                  : confirmUser.is_active
+                    ? "Deactivate"
+                    : "Reactivate"}
               </Button>
             </div>
           </div>

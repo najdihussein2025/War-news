@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
-from app.models.accounts import User
+from app.models.accounts import Role, RoleName, User
 
 
 class UserRepository:
@@ -12,9 +12,22 @@ class UserRepository:
 
     def create(self, user: User) -> User:
         self.db.add(user)
-        self.db.flush()
+        self.db.commit()
         self.db.refresh(user)
         return user
+
+    def exists(self) -> bool:
+        return self.db.scalar(select(User.id).limit(1)) is not None
+
+    def get_active_super_admin(self) -> User | None:
+        return self.db.scalar(
+            select(User)
+            .join(Role, User.role_id == Role.id)
+            .options(joinedload(User.role))
+            .where(User.is_active.is_(True), Role.name == RoleName.super_admin)
+            .order_by(User.created_at)
+            .limit(1)
+        )
 
     def get_by_id(self, user_id: UUID) -> User | None:
         return self.db.scalar(

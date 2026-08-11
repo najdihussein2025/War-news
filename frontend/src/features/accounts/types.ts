@@ -3,5 +3,16 @@ import type { Role } from "../../constants/roles";
 export type Account = {
   id: string;
   username: string;
-  role: Role;
+  full_name: string;
+  role: { id: number; name: Role };
+  is_active: boolean;
+  last_login_at: string | null;
+  created_at: string;
+};
+
+export type AccountCreate = {
+  username: string;
+  full_name: string;
+  password: string;
+  role_id: number;
 };
