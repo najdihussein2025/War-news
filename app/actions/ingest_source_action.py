@@ -50,7 +50,34 @@ def _is_duplicate_raw_message_error(exc: IntegrityError) -> bool:
     )
 
 
-def ingest_source(db: Session, source_id: int, page_limit: int = 500) -> dict:
+def _is_before_cutoff(
+    message_datetime: datetime | None,
+    min_message_datetime: datetime | None,
+) -> bool:
+    if min_message_datetime is None:
+        return False
+
+    if message_datetime is None:
+        return True
+
+    normalized_message_datetime = message_datetime
+    normalized_min_datetime = min_message_datetime
+    if normalized_message_datetime.tzinfo is None:
+        normalized_message_datetime = normalized_message_datetime.replace(
+            tzinfo=timezone.utc
+        )
+    if normalized_min_datetime.tzinfo is None:
+        normalized_min_datetime = normalized_min_datetime.replace(tzinfo=timezone.utc)
+
+    return normalized_message_datetime < normalized_min_datetime
+
+
+def ingest_source(
+    db: Session,
+    source_id: int,
+    page_limit: int = 500,
+    min_message_datetime: datetime | None = None,
+) -> dict:
     source = db.get(Source, source_id)
     if source is None:
         raise SourceIngestionError(f"Source id={source_id} was not found.")
@@ -74,6 +101,7 @@ def ingest_source(db: Session, source_id: int, page_limit: int = 500) -> dict:
     total_fetched = 0
     total_inserted = 0
     total_skipped_duplicate = 0
+    total_skipped_before_cutoff = 0
     total_failed = 0
     source_db_id = source.id
 
@@ -95,9 +123,15 @@ def ingest_source(db: Session, source_id: int, page_limit: int = 500) -> dict:
                     message_datetime = _parse_message_datetime(
                         item.get("message_datetime")
                     )
+                    if _is_before_cutoff(message_datetime, min_message_datetime):
+                        total_skipped_before_cutoff += 1
+                        continue
+
                     raw_message = RawMessage(
                         source_id=source.id,
                         external_message_id=item.get("external_message_id"),
+                        source_platform=item.get("source_platform"),
+                        source_name=item.get("source_name"),
                         raw_text=item.get("raw_text"),
                         raw_payload=item.get("raw_payload") or item,
                         message_datetime=message_datetime,
@@ -125,10 +159,12 @@ def ingest_source(db: Session, source_id: int, page_limit: int = 500) -> dict:
                 break
     except Exception:
         logger.exception(
-            "CNRS ingestion failed after fetched=%s inserted=%s skipped_duplicate=%s failed=%s",
+            "CNRS ingestion failed after fetched=%s inserted=%s "
+            "skipped_duplicate=%s skipped_before_cutoff=%s failed=%s",
             total_fetched,
             total_inserted,
             total_skipped_duplicate,
+            total_skipped_before_cutoff,
             total_failed,
         )
         _write_ingestion_log(
@@ -154,6 +190,7 @@ def ingest_source(db: Session, source_id: int, page_limit: int = 500) -> dict:
         "fetched": total_fetched,
         "inserted": total_inserted,
         "skipped_duplicate": total_skipped_duplicate,
+        "total_skipped_before_cutoff": total_skipped_before_cutoff,
         "failed": total_failed,
         "final_cursor": source.last_cursor,
     }

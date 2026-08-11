@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     telegram_api_hash: str | None = None
     cnrs_api_key: str | None = None
     cnrs_api_base_url: str = "https://lebanon.cnrs.edu.lb/api/v1/inspected-posts"
+    ingestion_poll_interval_seconds: int = 120
     poll_interval_minutes: int = 5
     auth_secret_key: str = "development-only-change-me"
 

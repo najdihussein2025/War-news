@@ -44,8 +44,22 @@ class RawMessage(Base):
         nullable=False,
     )
     external_message_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    source_platform: Mapped[str | None] = mapped_column(
+        String,
+        index=True,
+        nullable=True,
+    )
+    source_name: Mapped[str | None] = mapped_column(
+        String,
+        index=True,
+        nullable=True,
+    )
     raw_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     raw_payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    filter_result: Mapped[dict[str, Any] | None] = mapped_column(
+        JSONB,
+        nullable=True,
+    )
     message_datetime: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,

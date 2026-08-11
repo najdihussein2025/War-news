@@ -1,0 +1,222 @@
+[
+  {
+    "action_en": "Bombs",
+    "action_ar": "قصف وغارات",
+    "note": null
+  },
+  {
+    "action_en": "Warning Raid",
+    "action_ar": "غارة تحذيرية",
+    "note": null
+  },
+  {
+    "action_en": "Drone Failure",
+    "action_ar": "سقوط مسيّرة",
+    "note": null
+  },
+  {
+    "action_en": "Suicide Drone",
+    "action_ar": "مسيرة مفخخة",
+    "note": null
+  },
+  {
+    "action_en": "Artillery Shelling",
+    "action_ar": "قصف مدفعي",
+    "note": null
+  },
+  {
+    "action_en": "Tank Fire",
+    "action_ar": "قذائف الدبابات",
+    "note": null
+  },
+  {
+    "action_en": "Phosphorus Bombs",
+    "action_ar": "قذائف فوسفورية",
+    "note": null
+  },
+  {
+    "action_en": "Smoke Grenades",
+    "action_ar": "قنابل دخانية",
+    "note": null
+  },
+  {
+    "action_en": "Flare Bomb",
+    "action_ar": "قنابل مضيئة وحارقة",
+    "note": null
+  },
+  {
+    "action_en": "Sound Bombs",
+    "action_ar": "قنابل صوتية",
+    "note": null
+  },
+  {
+    "action_en": "Cluster Bombs",
+    "action_ar": "قنابل عنقودية",
+    "note": null
+  },
+  {
+    "action_en": "Nail bombs",
+    "action_ar": "قنابل مسمارية",
+    "note": null
+  },
+  {
+    "action_en": "Grenades",
+    "action_ar": "قنابل",
+    "note": null
+  },
+  {
+    "action_en": "Fissile Shells",
+    "action_ar": "قذائف انشطارية",
+    "note": null
+  },
+  {
+    "action_en": "Decoy Flares",
+    "action_ar": "القاء بالونات حرارية",
+    "note": null
+  },
+  {
+    "action_en": "Hand Grenades",
+    "action_ar": "قنابل يدوية",
+    "note": null
+  },
+  {
+    "action_en": "Shooting",
+    "action_ar": "إطلاق نار",
+    "note": "Shooting = directly shooting at personnel or vehicles."
+  },
+  {
+    "action_en": "Sweeping Operations",
+    "action_ar": "عملية تمشيط",
+    "note": "Sweeping = covers an area"
+  },
+  {
+    "action_en": "Aerial Sweep",
+    "action_ar": "عملية تمشيط مروحي",
+    "note": null
+  },
+  {
+    "action_en": "Ground Incursion",
+    "action_ar": "توغل بري",
+    "note": null
+  },
+  {
+    "action_en": "Mining & Detonation",
+    "action_ar": "تلغيم وتفجير",
+    "note": "Mining & Detonation is always preceded by Ground Incursion"
+  },
+  {
+    "action_en": "Stationing",
+    "action_ar": "تمركز",
+    "note": "Stationing is always preceded by Ground Incursion, unless Ground Incursion was mentioned in another report or إعادة تموضع"
+  },
+  {
+    "action_en": "Naval Incursion",
+    "action_ar": "توغل بحري",
+    "note": null
+  },
+  {
+    "action_en": "Road Blockage",
+    "action_ar": "قطع طريق",
+    "note": null
+  },
+  {
+    "action_en": "Bulldozing",
+    "action_ar": "حفر وجرف",
+    "note": null
+  },
+  {
+    "action_en": "Cutting Trees",
+    "action_ar": "قطع اشجار",
+    "note": null
+  },
+  {
+    "action_en": "Burning Properties",
+    "action_ar": "احراق ممتلكات",
+    "note": "Including houses, lands, cars, ambulances, etc."
+  },
+  {
+    "action_en": "Raiding & Stealing Homes",
+    "action_ar": "اقتحام/ سرقة منازل",
+    "note": "Raiding & Stealing Homes is always preceded by Ground Incursion unless they are stationed in a village"
+  },
+  {
+    "action_en": "Arrest Operation",
+    "action_ar": "عملية احتجاز",
+    "note": "Arresting is always preceded by Ground Incursion unless they are stationed in the village / Arrest = arrested and remained in Lebanese territory"
+  },
+  {
+    "action_en": "Kidnapping",
+    "action_ar": "خطف",
+    "note": "Kidnapping is always preceded by Ground Incursion unless they are stationed in the village"
+  },
+  {
+    "action_en": "Ambushes",
+    "action_ar": "كمائن",
+    "note": null
+  },
+  {
+    "action_en": "Releasing Cattle",
+    "action_ar": "تسريح ماشية",
+    "note": null
+  },
+  {
+    "action_en": "Installing Surveillance Devices",
+    "action_ar": "اجهزة تجسس",
+    "note": "Installing Surveillance Devices is always preceded by Ground Incursion, unless the report mentions it was done by an agent from Lebanon"
+  },
+  {
+    "action_en": "Spy Balloon",
+    "action_ar": "منطاد تجسسي",
+    "note": null
+  },
+  {
+    "action_en": "Warplane",
+    "action_ar": "طيران حربي",
+    "note": null
+  },
+  {
+    "action_en": "Surveillance Aircraft",
+    "action_ar": "طيران استطلاعي",
+    "note": null
+  },
+  {
+    "action_en": "Supersonic boom",
+    "action_ar": "خرق جدار الصوت",
+    "note": null
+  },
+  {
+    "action_en": "Helicopter Hovering",
+    "action_ar": "طيران مروحي",
+    "note": null
+  },
+  {
+    "action_en": "Feigned Attacks",
+    "action_ar": "غارات وهمية",
+    "note": null
+  },
+  {
+    "action_en": "Interceptor Missile",
+    "action_ar": "صاروخ اعتراضي",
+    "note": null
+  },
+  {
+    "action_en": "Unexploded Shells",
+    "action_ar": "قذائف لم تنفجر",
+    "note": null
+  },
+  {
+    "action_en": "Throwing Foreign Objects / Substances",
+    "action_ar": "رمي أجسام/ مواد مجهولة",
+    "note": null
+  },
+  {
+    "action_en": "Broadcast Provocative Statements / Warning Messages",
+    "action_ar": "عبارات / مناشير تحريضية / اتصالات تحذيرية",
+    "note": null
+  },
+  {
+    "action_en": "Obstructing Duties",
+    "action_ar": "عرقلة مهام",
+    "note": "Including Lebanese Army, UNIFIL, Red Cross, Civil Defense, etc."
+  }
+]
