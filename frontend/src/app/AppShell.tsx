@@ -156,9 +156,9 @@ const navItems: NavItem[] = [
   },
   {
     label: "Accounts",
-    to: "/accounts",
+    to: "/superadmin",
     icon: AccountsIcon,
-    match: (pathname) => pathname.startsWith("/accounts") || pathname.startsWith("/admin"),
+    match: (pathname) => pathname.startsWith("/superadmin"),
     superAdminOnly: true,
   },
 ];
@@ -168,7 +168,7 @@ const pageMeta = [
   { match: (pathname: string) => pathname.startsWith("/sources"), title: "Sources" },
   { match: (pathname: string) => pathname.startsWith("/logs"), title: "Logs" },
   { match: (pathname: string) => pathname.startsWith("/export"), title: "Export", action: "Export" },
-  { match: (pathname: string) => pathname.startsWith("/accounts") || pathname.startsWith("/admin"), title: "Accounts" },
+  { match: (pathname: string) => pathname.startsWith("/superadmin"), title: "Accounts" },
 ];
 
 const focusableSelector =
@@ -221,7 +221,7 @@ const SidebarContent = ({
 
   const handleLogout = () => {
     if (staticSuperAdmin) {
-      navigate("/admin", { replace: true });
+      navigate("/superadmin", { replace: true });
       return;
     }
 
@@ -240,7 +240,7 @@ const SidebarContent = ({
           {visibleItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.match(location.pathname);
-            const to = staticSuperAdmin && item.label === "Accounts" ? "/admin" : item.to;
+            const to = item.to;
 
             return (
               <NavLink
