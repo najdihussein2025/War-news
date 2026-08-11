@@ -10,6 +10,7 @@ export const usePermissions = () => {
 
   return {
     canManageAccounts: isSuperAdmin,
+    canManageSources: isSuperAdmin,
     canViewLogs: isSuperAdmin,
     canExport: canReviewNews,
     canReviewNews,

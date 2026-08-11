@@ -59,7 +59,7 @@ export const LogsPage = () => {
   const activeTab = logTabs.find((tab) => tab.value === logType);
 
   if (!activeTab) {
-    return <Navigate to="/logs/audit" replace />;
+    return <Navigate to="/superadmin/logs/audit" replace />;
   }
 
   return (
@@ -69,7 +69,7 @@ export const LogsPage = () => {
           {logTabs.map((tab) => (
             <NavLink
               key={tab.value}
-              to={`/logs/${tab.value}`}
+              to={`/superadmin/logs/${tab.value}`}
               className={({ isActive }) =>
                 cn(
                   "border-b-2 px-3 py-2 text-small font-semibold transition-colors duration-150 ease-out",

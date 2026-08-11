@@ -5,8 +5,7 @@ import { useAuthStore } from "../stores/authStore";
 
 export const App = () => {
   const hydrateFromStorage = useAuthStore((state) => state.hydrateFromStorage);
-  const role = useAuthStore((state) => state.role);
-  const element = useRoutes(createRoutes(role));
+  const element = useRoutes(createRoutes());
 
   useEffect(() => {
     hydrateFromStorage();

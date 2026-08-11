@@ -1,31 +1,46 @@
 import { Navigate, type RouteObject } from "react-router-dom";
-import type { Role } from "../constants/roles";
-import { AppShell } from "./AppShell";
+import { ROLES } from "../constants/roles";
+import { AccountsPage } from "../features/accounts/pages/AccountsPage";
 import { LoginPage } from "../features/auth/pages/LoginPage";
+import { AdminDashboardPage } from "../features/dashboard/pages/AdminDashboardPage";
+import { SuperAdminDashboardPage } from "../features/dashboard/pages/SuperAdminDashboardPage";
+import { ExportPage } from "../features/export/pages/ExportPage";
+import { LogsPage } from "../features/logs/pages/LogsPage";
 import { IncidentDetailPage } from "../features/news/pages/IncidentDetailPage";
 import { IncidentsPage } from "../features/news/pages/IncidentsPage";
 import { SourcesPage } from "../features/sources/pages/SourcesPage";
-import { AccountsPage } from "../features/accounts/pages/AccountsPage";
-import { LogsPage } from "../features/logs/pages/LogsPage";
-import { ExportPage } from "../features/export/pages/ExportPage";
+import { AppShell } from "./AppShell";
 
-export const createRoutes = (_role: Role | null): RouteObject[] => [
-  { path: "/login", element: <LoginPage /> },
-  {
-    // Frontend-only mock shell. Add real auth and super_admin guards here when the backend is wired up.
-    element: <AppShell staticSuperAdmin />,
-    children: [
-      { index: true, element: <Navigate to="/incidents" replace /> },
-      { path: "/incidents", element: <IncidentsPage /> },
-      { path: "/incidents/:incidentId", element: <IncidentDetailPage /> },
-      { path: "/news", element: <Navigate to="/incidents" replace /> },
-      { path: "/sources", element: <SourcesPage /> },
-      { path: "/logs", element: <Navigate to="/logs/audit" replace /> },
-      { path: "/logs/:logType", element: <LogsPage /> },
-      { path: "/export", element: <ExportPage /> },
-      { path: "/superadmin", element: <AccountsPage /> },
-      { path: "/admin", element: <Navigate to="/superadmin" replace /> },
-    ],
-  },
-  { path: "*", element: <Navigate to="/incidents" replace /> },
-];
+export const createRoutes = (): RouteObject[] => [
+    { path: "/login", element: <LoginPage /> },
+    {
+      path: "/admin",
+      element: <AppShell previewRole={ROLES.ADMIN} />,
+      children: [
+        { index: true, element: <Navigate to="dashboard" replace /> },
+        { path: "dashboard", element: <AdminDashboardPage /> },
+        { path: "incidents", element: <IncidentsPage /> },
+        { path: "incidents/:incidentId", element: <IncidentDetailPage /> },
+        { path: "export", element: <ExportPage /> },
+        { path: "*", element: <Navigate to="dashboard" replace /> },
+      ],
+    },
+    {
+      path: "/superadmin",
+      element: <AppShell previewRole={ROLES.SUPER_ADMIN} />,
+      children: [
+        { index: true, element: <Navigate to="dashboard" replace /> },
+        { path: "dashboard", element: <SuperAdminDashboardPage /> },
+        { path: "incidents", element: <IncidentsPage /> },
+        { path: "incidents/:incidentId", element: <IncidentDetailPage /> },
+        { path: "sources", element: <SourcesPage /> },
+        { path: "logs", element: <Navigate to="audit" replace /> },
+        { path: "logs/:logType", element: <LogsPage /> },
+        { path: "export", element: <ExportPage /> },
+        { path: "accounts", element: <AccountsPage /> },
+        { path: "*", element: <Navigate to="dashboard" replace /> },
+      ],
+    },
+    { path: "/", element: <Navigate to="/admin/dashboard" replace /> },
+    { path: "*", element: <Navigate to="/admin/dashboard" replace /> },
+  ];

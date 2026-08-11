@@ -123,60 +123,76 @@ const CloseIcon = ({ className }: { className?: string }) => (
 
 type NavItem = {
   label: string;
-  to: string;
+  path: string;
   icon: IconComponent;
-  match: (pathname: string) => boolean;
-  superAdminOnly?: boolean;
 };
 
-const navItems: NavItem[] = [
+const adminNavItems: NavItem[] = [
+  {
+    label: "Dashboard",
+    path: "dashboard",
+    icon: ShieldIcon,
+  },
   {
     label: "Incidents",
-    to: "/incidents",
+    path: "incidents",
     icon: IncidentsIcon,
-    match: (pathname) => pathname === "/incidents" || pathname.startsWith("/incidents/"),
-  },
-  {
-    label: "Sources",
-    to: "/sources",
-    icon: SourcesIcon,
-    match: (pathname) => pathname.startsWith("/sources"),
-  },
-  {
-    label: "Logs",
-    to: "/logs/audit",
-    icon: LogsIcon,
-    match: (pathname) => pathname.startsWith("/logs"),
   },
   {
     label: "Export",
-    to: "/export",
+    path: "export",
     icon: ExportIcon,
-    match: (pathname) => pathname.startsWith("/export"),
+  },
+];
+
+const superAdminNavItems: NavItem[] = [
+  {
+    label: "Dashboard",
+    path: "dashboard",
+    icon: ShieldIcon,
+  },
+  {
+    label: "Incidents",
+    path: "incidents",
+    icon: IncidentsIcon,
+  },
+  {
+    label: "Sources",
+    path: "sources",
+    icon: SourcesIcon,
+  },
+  {
+    label: "Logs",
+    path: "logs/audit",
+    icon: LogsIcon,
+  },
+  {
+    label: "Export",
+    path: "export",
+    icon: ExportIcon,
   },
   {
     label: "Accounts",
-    to: "/superadmin",
+    path: "accounts",
     icon: AccountsIcon,
-    match: (pathname) => pathname.startsWith("/superadmin"),
-    superAdminOnly: true,
   },
 ];
 
 const pageMeta = [
-  { match: (pathname: string) => pathname.startsWith("/incidents"), title: "Incidents" },
-  { match: (pathname: string) => pathname.startsWith("/sources"), title: "Sources" },
-  { match: (pathname: string) => pathname.startsWith("/logs"), title: "Logs" },
-  { match: (pathname: string) => pathname.startsWith("/export"), title: "Export", action: "Export" },
-  { match: (pathname: string) => pathname.startsWith("/superadmin"), title: "Accounts" },
+  { match: (pathname: string) => pathname.endsWith("/dashboard"), title: "Dashboard" },
+  { match: (pathname: string) => pathname.includes("/incidents"), title: "Incidents" },
+  { match: (pathname: string) => pathname.includes("/sources"), title: "Sources" },
+  { match: (pathname: string) => pathname.includes("/logs"), title: "Logs" },
+  { match: (pathname: string) => pathname.includes("/export"), title: "Export", action: "Export" },
+  { match: (pathname: string) => pathname.startsWith("/superadmin/accounts"), title: "Accounts" },
 ];
 
 const focusableSelector =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-const BrandMark = () => (
+const BrandMark = ({ to }: { to: string }) => (
   <Link
-    to="/incidents"
+    to={to}
     className="flex items-center gap-3 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus-ring"
   >
     <span className="flex h-8 w-8 items-center justify-center rounded-md border border-accent text-accent">
@@ -201,27 +217,30 @@ const RoleBadge = ({ role }: { role: string | null }) => (
 
 const SidebarContent = ({
   onNavigate,
-  staticSuperAdmin = false,
+  previewRole,
 }: {
   onNavigate?: () => void;
-  staticSuperAdmin?: boolean;
+  previewRole?: string;
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const role = useAuthStore((state) => state.role);
   const logout = useAuthStore((state) => state.logout);
-  const displayRole = staticSuperAdmin ? ROLES.SUPER_ADMIN : role;
-  const displayUser = staticSuperAdmin
+  const isAdminPanel = location.pathname.startsWith("/admin");
+  const isSuperAdminPanel = location.pathname.startsWith("/superadmin");
+  const displayRole = isAdminPanel ? ROLES.ADMIN : isSuperAdminPanel ? ROLES.SUPER_ADMIN : (role ?? previewRole ?? ROLES.ADMIN);
+  const roleBase = displayRole === ROLES.SUPER_ADMIN ? "/superadmin" : "/admin";
+  const displayUser = isAdminPanel
+    ? { username: "admin", displayName: "Operations Admin" }
+    : user ?? (displayRole === ROLES.SUPER_ADMIN
     ? { username: "super.admin", displayName: "Super Admin" }
-    : user;
-  const visibleItems = navItems.filter(
-    (item) => !item.superAdminOnly || displayRole === ROLES.SUPER_ADMIN,
-  );
+    : { username: "admin", displayName: "Operations Admin" });
+  const visibleItems = displayRole === ROLES.SUPER_ADMIN ? superAdminNavItems : adminNavItems;
 
   const handleLogout = () => {
-    if (staticSuperAdmin) {
-      navigate("/superadmin", { replace: true });
+    if (!role) {
+      navigate("/admin/dashboard", { replace: true });
       return;
     }
 
@@ -232,15 +251,15 @@ const SidebarContent = ({
   return (
     <div className="flex min-h-full flex-col bg-surface-raised">
       <div className="px-6 py-6">
-        <BrandMark />
+        <BrandMark to={`${roleBase}/dashboard`} />
       </div>
 
       <nav className="flex-1 px-4" aria-label="Main navigation">
         <div className="space-y-1">
           {visibleItems.map((item) => {
             const Icon = item.icon;
-            const isActive = item.match(location.pathname);
-            const to = item.to;
+            const to = `${roleBase}/${item.path}`;
+            const isActive = location.pathname === to || location.pathname.startsWith(`${to}/`);
 
             return (
               <NavLink
@@ -301,7 +320,7 @@ const Toast = ({ children }: { children: ReactNode }) => (
   </div>
 );
 
-export const AppShell = ({ staticSuperAdmin = false }: { staticSuperAdmin?: boolean }) => {
+export const AppShell = ({ previewRole }: { previewRole?: string }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -402,12 +421,12 @@ export const AppShell = ({ staticSuperAdmin = false }: { staticSuperAdmin?: bool
       {toast ? <Toast>{toast}</Toast> : null}
 
       <aside className="fixed inset-y-0 left-0 hidden w-[260px] border-r border-border bg-surface-raised shadow-[1px_0_0_rgba(24,33,43,0.04)] lg:block">
-        <SidebarContent staticSuperAdmin={staticSuperAdmin} />
+        <SidebarContent previewRole={previewRole} />
       </aside>
 
       <div className="lg:pl-[260px]">
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-surface-raised px-4 lg:hidden">
-          <BrandMark />
+          <BrandMark to={`${location.pathname.startsWith("/superadmin") ? "/superadmin" : "/admin"}/dashboard`} />
           <button
             ref={toggleRef}
             type="button"
@@ -467,7 +486,7 @@ export const AppShell = ({ staticSuperAdmin = false }: { staticSuperAdmin?: bool
         >
           <CloseIcon className="h-4 w-4" />
         </button>
-        <SidebarContent onNavigate={closeDrawer} staticSuperAdmin={staticSuperAdmin} />
+        <SidebarContent onNavigate={closeDrawer} previewRole={previewRole} />
       </div>
     </div>
   );

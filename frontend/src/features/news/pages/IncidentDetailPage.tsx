@@ -1,10 +1,11 @@
 import { useContext, useMemo, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ShellContext } from "../../../app/AppShell";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { Button, Card, Dialog, EmptyState, Input, Label } from "../../../components/ui";
 import { cn } from "../../../lib/cn";
 import { formatDate, formatDateTime, formatRelativeTime } from "../../../lib/formatters";
+import { roleBaseFromPath } from "../../../lib/rolePath";
 import { mockIncidentDetails } from "../../../mocks/mockIncidentDetails";
 import { useIncidents } from "../../../mocks/useIncidents";
 import type { IncidentStatus, MockIncident } from "../../../mocks/mockIncidents";
@@ -339,6 +340,8 @@ const EditIncidentDialog = ({
 };
 
 export const IncidentDetailPage = () => {
+  const location = useLocation();
+  const roleBase = roleBaseFromPath(location.pathname);
   const { incidentId } = useParams();
   const { data } = useIncidents();
   const shell = useContext(ShellContext);
@@ -372,7 +375,7 @@ export const IncidentDetailPage = () => {
           description="The record may have been removed or the link is out of date."
         />
         <div className="flex justify-center pb-8">
-          <Button type="button" variant="secondary" onClick={() => navigate("/incidents")}>
+          <Button type="button" variant="secondary" onClick={() => navigate(`${roleBase}/incidents`)}>
             Back to incidents
           </Button>
         </div>
@@ -390,7 +393,7 @@ export const IncidentDetailPage = () => {
   return (
     <div className="space-y-5">
       <Link
-        to="/incidents"
+        to={`${roleBase}/incidents`}
         className="inline-flex items-center gap-2 rounded-md text-small font-semibold text-text-muted transition-colors duration-150 ease-out hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
       >
         ← Back to incidents

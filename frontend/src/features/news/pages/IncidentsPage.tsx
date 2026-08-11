@@ -1,24 +1,15 @@
 import { useContext, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { ShellContext } from "../../../app/AppShell";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { Button, DataTable, Dialog, EmptyState, Input, Label, type DataTableColumn } from "../../../components/ui";
 import { formatDate, formatRelativeTime } from "../../../lib/formatters";
+import { roleBaseFromPath } from "../../../lib/rolePath";
 import { useIncidents } from "../../../mocks/useIncidents";
-import type { IncidentSourceType, IncidentStatus, MockIncident } from "../../../mocks/mockIncidents";
+import type { IncidentSourceType, MockIncident } from "../../../mocks/mockIncidents";
 
-const statuses: IncidentStatus[] = ["approved", "rejected", "archived"];
 const sources: IncidentSourceType[] = ["Telegram", "API", "Manual"];
 const PAGE_SIZE = 15;
-
-const statusLabel: Record<IncidentStatus, string> = {
-  approved: "Approved",
-  rejected: "Rejected",
-  archived: "Archived",
-};
-
-const statusVariant = (status: IncidentStatus) =>
-  status === "approved" ? "success" : status === "rejected" ? "danger" : "neutral";
 
 const sourceVariant = (source: IncidentSourceType) =>
   source === "Telegram" ? "accent" : source === "API" ? "neutral" : "warning";
@@ -27,17 +18,18 @@ export const IncidentsPage = () => {
   const { data, isLoading, isError } = useIncidents();
   const shell = useContext(ShellContext);
   const navigate = useNavigate();
+  const location = useLocation();
+  const roleBase = roleBaseFromPath(location.pathname);
   const [params, setParams] = useSearchParams();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [compareIncident, setCompareIncident] = useState<MockIncident | null>(null);
 
-  const selectedStatuses = params.get("status")?.split(",").filter(Boolean) as IncidentStatus[] | undefined;
   const village = params.get("village") ?? "";
   const source = (params.get("source") as IncidentSourceType | null) ?? "";
   const from = params.get("from") ?? "";
   const to = params.get("to") ?? "";
   const flaggedOnly = params.get("flagged") === "1";
-  const hasFilters = Boolean(selectedStatuses?.length || village || source || from || to || flaggedOnly);
+  const hasFilters = Boolean(village || source || from || to || flaggedOnly);
 
   const updateParam = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -50,22 +42,11 @@ export const IncidentsPage = () => {
     setParams(next);
   };
 
-  const toggleStatus = (status: IncidentStatus) => {
-    const nextStatuses = new Set(selectedStatuses ?? []);
-    if (nextStatuses.has(status)) {
-      nextStatuses.delete(status);
-    } else {
-      nextStatuses.add(status);
-    }
-    updateParam("status", Array.from(nextStatuses).join(","));
-  };
-
   const filtered = useMemo(() => {
     return data.filter((incident) => {
       const date = incident.event_date.slice(0, 10);
       const qualityFlagged = !incident.matched || incident.duplicate_flag === "possible";
       return (
-        (!selectedStatuses?.length || selectedStatuses.includes(incident.status)) &&
         (!village || incident.village.toLowerCase().includes(village.toLowerCase())) &&
         (!source || incident.source === source) &&
         (!from || date >= from) &&
@@ -73,7 +54,7 @@ export const IncidentsPage = () => {
         (!flaggedOnly || qualityFlagged)
       );
     });
-  }, [data, flaggedOnly, from, selectedStatuses, source, to, village]);
+  }, [data, flaggedOnly, from, source, to, village]);
 
   const flaggedCount = data.filter((incident) => !incident.matched).length;
   const duplicateCount = data.filter((incident) => incident.duplicate_flag === "possible").length;
@@ -100,7 +81,6 @@ export const IncidentsPage = () => {
     },
     { key: "condition", header: "Condition", render: (row) => row.condition, sortValue: (row) => row.condition },
     { key: "date", header: "Date", render: (row) => formatDate(row.event_date), sortValue: (row) => new Date(row.event_date).getTime() },
-    { key: "status", header: "Status", render: (row) => <StatusBadge label={statusLabel[row.status]} variant={statusVariant(row.status)} />, sortValue: (row) => row.status },
     {
       key: "source",
       header: "Source",
@@ -132,25 +112,6 @@ export const IncidentsPage = () => {
 
       <div className="rounded-lg border border-border bg-surface-raised p-4">
         <div className="grid gap-4 lg:grid-cols-4">
-          <div className="space-y-2 lg:col-span-2">
-            <Label>Status</Label>
-            <div className="flex flex-wrap gap-2">
-              {statuses.map((status) => (
-                <button
-                  key={status}
-                  type="button"
-                  className={`rounded-md border px-3 py-2 text-small font-semibold transition-colors duration-150 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring ${
-                    selectedStatuses?.includes(status)
-                      ? "border-accent bg-surface-muted text-accent"
-                      : "border-border bg-surface text-text-muted hover:bg-surface-muted"
-                  }`}
-                  onClick={() => toggleStatus(status)}
-                >
-                  {statusLabel[status]}
-                </button>
-              ))}
-            </div>
-          </div>
           <div className="space-y-2">
             <Label htmlFor="village-filter">Village</Label>
             <Input id="village-filter" value={village} onChange={(event) => updateParam("village", event.target.value)} placeholder="Search village" />
@@ -178,7 +139,6 @@ export const IncidentsPage = () => {
         {hasFilters ? (
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <span className="text-small font-semibold text-text-muted">Active filters</span>
-            {selectedStatuses?.map((status) => <StatusBadge key={status} label={statusLabel[status]} variant={statusVariant(status)} />)}
             {flaggedOnly ? <StatusBadge label="Flagged only" variant="warning" /> : null}
             {village ? <StatusBadge label={`Village: ${village}`} /> : null}
             {source ? <StatusBadge label={`Source: ${source}`} /> : null}
@@ -200,8 +160,8 @@ export const IncidentsPage = () => {
         errorState={<EmptyState title="Could not load incidents" description="The mocked error state is ready for a future API failure." />}
         actions={(row) => (
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" className="h-9" onClick={() => navigate(`/incidents/${row.id}`)}>View</Button>
-            <Button type="button" variant="ghost" className="h-9" onClick={() => navigate(`/incidents/${row.id}?edit=1`)}>Edit</Button>
+            <Button type="button" variant="secondary" className="h-9" onClick={() => navigate(`${roleBase}/incidents/${row.id}`)}>View</Button>
+            <Button type="button" variant="ghost" className="h-9" onClick={() => navigate(`${roleBase}/incidents/${row.id}?edit=1`)}>Edit</Button>
           </div>
         )}
       />

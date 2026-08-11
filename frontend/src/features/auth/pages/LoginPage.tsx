@@ -142,7 +142,7 @@ export const LoginPage = () => {
     password: false,
   });
 
-  const intendedPath = (location.state as { from?: string } | null)?.from || "/incidents";
+  const intendedPath = (location.state as { from?: string } | null)?.from || "/admin/dashboard";
 
   if (isAuthenticated) {
     return <Navigate to={intendedPath} replace />;
