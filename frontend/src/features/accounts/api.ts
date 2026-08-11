@@ -24,3 +24,14 @@ export const createAccount = async (payload: AccountCreate): Promise<Account> =>
     return bootstrapResponse.data;
   }
 };
+
+export const deleteAccount = async (userId: string): Promise<void> => {
+  await apiClient.delete(`/api/accounts/${userId}`);
+};
+
+export const setAccountActive = async (userId: string, isActive: boolean): Promise<Account> => {
+  const response = await apiClient.patch<Account>(`/api/accounts/${userId}/active`, {
+    is_active: isActive,
+  });
+  return response.data;
+};

@@ -7,3 +7,5 @@ export type LoginResponse = {
   user: AuthUser;
   role: Role;
 };
+
+export type SessionResponse = Pick<LoginResponse, "user" | "role">;

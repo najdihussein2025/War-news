@@ -22,6 +22,10 @@ class UserBootstrapError(Exception):
     pass
 
 
+class UserNotFoundError(Exception):
+    pass
+
+
 class UserService:
     def __init__(self, roles: RoleRepository, users: UserRepository) -> None:
         self.roles = roles
@@ -86,3 +90,25 @@ class UserService:
             raise UserPermissionError("Only super_admin users can list accounts.")
 
         return self.users.list_all(offset, limit)
+
+    def delete_user(self, user_id, requested_by_user: User) -> None:
+        if requested_by_user.role.name != RoleName.super_admin:
+            raise UserPermissionError("Only super_admin users can delete accounts.")
+        if requested_by_user.id == user_id:
+            raise UserPermissionError("You cannot delete your own active account.")
+
+        user = self.users.get_by_id(user_id)
+        if user is None:
+            raise UserNotFoundError("User does not exist.")
+        self.users.delete(user)
+
+    def set_user_active(self, user_id, is_active: bool, requested_by_user: User) -> User:
+        if requested_by_user.role.name != RoleName.super_admin:
+            raise UserPermissionError("Only super_admin users can change account status.")
+        if requested_by_user.id == user_id and not is_active:
+            raise UserPermissionError("You cannot deactivate your own active account.")
+
+        user = self.users.get_by_id(user_id)
+        if user is None:
+            raise UserNotFoundError("User does not exist.")
+        return self.users.set_active(user, is_active)

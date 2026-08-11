@@ -13,6 +13,10 @@ class UserCreateDTO(BaseModel):
     role_id: int
 
 
+class UserActiveUpdateDTO(BaseModel):
+    is_active: bool
+
+
 class RoleResponseDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

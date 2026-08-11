@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from uuid import UUID
 
 from app.dtos import UserCreateDTO, UserResponseDTO
 from app.models.accounts import User
@@ -39,3 +40,12 @@ def list_accounts(
         limit=limit,
     )
     return [UserResponseDTO.model_validate(user) for user in users]
+
+
+def delete_account(db: Session, user_id: UUID, current_user: User) -> None:
+    _service(db).delete_user(user_id, requested_by_user=current_user)
+
+
+def set_account_active(db: Session, user_id: UUID, is_active: bool, current_user: User) -> UserResponseDTO:
+    user = _service(db).set_user_active(user_id, is_active, requested_by_user=current_user)
+    return UserResponseDTO.model_validate(user)

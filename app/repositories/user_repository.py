@@ -52,10 +52,18 @@ class UserRepository:
 
     def update(self, user: User) -> User:
         self.db.add(user)
-        self.db.flush()
+        self.db.commit()
         self.db.refresh(user)
         return user
 
     def soft_deactivate(self, user: User) -> User:
         user.is_active = False
         return self.update(user)
+
+    def set_active(self, user: User, is_active: bool) -> User:
+        user.is_active = is_active
+        return self.update(user)
+
+    def delete(self, user: User) -> None:
+        self.db.delete(user)
+        self.db.commit()

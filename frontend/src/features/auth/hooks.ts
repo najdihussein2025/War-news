@@ -20,9 +20,10 @@ export const useLogin = () => {
 
 export const useLogout = () => {
   const storeLogout = useAuthStore((state) => state.logout);
+  const token = useAuthStore((state) => state.token);
 
   return useMutation({
-    mutationFn: logout,
+    mutationFn: () => logout(token),
     onSettled: () => {
       storeLogout();
     },

@@ -15,6 +15,7 @@ import { ROLES } from "../constants/roles";
 import { cn } from "../lib/cn";
 import { useAuthStore } from "../stores/authStore";
 import { Button } from "../components/ui";
+import { logout as revokeSession } from "../features/auth/api";
 
 type IconComponent = ComponentType<{ className?: string }>;
 type ShellAction = ReactNode | null;
@@ -226,24 +227,17 @@ const SidebarContent = ({
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const role = useAuthStore((state) => state.role);
+  const token = useAuthStore((state) => state.token);
   const logout = useAuthStore((state) => state.logout);
-  const isAdminPanel = location.pathname.startsWith("/admin");
-  const isSuperAdminPanel = location.pathname.startsWith("/superadmin");
-  const displayRole = isAdminPanel ? ROLES.ADMIN : isSuperAdminPanel ? ROLES.SUPER_ADMIN : (role ?? previewRole ?? ROLES.ADMIN);
+  const displayRole = role ?? previewRole ?? ROLES.ADMIN;
   const roleBase = displayRole === ROLES.SUPER_ADMIN ? "/superadmin" : "/admin";
-  const displayUser = isAdminPanel
-    ? { username: "admin", displayName: "Operations Admin" }
-    : user ?? (displayRole === ROLES.SUPER_ADMIN
+  const displayUser = user ?? (displayRole === ROLES.SUPER_ADMIN
     ? { username: "super.admin", displayName: "Super Admin" }
     : { username: "admin", displayName: "Operations Admin" });
   const visibleItems = displayRole === ROLES.SUPER_ADMIN ? superAdminNavItems : adminNavItems;
 
   const handleLogout = () => {
-    if (!role) {
-      navigate("/admin/dashboard", { replace: true });
-      return;
-    }
-
+    void revokeSession(token).catch(() => undefined);
     logout();
     navigate("/login", { replace: true });
   };

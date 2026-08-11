@@ -1,5 +1,5 @@
 import { apiClient } from "../../lib/apiClient";
-import type { LoginResponse } from "./types";
+import type { LoginResponse, SessionResponse } from "./types";
 
 export const login = async (
   username: string,
@@ -13,6 +13,15 @@ export const login = async (
   return response.data;
 };
 
-export const logout = async (): Promise<void> => {
-  await apiClient.post("/auth/logout");
+export const logout = async (token?: string | null): Promise<void> => {
+  await apiClient.post(
+    "/auth/logout",
+    undefined,
+    token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+  );
+};
+
+export const getSession = async (): Promise<SessionResponse> => {
+  const response = await apiClient.get<SessionResponse>("/auth/me");
+  return response.data;
 };

@@ -3,6 +3,7 @@ from app.services.user_service import (
     RoleNotFoundError,
     UserPermissionError,
     UserBootstrapError,
+    UserNotFoundError,
     UserService,
 )
 
@@ -11,5 +12,6 @@ __all__ = [
     "RoleNotFoundError",
     "UserPermissionError",
     "UserBootstrapError",
+    "UserNotFoundError",
     "UserService",
 ]

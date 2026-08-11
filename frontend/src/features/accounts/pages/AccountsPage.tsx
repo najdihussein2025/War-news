@@ -13,8 +13,8 @@ import { ShellContext } from "../../../app/AppShell";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { Button, Card, EmptyState, FormField, Input, Label } from "../../../components/ui";
 import { cn } from "../../../lib/cn";
-import { createAccount } from "../api";
-import { useUsers } from "../../../mocks/useUsers";
+import { createAccount, deleteAccount, setAccountActive } from "../api";
+import { useAccounts } from "../hooks";
 import type { MockUser, MockUserRole } from "../../../mocks/mockUsers";
 
 type SortKey = "username" | "full_name" | "role" | "last_login_at" | "is_active";
@@ -360,9 +360,9 @@ const AccountForm = ({
 };
 
 export const AccountsPage = () => {
-  const { data } = useUsers();
+  const { data: accountData, isLoading, isError } = useAccounts();
   const shell = useContext(ShellContext);
-  const [users, setUsers] = useState<MockUser[]>(data);
+  const [users, setUsers] = useState<MockUser[]>([]);
   const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({
     key: "username",
     direction: "asc",
@@ -377,6 +377,24 @@ export const AccountsPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!accountData) {
+      return;
+    }
+
+    setUsers(
+      accountData.map((account) => ({
+        id: account.id,
+        username: account.username,
+        full_name: account.full_name,
+        role: account.role.name,
+        is_active: account.is_active,
+        last_login_at: account.last_login_at,
+        created_at: account.created_at,
+      })),
+    );
+  }, [accountData]);
 
   const showToast = (message: string) => {
     if (shell) {
@@ -507,30 +525,46 @@ export const AccountsPage = () => {
     setConfirmUser(user);
   };
 
-  const confirmActiveChange = () => {
+  const confirmActiveChange = async () => {
     if (!confirmUser) {
       return;
     }
 
-    setUsers((current) =>
-      current.map((user) =>
-        user.id === confirmUser.id ? { ...user, is_active: !user.is_active } : user,
-      ),
-    );
-    showToast(
-      `${confirmUser.full_name} was ${confirmUser.is_active ? "deactivated" : "reactivated"}.`,
-    );
-    closeDialog();
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const updated = await setAccountActive(confirmUser.id, !confirmUser.is_active);
+      setUsers((current) => current.map((user) =>
+        user.id === updated.id ? { ...user, is_active: updated.is_active } : user,
+      ));
+      showToast(`${confirmUser.full_name} was ${updated.is_active ? "reactivated" : "deactivated"}.`);
+      closeDialog();
+    } catch (error) {
+      const detail = (error as { response?: { data?: { detail?: string } } }).response?.data?.detail;
+      setSubmitError(detail ?? "Could not change the account status.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!confirmUser) {
       return;
     }
 
-    setUsers((current) => current.filter((user) => user.id !== confirmUser.id));
-    showToast(`${confirmUser.full_name} was deleted.`);
-    closeDialog();
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      await deleteAccount(confirmUser.id);
+      setUsers((current) => current.filter((user) => user.id !== confirmUser.id));
+      showToast(`${confirmUser.full_name} was deleted.`);
+      closeDialog();
+    } catch (error) {
+      const detail = (error as { response?: { data?: { detail?: string } } }).response?.data?.detail;
+      setSubmitError(detail ?? "Could not delete the user.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleMenuKeyDown = (event: KeyboardEvent<HTMLButtonElement>, userId: string) => {
@@ -541,6 +575,25 @@ export const AccountsPage = () => {
       setOpenMenuId((current) => (current === userId ? null : userId));
     }
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <EmptyState title="Loading users" description="Reading accounts from the database." />
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card>
+        <EmptyState
+          title="Could not load users"
+          description="The accounts API could not read users from the database."
+        />
+      </Card>
+    );
+  }
 
   if (users.length === 0) {
     return (
@@ -719,6 +772,7 @@ export const AccountsPage = () => {
                 </>
               )}
             </p>
+            {submitError ? <p className="text-small font-medium text-danger" role="alert">{submitError}</p> : null}
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <Button type="button" variant="secondary" onClick={closeDialog}>
                 Cancel
@@ -727,6 +781,8 @@ export const AccountsPage = () => {
                 type="button"
                 variant={confirmAction === "delete" || confirmUser.is_active ? "destructive" : "primary"}
                 onClick={confirmAction === "delete" ? confirmDelete : confirmActiveChange}
+                isLoading={isSubmitting}
+                loadingText={confirmAction === "delete" ? "Deleting user" : "Updating user"}
               >
                 {confirmAction === "delete"
                   ? "Delete user"

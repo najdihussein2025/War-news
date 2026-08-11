@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     cnrs_api_key: str | None = None
     cnrs_api_base_url: str = "https://lebanon.cnrs.edu.lb/api/v1/inspected-posts"
     poll_interval_minutes: int = 5
+    auth_secret_key: str = "development-only-change-me"
 
     class Config:
         env_file = ".env"
