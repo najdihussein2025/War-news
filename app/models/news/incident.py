@@ -16,13 +16,16 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from pgvector.sqlalchemy import Vector
 
 from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.accounts.user import User
     from app.models.news.condition import Condition
+    from app.models.news.duplicate_match import DuplicateMatch
     from app.models.news.incident_detail import IncidentDetail
+    from app.models.news.incident_update import IncidentUpdate
     from app.models.news.raw_message import RawMessage
     from app.models.news.source import Source
     from app.models.news.village import Village
@@ -60,6 +63,10 @@ class Incident(Base):
     event_date: Mapped[date] = mapped_column(nullable=False)
     event_time: Mapped[time | None] = mapped_column(nullable=True)
     khabar: Mapped[str] = mapped_column(Text, nullable=False)
+    khabar_embedding: Mapped[list[float] | None] = mapped_column(
+        Vector(384),
+        nullable=True,
+    )
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     moh: Mapped[str | None] = mapped_column(String, nullable=True)
     martyrs: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -116,4 +123,15 @@ class Incident(Base):
         back_populates="incident",
         cascade="all, delete-orphan",
         uselist=False,
+    )
+    duplicate_matches: Mapped[list["DuplicateMatch"]] = relationship(
+        "DuplicateMatch",
+        back_populates="incident",
+        cascade="all, delete-orphan",
+        foreign_keys="DuplicateMatch.incident_id",
+    )
+    incident_updates: Mapped[list["IncidentUpdate"]] = relationship(
+        "IncidentUpdate",
+        back_populates="incident",
+        cascade="all, delete-orphan",
     )

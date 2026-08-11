@@ -60,6 +60,10 @@ class RawMessage(Base):
         JSONB,
         nullable=True,
     )
+    extraction_result: Mapped[dict[str, Any] | None] = mapped_column(
+        JSONB,
+        nullable=True,
+    )
     message_datetime: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
