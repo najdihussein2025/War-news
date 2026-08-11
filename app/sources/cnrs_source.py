@@ -28,6 +28,7 @@ class CNRSSourceProvider(SourceProvider):
             settings.cnrs_api_base_url,
             params=params,
             headers={"Authorization": f"Bearer {self.api_key}"},
+            timeout=30.0,
         )
 
         if response.status_code != 200:
