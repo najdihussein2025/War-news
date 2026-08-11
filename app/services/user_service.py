@@ -1,5 +1,5 @@
 from passlib.context import CryptContext
-from app.dtos import UserCreateDTO
+from app.dtos import UserCreateDTO, UserUpdateDTO
 from app.models.accounts import RoleName, User
 from app.repositories import RoleRepository, UserRepository
 
@@ -112,3 +112,23 @@ class UserService:
         if user is None:
             raise UserNotFoundError("User does not exist.")
         return self.users.set_active(user, is_active)
+
+    def update_user(self, user_id, dto: UserUpdateDTO, requested_by_user: User) -> User:
+        if requested_by_user.role.name != RoleName.super_admin:
+            raise UserPermissionError("Only super_admin users can edit accounts.")
+        user = self.users.get_by_id(user_id)
+        if user is None:
+            raise UserNotFoundError("User does not exist.")
+        duplicate = self.users.get_by_username(dto.username)
+        if duplicate is not None and duplicate.id != user.id:
+            raise DuplicateUserError("Username already exists.")
+        role = self.roles.get_by_id(dto.role_id)
+        if role is None:
+            raise RoleNotFoundError("Role does not exist.")
+
+        user.username = dto.username
+        user.full_name = dto.full_name
+        user.role_id = role.id
+        if dto.password:
+            user.password_hash = password_context.hash(dto.password)
+        return self.users.update(user)

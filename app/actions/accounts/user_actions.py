@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from uuid import UUID
 
-from app.dtos import UserCreateDTO, UserResponseDTO
+from app.dtos import UserCreateDTO, UserResponseDTO, UserUpdateDTO
 from app.models.accounts import User
 from app.repositories import RoleRepository, UserRepository
 from app.services import UserService
@@ -49,3 +49,7 @@ def delete_account(db: Session, user_id: UUID, current_user: User) -> None:
 def set_account_active(db: Session, user_id: UUID, is_active: bool, current_user: User) -> UserResponseDTO:
     user = _service(db).set_user_active(user_id, is_active, requested_by_user=current_user)
     return UserResponseDTO.model_validate(user)
+
+
+def update_account(db: Session, user_id: UUID, dto: UserUpdateDTO, current_user: User) -> UserResponseDTO:
+    return UserResponseDTO.model_validate(_service(db).update_user(user_id, dto, current_user))

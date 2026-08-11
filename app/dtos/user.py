@@ -17,6 +17,13 @@ class UserActiveUpdateDTO(BaseModel):
     is_active: bool
 
 
+class UserUpdateDTO(BaseModel):
+    username: str = Field(min_length=1, max_length=255)
+    full_name: str = Field(min_length=1)
+    role_id: int
+    password: str | None = Field(default=None, min_length=8)
+
+
 class RoleResponseDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

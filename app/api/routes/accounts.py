@@ -7,9 +7,10 @@ from app.actions.accounts import bootstrap_super_admin as bootstrap_super_admin_
 from app.actions.accounts import list_accounts as list_accounts_action
 from app.actions.accounts import delete_account as delete_account_action
 from app.actions.accounts import set_account_active as set_account_active_action
+from app.actions.accounts import update_account as update_account_action
 from app.api.dependencies import require_super_admin
 from app.core.database import get_db
-from app.dtos import UserActiveUpdateDTO, UserCreateDTO, UserResponseDTO
+from app.dtos import UserActiveUpdateDTO, UserCreateDTO, UserResponseDTO, UserUpdateDTO
 from app.models.accounts import User
 from app.services import (
     DuplicateUserError,
@@ -95,5 +96,24 @@ def set_account_active(
         return set_account_active_action(db, user_id, dto.is_active, current_user)
     except UserPermissionError as exc:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except UserNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.patch("/{user_id}", response_model=UserResponseDTO)
+def update_account(
+    user_id: UUID,
+    dto: UserUpdateDTO,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin),
+) -> UserResponseDTO:
+    try:
+        return update_account_action(db, user_id, dto, current_user)
+    except UserPermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except DuplicateUserError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except RoleNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except UserNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
