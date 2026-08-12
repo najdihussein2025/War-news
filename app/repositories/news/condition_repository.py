@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.interfaces.news import ConditionRepositoryInterface
+from app.interfaces.repositories import ConditionRepositoryInterface
 from app.models.news import Condition
 
 

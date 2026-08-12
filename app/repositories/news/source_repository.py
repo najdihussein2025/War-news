@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.interfaces.news import SourceRepositoryInterface
+from app.interfaces.repositories import SourceRepositoryInterface
 from app.models.news import IngestionLog, RawMessage, Source
 
 

@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy.exc import IntegrityError
 
 from app.dtos.news import IngestSourceData, IngestionSummary
-from app.interfaces.news import SourceRepositoryInterface
+from app.interfaces.repositories import SourceRepositoryInterface
 from app.interfaces.source_provider import SourceProvider
 from app.models.news import MessageStatus, RawMessage, Source
 from app.sources.cnrs_source import CNRSSourceProvider

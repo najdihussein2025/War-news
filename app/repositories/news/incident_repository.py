@@ -7,7 +7,7 @@ from sqlalchemy import and_, desc, select
 from sqlalchemy.orm import Session
 
 from app.dtos.news import ExtractedCandidate
-from app.interfaces.news import IncidentRepositoryInterface
+from app.interfaces.repositories import IncidentRepositoryInterface
 from app.models.news import (
     DuplicateMatch,
     Incident,

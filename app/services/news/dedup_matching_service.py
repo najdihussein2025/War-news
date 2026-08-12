@@ -1,7 +1,8 @@
 from datetime import date
 from typing import Any
 
-from app.interfaces.news import DedupMatchingInterface, IncidentRepositoryInterface
+from app.interfaces.repositories import IncidentRepositoryInterface
+from app.interfaces.services import DedupMatchingInterface
 from app.models.news import Incident
 
 # First estimate; tune after reviewing real duplicate decisions.

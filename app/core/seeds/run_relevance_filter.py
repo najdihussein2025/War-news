@@ -13,6 +13,7 @@ def main() -> None:
         print(f"processed: {summary.processed}")
         print(f"relevant: {summary.relevant}")
         print(f"rejected: {summary.rejected}")
+        print(f"uncertain: {summary.uncertain}")
         print(f"errored: {summary.errored}")
         print(f"auto_rejected_by_keyword: {summary.auto_rejected_by_keyword}")
         print(f"classifier_calls_made: {summary.classifier_calls_made}")

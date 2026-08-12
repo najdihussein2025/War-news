@@ -1,5 +1,5 @@
 from app.core.text_normalization import normalize_english_text
-from app.interfaces.news import ConditionResolutionInterface
+from app.interfaces.services import ConditionResolutionInterface
 from app.models.news import Condition
 
 

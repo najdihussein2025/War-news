@@ -1,7 +1,7 @@
 from sqlalchemy import desc, func, literal, select
 from sqlalchemy.orm import Session
 
-from app.interfaces.news import VillageRepositoryInterface
+from app.interfaces.repositories import VillageRepositoryInterface
 from app.models.news import Village
 
 

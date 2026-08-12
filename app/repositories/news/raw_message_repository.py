@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.dtos.news import ExtractionResult, RelevanceClassificationResult
-from app.interfaces.news import RawMessageRepositoryInterface
+from app.interfaces.repositories import RawMessageRepositoryInterface
 from app.models.news import MessageStatus, RawMessage
 
 
@@ -49,9 +49,11 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         message: RawMessage,
         result: RelevanceClassificationResult,
         new_status: MessageStatus,
+        low_confidence_relevance: bool = False,
     ) -> None:
         message.filter_result = result.model_dump(mode="json")
         message.status = new_status
+        message.low_confidence_relevance = low_confidence_relevance
         message.error_message = None
         self.db.add(message)
         self.db.commit()

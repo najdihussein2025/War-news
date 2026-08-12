@@ -26,6 +26,7 @@ class RawMessageRepositoryInterface(ABC):
         message: RawMessage,
         result: RelevanceClassificationResult,
         new_status: MessageStatus,
+        low_confidence_relevance: bool = False,
     ) -> None:
         pass
 

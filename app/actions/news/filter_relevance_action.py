@@ -4,15 +4,22 @@ from datetime import datetime, timezone
 from app.dtos.news import (
     FilterBatchSummary,
     FilterPendingMessagesData,
+    RelevanceConfidence,
     RelevanceClassificationResult,
+    RelevancePolicyVerdict,
 )
-from app.interfaces.news import (
-    KeywordPrefilterInterface,
+from app.interfaces.repositories import (
     RawMessageRepositoryInterface,
+)
+from app.interfaces.services import (
+    KeywordPrefilterInterface,
     RelevanceClassifierInterface,
 )
 from app.models.news import RawMessage
-from app.services.news.relevance_filter_service import status_for_result
+from app.services.news.relevance_filter_service import (
+    policy_for_result,
+    status_for_result,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +46,7 @@ class FilterRelevanceAction:
         processed = len(messages)
         relevant = 0
         rejected = 0
+        uncertain = 0
         errored = 0
         auto_rejected_by_keyword = 0
         classifier_calls_made = 0
@@ -50,10 +58,12 @@ class FilterRelevanceAction:
                 continue
 
             result = self._keyword_rejection_result()
+            policy = policy_for_result(result)
             self.raw_messages.save_filter_result(
                 message=message,
                 result=result,
                 new_status=status_for_result(result),
+                low_confidence_relevance=policy.low_confidence_relevance,
             )
             rejected += 1
             auto_rejected_by_keyword += 1
@@ -82,21 +92,28 @@ class FilterRelevanceAction:
                 break
 
             for message, result in zip(chunk, results, strict=True):
+                policy = policy_for_result(result)
                 new_status = status_for_result(result)
                 self.raw_messages.save_filter_result(
                     message=message,
                     result=result,
                     new_status=new_status,
+                    low_confidence_relevance=policy.low_confidence_relevance,
                 )
-                if result.relevant:
+                # Step B plugs into raw_messages with status=parsed. When this
+                # flag is true, extraction may continue but the UI can warn.
+                if policy.verdict == RelevancePolicyVerdict.proceed:
                     relevant += 1
-                else:
+                elif policy.verdict == RelevancePolicyVerdict.reject:
                     rejected += 1
+                else:
+                    uncertain += 1
 
         return FilterBatchSummary(
             processed=processed,
             relevant=relevant,
             rejected=rejected,
+            uncertain=uncertain,
             errored=errored,
             auto_rejected_by_keyword=auto_rejected_by_keyword,
             classifier_calls_made=classifier_calls_made,
@@ -105,9 +122,9 @@ class FilterRelevanceAction:
     @staticmethod
     def _keyword_rejection_result() -> RelevanceClassificationResult:
         return RelevanceClassificationResult(
-            relevant=False,
-            confidence=1.0,
-            reasoning=KEYWORD_PREFILTER_REASONING,
+            is_relevant=False,
+            confidence=RelevanceConfidence.high,
+            reason=KEYWORD_PREFILTER_REASONING,
             model=KEYWORD_PREFILTER_MODEL,
             classified_at=datetime.now(timezone.utc),
         )

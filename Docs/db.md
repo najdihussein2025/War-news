@@ -96,9 +96,9 @@ Indexes:
 
 `id` (PK) · `source_id` (FK sources, ON DELETE CASCADE) ·
 `external_message_id` · `source_platform` · `source_name` · `raw_text` ·
-`raw_payload` (jsonb) · `filter_result` (jsonb) · `extraction_result` (jsonb) ·
-`message_datetime` · `received_at` · `status` (message_status) ·
-`error_message`
+`raw_payload` (jsonb) · `filter_result` (jsonb) ·
+`low_confidence_relevance` · `extraction_result` (jsonb) · `message_datetime` ·
+`received_at` · `status` (message_status) · `error_message`
 
 Constraints and indexes:
 

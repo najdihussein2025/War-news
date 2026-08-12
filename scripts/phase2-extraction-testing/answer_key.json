@@ -1,0 +1,504 @@
+[
+  {
+    "sample_id": 2,
+    "source_row": 2,
+    "khabar_text": "غارة على بلدة تبنين",
+    "expected": {
+      "Action_E": "Bombs",
+      "Action_A": "قصف وغارات",
+      "casualties": {
+        "Total_D": 1,
+        "Death": 1
+      },
+      "categories": {
+        "hospital": {
+          "label": "Hospital",
+          "fields": {
+            "Hosp": 1,
+            "Hos_DID": "ID",
+            "Hos_Status": "Open",
+            "Hos_N": "مستشفى تبنين الحكومي"
+          }
+        },
+        "government_building": {
+          "label": "Government building",
+          "fields": {
+            "Gov": 1,
+            "Gov_Bui": 1,
+            "Gov_N": "سراي تبنين الحكومي",
+            "GB_DID": "ID"
+          }
+        },
+        "warning_classification": {
+          "label": "Warning & classification",
+          "fields": {
+            "Building": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sample_id": 3,
+    "source_row": 3,
+    "khabar_text": "صورة جويّة حديثة تظهر قيام جيش العدو بتفجير مجمع المرحوم موسى عباس في مدينة بنت جبيل وهو أحد أهم معالم المدينة",
+    "expected": {
+      "Action_E": "Mining & Detonation",
+      "Action_A": "تلغيم وتفجير",
+      "categories": {
+        "health_center": {
+          "label": "Health Center",
+          "fields": {
+            "HC": 1,
+            "HC_Rela": "الهيئة الصحية الاسلامية",
+            "HC_DID": "D",
+            "HC_Damage_Level": "Totally Destroyed"
+          }
+        },
+        "crossings_other": {
+          "label": "Crossings & other",
+          "fields": {
+            "Other": 1,
+            "Other_DID": "D",
+            "Other_Type": "مجمع المرحوم الحاج موسى عباس الرياضي"
+          }
+        },
+        "warning_classification": {
+          "label": "Warning & classification",
+          "fields": {
+            "Building": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sample_id": 4,
+    "source_row": 4,
+    "khabar_text": "حزام ناري على زوطر وتقدم قوات الاحتلال باتجاه النهر",
+    "expected": {
+      "Action_E": "Bombs",
+      "Action_A": "قصف وغارات"
+    }
+  },
+  {
+    "sample_id": 5,
+    "source_row": 5,
+    "khabar_text": "حزام ناري على زوطر وتقدم قوات الاحتلال باتجاه النهر",
+    "expected": {
+      "Action_E": "Ground Incursion",
+      "Action_A": "توغل بري"
+    }
+  },
+  {
+    "sample_id": 6,
+    "source_row": 6,
+    "khabar_text": "قوات الاحتلال تطلق النار باتجاه عدد من الاهالي عند اطراف بلدة حداثا كانو يتوجهون لاتمام عملية دفن في جبانة البلدة بمواكبة الجيش اللبناني كما رصد تمركز ٣ دبابات ميركافا وجرافة d9 بالقرب من جبانة بلدة حداثا",
+    "expected": {
+      "Action_E": "Ground Incursion",
+      "Action_A": "توغل بري"
+    }
+  },
+  {
+    "sample_id": 7,
+    "source_row": 7,
+    "khabar_text": "قوات الاحتلال تطلق النار باتجاه عدد من الاهالي عند اطراف بلدة حداثا كانو يتوجهون لاتمام عملية دفن في جبانة البلدة بمواكبة الجيش اللبناني كما رصد تمركز ٣ دبابات ميركافا وجرافة d9 بالقرب من جبانة بلدة حداثا",
+    "expected": {
+      "Action_E": "Shooting",
+      "Action_A": "إطلاق نار",
+      "categories": {
+        "army": {
+          "label": "Lebanese Army",
+          "fields": {
+            "LA": 1,
+            "LA_DID": "D"
+          }
+        }
+      }
+    }
+  },
+  {
+    "sample_id": 8,
+    "source_row": 8,
+    "khabar_text": "إخلاء مبنى على طريق المية ومية بعد تلقي أحد قاطنيه اتصالاً تحذيرياً",
+    "expected": {
+      "Action_E": "Warning Messages",
+      "Action_A": "اتصالات تحذيرية"
+    }
+  },
+  {
+    "sample_id": 9,
+    "source_row": 9,
+    "khabar_text": "مواطن ينتزع العلم الاسرائيلي بعدما زرعته قوة إسرائيلية على قلعة الشقيف مع كاميرا للتجسس تعمل على الطاقة الشمسية",
+    "expected": {
+      "Action_E": "Installing Surveillance Devices",
+      "Action_A": "اجهزة تجسس",
+      "categories": {
+        "religious_cultural": {
+          "label": "Religious & cultural",
+          "fields": {
+            "Archeo": 1,
+            "Arch_DID": "D",
+            "Arch_N": "قلعة الشقيف"
+          }
+        }
+      }
+    }
+  },
+  {
+    "sample_id": 10,
+    "source_row": 10,
+    "khabar_text": "جيش العدو الإسرائيلي يقوم بحرق المنازل في بلدة القنطرة",
+    "expected": {
+      "Action_E": "Burning Properties",
+      "Action_A": "احراق ممتلكات",
+      "categories": {
+        "warning_classification": {
+          "label": "Warning & classification",
+          "fields": {
+            "Building": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sample_id": 11,
+    "source_row": 11,
+    "khabar_text": "صورةٌ تُثير ضجةً واسعةً بين متصفحي الإنترنت اللبنانيين بعد أن نشرها موقع \"بنت جبيل\" الإلكتروني، زاعماً أنها لمطبخٍ داخل منزلٍ في بنت جبيل جنوب لبنان.",
+    "expected": {
+      "Action_E": "Raiding Homes",
+      "Action_A": "اقتحام منازل"
+    }
+  },
+  {
+    "sample_id": 12,
+    "source_row": 12,
+    "khabar_text": "الطيران الحربي الصهيوني يقوم بإلقاء بوالين حرارية فوق منطقة النبطية",
+    "expected": {
+      "Action_E": "Decoy Flares",
+      "Action_A": "القاء بالونات حرارية"
+    }
+  },
+  {
+    "sample_id": 13,
+    "source_row": 13,
+    "khabar_text": "استهدف مجاهدو المُقاومة الإسلاميّة عند السّاعة 17:16 الثّلاثاء 12-05-2026 قوّة إسرائيليّة متموضعة داخل منزل في بلدة البيّاضة بِمسيّرة انقضاضيّة.",
+    "expected": {
+      "Action_E": "Stationing",
+      "Action_A": "تمركز"
+    }
+  },
+  {
+    "sample_id": 14,
+    "source_row": 14,
+    "khabar_text": "زورق للعدو  الإسرائيلي يقترب من الشواطئ اللبنانية مقابل الناقورة",
+    "expected": {
+      "Action_E": "Naval Incursion",
+      "Action_A": "توغل بحري"
+    }
+  },
+  {
+    "sample_id": 15,
+    "source_row": 15,
+    "khabar_text": "تم جرف جبانة بلدة أرنون بالكامل",
+    "expected": {
+      "Action_E": "Bulldozing",
+      "Action_A": "حفر وجرف",
+      "categories": {
+        "religious_cultural": {
+          "label": "Religious & cultural",
+          "fields": {
+            "Ceme": 1,
+            "Ceme_DID": "D",
+            "Ceme_N": "جبانة أرنون"
+          }
+        }
+      }
+    }
+  },
+  {
+    "sample_id": 16,
+    "source_row": 16,
+    "khabar_text": "جدار صوت فوق البقاع الشمالي",
+    "expected": {
+      "Action_E": "Supersonic boom",
+      "Action_A": "خرق جدار الصوت"
+    }
+  },
+  {
+    "sample_id": 17,
+    "source_row": 17,
+    "khabar_text": "الجيش الإسرائيلي يخطتف 4 أشخاص عند مثلث المجيدية الماري عين عرب",
+    "expected": {
+      "Action_E": "Kidnapping",
+      "Action_A": "خطف"
+    }
+  },
+  {
+    "sample_id": 18,
+    "source_row": 18,
+    "khabar_text": "دورية من العدو الإسرائيلي دخلت إلى بلدة عين عرب الحدودية، وطلبت من أهلها مغادرتها خلال ساعتين.",
+    "expected": {
+      "Action_E": "Warning Messages",
+      "Action_A": "رسالة تحذيرية"
+    }
+  },
+  {
+    "sample_id": 19,
+    "source_row": 19,
+    "khabar_text": "درون معاديـة ترمي أجسام مشبوهة فوق النبطية الفوقا",
+    "expected": {
+      "Action_E": "Throwing Foreign Objects",
+      "Action_A": "رمي أجسام مجهولة"
+    }
+  },
+  {
+    "sample_id": 20,
+    "source_row": 20,
+    "khabar_text": "محلقة إسرائيلية تلقي متفجرات على تلة علي الطاهر من جديد",
+    "expected": {
+      "Action_E": "Throwing Foreign  Substances",
+      "Action_A": "رمي مواد مجهولة"
+    }
+  },
+  {
+    "sample_id": 21,
+    "source_row": 21,
+    "khabar_text": "السّاعة 10:00 وبعد رصد آليّة نقل عسكريّة إسرائيلية محمّلة بالممتلكات التي يسرقها جنود جيش العدو الإسرائيلي من منازل المدنيين، استهدفها مجاهدو المقاومة الإسلاميّة في تلّة الصلعة في بلدة القنطرة بمحلّقة أبابيل الانقضاضية وشوهدت الآلية تحترق لساعة كاملة بعد إصابتها",
+    "expected": {
+      "Action_E": "Stealing Homes",
+      "Action_A": "سرقة منازل"
+    }
+  },
+  {
+    "sample_id": 22,
+    "source_row": 22,
+    "khabar_text": "سقوط درون إسرائيلية في كفررمان، وعاود الاحتـلال تفجيرها في مكان سقوطها، من دون وقوع إصابات.",
+    "expected": {
+      "Action_E": "Drone Failure",
+      "Action_A": "سقوط مسيرة",
+      "categories": {
+        "crossings_other": {
+          "label": "Crossings & other",
+          "fields": {
+            "Drone_F": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sample_id": 23,
+    "source_row": 23,
+    "khabar_text": "3 صواريخ إعتراضية في سماء بنت جبيل",
+    "expected": {
+      "Action_E": "Interceptor Missile",
+      "Action_A": "صاروخ اعتراضي"
+    }
+  },
+  {
+    "sample_id": 24,
+    "source_row": 24,
+    "khabar_text": "مروحية إسرائيلية أطلقت صاروخاً باتجاه بلدة المنصوري في قضاء صور",
+    "expected": {
+      "Action_E": "Helicopter Air-Ground Missile",
+      "Action_A": "صاروخ مروحي جو أرض"
+    }
+  },
+  {
+    "sample_id": 25,
+    "source_row": 25,
+    "khabar_text": "درون إسرائيلية تبث أصوات اسعاف فوق حاريص",
+    "expected": {
+      "Action_E": "Broadcast Provocative Statements",
+      "Action_A": "عبارات تحريضية"
+    }
+  },
+  {
+    "sample_id": 26,
+    "source_row": 26,
+    "khabar_text": "قوات العدو أفرجت عن الراعي محمد هلال سوري الجنسية الذي اختطفته أول من أمس خلال توغل دورية معادية في خراج إبل السقي باتجاه بلدة الماري",
+    "expected": {
+      "Action_E": "Arrest Operation",
+      "Action_A": "عملية احتجاز"
+    }
+  },
+  {
+    "sample_id": 27,
+    "source_row": 27,
+    "khabar_text": "قوات جيش العدو الصهيوني تقوم بحملة تمشيط بالرشاشات نحو بلدة زوطر الشرقية",
+    "expected": {
+      "Action_E": "Sweeping Operations",
+      "Action_A": "عملية تمشيط"
+    }
+  },
+  {
+    "sample_id": 28,
+    "source_row": 28,
+    "khabar_text": "طائرات الاحتلال المروحية تقوم بعمليات تمشيط في بلدة القنطرة",
+    "expected": {
+      "Action_E": "Aerial Sweep",
+      "Action_A": "عملية تمشيط مروحي"
+    }
+  },
+  {
+    "sample_id": 29,
+    "source_row": 29,
+    "khabar_text": "طيران العدو الحربي يخرق أجواء منطقة النبطية وإقليم التفاح وينفّذ غارات وهمية",
+    "expected": {
+      "Action_E": "Feigned Attacks",
+      "Action_A": "غارات وهمية"
+    }
+  },
+  {
+    "sample_id": 30,
+    "source_row": 30,
+    "khabar_text": "غارة تحذيرية من مسيرة على البيسارية",
+    "expected": {
+      "Action_E": "Warning Raid",
+      "Action_A": "غارة تحذيرية"
+    }
+  },
+  {
+    "sample_id": 31,
+    "source_row": 31,
+    "khabar_text": "دبابة \"ميركافا\" إسرائيليّة استهدفت بلدة برج قلاويه بـ3 قذائف",
+    "expected": {
+      "Action_E": "Tank Fire",
+      "Action_A": "قذائف الدبابات"
+    }
+  },
+  {
+    "sample_id": 32,
+    "source_row": 32,
+    "khabar_text": "قصف مدفعي معادٍ ٳنشطاري يستهدف بلدة النبطية الفوقا",
+    "expected": {
+      "Action_E": "Fissile Shells",
+      "Action_A": "قذائف انشطارية"
+    }
+  },
+  {
+    "sample_id": 33,
+    "source_row": 33,
+    "khabar_text": "قصف مدفعي فوسفوري على النبطية الفوقا",
+    "expected": {
+      "Action_E": "Phosphorus Bombs",
+      "Action_A": "قذائف فوسفورية"
+    }
+  },
+  {
+    "sample_id": 34,
+    "source_row": 34,
+    "khabar_text": "غارة على محيط بلدة القصير - ديرسريان، وادي الخنآزير والصاروخ لم ينفجر",
+    "expected": {
+      "Action_E": "Unexploded Shells",
+      "Action_A": "قذائف لم تنفجر"
+    }
+  },
+  {
+    "sample_id": 35,
+    "source_row": 35,
+    "khabar_text": "قصف مدفعي إسرائيلي استهدف بلدة المنصوري",
+    "expected": {
+      "Action_E": "Artillery Shelling",
+      "Action_A": "قصف مدفعي"
+    }
+  },
+  {
+    "sample_id": 36,
+    "source_row": 36,
+    "khabar_text": "قام العدو البربري بتكسير جميع الأشجار المزروعة على جوانب طرقات بنت جبيل.",
+    "expected": {
+      "Action_E": "Cutting Trees",
+      "Action_A": "قطع اشجار"
+    }
+  },
+  {
+    "sample_id": 37,
+    "source_row": 37,
+    "khabar_text": "العدو الإسرائيلي قطع الطريق بين شبعا وكفرشوبا في بركة النقار بساتر ترابي",
+    "expected": {
+      "Action_E": "Road Blockage",
+      "Action_A": "قطع طريق",
+      "categories": {
+        "road_bridge": {
+          "label": "Road/Bridge",
+          "fields": {
+            "Road": 1,
+            "Road_D_ID": "D",
+            "Road_Blocked": 1,
+            "Road_Name": "الطريق بين شبعا وكفرشوبا"
+          }
+        }
+      }
+    }
+  },
+  {
+    "sample_id": 38,
+    "source_row": 38,
+    "khabar_text": "محلقة إسرائيلية قامت بإلقاء قنبلة على مشاع بلدة المنصوري",
+    "expected": {
+      "Action_E": "Grenades",
+      "Action_A": "قنابل"
+    }
+  },
+  {
+    "sample_id": 39,
+    "source_row": 39,
+    "khabar_text": "إلقاء قنابل دخانية محيط تلة علي الطاهر في هذه الأثناء",
+    "expected": {
+      "Action_E": "Smoke Grenades",
+      "Action_A": "قنابل دخانية"
+    }
+  },
+  {
+    "sample_id": 40,
+    "source_row": 40,
+    "khabar_text": "ألقت محلقة معادية قنبلة صوتية في محيط عدد من الشبان في بلدة حداثا ما أدى الى اصابة ٤ منهم بجروح طفيفة",
+    "expected": {
+      "Action_E": "Sound Bombs",
+      "Action_A": "قنابل صوتية",
+      "casualties": {
+        "Total_Inj": 4,
+        "Injuries": 4
+      }
+    }
+  },
+  {
+    "sample_id": 41,
+    "source_row": 41,
+    "khabar_text": "إلقاء قنابل عنقودية على الريحان",
+    "expected": {
+      "Action_E": "Cluster Bombs",
+      "Action_A": "قنابل عنقودية"
+    }
+  },
+  {
+    "sample_id": 42,
+    "source_row": 42,
+    "khabar_text": "قنابل مضيئة و حارقة استهدفت علي الطاهر",
+    "expected": {
+      "Action_E": "Flare Bomb",
+      "Action_A": "قنابل مضيئة وحارقة"
+    }
+  },
+  {
+    "sample_id": 43,
+    "source_row": 43,
+    "khabar_text": "محلقة قامت بتفجير نفسها فوق مشاع  المنصوري",
+    "expected": {
+      "Action_E": "Suicide Drone",
+      "Action_A": "مسيرة مفخخة"
+    }
+  },
+  {
+    "sample_id": 44,
+    "source_row": 44,
+    "khabar_text": "العدو الصهيوني يلقي مناشير فوق بلدة المنصوري",
+    "expected": {
+      "Action_E": "Broadcast Provocative Statements",
+      "Action_A": "مناشير تحريضية"
+    }
+  }
+]

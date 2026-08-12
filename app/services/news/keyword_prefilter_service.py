@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
 from app.core.text_normalization import normalize_arabic_text, normalize_english_text
-from app.interfaces.news import (
+from app.interfaces.repositories import (
     ConditionRepositoryInterface,
-    KeywordPrefilterInterface,
     VillageRepositoryInterface,
 )
+from app.interfaces.services import KeywordPrefilterInterface
 from app.models.news import Condition, Village
 
 

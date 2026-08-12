@@ -5,7 +5,7 @@ from app.actions.news import (
     FilterRelevanceAction,
     IngestSourceAction,
 )
-from app.interfaces.news import (
+from app.interfaces.services import (
     ExtractionClassifierInterface,
     RelevanceClassifierInterface,
 )
@@ -15,15 +15,27 @@ def build_filter_relevance_action(
     db: Session,
     classifier: RelevanceClassifierInterface | None = None,
 ) -> FilterRelevanceAction:
+    from app.core.config import settings
+    from app.core.ollama_client import OllamaChatClient
     from app.repositories.news import (
         ConditionRepository,
         RawMessageRepository,
         VillageRepository,
     )
     from app.services.news.keyword_prefilter_service import KeywordPrefilterService
+    from app.services.news.ollama_relevance_classifier_service import (
+        OllamaRelevanceClassifierService,
+    )
 
     if classifier is None:
-        raise RuntimeError("No relevance classifier is configured.")
+        classifier = OllamaRelevanceClassifierService(
+            OllamaChatClient(
+                base_url=settings.ollama_base_url,
+                api_key=settings.ollama_api_key,
+                model=settings.ollama_model,
+                timeout_seconds=settings.ollama_timeout_seconds,
+            )
+        )
 
     conditions = ConditionRepository(db)
     villages = VillageRepository(db)

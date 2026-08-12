@@ -1,6 +1,6 @@
 from sentence_transformers import SentenceTransformer
 
-from app.interfaces.news import EmbeddingServiceInterface
+from app.interfaces.services import EmbeddingServiceInterface
 
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 

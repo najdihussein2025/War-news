@@ -9,6 +9,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    Boolean,
     Enum as SqlEnum,
     func,
     text,
@@ -59,6 +60,12 @@ class RawMessage(Base):
     filter_result: Mapped[dict[str, Any] | None] = mapped_column(
         JSONB,
         nullable=True,
+    )
+    low_confidence_relevance: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=text("false"),
     )
     extraction_result: Mapped[dict[str, Any] | None] = mapped_column(
         JSONB,

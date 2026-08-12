@@ -4,14 +4,16 @@ from typing import Any
 from sqlalchemy.exc import IntegrityError
 
 from app.dtos.news import ExtractPendingMessagesData, ExtractionBatchSummary
-from app.interfaces.news import (
+from app.interfaces.repositories import (
     ConditionRepositoryInterface,
+    IncidentRepositoryInterface,
+    RawMessageRepositoryInterface,
+)
+from app.interfaces.services import (
     ConditionResolutionInterface,
     DedupMatchingInterface,
     EmbeddingServiceInterface,
     ExtractionClassifierInterface,
-    IncidentRepositoryInterface,
-    RawMessageRepositoryInterface,
     VillageMatchingInterface,
 )
 from app.services.news.dedup_matching_service import (

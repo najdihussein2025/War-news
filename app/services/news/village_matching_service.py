@@ -1,5 +1,6 @@
 from app.core.text_normalization import normalize_arabic_text
-from app.interfaces.news import VillageMatchingInterface, VillageRepositoryInterface
+from app.interfaces.repositories import VillageRepositoryInterface
+from app.interfaces.services import VillageMatchingInterface
 from app.models.news import Village
 
 # Initial pg_trgm cutoff; tune after reviewing real extraction audit results.
