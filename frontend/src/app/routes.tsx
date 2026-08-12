@@ -68,7 +68,7 @@ export const createRoutes = (): RouteObject[] => [
     { path: "/login", element: <LoginPage /> },
     {
       path: "/admin",
-      element: <RequireRole roles={[ROLES.ADMIN]}><AppShell /></RequireRole>,
+      element: <RequireRole roles={[ROLES.ADMIN]}><AppShell previewRole={ROLES.ADMIN} /></RequireRole>,
       children: [
         { index: true, element: <Navigate to="dashboard" replace /> },
         { path: "dashboard", element: <AdminDashboardPage /> },
@@ -80,7 +80,7 @@ export const createRoutes = (): RouteObject[] => [
     },
     {
       path: "/superadmin",
-      element: <RequireRole roles={[ROLES.SUPER_ADMIN]}><AppShell /></RequireRole>,
+      element: <RequireRole roles={[ROLES.SUPER_ADMIN]}><AppShell previewRole={ROLES.SUPER_ADMIN} /></RequireRole>,
       children: [
         { index: true, element: <Navigate to="dashboard" replace /> },
         { path: "dashboard", element: <SuperAdminDashboardPage /> },

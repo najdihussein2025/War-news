@@ -14,6 +14,10 @@ class InvalidCredentialsError(Exception):
     pass
 
 
+class AccountInactiveError(Exception):
+    pass
+
+
 def hash_access_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
@@ -25,8 +29,10 @@ class AuthService:
 
     def login(self, username: str, password: str) -> tuple[User, str]:
         user = self.users.get_by_username(username.strip())
-        if user is None or not user.is_active or not password_context.verify(password, user.password_hash):
+        if user is None or not password_context.verify(password, user.password_hash):
             raise InvalidCredentialsError("Incorrect username or password.")
+        if not user.is_active:
+            raise AccountInactiveError("This account is deactivated.")
 
         user.last_login_at = datetime.now(timezone.utc)
         self.users.update(user)

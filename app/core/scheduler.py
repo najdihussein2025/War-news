@@ -5,9 +5,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from app.core.config import settings
 from app.core.database import SessionLocal
-from app.core.news_action_factory import build_ingest_source_action
-from app.dtos.news import IngestSourceData
-from app.repositories.news import SourceRepository
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -19,6 +16,13 @@ _scheduler: BackgroundScheduler | None = None
 def _run_cnrs_ingestion() -> None:
     db = SessionLocal()
     try:
+        # Keep optional, ML-heavy ingestion dependencies out of API startup.
+        # This lets authentication and account management remain available even
+        # when an ingestion dependency is unavailable or still being installed.
+        from app.core.news_action_factory import build_ingest_source_action
+        from app.dtos.news import IngestSourceData
+        from app.repositories.news import SourceRepository
+
         source = SourceRepository(db).get_active_by_external_id(
             CNRS_SOURCE_EXTERNAL_ID
         )

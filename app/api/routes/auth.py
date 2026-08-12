@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.dtos import LoginDTO, LoginResponseDTO, SessionResponseDTO, UserResponseDTO
 from app.models.accounts import User
 from app.api.dependencies import get_current_user
-from app.services.auth_service import InvalidCredentialsError
+from app.services.auth_service import AccountInactiveError, InvalidCredentialsError
 from app.api.dependencies import bearer_scheme
 from app.repositories import AuthSessionRepository, UserRepository
 from app.services.auth_service import AuthService
@@ -27,6 +27,8 @@ def current_session(current_user: User = Depends(get_current_user)) -> SessionRe
 def login(dto: LoginDTO, db: Session = Depends(get_db)) -> LoginResponseDTO:
     try:
         return login_account(db, dto)
+    except AccountInactiveError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
     except InvalidCredentialsError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 

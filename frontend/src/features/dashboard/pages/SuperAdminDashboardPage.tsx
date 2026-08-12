@@ -4,7 +4,7 @@ import { Card } from "../../../components/ui";
 import { formatRelativeTime } from "../../../lib/formatters";
 import { mockAuditLogs, mockLoginLogs } from "../../../mocks/mockLogs";
 import { mockSources } from "../../../mocks/mockSources";
-import { mockUsers } from "../../../mocks/mockUsers";
+import { useAccounts } from "../../accounts/hooks";
 
 const Metric = ({ label, value, detail, alert = false }: { label: string; value: number; detail: string; alert?: boolean }) => (
   <Card className="p-5">
@@ -28,8 +28,9 @@ const ActionLink = ({ to, title, description }: { to: string; title: string; des
 );
 
 export const SuperAdminDashboardPage = () => {
-  const activeUsers = mockUsers.filter((user) => user.is_active);
-  const administrators = mockUsers.filter((user) => user.role === "admin");
+  const { data: accounts = [] } = useAccounts();
+  const activeUsers = accounts.filter((user) => user.is_active);
+  const superAdministrators = accounts.filter((user) => user.role.name === "super_admin");
   const sourceIssues = mockSources.filter((source) => source.health !== "healthy");
   const failedLogins = mockLoginLogs.filter((entry) => !entry.success);
 
@@ -42,8 +43,8 @@ export const SuperAdminDashboardPage = () => {
       </section>
 
       <section aria-label="System metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Active accounts" value={activeUsers.length} detail={`${mockUsers.length - activeUsers.length} inactive accounts`} />
-        <Metric label="Administrators" value={administrators.length} detail="Operational admin accounts" />
+        <Metric label="Active accounts" value={activeUsers.length} detail={`${accounts.length - activeUsers.length} inactive accounts`} />
+        <Metric label="Administrators" value={superAdministrators.length} detail="Super administrator accounts" />
         <Metric label="Source issues" value={sourceIssues.length} detail="Sources paused or in error" alert={sourceIssues.length > 0} />
         <Metric label="Failed logins" value={failedLogins.length} detail="Recent unsuccessful attempts" alert={failedLogins.length > 0} />
       </section>

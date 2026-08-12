@@ -1,7 +1,9 @@
-import { useState, type FocusEvent, type FormEvent } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState, type FocusEvent, type FormEvent } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { logout as revokeSession } from "../api";
 import { useLogin } from "../hooks";
 import { useAuthStore } from "../../../stores/authStore";
+import { ROLES } from "../../../constants/roles";
 import { Button, Card, FormField, Input } from "../../../components/ui";
 import { cn } from "../../../lib/cn";
 
@@ -132,7 +134,8 @@ const EditorialMotif = () => (
 export const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const [sessionOnEntry] = useState(() => useAuthStore.getState().token);
+  const clearSession = useAuthStore((state) => state.logout);
   const loginMutation = useLogin();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -142,11 +145,13 @@ export const LoginPage = () => {
     password: false,
   });
 
-  const intendedPath = (location.state as { from?: string } | null)?.from || "/admin/dashboard";
+  useEffect(() => {
+    if (!sessionOnEntry) return;
+    void revokeSession(sessionOnEntry).catch(() => undefined);
+    clearSession();
+  }, [clearSession, sessionOnEntry]);
 
-  if (isAuthenticated) {
-    return <Navigate to={intendedPath} replace />;
-  }
+  const requestedPath = (location.state as { from?: string } | null)?.from;
 
   const fieldErrors: Partial<Record<FieldName, string>> = {
     username: touchedFields.username && username.trim() === "" ? "Username is required." : "",
@@ -173,14 +178,20 @@ export const LoginPage = () => {
     loginMutation.mutate(
       { username, password },
       {
-        onSuccess: () => {
-          navigate(intendedPath, { replace: true });
+        onSuccess: (data) => {
+          const dashboard = data.role === ROLES.SUPER_ADMIN
+            ? "/superadmin/dashboard"
+            : "/admin/dashboard";
+          navigate(requestedPath || dashboard, { replace: true });
         },
       },
     );
   };
 
   const hasLoginError = loginMutation.isError;
+  const loginErrorMessage = (
+    loginMutation.error as { response?: { data?: { detail?: string } } } | null
+  )?.response?.data?.detail ?? "Incorrect username or password. Please check the credentials and try again.";
 
   return (
     <main className="min-h-screen bg-surface font-sans text-text-primary lg:grid lg:grid-cols-5">
@@ -266,7 +277,7 @@ export const LoginPage = () => {
               role="alert"
               aria-live="polite"
             >
-              Incorrect username or password. Please check the credentials and try again.
+              {loginErrorMessage}
             </p>
           ) : null}
 
