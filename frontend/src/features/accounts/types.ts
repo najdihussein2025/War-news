@@ -16,3 +16,10 @@ export type AccountCreate = {
   password: string;
   role_id: number;
 };
+
+export type AccountUpdate = {
+  username: string;
+  full_name: string;
+  role_id: number;
+  password?: string;
+};

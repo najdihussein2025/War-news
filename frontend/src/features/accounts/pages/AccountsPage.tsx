@@ -13,7 +13,7 @@ import { ShellContext } from "../../../app/AppShell";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { Button, Card, EmptyState, FormField, Input, Label } from "../../../components/ui";
 import { cn } from "../../../lib/cn";
-import { createAccount, deleteAccount, setAccountActive } from "../api";
+import { createAccount, deleteAccount, setAccountActive, updateAccount } from "../api";
 import { useAccounts } from "../hooks";
 import type { MockUser, MockUserRole } from "../../../mocks/mockUsers";
 
@@ -297,8 +297,11 @@ const AccountForm = ({
           required
         />
       </FormField>
-      {mode === "create" ? (
-        <FormField id="account-password" label="Password">
+      <FormField
+        id="account-password"
+        label={mode === "create" ? "Password" : "New password"}
+        hint={mode === "edit" ? "Leave blank to keep the current password." : undefined}
+      >
           <Input
             id="account-password"
             type="password"
@@ -306,10 +309,9 @@ const AccountForm = ({
             onChange={(event) => onChange({ ...value, password: event.target.value })}
             minLength={8}
             autoComplete="new-password"
-            required
+            required={mode === "create"}
           />
-        </FormField>
-      ) : null}
+      </FormField>
       <div className="space-y-2">
         <Label htmlFor="account-role">Role</Label>
         <select
@@ -492,20 +494,35 @@ export const AccountsPage = () => {
       }
       return;
     } else if (dialogMode === "edit" && editingUserId) {
-      setUsers((current) =>
-        current.map((user) =>
-          user.id === editingUserId
+      setIsSubmitting(true);
+      setSubmitError(null);
+      try {
+        const account = await updateAccount(editingUserId, {
+          username: formState.username.trim(),
+          full_name: formState.full_name.trim(),
+          role_id: formState.role === "super_admin" ? 1 : 2,
+          ...(formState.password ? { password: formState.password } : {}),
+        });
+        setUsers((current) => current.map((user) =>
+          user.id === account.id
             ? {
                 ...user,
-                username: formState.username,
-                full_name: formState.full_name,
-                role: formState.role,
-                is_active: formState.is_active,
+                username: account.username,
+                full_name: account.full_name,
+                role: account.role.name,
+                is_active: account.is_active,
               }
             : user,
-        ),
-      );
-      showToast(`${formState.full_name} was updated.`);
+        ));
+        showToast(`${account.full_name} was updated.`);
+        closeDialog();
+      } catch (error) {
+        const detail = (error as { response?: { data?: { detail?: string } } }).response?.data?.detail;
+        setSubmitError(detail ?? "Could not update the user. Please try again.");
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
     }
 
     closeDialog();

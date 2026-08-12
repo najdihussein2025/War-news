@@ -1,5 +1,5 @@
 import { apiClient } from "../../lib/apiClient";
-import type { Account, AccountCreate } from "./types";
+import type { Account, AccountCreate, AccountUpdate } from "./types";
 
 export const getAccounts = async (): Promise<Account[]> => {
   const response = await apiClient.get<Account[]>("/api/accounts");
@@ -23,6 +23,11 @@ export const createAccount = async (payload: AccountCreate): Promise<Account> =>
     const bootstrapResponse = await apiClient.post<Account>("/api/accounts/bootstrap", payload);
     return bootstrapResponse.data;
   }
+};
+
+export const updateAccount = async (userId: string, payload: AccountUpdate): Promise<Account> => {
+  const response = await apiClient.patch<Account>(`/api/accounts/${userId}`, payload);
+  return response.data;
 };
 
 export const deleteAccount = async (userId: string): Promise<void> => {
