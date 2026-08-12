@@ -1,0 +1,24 @@
+from app.core.database import SessionLocal
+from app.core.news_action_factory import build_filter_relevance_action
+from app.dtos.news import FilterPendingMessagesData
+
+
+def main() -> None:
+    db = SessionLocal()
+    try:
+        summary = build_filter_relevance_action(db).execute(
+            FilterPendingMessagesData()
+        )
+        print("Relevance filter summary")
+        print(f"processed: {summary.processed}")
+        print(f"relevant: {summary.relevant}")
+        print(f"rejected: {summary.rejected}")
+        print(f"errored: {summary.errored}")
+        print(f"auto_rejected_by_keyword: {summary.auto_rejected_by_keyword}")
+        print(f"gemini_calls_made: {summary.gemini_calls_made}")
+    finally:
+        db.close()
+
+
+if __name__ == "__main__":
+    main()

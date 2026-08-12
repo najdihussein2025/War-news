@@ -1,4 +1,35 @@
 from app.models.accounts import AuthSession, Role, User
-from app.models.news import IngestionLog, RawMessage, Source
+from app.models.news import (
+    Condition,
+    DidValue,
+    DuplicateMatch,
+    Incident,
+    IncidentDetail,
+    IncidentUpdate,
+    IngestionLog,
+    MatchStatus,
+    MatchType,
+    RawMessage,
+    Source,
+    UpdateAction,
+    Village,
+)
 
-__all__ = ["AuthSession", "IngestionLog", "RawMessage", "Role", "Source", "User"]
+__all__ = [
+    "AuthSession",
+    "Condition",
+    "DidValue",
+    "DuplicateMatch",
+    "Incident",
+    "IncidentDetail",
+    "IncidentUpdate",
+    "IngestionLog",
+    "MatchStatus",
+    "MatchType",
+    "RawMessage",
+    "Role",
+    "Source",
+    "UpdateAction",
+    "User",
+    "Village",
+]

@@ -55,6 +55,8 @@ class CNRSSourceProvider(SourceProvider):
         # raw_messages.external_message_id must use CNRS's numeric "id" instead.
         return {
             "external_message_id": str(record["id"]),
+            "source_platform": record.get("source_platform"),
+            "source_name": record.get("source_name"),
             "raw_text": record.get("post_text"),
             "raw_payload": record,
             "message_datetime": record.get("post_date"),
