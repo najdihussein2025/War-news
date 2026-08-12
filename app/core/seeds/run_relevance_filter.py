@@ -15,7 +15,7 @@ def main() -> None:
         print(f"rejected: {summary.rejected}")
         print(f"errored: {summary.errored}")
         print(f"auto_rejected_by_keyword: {summary.auto_rejected_by_keyword}")
-        print(f"gemini_calls_made: {summary.gemini_calls_made}")
+        print(f"classifier_calls_made: {summary.classifier_calls_made}")
     finally:
         db.close()
 

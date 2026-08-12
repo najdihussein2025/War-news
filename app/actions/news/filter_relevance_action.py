@@ -16,7 +16,7 @@ from app.services.news.relevance_filter_service import status_for_result
 
 logger = logging.getLogger(__name__)
 
-GEMINI_RELEVANCE_BATCH_SIZE = 15
+RELEVANCE_BATCH_SIZE = 15
 KEYWORD_PREFILTER_REASONING = "no keyword match (village/action)"
 KEYWORD_PREFILTER_MODEL = "keyword_prefilter"
 
@@ -41,7 +41,7 @@ class FilterRelevanceAction:
         rejected = 0
         errored = 0
         auto_rejected_by_keyword = 0
-        gemini_calls_made = 0
+        classifier_calls_made = 0
 
         candidates: list[RawMessage] = []
         for message in messages:
@@ -58,10 +58,10 @@ class FilterRelevanceAction:
             rejected += 1
             auto_rejected_by_keyword += 1
 
-        candidate_chunks = self._chunks(candidates, GEMINI_RELEVANCE_BATCH_SIZE)
+        candidate_chunks = self._chunks(candidates, RELEVANCE_BATCH_SIZE)
         for chunk_index, chunk in enumerate(candidate_chunks):
             try:
-                gemini_calls_made += 1
+                classifier_calls_made += 1
                 results = self.classifier.classify_batch(
                     [message.raw_text or "" for message in chunk]
                 )
@@ -99,7 +99,7 @@ class FilterRelevanceAction:
             rejected=rejected,
             errored=errored,
             auto_rejected_by_keyword=auto_rejected_by_keyword,
-            gemini_calls_made=gemini_calls_made,
+            classifier_calls_made=classifier_calls_made,
         )
 
     @staticmethod

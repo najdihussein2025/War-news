@@ -27,4 +27,4 @@ class FilterBatchSummary(BaseModel):
     rejected: int
     errored: int
     auto_rejected_by_keyword: int
-    gemini_calls_made: int
+    classifier_calls_made: int

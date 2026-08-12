@@ -20,16 +20,16 @@ def build_filter_relevance_action(
         RawMessageRepository,
         VillageRepository,
     )
-    from app.services.news.gemini_relevance_classifier import (
-        GeminiRelevanceClassifier,
-    )
     from app.services.news.keyword_prefilter_service import KeywordPrefilterService
+
+    if classifier is None:
+        raise RuntimeError("No relevance classifier is configured.")
 
     conditions = ConditionRepository(db)
     villages = VillageRepository(db)
     return FilterRelevanceAction(
         raw_messages=RawMessageRepository(db),
-        classifier=classifier or GeminiRelevanceClassifier(),
+        classifier=classifier,
         keyword_prefilter=KeywordPrefilterService(
             village_repository=villages,
             condition_repository=conditions,
@@ -52,10 +52,10 @@ def build_extract_incidents_action(
     )
     from app.services.news.dedup_matching_service import DedupMatchingService
     from app.services.news.embedding_service import EmbeddingService
-    from app.services.news.gemini_extraction_classifier import (
-        GeminiExtractionClassifier,
-    )
     from app.services.news.village_matching_service import VillageMatchingService
+
+    if classifier is None:
+        raise RuntimeError("No extraction classifier is configured.")
 
     raw_messages = RawMessageRepository(db)
     conditions = ConditionRepository(db)
@@ -65,7 +65,7 @@ def build_extract_incidents_action(
         raw_messages=raw_messages,
         incidents=incidents,
         conditions=conditions,
-        classifier=classifier or GeminiExtractionClassifier(),
+        classifier=classifier,
         condition_resolver=ConditionResolutionService(),
         village_matcher=VillageMatchingService(village_repository=villages),
         dedup_matcher=DedupMatchingService(incident_repository=incidents),
