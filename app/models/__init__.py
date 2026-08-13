@@ -1,4 +1,4 @@
-from app.models.accounts import AuthSession, Role, User
+from app.models.accounts import AuthSession, LoginThrottle, Role, User
 from app.models.news import (
     Condition,
     DidValue,
@@ -24,6 +24,7 @@ __all__ = [
     "IncidentDetail",
     "IncidentUpdate",
     "IngestionLog",
+    "LoginThrottle",
     "MatchStatus",
     "MatchType",
     "RawMessage",

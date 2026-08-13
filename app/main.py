@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+import secrets
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.accounts import router as accounts_router
@@ -6,6 +8,24 @@ from app.api.routes.auth import router as auth_router
 from app.core.scheduler import start_scheduler, stop_scheduler
 
 app = FastAPI(title="Lebanon News Monitor API")
+
+
+@app.middleware("http")
+async def assign_login_device(request: Request, call_next):
+    device_id = request.cookies.get("login_device_id") or secrets.token_urlsafe(32)
+    request.state.login_device_id = device_id
+    response = await call_next(request)
+    if "login_device_id" not in request.cookies:
+        response.set_cookie(
+            key="login_device_id",
+            value=device_id,
+            max_age=60 * 60 * 24 * 365,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+        )
+    return response
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],

@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     ollama_max_concurrent_requests: int = 4
     ingestion_poll_interval_seconds: int = 120
     poll_interval_minutes: int = 5
+    login_max_failed_attempts: int = 3
+    login_lockout_minutes: int = 5
     auth_secret_key: str = "development-only-change-me"
 
     class Config:
