@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from app.dtos.news import ExtractionResult, RelevanceClassificationResult
+from app.dtos.news import (
+    ExtractionResult,
+    MatchResultDTO,
+    RelevanceClassificationResult,
+)
 from app.models.news import MessageStatus, RawMessage
 
 
@@ -26,7 +30,7 @@ class RawMessageRepositoryInterface(ABC):
         message: RawMessage,
         result: RelevanceClassificationResult,
         new_status: MessageStatus,
-        low_confidence_relevance: bool = False,
+        needs_review: bool = False,
     ) -> None:
         pass
 
@@ -36,6 +40,18 @@ class RawMessageRepositoryInterface(ABC):
         message: RawMessage,
         result: ExtractionResult,
         audited_candidates: list[dict[str, Any]],
+    ) -> None:
+        pass
+
+    @abstractmethod
+    def get_parsed_by_id(self, raw_message_id: int) -> RawMessage | None:
+        pass
+
+    @abstractmethod
+    def save_match_result(
+        self,
+        message: RawMessage,
+        result: MatchResultDTO,
     ) -> None:
         pass
 

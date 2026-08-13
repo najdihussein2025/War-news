@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping, cast
+from typing import Mapping, TypeAlias, cast
 
 import httpx
+
+JsonValue: TypeAlias = (
+    str | int | float | bool | None | list["JsonValue"] | dict[str, "JsonValue"]
+)
+JsonObject: TypeAlias = dict[str, JsonValue]
 
 
 @dataclass(frozen=True)
@@ -28,27 +33,64 @@ class OllamaChatClient:
             headers=headers,
             transport=transport,
         )
+        self._async_client = httpx.AsyncClient(
+            base_url=base_url.rstrip("/"),
+            timeout=timeout_seconds,
+            headers=headers,
+            transport=transport,
+        )
         self._model = model
 
     @property
     def model(self) -> str:
         return self._model
 
-    def chat(self, messages: list[OllamaChatMessage]) -> str:
-        response = self._client.post(
-            "/api/chat",
-            json={
-                "model": self._model,
-                "stream": False,
-                "format": "json",
-                "messages": [
-                    {"role": message.role, "content": message.content}
-                    for message in messages
-                ],
-            },
-        )
+    def chat(
+        self,
+        messages: list[OllamaChatMessage],
+        response_format: str | JsonObject = "json",
+        temperature: float | None = None,
+    ) -> str:
+        request_payload: JsonObject = {
+            "model": self._model,
+            "stream": False,
+            "format": response_format,
+            "messages": [
+                {"role": message.role, "content": message.content}
+                for message in messages
+            ],
+        }
+        if temperature is not None:
+            request_payload["options"] = {"temperature": temperature}
+
+        response = self._client.post("api/chat", json=request_payload)
         response.raise_for_status()
-        payload = response.json()
+        return self._content_from_payload(response.json())
+
+    async def chat_async(
+        self,
+        messages: list[OllamaChatMessage],
+        response_format: str | JsonObject = "json",
+        temperature: float | None = None,
+    ) -> str:
+        request_payload: JsonObject = {
+            "model": self._model,
+            "stream": False,
+            "format": response_format,
+            "messages": [
+                {"role": message.role, "content": message.content}
+                for message in messages
+            ],
+        }
+        if temperature is not None:
+            request_payload["options"] = {"temperature": temperature}
+
+        response = await self._async_client.post("api/chat", json=request_payload)
+        response.raise_for_status()
+        return self._content_from_payload(response.json())
+
+    @staticmethod
+    def _content_from_payload(payload: JsonObject) -> str:
         if not isinstance(payload, Mapping):
             raise RuntimeError("Ollama response payload is not an object.")
 

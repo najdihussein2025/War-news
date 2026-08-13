@@ -1,6 +1,67 @@
 from datetime import datetime
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class ExtractionCategoryKey(str, Enum):
+    casualty_demographics = "casualty_demographics"
+    lebanese_army = "lebanese_army"
+    unifil = "unifil"
+    municipality = "municipality"
+    school_university = "school_university"
+    religious_cultural = "religious_cultural"
+    hospital = "hospital"
+    health_center = "health_center"
+    emergency_civil_defense = "emergency_civil_defense"
+    press = "press"
+    government_building = "government_building"
+    road_bridge = "road_bridge"
+    vehicles = "vehicles"
+    crossings_other = "crossings_other"
+    warning_classification = "warning_classification"
+
+
+class DidValue(str, Enum):
+    direct = "D"
+    indirect = "ID"
+
+
+class ExtractionCasualties(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    total_deaths: int | None = None
+    total_injuries: int | None = None
+    deaths: int | None = None
+    injuries: int | None = None
+    male_deaths: int | None = None
+    male_injuries: int | None = None
+    female_deaths: int | None = None
+    female_injuries: int | None = None
+    children_deaths: int | None = None
+    children_injuries: int | None = None
+
+
+class ExtractionCategory(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    did: DidValue | None = None
+    name: str | None = None
+    casualties: ExtractionCasualties | None = None
+
+
+class ExtractionResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    is_relevant: bool
+    village: str | None = None
+    action_description: str | None = None
+    categories: dict[ExtractionCategoryKey, ExtractionCategory] = Field(
+        default_factory=dict
+    )
+    casualties: ExtractionCasualties = Field(default_factory=ExtractionCasualties)
+    model: str
+    extracted_at: datetime
 
 
 class ExtractedCandidate(BaseModel):
@@ -20,7 +81,7 @@ class ExtractedCandidate(BaseModel):
     reasoning: str
 
 
-class ExtractionResult(BaseModel):
+class CandidateExtractionResult(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     candidates: list[ExtractedCandidate]
@@ -38,9 +99,5 @@ class ExtractionBatchSummary(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     processed: int
-    incidents_created: int
-    incidents_merged: int
-    incidents_flagged_duplicate: int
-    candidates_unmatched_village: int
-    candidates_invalid_action: int
+    extracted: int
     errored: int

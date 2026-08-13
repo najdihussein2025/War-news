@@ -1,10 +1,11 @@
+import asyncio
 import logging
-from datetime import datetime, timezone
 
 from app.dtos.news import (
+    ClassificationResultDTO,
+    ClassificationVerdict,
     FilterBatchSummary,
     FilterPendingMessagesData,
-    RelevanceConfidence,
     RelevanceClassificationResult,
     RelevancePolicyVerdict,
 )
@@ -34,12 +35,22 @@ class FilterRelevanceAction:
         raw_messages: RawMessageRepositoryInterface,
         classifier: RelevanceClassifierInterface,
         keyword_prefilter: KeywordPrefilterInterface,
+        reviewer_classifier: RelevanceClassifierInterface | None = None,
+        relevance_batch_size: int = RELEVANCE_BATCH_SIZE,
     ) -> None:
         self.raw_messages = raw_messages
         self.classifier = classifier
         self.keyword_prefilter = keyword_prefilter
+        self.reviewer_classifier = reviewer_classifier
+        self.relevance_batch_size = relevance_batch_size
 
     def execute(self, data: FilterPendingMessagesData) -> FilterBatchSummary:
+        return asyncio.run(self.execute_async(data))
+
+    async def execute_async(
+        self,
+        data: FilterPendingMessagesData,
+    ) -> FilterBatchSummary:
         messages = self.raw_messages.get_pending_unfiltered_batch(
             limit=data.batch_size
         )
@@ -57,24 +68,26 @@ class FilterRelevanceAction:
                 candidates.append(message)
                 continue
 
-            result = self._keyword_rejection_result()
+            result = self._keyword_rejection_result(message.id)
             policy = policy_for_result(result)
             self.raw_messages.save_filter_result(
                 message=message,
                 result=result,
                 new_status=status_for_result(result),
-                low_confidence_relevance=policy.low_confidence_relevance,
+                needs_review=policy.needs_review,
             )
             rejected += 1
             auto_rejected_by_keyword += 1
 
-        candidate_chunks = self._chunks(candidates, RELEVANCE_BATCH_SIZE)
+        candidate_chunks = self._chunks(candidates, self.relevance_batch_size)
         for chunk_index, chunk in enumerate(candidate_chunks):
             try:
                 classifier_calls_made += 1
-                results = self.classifier.classify_batch(
-                    [message.raw_text or "" for message in chunk]
-                )
+                results = await self.classifier.classify_batch(chunk)
+                if len(results) != len(chunk):
+                    raise RuntimeError(
+                        "Classifier result count does not match message count."
+                    )
             except Exception as exc:
                 self.raw_messages.rollback()
                 logger.exception("Failed to classify relevance batch")
@@ -93,15 +106,20 @@ class FilterRelevanceAction:
 
             for message, result in zip(chunk, results, strict=True):
                 policy = policy_for_result(result)
+                # Future reviewer classifiers can be invoked here for uncertain
+                # primary results; the optional dependency is intentionally idle now.
+                if (
+                    self.reviewer_classifier is not None
+                    and policy.verdict == RelevancePolicyVerdict.uncertain
+                ):
+                    pass
                 new_status = status_for_result(result)
                 self.raw_messages.save_filter_result(
                     message=message,
                     result=result,
                     new_status=new_status,
-                    low_confidence_relevance=policy.low_confidence_relevance,
+                    needs_review=policy.needs_review,
                 )
-                # Step B plugs into raw_messages with status=parsed. When this
-                # flag is true, extraction may continue but the UI can warn.
                 if policy.verdict == RelevancePolicyVerdict.proceed:
                     relevant += 1
                 elif policy.verdict == RelevancePolicyVerdict.reject:
@@ -120,13 +138,13 @@ class FilterRelevanceAction:
         )
 
     @staticmethod
-    def _keyword_rejection_result() -> RelevanceClassificationResult:
-        return RelevanceClassificationResult(
-            is_relevant=False,
-            confidence=RelevanceConfidence.high,
-            reason=KEYWORD_PREFILTER_REASONING,
-            model=KEYWORD_PREFILTER_MODEL,
-            classified_at=datetime.now(timezone.utc),
+    def _keyword_rejection_result(raw_message_id: int) -> RelevanceClassificationResult:
+        return ClassificationResultDTO(
+            raw_message_id=raw_message_id,
+            verdict=ClassificationVerdict.not_relevant,
+            confidence=1.0,
+            reasoning=KEYWORD_PREFILTER_REASONING,
+            backend=KEYWORD_PREFILTER_MODEL,
         )
 
     @staticmethod

@@ -1,68 +1,32 @@
-from datetime import datetime, timezone
-
 from app.dtos.news import (
+    ClassificationResultDTO,
+    ClassificationVerdict,
     RelevanceClassificationResult,
-    RelevanceConfidence,
     RelevancePolicyResult,
     RelevancePolicyVerdict,
 )
-from app.interfaces.services import KeywordPrefilterInterface, RelevanceClassifierInterface
 from app.models.news import MessageStatus
 
 
-def classify_message(
-    raw_text: str | None,
-    classifier: RelevanceClassifierInterface,
-    keyword_prefilter: KeywordPrefilterInterface,
-) -> RelevanceClassificationResult:
-    if raw_text is None or not raw_text.strip():
-        return RelevanceClassificationResult(
-            is_relevant=False,
-            confidence=RelevanceConfidence.high,
-            reason="no text content",
-            model="n/a",
-            classified_at=datetime.now(timezone.utc),
-        )
-
-    if not keyword_prefilter.has_candidate_keywords(raw_text):
-        return RelevanceClassificationResult(
-            is_relevant=False,
-            confidence=RelevanceConfidence.high,
-            reason="no keyword match (village/action)",
-            model="keyword_prefilter",
-            classified_at=datetime.now(timezone.utc),
-        )
-
-    return classifier.classify(raw_text)
-
-
-def policy_for_result(result: RelevanceClassificationResult) -> RelevancePolicyResult:
-    if (
-        result.is_relevant is False
-        and result.confidence == RelevanceConfidence.high
-        and result.parse_error is None
-    ):
+def policy_for_result(result: ClassificationResultDTO) -> RelevancePolicyResult:
+    if result.verdict == ClassificationVerdict.not_relevant:
         return RelevancePolicyResult(
             verdict=RelevancePolicyVerdict.reject,
             status=MessageStatus.rejected.value,
-            low_confidence_relevance=False,
+            needs_review=False,
         )
 
-    if (
-        result.is_relevant is True
-        and result.confidence == RelevanceConfidence.high
-        and result.parse_error is None
-    ):
+    if result.verdict == ClassificationVerdict.relevant:
         return RelevancePolicyResult(
             verdict=RelevancePolicyVerdict.proceed,
             status=MessageStatus.parsed.value,
-            low_confidence_relevance=False,
+            needs_review=False,
         )
 
     return RelevancePolicyResult(
         verdict=RelevancePolicyVerdict.uncertain,
-        status=MessageStatus.parsed.value,
-        low_confidence_relevance=True,
+        status=MessageStatus.rejected.value,
+        needs_review=True,
     )
 
 

@@ -5,9 +5,9 @@ from app.dtos.news import ExtractionResult
 
 class ExtractionClassifierInterface(ABC):
     @abstractmethod
-    def extract_candidates(
+    def extract(
         self,
         post_text: str,
-        conditions: list[tuple[str, str]],
+        raw_message_id: int | None = None,
     ) -> ExtractionResult:
         pass

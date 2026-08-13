@@ -1,24 +1,8 @@
-from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
-class RelevanceConfidence(str, Enum):
-    high = "high"
-    medium = "medium"
-    low = "low"
-
-
-class RelevanceClassificationResult(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    is_relevant: bool | None
-    confidence: RelevanceConfidence | None
-    reason: str
-    model: str
-    classified_at: datetime
-    parse_error: str | None = None
+from app.dtos.news.classification_result_dto import ClassificationResultDTO
 
 
 class RelevancePolicyVerdict(str, Enum):
@@ -32,7 +16,7 @@ class RelevancePolicyResult(BaseModel):
 
     verdict: RelevancePolicyVerdict
     status: str
-    low_confidence_relevance: bool
+    needs_review: bool
 
 
 class FilterPendingMessagesData(BaseModel):
@@ -51,3 +35,6 @@ class FilterBatchSummary(BaseModel):
     errored: int
     auto_rejected_by_keyword: int
     classifier_calls_made: int
+
+
+RelevanceClassificationResult = ClassificationResultDTO

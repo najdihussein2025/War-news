@@ -14,3 +14,11 @@ class VillageRepositoryInterface(ABC):
         normalized_location: str,
     ) -> tuple[Village, float] | None:
         pass
+
+    @abstractmethod
+    def find_similar(
+        self,
+        text: str,
+        limit: int = 5,
+    ) -> list[tuple[Village, float]]:
+        pass

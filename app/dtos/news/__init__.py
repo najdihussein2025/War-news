@@ -1,4 +1,13 @@
+from app.dtos.news.classification_result_dto import (
+    ClassificationResultDTO,
+    ClassificationVerdict,
+)
 from app.dtos.news.extraction_dto import (
+    CandidateExtractionResult,
+    DidValue,
+    ExtractionCasualties,
+    ExtractionCategory,
+    ExtractionCategoryKey,
     ExtractPendingMessagesData,
     ExtractedCandidate,
     ExtractionBatchSummary,
@@ -7,23 +16,34 @@ from app.dtos.news.extraction_dto import (
 from app.dtos.news.relevance_filter_dto import (
     FilterBatchSummary,
     FilterPendingMessagesData,
-    RelevanceConfidence,
     RelevanceClassificationResult,
     RelevancePolicyResult,
     RelevancePolicyVerdict,
 )
 from app.dtos.news.ingestion_dto import IngestSourceData, IngestionSummary
+from app.dtos.news.match_result_dto import MatchResultDTO, MatchResultStatus
+from app.dtos.news.webhook_dto import CnrsWebhookPayload, CnrsWebhookPostDTO
 
 __all__ = [
+    "ClassificationResultDTO",
+    "ClassificationVerdict",
+    "CnrsWebhookPayload",
+    "CnrsWebhookPostDTO",
     "ExtractPendingMessagesData",
     "ExtractedCandidate",
+    "CandidateExtractionResult",
+    "DidValue",
+    "ExtractionCasualties",
     "ExtractionBatchSummary",
+    "ExtractionCategory",
+    "ExtractionCategoryKey",
     "ExtractionResult",
     "FilterBatchSummary",
     "FilterPendingMessagesData",
     "IngestSourceData",
     "IngestionSummary",
-    "RelevanceConfidence",
+    "MatchResultDTO",
+    "MatchResultStatus",
     "RelevanceClassificationResult",
     "RelevancePolicyResult",
     "RelevancePolicyVerdict",

@@ -20,6 +20,10 @@ class SourceRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    def commit(self) -> None:
+        pass
+
+    @abstractmethod
     def is_duplicate_raw_message_error(self, exc: IntegrityError) -> bool:
         pass
 

@@ -28,6 +28,9 @@ class SourceRepository(SourceRepositoryInterface):
             self.db.add(raw_message)
             self.db.flush()
 
+    def commit(self) -> None:
+        self.db.commit()
+
     def is_duplicate_raw_message_error(self, exc: IntegrityError) -> bool:
         constraint_name = getattr(
             getattr(exc.orig, "diag", None),
