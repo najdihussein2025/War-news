@@ -1,5 +1,6 @@
 export type Source = {
-  id: string;
+  id: number;
+  type: "telegram" | "twitter" | "facebook" | "website" | "api" | "manual" | "other";
   name: string;
-  url: string;
+  is_active: boolean;
 };

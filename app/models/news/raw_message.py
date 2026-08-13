@@ -55,8 +55,14 @@ class RawMessage(Base):
         index=True,
         nullable=True,
     )
+    origin_platform: Mapped[str | None] = mapped_column(Text, nullable=True)
+    origin_account: Mapped[str | None] = mapped_column(Text, nullable=True)
     raw_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     raw_payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    cnrs_classification: Mapped[dict[str, Any] | None] = mapped_column(
+        JSONB,
+        nullable=True,
+    )
     filter_result: Mapped[dict[str, Any] | None] = mapped_column(
         JSONB,
         nullable=True,

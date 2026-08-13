@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from app.dtos.news import CnrsWebhookPayload, CnrsWebhookPostDTO
 from app.interfaces.repositories import SourceRepositoryInterface
 from app.models.news import MessageStatus, RawMessage
+from app.sources.cnrs_source import CNRS_CLASSIFICATION_FIELDS
 
 
 class ReceiveCnrsWebhookAction:
@@ -16,12 +17,21 @@ class ReceiveCnrsWebhookAction:
 
         for post in posts:
             try:
+                raw_payload = post.model_dump(mode="json")
+                classification = {
+                    key: raw_payload[key]
+                    for key in CNRS_CLASSIFICATION_FIELDS
+                    if key in raw_payload
+                }
                 self.sources.add_raw_message(
                     RawMessage(
                         source_id=source_id,
                         external_message_id=post.external_message_id,
+                        origin_platform=raw_payload.get("source_platform"),
+                        origin_account=raw_payload.get("source_name"),
+                        cnrs_classification=classification or None,
                         raw_text=post.raw_text,
-                        raw_payload=post.model_dump(mode="json"),
+                        raw_payload=raw_payload,
                         message_datetime=post.message_datetime,
                         status=MessageStatus.pending,
                     )

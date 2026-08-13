@@ -12,6 +12,9 @@ class SourceRepository(SourceRepositoryInterface):
     def __init__(self, db: Session) -> None:
         self.db = db
 
+    def list_all(self) -> list[Source]:
+        return list(self.db.scalars(select(Source).order_by(Source.id.asc())).all())
+
     def get_by_id(self, source_id: int) -> Source | None:
         return self.db.get(Source, source_id)
 

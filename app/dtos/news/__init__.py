@@ -22,6 +22,7 @@ from app.dtos.news.relevance_filter_dto import (
 )
 from app.dtos.news.ingestion_dto import IngestSourceData, IngestionSummary
 from app.dtos.news.match_result_dto import MatchResultDTO, MatchResultStatus
+from app.dtos.news.source_dto import SourceListItemDTO
 from app.dtos.news.webhook_dto import CnrsWebhookPayload, CnrsWebhookPostDTO
 
 __all__ = [
@@ -47,4 +48,5 @@ __all__ = [
     "RelevanceClassificationResult",
     "RelevancePolicyResult",
     "RelevancePolicyVerdict",
+    "SourceListItemDTO",
 ]

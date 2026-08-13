@@ -5,6 +5,19 @@ import httpx
 from app.core.config import settings
 from app.interfaces.source_provider import SourceProvider
 
+CNRS_CLASSIFICATION_FIELDS = (
+    "include",
+    "confidence",
+    "event_domain",
+    "event_subtype",
+    "location",
+    "location_in_lebanon",
+    "is_commentary_or_analysis",
+    "mentions_israeli_actor",
+    "is_realtime",
+    "reason",
+)
+
 
 class CNRSSourceProvider(SourceProvider):
     def __init__(self, config: dict[str, Any] | None, api_key: str) -> None:
@@ -53,10 +66,18 @@ class CNRSSourceProvider(SourceProvider):
     def _normalize_record(record: dict[str, Any]) -> dict[str, Any]:
         # CNRS also has a field named "external_id" such as "twitter:1812";
         # raw_messages.external_message_id must use CNRS's numeric "id" instead.
+        classification = {
+            key: record[key]
+            for key in CNRS_CLASSIFICATION_FIELDS
+            if key in record
+        }
         return {
             "external_message_id": str(record["id"]),
             "source_platform": record.get("source_platform"),
             "source_name": record.get("source_name"),
+            "origin_platform": record.get("source_platform"),
+            "origin_account": record.get("source_name"),
+            "cnrs_classification": classification or None,
             "raw_text": record.get("post_text"),
             "raw_payload": record,
             "message_datetime": record.get("post_date"),

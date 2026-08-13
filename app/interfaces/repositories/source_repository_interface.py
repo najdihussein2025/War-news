@@ -8,6 +8,10 @@ from app.models.news import RawMessage, Source
 
 class SourceRepositoryInterface(ABC):
     @abstractmethod
+    def list_all(self) -> list[Source]:
+        pass
+
+    @abstractmethod
     def get_by_id(self, source_id: int) -> Source | None:
         pass
 

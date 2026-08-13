@@ -88,6 +88,36 @@ def _payload(external_message_id: str = "cnrs-1") -> dict[str, str]:
     }
 
 
+def test_cnrs_metadata_is_mapped_without_inventing_missing_keys() -> None:
+    client = _client()
+    payload = _payload()
+    payload.update(
+        {
+            "source_platform": "telegram",
+            "source_name": "example-channel",
+            "include": True,
+            "confidence": 0.91,
+            "location": None,
+        }
+    )
+
+    response = client.post(
+        "/webhooks/cnrs-posts?source_id=44",
+        headers=_headers(),
+        json=payload,
+    )
+
+    assert response.status_code == 202
+    message = _WebhookSourceRepository.messages[0]
+    assert message.origin_platform == "telegram"
+    assert message.origin_account == "example-channel"
+    assert message.cnrs_classification == {
+        "include": True,
+        "confidence": 0.91,
+        "location": None,
+    }
+
+
 def test_valid_secret_single_post_returns_202_and_writes_raw_message() -> None:
     client = _client()
 

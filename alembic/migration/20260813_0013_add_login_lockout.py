@@ -1,6 +1,6 @@
 """add login lockout fields
 
-Revision ID: 20260813_0013
+Revision ID: 20260813_0013_login
 Revises: 20260811_0012
 Create Date: 2026-08-13
 """
@@ -9,7 +9,7 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-revision: str = "20260813_0013"
+revision: str = "20260813_0013_login"
 down_revision: Union[str, Sequence[str], None] = "20260811_0012"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

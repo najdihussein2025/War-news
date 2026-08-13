@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes.accounts import router as accounts_router
 from app.api.routes.auth import router as auth_router
 from app.api.news.webhook_router import router as webhook_router
+from app.api.news.sources_router import router as sources_router
 from app.core.scheduler import start_scheduler, stop_scheduler
 
 app = FastAPI(title="Lebanon News Monitor API")
@@ -37,6 +38,7 @@ app.add_middleware(
 app.include_router(accounts_router)
 app.include_router(auth_router)
 app.include_router(webhook_router)
+app.include_router(sources_router)
 
 
 @app.on_event("startup")
