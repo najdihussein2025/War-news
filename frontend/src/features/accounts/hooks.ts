@@ -5,4 +5,7 @@ export const useAccounts = () =>
   useQuery({
     queryKey: ["accounts"],
     queryFn: getAccounts,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchInterval: 30_000,
   });

@@ -19,6 +19,7 @@ import type { MockUser, MockUserRole } from "../../../mocks/mockUsers";
 
 type SortKey = "username" | "full_name" | "role" | "last_login_at" | "is_active";
 type SortDirection = "asc" | "desc";
+type LastLoginFilter = "all" | "today" | "7_days" | "30_days" | "never";
 type DialogMode = "create" | "edit";
 type ConfirmAction = "active" | "delete";
 type UserFormState = {
@@ -45,8 +46,10 @@ const roleLabels: Record<MockUserRole, string> = {
   admin: "Admin",
 };
 
-const now = new Date("2026-08-10T12:00:00+03:00");
-const relativeFormatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+const lastLoginFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
 
 const IconBase = ({ children, className }: { children: ReactNode; className?: string }) => (
   <svg
@@ -106,31 +109,12 @@ const SortIcon = ({ direction, active }: { direction: SortDirection; active: boo
   </IconBase>
 );
 
-const formatRelativeTime = (value: string | null) => {
+const formatLastLogin = (value: string | null) => {
   if (!value) {
     return "Never";
   }
 
-  const diffMs = new Date(value).getTime() - now.getTime();
-  const diffMinutes = Math.round(diffMs / 60000);
-  const absMinutes = Math.abs(diffMinutes);
-
-  if (absMinutes < 60) {
-    return relativeFormatter.format(diffMinutes, "minute");
-  }
-
-  const diffHours = Math.round(diffMinutes / 60);
-  if (Math.abs(diffHours) < 24) {
-    return relativeFormatter.format(diffHours, "hour");
-  }
-
-  const diffDays = Math.round(diffHours / 24);
-  if (Math.abs(diffDays) < 30) {
-    return relativeFormatter.format(diffDays, "day");
-  }
-
-  const diffMonths = Math.round(diffDays / 30);
-  return relativeFormatter.format(diffMonths, "month");
+  return lastLoginFormatter.format(new Date(value));
 };
 
 const compareUsers = (a: MockUser, b: MockUser, key: SortKey) => {
@@ -369,6 +353,10 @@ export const AccountsPage = () => {
     key: "username",
     direction: "asc",
   });
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | MockUserRole>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [lastLoginFilter, setLastLoginFilter] = useState<LastLoginFilter>("all");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [dialogMode, setDialogMode] = useState<DialogMode | null>(null);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -426,12 +414,47 @@ export const AccountsPage = () => {
     return () => shell?.setPageAction(null);
   }, [shell]);
 
-  const sortedUsers = useMemo(() => {
-    return [...users].sort((a, b) => {
+  const filteredAndSortedUsers = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    return users.filter((user) => {
+      const matchesSearch =
+        normalizedSearch === "" ||
+        user.username.toLowerCase().includes(normalizedSearch) ||
+        user.full_name.toLowerCase().includes(normalizedSearch);
+      const matchesRole = roleFilter === "all" || user.role === roleFilter;
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && user.is_active) ||
+        (statusFilter === "inactive" && !user.is_active);
+      const loginTime = user.last_login_at ? new Date(user.last_login_at).getTime() : null;
+      const loginAge = loginTime === null ? null : Date.now() - loginTime;
+      const matchesLastLogin =
+        lastLoginFilter === "all" ||
+        (lastLoginFilter === "never" && loginTime === null) ||
+        (lastLoginFilter === "today" && loginAge !== null && loginAge >= 0 && loginAge <= 24 * 60 * 60 * 1000) ||
+        (lastLoginFilter === "7_days" && loginAge !== null && loginAge >= 0 && loginAge <= 7 * 24 * 60 * 60 * 1000) ||
+        (lastLoginFilter === "30_days" && loginAge !== null && loginAge >= 0 && loginAge <= 30 * 24 * 60 * 60 * 1000);
+
+      return matchesSearch && matchesRole && matchesStatus && matchesLastLogin;
+    }).sort((a, b) => {
       const result = compareUsers(a, b, sort.key);
       return sort.direction === "asc" ? result : -result;
     });
-  }, [sort, users]);
+  }, [lastLoginFilter, roleFilter, search, sort, statusFilter, users]);
+
+  const hasFilters =
+    search.trim() !== "" ||
+    roleFilter !== "all" ||
+    statusFilter !== "all" ||
+    lastLoginFilter !== "all";
+
+  const clearFilters = () => {
+    setSearch("");
+    setRoleFilter("all");
+    setStatusFilter("all");
+    setLastLoginFilter("all");
+  };
 
   const closeDialog = useCallback(() => {
     setDialogMode(null);
@@ -654,6 +677,61 @@ export const AccountsPage = () => {
       ) : null}
 
       <Card className="min-h-[360px] overflow-visible">
+        <div className="grid gap-4 border-b border-border p-4 md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_180px_180px_180px_auto] xl:items-end">
+          <FormField id="account-search" label="Search">
+            <Input
+              id="account-search"
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Username or full name"
+            />
+          </FormField>
+          <div className="space-y-2">
+            <Label htmlFor="account-role-filter">Role</Label>
+            <select
+              id="account-role-filter"
+              className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3 text-body text-text-primary transition-colors duration-150 ease-out hover:border-input-border-hover focus:border-input-border-focus focus:bg-surface focus:outline-none focus:ring-2 focus:ring-focus-ring focus:ring-offset-1 focus:ring-offset-surface-raised"
+              value={roleFilter}
+              onChange={(event) => setRoleFilter(event.target.value as "all" | MockUserRole)}
+            >
+              <option value="all">All roles</option>
+              <option value="super_admin">Super Admin</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="account-status-filter">Status</Label>
+            <select
+              id="account-status-filter"
+              className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3 text-body text-text-primary transition-colors duration-150 ease-out hover:border-input-border-hover focus:border-input-border-focus focus:bg-surface focus:outline-none focus:ring-2 focus:ring-focus-ring focus:ring-offset-1 focus:ring-offset-surface-raised"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as "all" | "active" | "inactive")}
+            >
+              <option value="all">All statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="account-last-login-filter">Last login</Label>
+            <select
+              id="account-last-login-filter"
+              className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3 text-body text-text-primary transition-colors duration-150 ease-out hover:border-input-border-hover focus:border-input-border-focus focus:bg-surface focus:outline-none focus:ring-2 focus:ring-focus-ring focus:ring-offset-1 focus:ring-offset-surface-raised"
+              value={lastLoginFilter}
+              onChange={(event) => setLastLoginFilter(event.target.value as LastLoginFilter)}
+            >
+              <option value="all">Any time</option>
+              <option value="today">Today</option>
+              <option value="7_days">Last 7 days</option>
+              <option value="30_days">Last 30 days</option>
+              <option value="never">Never</option>
+            </select>
+          </div>
+          <Button type="button" variant="secondary" onClick={clearFilters} disabled={!hasFilters}>
+            Clear filters
+          </Button>
+        </div>
         <div className="min-h-[360px] overflow-x-auto">
           <table className="min-w-[980px] w-full border-collapse">
             <thead className="sticky top-0 z-10 bg-surface-raised">
@@ -689,7 +767,7 @@ export const AccountsPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {sortedUsers.map((user) => (
+              {filteredAndSortedUsers.map((user) => (
                 <tr
                   key={user.id}
                   className="transition-colors duration-150 ease-out hover:bg-surface-muted"
@@ -702,7 +780,7 @@ export const AccountsPage = () => {
                     <RoleBadge role={user.role} />
                   </td>
                   <td className="px-4 py-4 text-small text-text-muted">
-                    {formatRelativeTime(user.last_login_at)}
+                    {formatLastLogin(user.last_login_at)}
                   </td>
                   <td className="px-4 py-4">
                     <ActivityState isActive={user.is_active} />
@@ -746,6 +824,17 @@ export const AccountsPage = () => {
                   </td>
                 </tr>
               ))}
+              {filteredAndSortedUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <p className="text-small font-semibold text-text-primary">No matching accounts</p>
+                    <p className="mt-1 text-small text-text-muted">Adjust or clear the filters to see more accounts.</p>
+                    <Button type="button" variant="ghost" className="mt-4" onClick={clearFilters}>
+                      Clear filters
+                    </Button>
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>
