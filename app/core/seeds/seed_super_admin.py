@@ -2,8 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
-from app.models.accounts import Role, RoleName, User
-from app.services.auth_service import password_context
+from app.accounts.models import Role, RoleName, User
+from app.accounts.services.auth_service import password_context
 
 SUPER_ADMIN_USERNAME = "superadmin"
 SUPER_ADMIN_PASSWORD = "password"

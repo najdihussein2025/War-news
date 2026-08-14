@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
-from app.models.news.source import Source, SourceType
+from app.sources.models.source import Source, SourceType
 
 CNRS_WEBHOOK_SECRET_REF = "CNRS_WEBHOOK_SECRET"
 

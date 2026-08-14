@@ -6,14 +6,20 @@ import httpx
 import pytest
 
 from app.core.ollama_client import OllamaChatClient
-from app.dtos.news import ClassificationResultDTO, ClassificationVerdict
-from app.models.news import MessageStatus, RawMessage
-from app.services.news.local_llm_relevance_classifier import (
+from app.llm.dtos import (
+    ClassificationResultDTO,
+    ClassificationVerdict,
+)
+from app.news.models import (
+    MessageStatus,
+    RawMessage,
+)
+from app.llm.services.local_llm_relevance_classifier import (
     LocalLLMRelevanceClassifier,
     REASON_VALIDATION_FALLBACK,
     is_valid_reason_text,
 )
-from app.services.news.relevance_filter_service import policy_for_result
+from app.llm.services.relevance_filter_service import policy_for_result
 
 
 def _message(message_id: int, text: str = "غارة إسرائيلية على أطراف بلدة.") -> RawMessage:

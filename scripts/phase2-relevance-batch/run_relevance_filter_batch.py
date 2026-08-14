@@ -10,8 +10,8 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from app.core.config import settings
 from app.core.database import SessionLocal
-from app.core.news_action_factory import build_filter_relevance_action
-from app.dtos.news import FilterPendingMessagesData
+from app.api.factories.action_factory import build_filter_relevance_action
+from app.llm.dtos import FilterPendingMessagesData
 
 
 def main() -> None:

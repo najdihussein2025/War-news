@@ -3,9 +3,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.actions.news.match_incident_action import MatchIncidentAction
-from app.dtos.news import ExtractionResult, MatchResultDTO, MatchResultStatus
-from app.services.news.matching_service import MatchingService
+from app.news.actions.match_incident_action import MatchIncidentAction
+from app.llm.dtos import ExtractionResult
+from app.news.dtos import (
+    MatchResultDTO,
+    MatchResultStatus,
+)
+from app.news.services.matching_service import MatchingService
 
 
 class _SimilarRepositoryStub:

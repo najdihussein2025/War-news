@@ -1,6 +1,6 @@
 from app.core.database import SessionLocal
-from app.core.news_action_factory import build_filter_relevance_action
-from app.dtos.news import FilterPendingMessagesData
+from app.api.factories.action_factory import build_filter_relevance_action
+from app.llm.dtos import FilterPendingMessagesData
 
 
 def main() -> None:

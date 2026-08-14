@@ -6,14 +6,14 @@ import logging
 import httpx
 
 from app.core.ollama_client import OllamaChatClient
-from app.dtos.news import (
+from app.llm.dtos import (
     DidValue,
     ExtractionCasualties,
     ExtractionCategory,
     ExtractionCategoryKey,
 )
-from app.services.news.ollama_extraction_service import OllamaExtractionService
-from app.services.news.ollama_presence_gate_service import OllamaPresenceGateService
+from app.llm.services.ollama_extraction_service import OllamaExtractionService
+from app.llm.services.ollama_presence_gate_service import OllamaPresenceGateService
 
 
 class _PresenceGateStub:

@@ -1,0 +1,17 @@
+from abc import ABC, abstractmethod
+
+from app.news.models import Condition
+
+
+class ConditionRepositoryInterface(ABC):
+    @abstractmethod
+    def list_active(self) -> list[Condition]:
+        pass
+
+    @abstractmethod
+    def find_similar(
+        self,
+        text: str,
+        limit: int = 5,
+    ) -> list[tuple[Condition, float]]:
+        pass

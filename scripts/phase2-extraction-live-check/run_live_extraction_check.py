@@ -13,8 +13,8 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from app.core.config import settings
 from app.core.ollama_client import OllamaChatClient
-from app.dtos.news import ExtractionResult
-from app.services.news.ollama_extraction_service import OllamaExtractionService
+from app.llm.dtos import ExtractionResult
+from app.llm.services.ollama_extraction_service import OllamaExtractionService
 
 DEFAULT_SAMPLES_DIR = (
     PROJECT_ROOT / "scripts" / "phase2-extraction-testing" / "sample_texts"

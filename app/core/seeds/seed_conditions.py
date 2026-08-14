@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
-from app.models.news import Condition
+from app.news.models import Condition
 
 CONDITIONS_JSON_PATH = Path("Data/Conditions.json")
 

@@ -1,7 +1,10 @@
 from datetime import datetime, timezone
 
-from app.actions.news import ListContentSourcesAction
-from app.dtos.news import ContentSourceFilterData, ContentSourceListItemDTO
+from app.sources.actions import ListContentSourcesAction
+from app.sources.dtos import (
+    ContentSourceFilterData,
+    ContentSourceListItemDTO,
+)
 
 
 class _ContentSourceRepository:

@@ -10,12 +10,12 @@ os.environ.setdefault("CNRS_WEBHOOK_SECRET", "test-webhook-secret")
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import IntegrityError
 
-from app.api.news import webhook_router
+from app.api import webhooks_router as webhook_router
 from app.core.config import settings
 from app.core.database import get_db
 from app.main import app
-from app.models.news import RawMessage
-from app.repositories.news import SourceRepository
+from app.news.models import RawMessage
+from app.sources.repositories import SourceRepository
 
 
 class _WebhookSourceRepository:

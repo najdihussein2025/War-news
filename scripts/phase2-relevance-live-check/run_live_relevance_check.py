@@ -11,19 +11,22 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from app.actions.news import FilterRelevanceAction
+from app.llm.actions import FilterRelevanceAction
 from app.core.config import settings
 from app.core.ollama_client import OllamaChatClient
-from app.dtos.news import (
+from app.llm.dtos import (
     ExtractionResult,
     FilterPendingMessagesData,
-    MatchResultDTO,
     RelevanceClassificationResult,
 )
-from app.interfaces.repositories import RawMessageRepositoryInterface
-from app.interfaces.services import KeywordPrefilterInterface
-from app.models.news import MessageStatus, RawMessage
-from app.services.news.ollama_relevance_classifier_service import (
+from app.news.dtos import MatchResultDTO
+from app.news.interfaces import RawMessageRepositoryInterface
+from app.llm.interfaces import KeywordPrefilterInterface
+from app.news.models import (
+    MessageStatus,
+    RawMessage,
+)
+from app.llm.services.ollama_relevance_classifier_service import (
     OllamaRelevanceClassifierService,
 )
 

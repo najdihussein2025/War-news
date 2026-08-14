@@ -7,7 +7,7 @@ from sqlalchemy import select
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from app.core.database import SessionLocal
-from app.models.news import RawMessage
+from app.news.models import RawMessage
 
 BATCH_SIZE = 500
 

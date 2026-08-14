@@ -1,6 +1,6 @@
 from app.core.database import SessionLocal
-from app.core.news_action_factory import build_extract_incidents_action
-from app.dtos.news import ExtractPendingMessagesData
+from app.api.factories.action_factory import build_extract_incidents_action
+from app.llm.dtos import ExtractPendingMessagesData
 
 
 def main() -> None:

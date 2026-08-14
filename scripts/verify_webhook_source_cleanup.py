@@ -11,18 +11,28 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from app.actions.news import ExtractIncidentsAction, FilterRelevanceAction
+from app.llm.actions import (
+    ExtractIncidentsAction,
+    FilterRelevanceAction,
+)
 from app.core.database import SessionLocal
-from app.dtos.news import (
+from app.llm.dtos import (
     ClassificationResultDTO,
     ClassificationVerdict,
     ExtractPendingMessagesData,
     ExtractionResult,
     FilterPendingMessagesData,
 )
-from app.interfaces.repositories import RawMessageRepositoryInterface
-from app.interfaces.services import ExtractionClassifierInterface, KeywordPrefilterInterface
-from app.models.news import MessageStatus, RawMessage, Source
+from app.news.interfaces import RawMessageRepositoryInterface
+from app.llm.interfaces import (
+    ExtractionClassifierInterface,
+    KeywordPrefilterInterface,
+)
+from app.news.models import (
+    MessageStatus,
+    RawMessage,
+)
+from app.sources.models import Source
 
 
 class AlwaysCandidateKeywordPrefilter(KeywordPrefilterInterface):

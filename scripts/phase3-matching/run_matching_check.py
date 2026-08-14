@@ -12,8 +12,13 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.core.database import SessionLocal
-from app.core.news_action_factory import build_match_incident_action
-from app.models.news import Condition, MessageStatus, RawMessage, Village
+from app.api.factories.action_factory import build_match_incident_action
+from app.news.models import (
+    Condition,
+    MessageStatus,
+    RawMessage,
+    Village,
+)
 
 
 def _parse_args() -> argparse.Namespace:

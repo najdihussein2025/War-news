@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
-from app.models.news import Village
+from app.news.models import Village
 
 VILLAGES_JSON_PATH = Path("Data/Villages.json")
 

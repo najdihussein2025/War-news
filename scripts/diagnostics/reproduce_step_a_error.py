@@ -12,8 +12,11 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.core.database import SessionLocal
-from app.core.news_action_factory import build_relevance_classifier
-from app.models.news import MessageStatus, RawMessage
+from app.api.factories.action_factory import build_relevance_classifier
+from app.news.models import (
+    MessageStatus,
+    RawMessage,
+)
 
 
 PREFERRED_RAW_MESSAGE_ID = 691464

@@ -1,4 +1,4 @@
-from app.sources.cnrs_source import CNRSSourceProvider
+from app.sources.services.cnrs_source import CNRSSourceProvider
 
 
 def test_normalize_record_maps_cnrs_metadata_present_in_any_feed_variant() -> None:

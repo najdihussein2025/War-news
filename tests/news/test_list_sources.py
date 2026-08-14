@@ -2,19 +2,19 @@ from datetime import datetime, timezone
 
 import pytest
 
-from app.actions.news import (
+from app.sources.actions import (
     GetSourceAction,
     ListSourcesAction,
     SetSourceActiveAction,
     SourceNotFoundError,
 )
-from app.dtos.news import (
+from app.sources.dtos import (
     SourceActiveUpdateData,
     SourceDetailDTO,
     SourceListItemDTO,
     SourceLookupData,
 )
-from app.models.news import SourceType
+from app.sources.models import SourceType
 
 
 class _SourceRepository:

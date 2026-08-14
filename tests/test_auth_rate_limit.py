@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.services.auth_service import (
+from app.accounts.services.auth_service import (
     AuthService,
     InvalidCredentialsError,
     LoginRateLimitError,
