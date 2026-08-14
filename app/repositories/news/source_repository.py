@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.dtos.news import SourceDetailDTO, SourceListItemDTO
 from app.interfaces.repositories import SourceRepositoryInterface
 from app.models.news import IngestionLog, RawMessage, Source
 
@@ -12,8 +13,63 @@ class SourceRepository(SourceRepositoryInterface):
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def list_all(self) -> list[Source]:
-        return list(self.db.scalars(select(Source).order_by(Source.id.asc())).all())
+    def list_all(self) -> list[SourceListItemDTO]:
+        rows = self.db.execute(
+            select(
+                Source.id,
+                Source.type,
+                Source.name,
+                Source.is_active,
+                func.max(RawMessage.received_at).label("last_message_at"),
+                func.count(RawMessage.id).label("total_messages"),
+            )
+            .outerjoin(RawMessage, RawMessage.source_id == Source.id)
+            .group_by(Source.id, Source.type, Source.name, Source.is_active)
+            .order_by(Source.id.asc())
+        ).all()
+        return [SourceListItemDTO.model_validate(row._mapping) for row in rows]
+
+    def get_detail(self, source_id: int) -> SourceDetailDTO | None:
+        row = self.db.execute(
+            select(
+                Source.id,
+                Source.type,
+                Source.name,
+                Source.is_active,
+                Source.external_id,
+                Source.created_at,
+                Source.last_cursor,
+                func.max(RawMessage.received_at).label("last_message_at"),
+                func.count(RawMessage.id).label("total_messages"),
+            )
+            .outerjoin(RawMessage, RawMessage.source_id == Source.id)
+            .where(Source.id == source_id)
+            .group_by(
+                Source.id,
+                Source.type,
+                Source.name,
+                Source.is_active,
+                Source.external_id,
+                Source.created_at,
+                Source.last_cursor,
+            )
+        ).one_or_none()
+        if row is None:
+            return None
+        return SourceDetailDTO.model_validate(row._mapping)
+
+    def set_active(
+        self,
+        source_id: int,
+        is_active: bool,
+    ) -> SourceDetailDTO | None:
+        source = self.get_by_id(source_id)
+        if source is None:
+            return None
+        source.is_active = is_active
+        self.db.add(source)
+        self.db.commit()
+        return self.get_detail(source_id)
 
     def get_by_id(self, source_id: int) -> Source | None:
         return self.db.get(Source, source_id)

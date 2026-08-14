@@ -1,3 +1,4 @@
+from app.models.news.air_violation import AirViolation
 from app.models.news.condition import Condition
 from app.models.news.duplicate_match import DuplicateMatch, MatchStatus, MatchType
 from app.models.news.incident import Incident
@@ -9,6 +10,7 @@ from app.models.news.source import Source, SourceType
 from app.models.news.village import Village
 
 __all__ = [
+    "AirViolation",
     "Condition",
     "DidValue",
     "DuplicateMatch",

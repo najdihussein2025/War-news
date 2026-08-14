@@ -1,94 +1,13 @@
 import logging
-from datetime import datetime, timezone
-
-from apscheduler.schedulers.background import BackgroundScheduler
-
-from app.core.config import settings
-from app.core.database import SessionLocal
 
 logger = logging.getLogger("uvicorn.error")
 
-CNRS_SOURCE_EXTERNAL_ID = "cnrs_inspected_posts"
-
-_scheduler: BackgroundScheduler | None = None
-
-
-def _run_cnrs_ingestion() -> None:
-    db = SessionLocal()
-    try:
-        # Keep optional, ML-heavy ingestion dependencies out of API startup.
-        # This lets authentication and account management remain available even
-        # when an ingestion dependency is unavailable or still being installed.
-        from app.core.news_action_factory import build_ingest_source_action
-        from app.dtos.news import IngestSourceData
-        from app.repositories.news import SourceRepository
-
-        source = SourceRepository(db).get_active_by_external_id(
-            CNRS_SOURCE_EXTERNAL_ID
-        )
-        if source is None:
-            logger.warning(
-                "CNRS ingestion poll skipped: active source external_id=%r not found",
-                CNRS_SOURCE_EXTERNAL_ID,
-            )
-            return
-
-        min_message_datetime = datetime.now(timezone.utc).replace(
-            hour=0,
-            minute=0,
-            second=0,
-            microsecond=0,
-        )
-        summary = build_ingest_source_action(db).execute(
-            IngestSourceData(
-                source_id=source.id,
-                min_message_datetime=min_message_datetime,
-            )
-        )
-        logger.info(
-            "CNRS ingestion poll complete: fetched=%s inserted=%s "
-            "skipped_duplicate=%s total_skipped_before_cutoff=%s failed=%s final_cursor=%s",
-            summary.fetched,
-            summary.inserted,
-            summary.skipped_duplicate,
-            summary.skipped_before_cutoff,
-            summary.failed,
-            summary.final_cursor,
-        )
-    except Exception:
-        logger.exception("CNRS ingestion poll failed")
-    finally:
-        db.close()
+_scheduler = None
 
 
 def start_scheduler() -> None:
-    global _scheduler
-    if _scheduler is not None and _scheduler.running:
-        return
-
-    _scheduler = BackgroundScheduler(timezone="UTC")
-    _scheduler.add_job(
-        _run_cnrs_ingestion,
-        "interval",
-        seconds=settings.ingestion_poll_interval_seconds,
-        id="cnrs_ingestion_poll",
-        max_instances=1,
-        coalesce=True,
-        replace_existing=True,
-    )
-    _scheduler.start()
-    logger.info(
-        "Started CNRS ingestion scheduler: interval_seconds=%s",
-        settings.ingestion_poll_interval_seconds,
-    )
+    logger.info("CNRS polling scheduler disabled; webhook ingestion remains active")
 
 
 def stop_scheduler() -> None:
-    global _scheduler
-    if _scheduler is None:
-        return
-
-    if _scheduler.running:
-        _scheduler.shutdown(wait=False)
-        logger.info("Stopped CNRS ingestion scheduler")
-    _scheduler = None
+    return

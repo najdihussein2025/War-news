@@ -3,12 +3,25 @@ from datetime import datetime
 
 from sqlalchemy.exc import IntegrityError
 
+from app.dtos.news import SourceDetailDTO, SourceListItemDTO
 from app.models.news import RawMessage, Source
 
 
 class SourceRepositoryInterface(ABC):
     @abstractmethod
-    def list_all(self) -> list[Source]:
+    def list_all(self) -> list[SourceListItemDTO]:
+        pass
+
+    @abstractmethod
+    def get_detail(self, source_id: int) -> SourceDetailDTO | None:
+        pass
+
+    @abstractmethod
+    def set_active(
+        self,
+        source_id: int,
+        is_active: bool,
+    ) -> SourceDetailDTO | None:
         pass
 
     @abstractmethod

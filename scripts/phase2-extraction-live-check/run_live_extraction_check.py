@@ -39,7 +39,7 @@ def _build_service() -> OllamaExtractionService:
     client = OllamaChatClient(
         base_url=settings.ollama_base_url,
         api_key=settings.ollama_api_key,
-        model=settings.ollama_model,
+        model=settings.extraction_ollama_model,
         timeout_seconds=settings.ollama_timeout_seconds,
     )
     return OllamaExtractionService(client)
@@ -81,7 +81,7 @@ def main() -> None:
     service = _build_service()
 
     print(f"Samples: {samples_dir}")
-    print(f"Ollama model: {settings.ollama_model}")
+    print(f"Ollama model: {settings.extraction_ollama_model}")
     print()
 
     for index, sample_path in enumerate(sample_paths, start=1):

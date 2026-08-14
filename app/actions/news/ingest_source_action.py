@@ -15,6 +15,13 @@ from app.sources.cnrs_source import CNRSSourceProvider
 logger = logging.getLogger(__name__)
 
 
+def _derive_platform_from_external_id(external_message_id: str | None) -> str | None:
+    if not external_message_id or ":" not in external_message_id:
+        return None
+    platform, _message_id = external_message_id.split(":", 1)
+    return platform or None
+
+
 class SourceIngestionError(Exception):
     pass
 
@@ -69,14 +76,21 @@ class IngestSourceAction:
                             total_skipped_before_cutoff += 1
                             continue
 
+                        external_message_id = item.get("external_message_id")
+                        source_platform = item.get(
+                            "source_platform"
+                        ) or _derive_platform_from_external_id(external_message_id)
+                        source_name = item.get("source_name") or source.name
                         self.sources.add_raw_message(
                             RawMessage(
                                 source_id=source.id,
-                                external_message_id=item.get("external_message_id"),
-                                source_platform=item.get("source_platform"),
-                                source_name=item.get("source_name"),
-                                origin_platform=item.get("origin_platform"),
-                                origin_account=item.get("origin_account"),
+                                external_message_id=external_message_id,
+                                source_platform=source_platform,
+                                source_name=source_name,
+                                origin_platform=item.get("origin_platform")
+                                or source_platform,
+                                origin_account=item.get("origin_account")
+                                or source_name,
                                 cnrs_classification=item.get("cnrs_classification"),
                                 raw_text=item.get("raw_text"),
                                 raw_payload=item.get("raw_payload") or item,

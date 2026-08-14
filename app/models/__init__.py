@@ -1,5 +1,6 @@
 from app.models.accounts import AuthSession, LoginThrottle, Role, User
 from app.models.news import (
+    AirViolation,
     Condition,
     DidValue,
     DuplicateMatch,
@@ -16,6 +17,7 @@ from app.models.news import (
 )
 
 __all__ = [
+    "AirViolation",
     "AuthSession",
     "Condition",
     "DidValue",

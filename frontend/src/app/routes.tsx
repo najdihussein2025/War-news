@@ -7,6 +7,7 @@ import { AdminDashboardPage } from "../features/dashboard/pages/AdminDashboardPa
 import { SuperAdminDashboardPage } from "../features/dashboard/pages/SuperAdminDashboardPage";
 import { ExportPage } from "../features/export/pages/ExportPage";
 import { LogsPage } from "../features/logs/pages/LogsPage";
+import { AirViolationsPage } from "../features/airViolations/pages/AirViolationsPage";
 import { IncidentDetailPage } from "../features/news/pages/IncidentDetailPage";
 import { IncidentsPage } from "../features/news/pages/IncidentsPage";
 import { SourcesPage } from "../features/sources/pages/SourcesPage";
@@ -86,6 +87,7 @@ export const createRoutes = (): RouteObject[] => [
         { path: "dashboard", element: <SuperAdminDashboardPage /> },
         { path: "incidents", element: <IncidentsPage /> },
         { path: "incidents/:incidentId", element: <IncidentDetailPage /> },
+        { path: "air-violations", element: <AirViolationsPage /> },
         { path: "sources", element: <SourcesPage /> },
         { path: "logs", element: <Navigate to="audit" replace /> },
         { path: "logs/:logType", element: <LogsPage /> },

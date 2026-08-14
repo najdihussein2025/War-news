@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     ollama_timeout_seconds: int = 90
     ollama_max_concurrent_requests: int = 4
     relevance_ollama_model: str = "gpt-oss:20b"
+    extraction_ollama_model: str = "gpt-oss:20b"
     relevance_llm_batch_size: int = 4
     relevance_llm_timeout_seconds: int = 240
     relevance_classifier_backend: str = "local_llm"

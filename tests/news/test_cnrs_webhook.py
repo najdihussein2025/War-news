@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from types import SimpleNamespace
 from datetime import datetime, timezone
 
 os.environ.setdefault("DATABASE_URL", "sqlite+pysqlite:///:memory:")
@@ -10,6 +11,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.exc import IntegrityError
 
 from app.api.news import webhook_router
+from app.core.config import settings
 from app.core.database import get_db
 from app.main import app
 from app.models.news import RawMessage
@@ -29,7 +31,7 @@ class _WebhookSourceRepository:
         cls.seen = set()
 
     def get_by_id(self, source_id: int):
-        raise NotImplementedError
+        return SimpleNamespace(id=source_id, name="CNRS Webhook")
 
     def get_active_by_external_id(self, external_id: str):
         raise NotImplementedError
@@ -70,6 +72,7 @@ class _WebhookSourceRepository:
 
 def _client() -> TestClient:
     _WebhookSourceRepository.reset()
+    settings.cnrs_webhook_secret = "test-webhook-secret"
     webhook_router.SourceRepository = _WebhookSourceRepository
     app.dependency_overrides[get_db] = lambda: None
     return TestClient(app)
@@ -109,6 +112,8 @@ def test_cnrs_metadata_is_mapped_without_inventing_missing_keys() -> None:
 
     assert response.status_code == 202
     message = _WebhookSourceRepository.messages[0]
+    assert message.source_platform == "telegram"
+    assert message.source_name == "example-channel"
     assert message.origin_platform == "telegram"
     assert message.origin_account == "example-channel"
     assert message.cnrs_classification == {

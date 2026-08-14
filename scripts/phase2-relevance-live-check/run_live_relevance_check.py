@@ -159,7 +159,7 @@ def _build_action(repository: LiveCheckRawMessageRepository) -> FilterRelevanceA
     client = OllamaChatClient(
         base_url=settings.ollama_base_url,
         api_key=settings.ollama_api_key,
-        model=settings.ollama_model,
+        model=settings.relevance_ollama_model,
         timeout_seconds=settings.ollama_timeout_seconds,
     )
     return FilterRelevanceAction(
@@ -205,7 +205,7 @@ def main() -> None:
     action = _build_action(repository)
 
     print(f"Samples: {samples_dir}")
-    print(f"Ollama model: {settings.ollama_model}")
+    print(f"Ollama model: {settings.relevance_ollama_model}")
     print()
 
     summary = action.execute(FilterPendingMessagesData(batch_size=len(messages)))

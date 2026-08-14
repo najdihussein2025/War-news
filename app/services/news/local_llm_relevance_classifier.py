@@ -46,6 +46,7 @@ Use verdict "relevant" only when the text describes a physical event that occurr
 - drone strike
 - casualties from military or security action
 - infrastructure damage from conflict
+- airspace violations with no strike or casualties: warplane overflight, surveillance aircraft or drone reconnaissance flight, or helicopter hovering over Lebanese territory
 
 Exclusion criteria:
 Use verdict "not_relevant" when the text describes:

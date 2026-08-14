@@ -6,25 +6,16 @@ from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models.news.source import Source, SourceType
 
-CNRS_AUTH_SECRET_REF = "CNRS_API_KEY"
+CNRS_WEBHOOK_SECRET_REF = "CNRS_WEBHOOK_SECRET"
 
 CNRS_SOURCES: tuple[dict[str, Any], ...] = (
     {
         "type": SourceType.api,
-        "name": "CNRS Inspected Posts",
-        "external_id": "cnrs_inspected_posts",
-        "config": {},
+        "name": "CNRS Webhook",
+        "external_id": "cnrs_webhook",
+        "config": {"delivery_method": "webhook"},
         "last_cursor": None,
-        "auth_secret_ref": CNRS_AUTH_SECRET_REF,
-        "is_active": True,
-    },
-    {
-        "type": SourceType.api,
-        "name": "CNRS Inspected Posts (LLM)",
-        "external_id": "cnrs_inspected_posts_llm",
-        "config": {"model_backend": "local_llm"},
-        "last_cursor": None,
-        "auth_secret_ref": CNRS_AUTH_SECRET_REF,
+        "auth_secret_ref": CNRS_WEBHOOK_SECRET_REF,
         "is_active": True,
     },
 )

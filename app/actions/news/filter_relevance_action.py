@@ -29,6 +29,13 @@ KEYWORD_PREFILTER_REASONING = "no keyword match (village/action)"
 KEYWORD_PREFILTER_MODEL = "keyword_prefilter"
 
 
+def _format_exception(exc: Exception) -> str:
+    message = str(exc).strip()
+    if message:
+        return f"{type(exc).__name__}: {message}"
+    return f"{type(exc).__name__} (no message)"
+
+
 class FilterRelevanceAction:
     def __init__(
         self,
@@ -88,21 +95,40 @@ class FilterRelevanceAction:
                     raise RuntimeError(
                         "Classifier result count does not match message count."
                     )
+            # One chunk's failure must not mark subsequent unattempted chunks as
+            # errored — they haven't been tried yet.
             except Exception as exc:
                 self.raw_messages.rollback()
-                logger.exception("Failed to classify relevance batch")
-                failed_messages = [
-                    message
-                    for failed_chunk in candidate_chunks[chunk_index:]
-                    for message in failed_chunk
-                ]
-                for failed_message in failed_messages:
-                    self.raw_messages.save_error(
-                        message=failed_message,
-                        error_message=str(exc),
+                logger.exception(
+                    "Failed to classify relevance batch "
+                    "(chunk_index=%s, chunk_size=%s)",
+                    chunk_index,
+                    len(chunk),
+                )
+                try:
+                    classifier_calls_made += 1
+                    results = await self.classifier.classify_batch(chunk)
+                    if len(results) != len(chunk):
+                        raise RuntimeError(
+                            "Classifier result count does not match message count."
+                        )
+                except Exception as retry_exc:
+                    self.raw_messages.rollback()
+                    logger.exception(
+                        "Failed to classify relevance batch on retry "
+                        "(chunk_index=%s, chunk_size=%s)",
+                        chunk_index,
+                        len(chunk),
                     )
-                errored += len(failed_messages)
-                break
+                    error_message = _format_exception(retry_exc)
+                    failed_messages = chunk
+                    for failed_message in failed_messages:
+                        self.raw_messages.save_error(
+                            message=failed_message,
+                            error_message=error_message,
+                        )
+                    errored += len(failed_messages)
+                    continue
 
             for message, result in zip(chunk, results, strict=True):
                 policy = policy_for_result(result)

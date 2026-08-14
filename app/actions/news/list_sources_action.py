@@ -7,7 +7,4 @@ class ListSourcesAction:
         self.sources = sources
 
     def execute(self) -> list[SourceListItemDTO]:
-        return [
-            SourceListItemDTO.model_validate(source)
-            for source in self.sources.list_all()
-        ]
+        return self.sources.list_all()

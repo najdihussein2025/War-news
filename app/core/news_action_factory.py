@@ -90,7 +90,7 @@ def build_extract_incidents_action(
             OllamaChatClient(
                 base_url=settings.ollama_base_url,
                 api_key=settings.ollama_api_key,
-                model=settings.ollama_model,
+                model=settings.extraction_ollama_model,
                 timeout_seconds=settings.ollama_timeout_seconds,
             )
         )

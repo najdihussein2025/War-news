@@ -65,6 +65,14 @@ const IncidentsIcon = ({ className }: { className?: string }) => (
   </IconBase>
 );
 
+const AirViolationsIcon = ({ className }: { className?: string }) => (
+  <IconBase className={className}>
+    <path d="M3 13h5l4-7 4 12 3-5h2" />
+    <path d="M5 19h14" />
+    <path d="M7 5h10" />
+  </IconBase>
+);
+
 const SourcesIcon = ({ className }: { className?: string }) => (
   <IconBase className={className}>
     <ellipse cx="12" cy="5" rx="7" ry="3" />
@@ -158,6 +166,11 @@ const superAdminNavItems: NavItem[] = [
     icon: IncidentsIcon,
   },
   {
+    label: "Air Violations",
+    path: "air-violations",
+    icon: AirViolationsIcon,
+  },
+  {
     label: "Sources",
     path: "sources",
     icon: SourcesIcon,
@@ -181,6 +194,7 @@ const superAdminNavItems: NavItem[] = [
 
 const pageMeta = [
   { match: (pathname: string) => pathname.endsWith("/dashboard"), title: "Dashboard" },
+  { match: (pathname: string) => pathname.includes("/air-violations"), title: "Air Violations" },
   { match: (pathname: string) => pathname.includes("/incidents"), title: "Incidents" },
   { match: (pathname: string) => pathname.includes("/sources"), title: "Sources" },
   { match: (pathname: string) => pathname.includes("/logs"), title: "Logs" },
