@@ -2,11 +2,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
+from app.core.config import settings
 from app.accounts.models import Role, RoleName, User
 from app.accounts.services.auth_service import password_context
 
 SUPER_ADMIN_USERNAME = "superadmin"
-SUPER_ADMIN_PASSWORD = "password"
 SUPER_ADMIN_FULL_NAME = "Super Admin"
 
 
@@ -39,7 +39,7 @@ def seed_super_admin(db: Session) -> tuple[User, bool]:
         user = User(username=SUPER_ADMIN_USERNAME)
         db.add(user)
 
-    user.password_hash = password_context.hash(SUPER_ADMIN_PASSWORD)
+    user.password_hash = password_context.hash(settings.super_admin_seed_password)
     user.full_name = SUPER_ADMIN_FULL_NAME
     user.role_id = super_admin_role.id
     user.is_active = True
@@ -58,7 +58,8 @@ def main() -> None:
         print(
             f"{action}: username={user.username}, "
             f"role={RoleName.super_admin.value}, "
-            f"is_active={user.is_active}"
+            f"is_active={user.is_active}, "
+            "password_source=SUPER_ADMIN_SEED_PASSWORD"
         )
     finally:
         db.close()

@@ -89,7 +89,7 @@ if (-not $resolvedSamplePath) {
 
 $baseUrl = Get-EnvValue -Key "OLLAMA_BASE_URL" -Path $resolvedEnvPath
 $apiKey = Get-EnvValue -Key "OLLAMA_API_KEY" -Path $resolvedEnvPath
-$model = Get-EnvValue -Key "OLLAMA_MODEL" -Path $resolvedEnvPath
+$model = Get-EnvValue -Key "EXTRACTION_OLLAMA_MODEL" -Path $resolvedEnvPath
 $timeoutValue = Get-EnvValue -Key "OLLAMA_TIMEOUT_SECONDS" -Path $resolvedEnvPath
 
 if (-not $baseUrl) {
@@ -99,7 +99,7 @@ if (-not $apiKey) {
     throw "OLLAMA_API_KEY is empty in $resolvedEnvPath"
 }
 if (-not $model) {
-    throw "OLLAMA_MODEL is empty in $resolvedEnvPath"
+    throw "EXTRACTION_OLLAMA_MODEL is empty in $resolvedEnvPath"
 }
 
 $timeoutSeconds = 60
@@ -111,7 +111,7 @@ Write-Host "Pre-flight configuration"
 Write-Host "ENV file found: $(Test-Path $resolvedEnvPath)"
 Write-Host "ENV path: $resolvedEnvPath"
 Write-Host "OLLAMA_BASE_URL: $baseUrl"
-Write-Host "OLLAMA_MODEL: $model"
+Write-Host "EXTRACTION_OLLAMA_MODEL: $model"
 Write-Host "OLLAMA_API_KEY: loaded (length: $($apiKey.Length))"
 Write-Host "OLLAMA_TIMEOUT_SECONDS: $timeoutSeconds"
 Write-Host "SampleFile: $SampleFile"

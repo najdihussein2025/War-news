@@ -41,6 +41,14 @@ class SourceRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    def is_content_source_blocked(
+        self,
+        source_platform: str | None,
+        origin_account: str | None,
+    ) -> bool:
+        pass
+
+    @abstractmethod
     def commit(self) -> None:
         pass
 
@@ -60,6 +68,7 @@ class SourceRepositoryInterface(ABC):
         messages_parsed: int,
         messages_failed: int,
         started_at: datetime,
+        messages_blocked: int = 0,
     ) -> None:
         pass
 

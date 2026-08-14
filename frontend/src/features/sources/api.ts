@@ -1,5 +1,7 @@
 import { apiClient } from "../../lib/apiClient";
 import type {
+  ContentSourceBlock,
+  ContentSourceDetail,
   ContentSource,
   ContentSourceFilters,
   Source,
@@ -36,5 +38,32 @@ export const getContentSources = async (
       search: filters.search || undefined,
     },
   });
+  return response.data;
+};
+
+const contentSourcePath = (sourcePlatform: string, originAccount: string) =>
+  `/api/content-sources/${encodeURIComponent(sourcePlatform)}/${encodeURIComponent(
+    originAccount,
+  )}`;
+
+export const getContentSource = async (
+  sourcePlatform: string,
+  originAccount: string,
+): Promise<ContentSourceDetail> => {
+  const response = await apiClient.get<ContentSourceDetail>(
+    contentSourcePath(sourcePlatform, originAccount),
+  );
+  return response.data;
+};
+
+export const setContentSourceBlocked = async (
+  sourcePlatform: string,
+  originAccount: string,
+  isBlocked: boolean,
+): Promise<ContentSourceBlock> => {
+  const response = await apiClient.patch<ContentSourceBlock>(
+    `${contentSourcePath(sourcePlatform, originAccount)}/block`,
+    { is_blocked: isBlocked },
+  );
   return response.data;
 };

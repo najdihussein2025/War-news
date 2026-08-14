@@ -18,5 +18,6 @@ class IngestionSummary(BaseModel):
     inserted: int
     skipped_duplicate: int
     skipped_before_cutoff: int
+    skipped_blocked: int
     failed: int
     final_cursor: str | None

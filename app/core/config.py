@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     ollama_timeout_seconds: int = 90
     ollama_max_concurrent_requests: int = 4
     relevance_ollama_model: str = "gpt-oss:20b"
-    extraction_ollama_model: str = "gpt-oss:20b"
+    extraction_ollama_model: str = "qwen2.5:7b"
     relevance_llm_batch_size: int = 4
     relevance_llm_timeout_seconds: int = 240
     relevance_classifier_backend: str = "local_llm"
@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     login_max_failed_attempts: int = 3
     login_lockout_minutes: int = 5
     auth_secret_key: str = "development-only-change-me"
+    super_admin_seed_password: str = "password"
 
     class Config:
         env_file = ".env"

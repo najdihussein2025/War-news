@@ -21,6 +21,7 @@ from app.sources.repositories import SourceRepository
 class _WebhookSourceRepository:
     messages: list[RawMessage] = []
     seen: set[tuple[int, str]] = set()
+    blocked_sources: set[tuple[str, str]] = set()
 
     def __init__(self, db=None) -> None:
         self.db = db
@@ -29,6 +30,7 @@ class _WebhookSourceRepository:
     def reset(cls) -> None:
         cls.messages = []
         cls.seen = set()
+        cls.blocked_sources = set()
 
     def get_by_id(self, source_id: int):
         return SimpleNamespace(id=source_id, name="CNRS Webhook")
@@ -46,6 +48,13 @@ class _WebhookSourceRepository:
             )
         self.seen.add(key)
         self.messages.append(raw_message)
+
+    def is_content_source_blocked(
+        self,
+        source_platform: str | None,
+        origin_account: str | None,
+    ) -> bool:
+        return (source_platform or "", origin_account or "") in self.blocked_sources
 
     def commit(self) -> None:
         return
@@ -133,7 +142,7 @@ def test_valid_secret_single_post_returns_202_and_writes_raw_message() -> None:
     )
 
     assert response.status_code == 202
-    assert response.json() == {"received": 1, "saved": 1, "duplicates": 0}
+    assert response.json() == {"received": 1, "saved": 1, "duplicates": 0, "blocked": 0}
     assert len(_WebhookSourceRepository.messages) == 1
     message = _WebhookSourceRepository.messages[0]
     assert message.source_id == 44
@@ -153,7 +162,7 @@ def test_valid_secret_array_of_posts_returns_202_and_writes_all_messages() -> No
     )
 
     assert response.status_code == 202
-    assert response.json() == {"received": 2, "saved": 2, "duplicates": 0}
+    assert response.json() == {"received": 2, "saved": 2, "duplicates": 0, "blocked": 0}
     assert [message.external_message_id for message in _WebhookSourceRepository.messages] == [
         "cnrs-1",
         "cnrs-2",
@@ -190,10 +199,32 @@ def test_duplicate_external_message_id_is_noop_not_error() -> None:
     )
 
     assert first.status_code == 202
-    assert first.json() == {"received": 1, "saved": 1, "duplicates": 0}
+    assert first.json() == {"received": 1, "saved": 1, "duplicates": 0, "blocked": 0}
     assert second.status_code == 202
-    assert second.json() == {"received": 1, "saved": 0, "duplicates": 1}
+    assert second.json() == {"received": 1, "saved": 0, "duplicates": 1, "blocked": 0}
     assert len(_WebhookSourceRepository.messages) == 1
+
+
+def test_blocked_content_source_webhook_skips_raw_message_insert() -> None:
+    client = _client()
+    _WebhookSourceRepository.blocked_sources = {("telegram", "blocked-account")}
+    payload = _payload("blocked-1")
+    payload.update(
+        {
+            "source_platform": "telegram",
+            "source_name": "blocked-account",
+        }
+    )
+
+    response = client.post(
+        "/webhooks/cnrs-posts?source_id=49",
+        headers=_headers(),
+        json=payload,
+    )
+
+    assert response.status_code == 202
+    assert response.json() == {"received": 1, "saved": 0, "duplicates": 0, "blocked": 1}
+    assert _WebhookSourceRepository.messages == []
 
 
 def test_malformed_payload_missing_external_message_id_returns_422() -> None:

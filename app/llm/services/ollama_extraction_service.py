@@ -134,14 +134,31 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             post_text,
             raw_message_id=raw_message_id,
         )
-        category_details = {
-            category_key.value: self.category_detail.extract_detail(
-                post_text,
-                category_key=category_key,
-                raw_message_id=raw_message_id,
-            )
-            for category_key in categories_present
-        }
+        category_details: dict[str, ExtractionCategory] = {}
+        for category_key in categories_present:
+            try:
+                category_detail = self.category_detail.extract_detail(
+                    post_text,
+                    category_key=category_key,
+                    raw_message_id=raw_message_id,
+                )
+            except Exception:
+                logger.exception(
+                    "Failed to extract category detail category=%s raw_message_id=%s",
+                    category_key.value,
+                    raw_message_id,
+                )
+                continue
+
+            if self._is_empty_category_detail(category_detail):
+                logger.warning(
+                    "Dropped empty category detail category=%s raw_message_id=%s",
+                    category_key.value,
+                    raw_message_id,
+                )
+                continue
+
+            category_details[category_key.value] = category_detail
         categories = self._validated_categories(
             category_details,
             raw_message_id=raw_message_id,
@@ -225,6 +242,16 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 casualties=raw_category.casualties,
             )
         return validated
+
+    def _is_empty_category_detail(self, category: ExtractionCategory) -> bool:
+        if category.did is not None or category.name is not None:
+            return False
+        if category.casualties is None:
+            return True
+        return all(
+            value is None
+            for value in category.casualties.model_dump(mode="python").values()
+        )
 
     def _validated_text(
         self,

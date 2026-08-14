@@ -28,6 +28,7 @@ class ReceiveCnrsWebhookAction:
         source = self.sources.get_by_id(source_id)
         saved = 0
         duplicates = 0
+        blocked = 0
 
         for post in posts:
             try:
@@ -43,6 +44,14 @@ class ReceiveCnrsWebhookAction:
                 source_name = raw_payload.get("source_name") or (
                     source.name if source is not None else None
                 )
+                origin_account = raw_payload.get("origin_account") or source_name
+                if self.sources.is_content_source_blocked(
+                    source_platform,
+                    origin_account,
+                ):
+                    blocked += 1
+                    continue
+
                 self.sources.add_raw_message(
                     RawMessage(
                         source_id=source_id,
@@ -50,7 +59,7 @@ class ReceiveCnrsWebhookAction:
                         source_platform=source_platform,
                         source_name=source_name,
                         origin_platform=source_platform,
-                        origin_account=source_name,
+                        origin_account=origin_account,
                         cnrs_classification=classification or None,
                         raw_text=post.raw_text,
                         raw_payload=raw_payload,
@@ -70,6 +79,7 @@ class ReceiveCnrsWebhookAction:
             "received": len(posts),
             "saved": saved,
             "duplicates": duplicates,
+            "blocked": blocked,
         }
 
     @staticmethod

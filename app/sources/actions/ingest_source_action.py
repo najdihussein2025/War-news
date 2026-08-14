@@ -56,6 +56,7 @@ class IngestSourceAction:
         total_inserted = 0
         total_skipped_duplicate = 0
         total_skipped_before_cutoff = 0
+        total_skipped_blocked = 0
         total_failed = 0
         source_db_id = source.id
 
@@ -88,6 +89,14 @@ class IngestSourceAction:
                             "source_platform"
                         ) or _derive_platform_from_external_id(external_message_id)
                         source_name = item.get("source_name") or source.name
+                        origin_account = item.get("origin_account") or source_name
+                        if self.sources.is_content_source_blocked(
+                            source_platform,
+                            origin_account,
+                        ):
+                            total_skipped_blocked += 1
+                            continue
+
                         self.sources.add_raw_message(
                             RawMessage(
                                 source_id=source.id,
@@ -96,8 +105,7 @@ class IngestSourceAction:
                                 source_name=source_name,
                                 origin_platform=item.get("origin_platform")
                                 or source_platform,
-                                origin_account=item.get("origin_account")
-                                or source_name,
+                                origin_account=origin_account,
                                 cnrs_classification=item.get("cnrs_classification"),
                                 raw_text=item.get("raw_text"),
                                 raw_payload=item.get("raw_payload") or item,
@@ -123,11 +131,13 @@ class IngestSourceAction:
         except Exception:
             logger.exception(
                 "CNRS ingestion failed after fetched=%s inserted=%s "
-                "skipped_duplicate=%s skipped_before_cutoff=%s failed=%s",
+                "skipped_duplicate=%s skipped_before_cutoff=%s "
+                "skipped_blocked=%s failed=%s",
                 total_fetched,
                 total_inserted,
                 total_skipped_duplicate,
                 total_skipped_before_cutoff,
+                total_skipped_blocked,
                 total_failed,
             )
             self.sources.write_ingestion_log(
@@ -136,6 +146,7 @@ class IngestSourceAction:
                 messages_parsed=total_inserted,
                 messages_failed=total_failed,
                 started_at=started_at,
+                messages_blocked=total_skipped_blocked,
             )
             raise
 
@@ -145,6 +156,7 @@ class IngestSourceAction:
             messages_parsed=total_inserted,
             messages_failed=total_failed,
             started_at=started_at,
+            messages_blocked=total_skipped_blocked,
         )
 
         return IngestionSummary(
@@ -152,6 +164,7 @@ class IngestSourceAction:
             inserted=total_inserted,
             skipped_duplicate=total_skipped_duplicate,
             skipped_before_cutoff=total_skipped_before_cutoff,
+            skipped_blocked=total_skipped_blocked,
             failed=total_failed,
             final_cursor=source.last_cursor,
         )

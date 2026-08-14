@@ -150,7 +150,17 @@ def test_presence_gate_drops_invalid_category_key_and_logs(caplog) -> None:
                             "attack",
                             "unifil",
                             "vehicles",
-                        ]
+                        ],
+                        "category_evidence": [
+                            {
+                                "category_key": "vehicles",
+                                "evidence_span": "vehicle was hit",
+                            },
+                            {
+                                "category_key": "unifil",
+                                "evidence_span": "UNIFIL patrol was targeted",
+                            },
+                        ],
                     }
                 )
             ]
@@ -168,5 +178,42 @@ def test_presence_gate_drops_invalid_category_key_and_logs(caplog) -> None:
         "Dropped invalid extraction category" in record.message
         and "raw_message_id=42" in record.message
         and "attack" in record.message
+        for record in caplog.records
+    )
+
+
+def test_orchestration_isolates_malformed_category_detail(caplog) -> None:
+    client = _client_for_model_contents(
+        [
+            _general_response(),
+            "{malformed json",
+            json.dumps(
+                {
+                    "did": "D",
+                    "name": "Ø³ÙŠØ§Ø±Ø©",
+                    "casualties": {"injuries": 1},
+                },
+                ensure_ascii=False,
+            ),
+        ]
+    )
+    presence_gate = _PresenceGateStub(
+        categories=[
+            ExtractionCategoryKey.health_center,
+            ExtractionCategoryKey.vehicles,
+        ]
+    )
+    service = OllamaExtractionService(
+        client=client,
+        presence_gate=presence_gate,
+    )
+
+    with caplog.at_level(logging.ERROR):
+        result = service.extract("sample text", raw_message_id=42)
+
+    assert list(result.categories) == [ExtractionCategoryKey.vehicles]
+    assert any(
+        "Failed to extract category detail category=health_center raw_message_id=42"
+        in record.message
         for record in caplog.records
     )

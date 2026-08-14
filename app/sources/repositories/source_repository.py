@@ -11,7 +11,7 @@ from app.sources.dtos import (
 from app.sources.interfaces import SourceRepositoryInterface
 from app.logs.models import IngestionLog
 from app.news.models import RawMessage
-from app.sources.models import Source
+from app.sources.models import ContentSourceBlock, Source
 
 
 class SourceRepository(SourceRepositoryInterface):
@@ -92,6 +92,24 @@ class SourceRepository(SourceRepositoryInterface):
             self.db.add(raw_message)
             self.db.flush()
 
+    def is_content_source_blocked(
+        self,
+        source_platform: str | None,
+        origin_account: str | None,
+    ) -> bool:
+        if not source_platform or not origin_account:
+            return False
+
+        return bool(
+            self.db.scalar(
+                select(ContentSourceBlock.is_blocked).where(
+                    ContentSourceBlock.source_platform == source_platform,
+                    ContentSourceBlock.origin_account == origin_account,
+                    ContentSourceBlock.is_blocked.is_(True),
+                )
+            )
+        )
+
     def commit(self) -> None:
         self.db.commit()
 
@@ -118,6 +136,7 @@ class SourceRepository(SourceRepositoryInterface):
         messages_parsed: int,
         messages_failed: int,
         started_at: datetime,
+        messages_blocked: int = 0,
     ) -> None:
         self.db.rollback()
         self.db.add(
@@ -127,6 +146,7 @@ class SourceRepository(SourceRepositoryInterface):
                 messages_parsed=messages_parsed,
                 messages_flagged=0,
                 messages_failed=messages_failed,
+                messages_blocked=messages_blocked,
                 started_at=started_at,
                 finished_at=datetime.now(timezone.utc),
             )
