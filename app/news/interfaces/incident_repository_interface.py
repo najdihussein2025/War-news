@@ -2,8 +2,14 @@ from abc import ABC, abstractmethod
 from contextlib import AbstractContextManager
 from datetime import date
 from typing import Any
+from uuid import UUID
 
 from app.llm.dtos import ExtractedCandidate
+from app.news.dtos import (
+    IncidentDetailDTO,
+    IncidentListParams,
+    IncidentListResponse,
+)
 from app.news.models import (
     Incident,
     RawMessage,
@@ -11,6 +17,14 @@ from app.news.models import (
 
 
 class IncidentRepositoryInterface(ABC):
+    @abstractmethod
+    def list_all(self, params: IncidentListParams) -> IncidentListResponse:
+        pass
+
+    @abstractmethod
+    def get_by_id(self, incident_id: UUID) -> IncidentDetailDTO | None:
+        pass
+
     @abstractmethod
     def list_duplicate_candidates(
         self,
@@ -49,6 +63,10 @@ class IncidentRepositoryInterface(ABC):
         new_candidate_data: dict[str, Any],
         raw_message_id: int,
     ) -> None:
+        pass
+
+    @abstractmethod
+    def soft_delete_for_raw_message_id(self, raw_message_id: int) -> list[UUID]:
         pass
 
     @abstractmethod

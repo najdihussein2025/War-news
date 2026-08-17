@@ -73,6 +73,7 @@ def main() -> None:
             last_seen_id = batch[-1].id
             batch_inserted_before = service.stats.inserted
             batch_ineligible_before = service.stats.skipped_ineligible
+            batch_air_violation_before = service.stats.skipped_air_violation_routed
             batch_duplicate_before = service.stats.skipped_duplicate_hash
             batch_failed = 0
 
@@ -93,10 +94,11 @@ def main() -> None:
 
             logger.info(
                 "Batch processed=%s inserted=%s skipped_ineligible=%s "
-                "skipped_duplicate_hash=%s failed=%s",
+                "skipped_air_violation_routed=%s skipped_duplicate_hash=%s failed=%s",
                 len(batch),
                 service.stats.inserted - batch_inserted_before,
                 service.stats.skipped_ineligible - batch_ineligible_before,
+                service.stats.skipped_air_violation_routed - batch_air_violation_before,
                 service.stats.skipped_duplicate_hash - batch_duplicate_before,
                 batch_failed,
             )
@@ -106,6 +108,7 @@ def main() -> None:
     print(
         f"processed={processed} inserted={service.stats.inserted} "
         f"skipped_ineligible={service.stats.skipped_ineligible} "
+        f"skipped_air_violation_routed={service.stats.skipped_air_violation_routed} "
         f"skipped_duplicate_hash={service.stats.skipped_duplicate_hash} "
         f"failed={failed}"
     )

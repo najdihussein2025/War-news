@@ -178,6 +178,24 @@ def test_casualty_fields_map_from_top_level_extraction_result() -> None:
     ).hexdigest()
 
 
+@pytest.mark.parametrize("condition_id", [35, 36, 38])
+def test_air_violation_condition_is_skipped(condition_id: int, caplog) -> None:
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+
+    with caplog.at_level("INFO"):
+        result = service.materialize(
+            _representative(match_result=_match_result(condition_id=condition_id))
+        )
+
+    assert result is None
+    assert db.added == []
+    assert db.commit_calls == 0
+    assert service.stats.skipped_air_violation_routed == 1
+    assert service.stats.skipped_ineligible == 0
+    assert f"routed to air_violations, condition_id={condition_id}" in caplog.text
+
+
 @pytest.mark.parametrize(
     "match_result",
     [

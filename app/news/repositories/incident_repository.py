@@ -2,13 +2,22 @@ import hashlib
 from contextlib import AbstractContextManager
 from datetime import date, timedelta
 from typing import Any
+from uuid import UUID
 
-from sqlalchemy import and_, desc, select
+from sqlalchemy import and_, case, desc, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.llm.dtos import ExtractedCandidate
+from app.news.dtos import (
+    CasualtyDemographicsDTO,
+    IncidentDetailDTO,
+    IncidentListItemDTO,
+    IncidentListParams,
+    IncidentListResponse,
+)
 from app.news.interfaces import IncidentRepositoryInterface
 from app.news.models import (
+    Condition,
     DuplicateMatch,
     Incident,
     IncidentDetail,
@@ -17,11 +26,143 @@ from app.news.models import (
     MatchType,
     RawMessage,
     UpdateAction,
+    Village,
 )
+from app.sources.models import Source, SourceType
 
 class IncidentRepository(IncidentRepositoryInterface):
     def __init__(self, db: Session) -> None:
         self.db = db
+
+    def list_all(self, params: IncidentListParams) -> IncidentListResponse:
+        filters = self._list_filters(params)
+        low_confidence = self._low_confidence_match()
+
+        base_query = (
+            select(
+                Incident.id,
+                func.coalesce(Village.ref_name_en, Village.cad_name).label("village"),
+                Condition.action_en.label("condition"),
+                Incident.event_date,
+                Incident.khabar,
+                case(
+                    (Source.type == SourceType.telegram, "Telegram"),
+                    (Source.type == SourceType.api, "API"),
+                    (Source.type == SourceType.manual, "Manual"),
+                    (Source.type == SourceType.twitter, "Twitter"),
+                    (Source.type == SourceType.facebook, "Facebook"),
+                    (Source.type == SourceType.website, "Website"),
+                    else_="Other",
+                ).label("source"),
+                RawMessage.external_message_id.label("source_reference"),
+                case((low_confidence, False), else_=True).label("matched"),
+                case(
+                    (Incident.duplicate_flag.is_(True), "possible"),
+                    else_="none",
+                ).label("duplicate_flag"),
+                Incident.created_at,
+            )
+            .join(Village, Village.id == Incident.village_id)
+            .join(Condition, Condition.id == Incident.condition_id)
+            .outerjoin(Source, Source.id == Incident.source_id)
+            .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
+            .where(*filters)
+        )
+
+        rows = self.db.execute(
+            base_query.order_by(
+                Incident.event_date.desc(),
+                Incident.event_time.desc().nullslast(),
+                Incident.created_at.desc(),
+            )
+            .limit(params.limit)
+            .offset(params.offset)
+        ).all()
+        total = self.db.scalar(
+            select(func.count(Incident.id))
+            .join(Village, Village.id == Incident.village_id)
+            .join(Condition, Condition.id == Incident.condition_id)
+            .outerjoin(Source, Source.id == Incident.source_id)
+            .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
+            .where(*filters)
+        )
+
+        return IncidentListResponse(
+            items=[
+                IncidentListItemDTO.model_validate(row._mapping)
+                for row in rows
+            ],
+            total=int(total or 0),
+            limit=params.limit,
+            offset=params.offset,
+        )
+
+    def get_by_id(self, incident_id: UUID) -> IncidentDetailDTO | None:
+        low_confidence = self._low_confidence_match()
+        row = self.db.execute(
+            select(
+                Incident.id,
+                func.coalesce(Village.ref_name_en, Village.cad_name).label("village"),
+                Condition.action_en.label("condition"),
+                case(
+                    (Source.type == SourceType.telegram, "Telegram"),
+                    (Source.type == SourceType.api, "API"),
+                    (Source.type == SourceType.manual, "Manual"),
+                    (Source.type == SourceType.twitter, "Twitter"),
+                    (Source.type == SourceType.facebook, "Facebook"),
+                    (Source.type == SourceType.website, "Website"),
+                    else_="Other",
+                ).label("source"),
+                RawMessage.external_message_id.label("source_reference"),
+                Incident.khabar,
+                Incident.note,
+                Incident.moh,
+                Incident.martyrs,
+                Incident.worker_name,
+                Incident.source_link,
+                Incident.source_link_2,
+                Incident.total_deaths,
+                Incident.total_injuries,
+                Incident.deaths,
+                Incident.injuries,
+                Incident.event_date,
+                Incident.event_time,
+                Incident.created_at,
+                case((low_confidence, False), else_=True).label("matched"),
+                case(
+                    (Incident.duplicate_flag.is_(True), "possible"),
+                    else_="none",
+                ).label("duplicate_flag"),
+                IncidentDetail.male_d,
+                IncidentDetail.male_i,
+                IncidentDetail.female_d,
+                IncidentDetail.female_i,
+                IncidentDetail.children_d,
+                IncidentDetail.children_i,
+            )
+            .join(Village, Village.id == Incident.village_id)
+            .join(Condition, Condition.id == Incident.condition_id)
+            .outerjoin(Source, Source.id == Incident.source_id)
+            .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
+            .outerjoin(IncidentDetail, IncidentDetail.incident_id == Incident.id)
+            .where(
+                Incident.id == incident_id,
+                Incident.is_deleted.is_(False),
+            )
+        ).one_or_none()
+        if row is None:
+            return None
+
+        values = dict(row._mapping)
+        values["casualty_demographics"] = CasualtyDemographicsDTO(
+            male_d=values.pop("male_d"),
+            male_i=values.pop("male_i"),
+            female_d=values.pop("female_d"),
+            female_i=values.pop("female_i"),
+            children_d=values.pop("children_d"),
+            children_i=values.pop("children_i"),
+        )
+        return IncidentDetailDTO.model_validate(values)
 
     def list_duplicate_candidates(
         self,
@@ -167,11 +308,61 @@ class IncidentRepository(IncidentRepositoryInterface):
             )
         self.db.add(existing)
 
+    def soft_delete_for_raw_message_id(self, raw_message_id: int) -> list[UUID]:
+        incidents = list(
+            self.db.scalars(
+                select(Incident).where(
+                    Incident.raw_message_id == raw_message_id,
+                    Incident.is_deleted.is_(False),
+                )
+            ).all()
+        )
+        for incident in incidents:
+            incident.is_deleted = True
+            self.db.add(incident)
+        self.db.flush()
+        return [incident.id for incident in incidents]
+
     def begin_nested(self) -> AbstractContextManager[object]:
         return self.db.begin_nested()
 
     def rollback(self) -> None:
         self.db.rollback()
+
+    @staticmethod
+    def _low_confidence_match() -> object:
+        return or_(
+            RawMessage.match_result["village_match_status"].astext
+            == "matched_low_confidence",
+            RawMessage.match_result["condition_match_status"].astext
+            == "matched_low_confidence",
+        )
+
+    @classmethod
+    def _list_filters(cls, params: IncidentListParams) -> list[object]:
+        filters: list[object] = [Incident.is_deleted.is_(False)]
+        if params.village:
+            village_pattern = f"%{params.village}%"
+            filters.append(
+                or_(
+                    Village.ref_name_en.ilike(village_pattern),
+                    Village.cad_name.ilike(village_pattern),
+                )
+            )
+        if params.source_type:
+            filters.append(Source.type == params.source_type.lower())
+        if params.event_date_from is not None:
+            filters.append(Incident.event_date >= params.event_date_from)
+        if params.event_date_to is not None:
+            filters.append(Incident.event_date <= params.event_date_to)
+        if params.flagged_only:
+            filters.append(
+                or_(
+                    Incident.duplicate_flag.is_(True),
+                    cls._low_confidence_match(),
+                )
+            )
+        return filters
 
     @staticmethod
     def _build_exact_hash(

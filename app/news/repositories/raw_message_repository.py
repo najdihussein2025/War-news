@@ -138,6 +138,8 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         self,
         representative_id: int,
         member_ids: list[int],
+        *,
+        commit: bool = True,
     ) -> None:
         if not member_ids:
             return
@@ -159,7 +161,10 @@ class RawMessageRepository(RawMessageRepositoryInterface):
                 message.duplicate_of_id = representative_id
                 message.status = MessageStatus.duplicate
                 self.db.add(message)
-            self.db.commit()
+            if commit:
+                self.db.commit()
+            else:
+                self.db.flush()
         except Exception:
             self.db.rollback()
             raise

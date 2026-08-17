@@ -9,6 +9,10 @@ from app.news.services.dedup_matching_service import (
     DEDUP_LOW_THRESHOLD,
     DedupMatchingService,
 )
+from app.news.services.incident_service import (
+    IncidentNotFoundError,
+    IncidentService,
+)
 from app.news.services.matching_service import MatchingService
 from app.news.services.village_matching_service import VillageMatchingService
 
@@ -20,6 +24,8 @@ __all__ = [
     "DEDUP_HIGH_THRESHOLD",
     "DEDUP_LOW_THRESHOLD",
     "DedupMatchingService",
+    "IncidentNotFoundError",
+    "IncidentService",
     "MatchingService",
     "VillageMatchingService",
 ]

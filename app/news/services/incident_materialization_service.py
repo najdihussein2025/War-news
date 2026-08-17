@@ -15,6 +15,7 @@ from app.news.models import Incident, IncidentDetail, RawMessage
 logger = logging.getLogger(__name__)
 
 ELIGIBLE_MATCH_STATUSES = frozenset({"matched", "matched_low_confidence"})
+AIR_VIOLATION_CONDITION_IDS = frozenset({35, 36, 38})
 EXACT_HASH_CONSTRAINT = "uq_incidents_exact_hash_active"
 
 
@@ -22,6 +23,7 @@ EXACT_HASH_CONSTRAINT = "uq_incidents_exact_hash_active"
 class MaterializationStats:
     inserted: int = 0
     skipped_ineligible: int = 0
+    skipped_air_violation_routed: int = 0
     skipped_duplicate_hash: int = 0
 
 
@@ -41,6 +43,18 @@ class IncidentMaterializationService:
             )
             return None
 
+        condition_id = self._required_int(
+            representative.match_result or {}, "matched_condition_id"
+        )
+        if condition_id in AIR_VIOLATION_CONDITION_IDS:
+            self.stats.skipped_air_violation_routed += 1
+            logger.info(
+                "raw_message_id=%s skipped: routed to air_violations, condition_id=%s",
+                representative.id,
+                condition_id,
+            )
+            return None
+
         if representative.extraction_result is None:
             raise ValueError(
                 f"raw_message id={representative.id} has no extraction_result"
@@ -57,7 +71,6 @@ class IncidentMaterializationService:
 
         match_result = representative.match_result or {}
         village_id = self._required_int(match_result, "matched_village_id")
-        condition_id = self._required_int(match_result, "matched_condition_id")
         exact_hash = self._build_exact_hash(
             khabar=representative.raw_text or "",
             village_id=village_id,
