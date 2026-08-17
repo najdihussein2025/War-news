@@ -81,6 +81,34 @@ def test_matches_condition_and_preserves_raw_mentions() -> None:
     assert villages.calls == []
 
 
+def test_verbose_airstrike_uses_word_similarity_score_without_matching_artillery() -> (
+    None
+):
+    verbose_airstrike = (
+        "الطيران الحربي الإسرائيلي أغار مستهدفًا بلدة المنصوري بغارتين"
+    )
+    villages = _SimilarRepositoryStub(None, None)
+    airstrike_conditions = _SimilarRepositoryStub(35, 0.466667)
+    service = MatchingService(villages, airstrike_conditions)
+
+    result = service.match(
+        _extraction(village=None, action=verbose_airstrike)
+    )
+
+    assert result.matched_condition_id == 35
+    assert result.condition_match_status == MatchResultStatus.matched_low_confidence
+    assert result.condition_confidence == 0.466667
+
+    artillery_conditions = _SimilarRepositoryStub(5, 0.1)
+    unrelated_result = MatchingService(
+        villages,
+        artillery_conditions,
+    ).match(_extraction(village=None, action=verbose_airstrike))
+
+    assert unrelated_result.matched_condition_id is None
+    assert unrelated_result.condition_match_status == MatchResultStatus.unmatched
+
+
 class _MatchingServiceStub:
     def __init__(self, result: MatchResultDTO) -> None:
         self.result = result

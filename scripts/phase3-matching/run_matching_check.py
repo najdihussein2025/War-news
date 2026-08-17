@@ -11,6 +11,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+import app.accounts.models  # noqa: F401
+import app.logs.models  # noqa: F401
+import app.sources.models  # noqa: F401
 from app.core.database import SessionLocal
 from app.api.factories.action_factory import build_match_incident_action
 from app.news.models import (

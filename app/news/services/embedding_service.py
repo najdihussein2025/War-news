@@ -2,7 +2,7 @@ from sentence_transformers import SentenceTransformer
 
 from app.news.interfaces import EmbeddingServiceInterface
 
-EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
+EMBEDDING_MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
 
 _model = SentenceTransformer(EMBEDDING_MODEL_NAME)
 

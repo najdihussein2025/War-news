@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     login_lockout_minutes: int = 5
     auth_secret_key: str = "development-only-change-me"
     super_admin_seed_password: str = "password"
+    cluster_time_window_minutes: int = 90
+    cluster_similarity_threshold: float = 0.90
+    cluster_require_condition_match: bool = True
 
     class Config:
         env_file = ".env"

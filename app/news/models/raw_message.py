@@ -16,6 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from pgvector.sqlalchemy import Vector
 
 from app.core.database import Base
 
@@ -81,6 +82,16 @@ class RawMessage(Base):
         JSONB,
         nullable=True,
     )
+    content_embedding: Mapped[list[float] | None] = mapped_column(
+        Vector(384),
+        nullable=True,
+    )
+    duplicate_of_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("raw_messages.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True,
+    )
     message_datetime: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
@@ -99,3 +110,8 @@ class RawMessage(Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     source = relationship("Source", back_populates="raw_messages")
+    duplicate_of: Mapped["RawMessage | None"] = relationship(
+        "RawMessage",
+        remote_side=[id],
+        foreign_keys=[duplicate_of_id],
+    )
