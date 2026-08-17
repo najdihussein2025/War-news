@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.sources.actions import (
@@ -17,6 +17,7 @@ from app.sources.dtos import (
 )
 from app.accounts.models import User
 from app.sources.repositories import SourceRepository
+from app.logs.repositories import AuditLogRepository
 
 router = APIRouter(prefix="/api/sources", tags=["sources"])
 
@@ -65,16 +66,22 @@ def _set_source_active(
 @router.post("/{source_id}/pause", response_model=SourceDetailDTO)
 def pause_source(
     source_id: int,
+    request: Request,
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    current_user: User = Depends(require_super_admin),
 ) -> SourceDetailDTO:
-    return _set_source_active(source_id, False, db)
+    result = _set_source_active(source_id, False, db)
+    AuditLogRepository(db).record(action="source.paused", target_type="source", target_id=str(source_id), actor_id=current_user.id, actor_name=current_user.full_name, client_ip=request.client.host if request.client else None, new_values=result.model_dump(mode="json"))
+    return result
 
 
 @router.post("/{source_id}/resume", response_model=SourceDetailDTO)
 def resume_source(
     source_id: int,
+    request: Request,
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    current_user: User = Depends(require_super_admin),
 ) -> SourceDetailDTO:
-    return _set_source_active(source_id, True, db)
+    result = _set_source_active(source_id, True, db)
+    AuditLogRepository(db).record(action="source.resumed", target_type="source", target_id=str(source_id), actor_id=current_user.id, actor_name=current_user.full_name, client_ip=request.client.host if request.client else None, new_values=result.model_dump(mode="json"))
+    return result

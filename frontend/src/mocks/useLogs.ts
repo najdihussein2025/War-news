@@ -1,13 +1,7 @@
-import { mockAuditLogs, mockIngestionLogs, mockLoginLogs } from "./mockLogs";
+import { mockAuditLogs, mockIngestionLogs } from "./mockLogs";
 
 export const useAuditLogs = () => ({
   data: mockAuditLogs,
-  isLoading: false,
-  isError: false,
-});
-
-export const useLoginLogs = () => ({
-  data: mockLoginLogs,
   isLoading: false,
   isError: false,
 });

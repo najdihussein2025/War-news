@@ -2,6 +2,7 @@ from app.news.services.air_violation_service import (
     AirViolationNotFoundError,
     AirViolationService,
 )
+from app.news.services.air_violation_workbook_service import AirViolationWorkbookService
 from app.news.services.condition_resolution_service import ConditionResolutionService
 from app.news.services.dedup_matching_service import (
     DEDUP_HIGH_THRESHOLD,
@@ -14,6 +15,7 @@ from app.news.services.village_matching_service import VillageMatchingService
 __all__ = [
     "AirViolationNotFoundError",
     "AirViolationService",
+    "AirViolationWorkbookService",
     "ConditionResolutionService",
     "DEDUP_HIGH_THRESHOLD",
     "DEDUP_LOW_THRESHOLD",

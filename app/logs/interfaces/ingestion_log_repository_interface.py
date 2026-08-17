@@ -1,0 +1,9 @@
+from typing import Protocol
+
+from app.logs.dtos import IngestionLogFilterData, IngestionLogItemDTO, IngestionLogPageDTO
+
+
+class IngestionLogRepositoryInterface(Protocol):
+    def list_page(self, filters: IngestionLogFilterData) -> IngestionLogPageDTO: ...
+    def get(self, log_id: int) -> IngestionLogItemDTO | None: ...
+    def start_retry(self, original_log_id: int) -> IngestionLogItemDTO | None: ...

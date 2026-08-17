@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Navigate, NavLink, useParams } from "react-router-dom";
 import { StatusBadge } from "../../../components/StatusBadge";
-import { Button, DataTable, EmptyState, type DataTableColumn } from "../../../components/ui";
+import { Button, DataTable, Dialog, EmptyState, Input, Label, type DataTableColumn } from "../../../components/ui";
 import { cn } from "../../../lib/cn";
 import { formatDateTime } from "../../../lib/formatters";
-import { useAuditLogs, useIngestionLogs, useLoginLogs } from "../../../mocks/useLogs";
-import type { MockAuditLog, MockIngestionLog, MockLoginLog } from "../../../mocks/mockLogs";
+import { useDebounce } from "../../../hooks/useDebounce";
+import { useSourcesQuery } from "../../sources/hooks";
+import { useAuditLogsQuery, useIngestionLogQuery, useIngestionLogsQuery, useLoginLogsQuery, useRetryIngestionMutation } from "../hooks";
+import type { AuditLog, IngestionLog, IngestionStatus, LoginLog } from "../types";
 
 const logTabs = [
   { label: "Audit", value: "audit" },
@@ -14,44 +16,142 @@ const logTabs = [
 ];
 
 const AuditTable = () => {
-  const { data, isLoading, isError } = useAuditLogs();
+  const [search, setSearch] = useState("");
+  const [action, setAction] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const columns: Array<DataTableColumn<MockAuditLog>> = [
-    { key: "action", header: "Action", render: (row) => <span className="font-semibold text-text-primary">{row.action}</span>, sortValue: (row) => row.action },
-    { key: "by", header: "Performed by", render: (row) => row.performed_by, sortValue: (row) => row.performed_by },
-    { key: "target", header: "Target", render: (row) => row.target, sortValue: (row) => row.target },
-    { key: "time", header: "Timestamp", render: (row) => formatDateTime(row.timestamp), sortValue: (row) => new Date(row.timestamp).getTime() },
-    {
-      key: "diff",
-      header: "Diff",
-      render: (row) => expandedId === row.id ? (
-        <pre className="max-w-md overflow-x-auto rounded-md border border-border bg-surface p-3 text-caption text-text-muted">{JSON.stringify({ old_values: row.old_values, new_values: row.new_values }, null, 2)}</pre>
-      ) : <span className="text-text-muted">Collapsed</span>,
-    },
+  const pageSize = 100;
+  const debouncedSearch = useDebounce(search);
+  const { data, isLoading, isError } = useAuditLogsQuery({ search: debouncedSearch, action, dateFrom, dateTo, page, pageSize });
+  const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / pageSize));
+  const columns: Array<DataTableColumn<AuditLog>> = [
+    { key: "action", header: "Action", render: (row) => <span className="font-semibold text-text-primary">{row.action}</span> },
+    { key: "by", header: "Performed by", render: (row) => <div>{row.performed_by}<p className="text-caption text-text-muted">{row.ip || "IP unavailable"}</p></div> },
+    { key: "target", header: "Target", render: (row) => <div>{row.target}<p className="text-caption text-text-muted">{row.target_type}</p></div> },
+    { key: "time", header: "Login Date & Time", render: (row) => formatDateTime(row.timestamp) },
+    { key: "diff", header: "Changes", render: (row) => expandedId === row.id ? <pre className="max-w-xl overflow-x-auto whitespace-pre-wrap rounded-md border border-border bg-surface p-3 text-caption text-text-muted">{JSON.stringify({ before: row.old_values, after: row.new_values }, null, 2)}</pre> : <span className="text-text-muted">Collapsed</span> },
   ];
-  return <DataTable columns={columns} rows={data} getRowKey={(row) => row.id} loading={isLoading} error={isError} emptyState={<EmptyState title="No audit logs" description="Audit events will appear here." />} errorState={<EmptyState title="Could not load audit logs" description="The mocked error state is ready." />} actions={(row) => <Button type="button" variant="secondary" className="h-9" onClick={() => setExpandedId((id) => id === row.id ? null : row.id)}>{expandedId === row.id ? "Collapse" : "Expand"}</Button>} />;
+  return <div className="space-y-4"><div className="grid gap-3 rounded-lg border border-border bg-surface-raised p-4 md:grid-cols-4"><div className="space-y-2"><Label htmlFor="audit-search">Search</Label><Input id="audit-search" placeholder="Action, user, or target" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div><div className="space-y-2"><Label htmlFor="audit-action">Action</Label><Input id="audit-action" placeholder="e.g. user.updated" value={action} onChange={(e) => { setAction(e.target.value); setPage(1); }} /></div><div className="space-y-2"><Label htmlFor="audit-from">From</Label><Input id="audit-from" type="date" max={dateTo || undefined} value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} /></div><div className="space-y-2"><Label htmlFor="audit-to">To</Label><Input id="audit-to" type="date" min={dateFrom || undefined} value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} /></div></div><DataTable columns={columns} rows={data?.items ?? []} getRowKey={(row) => row.id} loading={isLoading} error={isError} clientSort={false} minWidth="1050px" emptyState={<EmptyState title="No audit logs" description="Administrative changes will appear here." />} errorState={<EmptyState title="Could not load audit logs" description="Check the API connection and database migration." />} actions={(row) => <Button type="button" variant="secondary" onClick={() => setExpandedId((id) => id === row.id ? null : row.id)}>{expandedId === row.id ? "Collapse" : "Expand"}</Button>} /><div className="flex flex-wrap items-center justify-between gap-3 text-small text-text-muted"><span>{data?.total ?? 0} results</span><div className="flex items-center gap-2"><Button type="button" variant="secondary" disabled={page <= 1 || isLoading} onClick={() => setPage((p) => p - 1)}>Previous</Button><span>Page {page} of {totalPages}</span><Button type="button" variant="secondary" disabled={page >= totalPages || isLoading} onClick={() => setPage((p) => p + 1)}>Next</Button></div></div></div>;
 };
 
 const LoginTable = () => {
-  const { data, isLoading, isError } = useLoginLogs();
-  const columns: Array<DataTableColumn<MockLoginLog>> = [
+  const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 100;
+  const debouncedSearch = useDebounce(search);
+  const { data, isLoading, isError } = useLoginLogsQuery({
+    search: debouncedSearch,
+    result: "success",
+    dateFrom,
+    dateTo,
+    page,
+    pageSize,
+  });
+  const rows = data?.items ?? [];
+  const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / pageSize));
+  const resetPage = () => setPage(1);
+  const columns: Array<DataTableColumn<LoginLog>> = [
     { key: "username", header: "Username", render: (row) => <span className={cn("font-semibold", row.success ? "text-text-primary" : "text-danger")}>{row.username}</span>, sortValue: (row) => row.username },
-    { key: "time", header: "Timestamp", render: (row) => formatDateTime(row.timestamp), sortValue: (row) => new Date(row.timestamp).getTime() },
+    { key: "time", header: "Login date & time", render: (row) => formatDateTime(row.timestamp), sortValue: (row) => new Date(row.timestamp).getTime() },
     { key: "result", header: "Result", render: (row) => <StatusBadge label={row.success ? "Success" : "Failure"} variant={row.success ? "success" : "danger"} />, sortValue: (row) => row.success ? 1 : 0 },
     { key: "ip", header: "IP", render: (row) => row.ip, sortValue: (row) => row.ip },
   ];
-  return <DataTable columns={columns} rows={data} getRowKey={(row) => row.id} loading={isLoading} error={isError} emptyState={<EmptyState title="No login logs" description="Login activity will appear here." />} errorState={<EmptyState title="Could not load login logs" description="The mocked error state is ready." />} />;
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 rounded-lg border border-border bg-surface-raised p-4 md:grid-cols-3">
+        <div className="space-y-2"><Label htmlFor="login-search">Search</Label><Input
+          id="login-search"
+          placeholder="Search username or IP"
+          value={search}
+          onChange={(event) => { setSearch(event.target.value); resetPage(); }}
+        /></div>
+        <div className="space-y-2"><Label htmlFor="login-from">From</Label><Input
+          id="login-from"
+          type="date"
+          value={dateFrom}
+          max={dateTo || undefined}
+          onChange={(event) => { setDateFrom(event.target.value); resetPage(); }}
+        /></div>
+        <div className="space-y-2"><Label htmlFor="login-to">To</Label><Input
+          id="login-to"
+          type="date"
+          value={dateTo}
+          min={dateFrom || undefined}
+          onChange={(event) => { setDateTo(event.target.value); resetPage(); }}
+        /></div>
+      </div>
+      <DataTable
+        columns={columns}
+        rows={rows}
+        initialSort={{ key: "time", direction: "desc" }}
+        getRowKey={(row) => row.id}
+        loading={isLoading}
+        error={isError}
+        emptyState={<EmptyState title="No login logs" description="No login attempts match these filters." />}
+        errorState={<EmptyState title="Could not load login logs" description="Check the API connection and try again." />}
+        clientSort={false}
+      />
+      <div className="flex items-center justify-between text-small text-text-muted">
+        <span>{data?.total ?? 0} result{data?.total === 1 ? "" : "s"}</span>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="secondary" className="h-9" disabled={page <= 1 || isLoading} onClick={() => setPage((value) => value - 1)}>Previous</Button>
+          <span>Page {page} of {totalPages}</span>
+          <Button type="button" variant="secondary" className="h-9" disabled={page >= totalPages || isLoading} onClick={() => setPage((value) => value + 1)}>Next</Button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const IngestionTable = () => {
-  const { data, isLoading, isError } = useIngestionLogs();
-  const columns: Array<DataTableColumn<MockIngestionLog>> = [
+  const [sourceId, setSourceId] = useState(0);
+  const [status, setStatus] = useState<IngestionStatus | "all">("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
+  const [detailId, setDetailId] = useState<number | null>(null);
+  const pageSize = 100;
+  const { data, isLoading, isError } = useIngestionLogsQuery({ sourceId: sourceId || undefined, status, dateFrom, dateTo, page, pageSize });
+  const { data: sources = [] } = useSourcesQuery();
+  const { data: detail } = useIngestionLogQuery(detailId);
+  const retryMutation = useRetryIngestionMutation();
+  const rows = data?.items ?? [];
+  const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / pageSize));
+  const resetPage = () => setPage(1);
+  const duration = (seconds: number | null) => seconds === null ? "In progress" : seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+  const columns: Array<DataTableColumn<IngestionLog>> = [
     { key: "source", header: "Source", render: (row) => <span className="font-semibold text-text-primary">{row.source_name}</span>, sortValue: (row) => row.source_name },
-    { key: "time", header: "Run timestamp", render: (row) => formatDateTime(row.run_timestamp), sortValue: (row) => new Date(row.run_timestamp).getTime() },
-    { key: "stats", header: "Stats", render: (row) => <span className="text-text-muted">{row.messages_fetched} fetched / {row.parsed} parsed / {row.flagged} flagged / {row.failed} failed</span> },
+    { key: "time", header: "Run date & time", render: (row) => formatDateTime(row.run_timestamp), sortValue: (row) => new Date(row.run_timestamp).getTime() },
+    { key: "fetched", header: "Fetched", render: (row) => row.messages_fetched, sortValue: (row) => row.messages_fetched },
+    { key: "parsed", header: "Parsed", render: (row) => row.messages_parsed, sortValue: (row) => row.messages_parsed },
+    { key: "flagged", header: "Flagged", render: (row) => row.messages_flagged, sortValue: (row) => row.messages_flagged },
+    { key: "failed", header: "Failed", render: (row) => row.messages_failed, sortValue: (row) => row.messages_failed },
+    { key: "blocked", header: "Blocked", render: (row) => row.messages_blocked, sortValue: (row) => row.messages_blocked },
+    { key: "duration", header: "Duration", render: (row) => duration(row.duration_seconds), sortValue: (row) => row.duration_seconds },
     { key: "status", header: "Status", render: (row) => <StatusBadge label={row.status} variant={row.status === "completed" ? "success" : row.status === "failed" ? "danger" : "warning"} />, sortValue: (row) => row.status },
   ];
-  return <DataTable columns={columns} rows={data} getRowKey={(row) => row.id} loading={isLoading} error={isError} emptyState={<EmptyState title="No ingestion logs" description="Ingestion runs will appear here." />} errorState={<EmptyState title="Could not load ingestion logs" description="The mocked error state is ready." />} />;
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 rounded-lg border border-border bg-surface-raised p-4 md:grid-cols-4">
+        <div className="space-y-2"><Label htmlFor="ingestion-source">Source</Label><select id="ingestion-source" className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3" value={sourceId} onChange={(event) => { setSourceId(Number(event.target.value)); resetPage(); }}>
+          <option value={0}>All sources</option>
+          {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
+        </select></div>
+        <div className="space-y-2"><Label htmlFor="ingestion-status">Status</Label><select id="ingestion-status" className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3" value={status} onChange={(event) => { setStatus(event.target.value as IngestionStatus | "all"); resetPage(); }}>
+          <option value="all">All statuses</option><option value="running">Running</option><option value="completed">Completed</option><option value="failed">Failed</option>
+        </select></div>
+        <div className="space-y-2"><Label htmlFor="ingestion-from">From</Label><Input id="ingestion-from" type="date" value={dateFrom} max={dateTo || undefined} onChange={(event) => { setDateFrom(event.target.value); resetPage(); }} /></div>
+        <div className="space-y-2"><Label htmlFor="ingestion-to">To</Label><Input id="ingestion-to" type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => { setDateTo(event.target.value); resetPage(); }} /></div>
+      </div>
+      <DataTable columns={columns} rows={rows} initialSort={{ key: "time", direction: "desc" }} clientSort={false} getRowKey={(row) => String(row.id)} loading={isLoading} error={isError} minWidth="1120px" emptyState={<EmptyState title="No ingestion logs" description="No ingestion runs match these filters." />} errorState={<EmptyState title="Could not load ingestion logs" description="Check the API connection and try again." />} actions={(row) => <div className="flex justify-end gap-2"><Button type="button" variant="secondary" onClick={() => setDetailId(row.id)}>Details</Button>{row.status === "failed" ? <Button type="button" isLoading={retryMutation.isPending && retryMutation.variables === row.id} onClick={() => retryMutation.mutate(row.id)}>Retry</Button> : null}</div>} />
+      <div className="flex items-center justify-between text-small text-text-muted"><span>{data?.total ?? 0} results</span><div className="flex items-center gap-2"><Button type="button" variant="secondary" className="h-9" disabled={page <= 1 || isLoading} onClick={() => setPage((value) => value - 1)}>Previous</Button><span>Page {page} of {totalPages}</span><Button type="button" variant="secondary" className="h-9" disabled={page >= totalPages || isLoading} onClick={() => setPage((value) => value + 1)}>Next</Button></div></div>
+      {detailId !== null && detail ? <Dialog title={`Ingestion run #${detail.id}`} onClose={() => setDetailId(null)}><dl className="grid gap-4 sm:grid-cols-2"><div><dt className="text-caption font-semibold uppercase text-text-muted">Source</dt><dd>{detail.source_name}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Status</dt><dd>{detail.status}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Started</dt><dd>{detail.started_at ? formatDateTime(detail.started_at) : "Unknown"}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Finished</dt><dd>{detail.finished_at ? formatDateTime(detail.finished_at) : "Running"}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Duration</dt><dd>{duration(detail.duration_seconds)}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Retry of</dt><dd>{detail.retry_of_id ? `#${detail.retry_of_id}` : "Original run"}</dd></div></dl><div className="mt-5 rounded-md border border-border bg-surface p-4"><p className="text-caption font-semibold uppercase text-text-muted">Failure reason</p><p className="mt-2 whitespace-pre-wrap text-small">{detail.error_message || "No failure reason recorded."}</p></div></Dialog> : null}
+    </div>
+  );
 };
 
 export const LogsPage = () => {

@@ -16,6 +16,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    if sa.inspect(op.get_bind()).has_table("login_throttles"):
+        return
     op.create_table(
         "login_throttles",
         sa.Column("client_ip", sa.Text(), nullable=False),

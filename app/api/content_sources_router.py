@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.sources.actions import ListContentSourcesAction
@@ -13,6 +13,7 @@ from app.sources.dtos import (
 )
 from app.accounts.models import User
 from app.sources.repositories import ContentSourceRepository
+from app.logs.repositories import AuditLogRepository
 
 router = APIRouter(prefix="/api/content-sources", tags=["content-sources"])
 
@@ -37,15 +38,18 @@ def set_content_source_blocked(
     source_platform: str,
     origin_account: str,
     data: ContentSourceBlockUpdateData,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ) -> ContentSourceBlockDTO:
-    return ContentSourceRepository(db).set_blocked(
+    result = ContentSourceRepository(db).set_blocked(
         source_platform=source_platform,
         origin_account=origin_account,
         is_blocked=data.is_blocked,
         blocked_by=current_user.id,
     )
+    AuditLogRepository(db).record(action="content_source.blocked" if data.is_blocked else "content_source.unblocked", target_type="content_source", target_id=f"{source_platform}/{origin_account}", actor_id=current_user.id, actor_name=current_user.full_name, client_ip=request.client.host if request.client else None, new_values=result.model_dump(mode="json"))
+    return result
 
 
 @router.get(

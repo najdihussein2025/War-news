@@ -26,3 +26,20 @@ export const getAirViolations = async (
   );
   return response.data;
 };
+
+export const importAirViolations = async (file: File): Promise<{ imported: number; skipped: number; failed: number }> => {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await apiClient.post("/api/air-violations/import", form);
+  return response.data;
+};
+
+export const exportAirViolations = async (): Promise<void> => {
+  const response = await apiClient.get("/api/air-violations/export", { responseType: "blob" });
+  const url = URL.createObjectURL(response.data);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "air_violations.xlsx";
+  anchor.click();
+  URL.revokeObjectURL(url);
+};

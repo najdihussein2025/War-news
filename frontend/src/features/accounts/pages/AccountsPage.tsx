@@ -15,7 +15,7 @@ import { Button, Card, EmptyState, FormField, Input, Label } from "../../../comp
 import { cn } from "../../../lib/cn";
 import { createAccount, deleteAccount, setAccountActive, updateAccount } from "../api";
 import { useAccounts } from "../hooks";
-import type { MockUser, MockUserRole } from "../../../mocks/mockUsers";
+import type { AccountRole, AccountRow } from "../types";
 
 type SortKey = "username" | "full_name" | "role" | "last_login_at" | "is_active";
 type SortDirection = "asc" | "desc";
@@ -26,7 +26,7 @@ type UserFormState = {
   username: string;
   full_name: string;
   password: string;
-  role: MockUserRole;
+  role: AccountRole;
   is_active: boolean;
 };
 
@@ -41,7 +41,7 @@ const emptyForm: UserFormState = {
   is_active: true,
 };
 
-const roleLabels: Record<MockUserRole, string> = {
+const roleLabels: Record<AccountRole, string> = {
   super_admin: "Super Admin",
   admin: "Admin",
 };
@@ -117,7 +117,7 @@ const formatLastLogin = (value: string | null) => {
   return lastLoginFormatter.format(new Date(value));
 };
 
-const compareUsers = (a: MockUser, b: MockUser, key: SortKey) => {
+const compareUsers = (a: AccountRow, b: AccountRow, key: SortKey) => {
   const aValue = a[key];
   const bValue = b[key];
 
@@ -207,7 +207,7 @@ const Dialog = ({
   );
 };
 
-const RoleBadge = ({ role }: { role: MockUserRole }) => (
+const RoleBadge = ({ role }: { role: AccountRole }) => (
   <StatusBadge label={roleLabels[role]} variant={role === "super_admin" ? "accent" : "neutral"} />
 );
 
@@ -302,7 +302,7 @@ const AccountForm = ({
           id="account-role"
           className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3 text-body text-text-primary transition-colors duration-150 ease-out hover:border-input-border-hover focus:border-input-border-focus focus:bg-surface focus:outline-none focus:ring-2 focus:ring-focus-ring focus:ring-offset-1 focus:ring-offset-surface-raised"
           value={value.role}
-          onChange={(event) => onChange({ ...value, role: event.target.value as MockUserRole })}
+          onChange={(event) => onChange({ ...value, role: event.target.value as AccountRole })}
         >
           <option value="super_admin">Super Admin</option>
           <option value="admin">Admin</option>
@@ -348,20 +348,20 @@ const AccountForm = ({
 export const AccountsPage = () => {
   const { data: accountData, isLoading, isError } = useAccounts();
   const shell = useContext(ShellContext);
-  const [users, setUsers] = useState<MockUser[]>([]);
+  const [users, setUsers] = useState<AccountRow[]>([]);
   const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({
     key: "username",
     direction: "asc",
   });
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"all" | MockUserRole>("all");
+  const [roleFilter, setRoleFilter] = useState<"all" | AccountRole>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [lastLoginFilter, setLastLoginFilter] = useState<LastLoginFilter>("all");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [dialogMode, setDialogMode] = useState<DialogMode | null>(null);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [formState, setFormState] = useState<UserFormState>(emptyForm);
-  const [confirmUser, setConfirmUser] = useState<MockUser | null>(null);
+  const [confirmUser, setConfirmUser] = useState<AccountRow | null>(null);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [localToast, setLocalToast] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -470,7 +470,7 @@ export const AccountsPage = () => {
     }));
   };
 
-  const openEditDialog = (user: MockUser) => {
+  const openEditDialog = (user: AccountRow) => {
     returnFocusRef.current = document.activeElement as HTMLElement | null;
     setOpenMenuId(null);
     setEditingUserId(user.id);
@@ -551,14 +551,14 @@ export const AccountsPage = () => {
     closeDialog();
   };
 
-  const requestActiveChange = (user: MockUser) => {
+  const requestActiveChange = (user: AccountRow) => {
     returnFocusRef.current = document.activeElement as HTMLElement | null;
     setOpenMenuId(null);
     setConfirmAction("active");
     setConfirmUser(user);
   };
 
-  const requestDelete = (user: MockUser) => {
+  const requestDelete = (user: AccountRow) => {
     returnFocusRef.current = document.activeElement as HTMLElement | null;
     setOpenMenuId(null);
     setConfirmAction("delete");
@@ -693,7 +693,7 @@ export const AccountsPage = () => {
               id="account-role-filter"
               className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3 text-body text-text-primary transition-colors duration-150 ease-out hover:border-input-border-hover focus:border-input-border-focus focus:bg-surface focus:outline-none focus:ring-2 focus:ring-focus-ring focus:ring-offset-1 focus:ring-offset-surface-raised"
               value={roleFilter}
-              onChange={(event) => setRoleFilter(event.target.value as "all" | MockUserRole)}
+              onChange={(event) => setRoleFilter(event.target.value as "all" | AccountRole)}
             >
               <option value="all">All roles</option>
               <option value="super_admin">Super Admin</option>

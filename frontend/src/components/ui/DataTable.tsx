@@ -23,6 +23,8 @@ type DataTableProps<T> = {
   error?: boolean;
   emptyState: ReactNode;
   errorState?: ReactNode;
+  initialSort?: { key: string; direction: SortDirection };
+  clientSort?: boolean;
 };
 
 const SortIcon = ({ active, direction }: { active: boolean; direction: SortDirection }) => (
@@ -81,13 +83,15 @@ export const DataTable = <T,>({
   error = false,
   emptyState,
   errorState,
+  initialSort,
+  clientSort = true,
 }: DataTableProps<T>) => {
   const firstSortable = columns.find((column) => column.sortValue);
   const [sort, setSort] = useState<{ key: string; direction: SortDirection } | null>(
-    firstSortable ? { key: firstSortable.key, direction: "asc" } : null,
+    initialSort ?? (firstSortable ? { key: firstSortable.key, direction: "asc" } : null),
   );
 
-  const sortedRows = [...rows].sort((a, b) => {
+  const sortedRows = clientSort ? [...rows].sort((a, b) => {
     const column = columns.find((item) => item.key === sort?.key);
     if (!column?.sortValue || !sort) {
       return 0;
@@ -101,7 +105,7 @@ export const DataTable = <T,>({
         : String(aValue ?? "").localeCompare(String(bValue ?? ""));
 
     return sort.direction === "asc" ? result : -result;
-  });
+  }) : rows;
 
   const handleSort = (key: string) => {
     setSort((current) => ({
@@ -121,12 +125,12 @@ export const DataTable = <T,>({
   return (
     <Card className="overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse" style={{ minWidth }}>
+        <table className="w-full border-collapse" style={{ minWidth }} aria-busy={loading}>
           <thead className="sticky top-0 z-10 bg-surface-raised">
             <tr className="border-b border-border">
               {columns.map((column) => (
-                <th className={cn("px-4 py-3 text-left", column.className)} key={column.key}>
-                  {column.sortValue ? (
+                <th className={cn("px-4 py-3 text-left", column.className)} key={column.key} aria-sort={clientSort && column.sortValue && sort?.key === column.key ? (sort.direction === "asc" ? "ascending" : "descending") : undefined}>
+                  {clientSort && column.sortValue ? (
                     <button
                       type="button"
                       className="inline-flex items-center text-left text-caption font-semibold uppercase text-text-muted transition-colors duration-150 ease-out hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
@@ -161,6 +165,13 @@ export const DataTable = <T,>({
                     onRowClick && "cursor-pointer",
                   )}
                   onClick={() => onRowClick?.(row)}
+                  onKeyDown={(event) => {
+                    if (onRowClick && (event.key === "Enter" || event.key === " ")) {
+                      event.preventDefault();
+                      onRowClick(row);
+                    }
+                  }}
+                  tabIndex={onRowClick ? 0 : undefined}
                 >
                   {columns.map((column) => (
                     <td className={cn("px-4 py-4 align-top text-small", column.className)} key={column.key}>

@@ -3,9 +3,11 @@ import { useRoutes } from "react-router-dom";
 import { createRoutes } from "./routes";
 import { useAuthStore } from "../stores/authStore";
 
+const routes = createRoutes();
+
 export const App = () => {
   const hydrateFromStorage = useAuthStore((state) => state.hydrateFromStorage);
-  const element = useRoutes(createRoutes());
+  const element = useRoutes(routes);
 
   useEffect(() => {
     hydrateFromStorage();

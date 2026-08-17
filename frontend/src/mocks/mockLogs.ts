@@ -8,14 +8,6 @@ export type MockAuditLog = {
   new_values: Record<string, string>;
 };
 
-export type MockLoginLog = {
-  id: string;
-  username: string;
-  timestamp: string;
-  success: boolean;
-  ip: string;
-};
-
 export type MockIngestionLog = {
   id: string;
   source_name: string;
@@ -55,14 +47,6 @@ export const mockAuditLogs: MockAuditLog[] = [
     old_values: { is_active: "true" },
     new_values: { is_active: "false" },
   },
-];
-
-export const mockLoginLogs: MockLoginLog[] = [
-  { id: "log_001", username: "maya.haddad", timestamp: "2026-08-10T10:55:00+03:00", success: true, ip: "10.11.4.18" },
-  { id: "log_002", username: "unknown.admin", timestamp: "2026-08-10T10:43:00+03:00", success: false, ip: "185.44.21.9" },
-  { id: "log_003", username: "karim.nasser", timestamp: "2026-08-10T09:10:00+03:00", success: true, ip: "10.11.4.22" },
-  { id: "log_004", username: "maya.haddad", timestamp: "2026-08-09T23:05:00+03:00", success: false, ip: "10.11.4.18" },
-  { id: "log_005", username: "rana.saad", timestamp: "2026-08-09T18:25:00+03:00", success: true, ip: "10.11.5.2" },
 ];
 
 export const mockIngestionLogs: MockIngestionLog[] = [

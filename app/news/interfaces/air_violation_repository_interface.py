@@ -5,6 +5,8 @@ from app.news.dtos import (
     AirViolationListParams,
     AirViolationListResponse,
 )
+from app.news.dtos import MatchResultDTO
+from app.news.models import RawMessage
 
 
 class AirViolationRepositoryInterface(ABC):
@@ -14,4 +16,8 @@ class AirViolationRepositoryInterface(ABC):
 
     @abstractmethod
     def get_detail(self, air_violation_id: int) -> AirViolationDTO | None:
+        pass
+
+    @abstractmethod
+    def route_from_match(self, message: RawMessage, result: MatchResultDTO) -> None:
         pass

@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -16,8 +18,30 @@ from app.accounts.services.auth_service import AccountInactiveError, InvalidCred
 from app.api.deps import bearer_scheme
 from app.accounts.repositories import AuthSessionRepository, LoginThrottleRepository, UserRepository
 from app.accounts.services.auth_service import AuthService
+from app.logs.repositories import LoginLogRepository
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+def _record_login_attempt(
+    db: Session,
+    *,
+    username: str,
+    client_ip: str,
+    success: bool,
+    user_id: UUID | None = None,
+    failure_reason: str | None = None,
+) -> None:
+    try:
+        LoginLogRepository(db).record(
+            username=username,
+            client_ip=client_ip,
+            success=success,
+            user_id=user_id,
+            failure_reason=failure_reason,
+        )
+    except Exception:
+        db.rollback()
 
 
 @router.get("/me", response_model=SessionResponseDTO)
@@ -30,14 +54,25 @@ def current_session(current_user: User = Depends(get_current_user)) -> SessionRe
 
 @router.post("/login", response_model=LoginResponseDTO)
 def login(dto: LoginDTO, request: Request, db: Session = Depends(get_db)) -> LoginResponseDTO:
+    client_ip = request.client.host if request.client else "unknown"
     try:
-        client_ip = request.client.host if request.client else "unknown"
-        return login_account(db, dto, client_ip, request.state.login_device_id)
+        result = login_account(db, dto, client_ip, request.state.login_device_id)
+        _record_login_attempt(
+            db,
+            username=dto.username,
+            client_ip=client_ip,
+            success=True,
+            user_id=result.user.id,
+        )
+        return result
     except AccountInactiveError as exc:
+        _record_login_attempt(db, username=dto.username, client_ip=client_ip, success=False, failure_reason="inactive")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
     except InvalidCredentialsError as exc:
+        _record_login_attempt(db, username=dto.username, client_ip=client_ip, success=False, failure_reason="invalid_credentials")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
     except LoginRateLimitError as exc:
+        _record_login_attempt(db, username=dto.username, client_ip=client_ip, success=False, failure_reason="rate_limited")
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=str(exc),

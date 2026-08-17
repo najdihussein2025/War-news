@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button, DataTable, EmptyState, Input, Label, type DataTableColumn } from "../../../components/ui";
 import { formatDate } from "../../../lib/formatters";
 import { useAirViolationsQuery } from "../hooks";
+import { exportAirViolations, importAirViolations } from "../api";
 import type { AirViolation } from "../types";
 
 const PAGE_SIZE = 25;
@@ -23,6 +24,10 @@ const TextCell = ({ value }: { value: string | null }) => (
 );
 
 export const AirViolationsPage = () => {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [importMessage, setImportMessage] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Number(params.get("page") ?? "1") || 1);
   const offset = (page - 1) * PAGE_SIZE;
@@ -44,7 +49,7 @@ export const AirViolationsPage = () => {
     [cazaEn, conditionId, eventDateFrom, eventDateTo, offset],
   );
 
-  const { data, isLoading, isError } = useAirViolationsQuery(filters);
+  const { data, isLoading, isError, refetch } = useAirViolationsQuery(filters);
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const rows = data?.items ?? [];
@@ -74,14 +79,7 @@ export const AirViolationsPage = () => {
     {
       key: "caza",
       header: "Caza",
-      render: (row) => (
-        <div className="space-y-1">
-          <span className="font-semibold text-text-primary">{row.caza_ar || row.caza_en || emptyText}</span>
-          {row.caza_ar && row.caza_en ? (
-            <p className="text-caption text-text-muted">{row.caza_en}</p>
-          ) : null}
-        </div>
-      ),
+      render: (row) => <span className="font-semibold text-text-primary">{row.caza_en || row.caza_ar || emptyText}</span>,
       sortValue: (row) => row.caza_en ?? row.caza_ar ?? "",
     },
     {
@@ -91,14 +89,16 @@ export const AirViolationsPage = () => {
       sortValue: (row) => row.event_month ?? "",
     },
     {
-      key: "action",
-      header: "Action",
-      render: (row) => (
-        <span title={row.action_en} className="font-semibold text-text-primary">
-          {row.action_ar}
-        </span>
-      ),
+      key: "action-en",
+      header: "Action_E",
+      render: (row) => <TextCell value={row.action_en} />,
       sortValue: (row) => row.action_en,
+    },
+    {
+      key: "action-ar",
+      header: "Action_A",
+      render: (row) => <span className="block max-w-sm whitespace-pre-wrap text-right text-text-primary" dir="rtl" lang="ar">{row.action_ar || emptyText}</span>,
+      sortValue: (row) => row.action_ar,
     },
     {
       key: "khabar",
@@ -113,16 +113,16 @@ export const AirViolationsPage = () => {
       sortValue: (row) => row.source_name,
     },
     {
-      key: "date",
-      header: "Date",
-      render: (row) => formatDate(row.event_date),
-      sortValue: (row) => new Date(row.event_date).getTime(),
-    },
-    {
       key: "time",
       header: "Time",
       render: (row) => formatTime(row.event_time),
       sortValue: (row) => row.event_time ?? "",
+    },
+    {
+      key: "date",
+      header: "Date",
+      render: (row) => formatDate(row.event_date),
+      sortValue: (row) => new Date(row.event_date).getTime(),
     },
     {
       key: "note-1",
@@ -171,14 +171,12 @@ export const AirViolationsPage = () => {
           </div>
           <div className="space-y-2">
             <Label htmlFor="air-condition-filter">Condition ID</Label>
-            <Input
+            <select
               id="air-condition-filter"
-              type="number"
-              min="1"
+              className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3 text-body text-text-primary"
               value={conditionId}
               onChange={(event) => updateParam("condition_id", event.target.value)}
-              placeholder="35, 36, or 38"
-            />
+            ><option value="">All conditions</option><option value="35">35</option><option value="36">36</option><option value="38">38</option></select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="air-from-filter">From</Label>
@@ -199,13 +197,42 @@ export const AirViolationsPage = () => {
             />
           </div>
         </div>
-        {hasFilters ? (
-          <div className="mt-4">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <input
+            ref={fileInputRef}
+            className="hidden"
+            type="file"
+            accept=".xlsx"
+            onChange={async (event) => {
+              const file = event.target.files?.[0];
+              if (!file) return;
+              setIsImporting(true);
+              setImportMessage("");
+              try {
+                const result = await importAirViolations(file);
+                setImportMessage(`${result.imported} imported, ${result.skipped} skipped, ${result.failed} failed`);
+                await refetch();
+              } catch {
+                setImportMessage("Import failed. Check that the workbook uses the required template.");
+              } finally {
+                setIsImporting(false);
+                event.target.value = "";
+              }
+            }}
+          />
+          <Button type="button" isLoading={isImporting} loadingText="Importing" onClick={() => fileInputRef.current?.click()}>
+            Import Excel
+          </Button>
+          <Button type="button" variant="secondary" isLoading={isExporting} loadingText="Exporting" onClick={async () => { setIsExporting(true); setImportMessage(""); try { await exportAirViolations(); } catch { setImportMessage("Export failed. Check the API connection and try again."); } finally { setIsExporting(false); } }}>
+            Export Excel
+          </Button>
+          {hasFilters ? (
             <Button type="button" variant="ghost" className="h-9" onClick={() => setParams({})}>
               Clear filters
             </Button>
-          </div>
-        ) : null}
+          ) : null}
+          {importMessage ? <p className="text-small text-text-muted">{importMessage}</p> : null}
+        </div>
       </div>
 
       <DataTable
@@ -214,7 +241,8 @@ export const AirViolationsPage = () => {
         getRowKey={(row) => String(row.id)}
         loading={isLoading}
         error={isError}
-        minWidth="1280px"
+        minWidth="1320px"
+        clientSort={false}
         emptyState={
           <EmptyState
             title={hasFilters ? "No matching air violations" : "No air violations recorded yet"}

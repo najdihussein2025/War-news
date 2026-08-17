@@ -1,4 +1,5 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "../../lib/cn";
 
 type DialogProps = {
@@ -20,12 +21,13 @@ const sizeClasses = {
 
 export const Dialog = ({ title, children, onClose, size = "md" }: DialogProps) => {
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const titleId = useId();
 
   useEffect(() => {
-    const focusableElements = Array.from(
-      dialogRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? [],
-    );
-    focusableElements[0]?.focus();
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialogRef.current?.querySelector<HTMLElement>(focusableSelector)?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -33,6 +35,7 @@ export const Dialog = ({ title, children, onClose, size = "md" }: DialogProps) =
         return;
       }
 
+      const focusableElements = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? []);
       if (event.key !== "Tab" || focusableElements.length === 0) {
         return;
       }
@@ -50,10 +53,14 @@ export const Dialog = ({ title, children, onClose, size = "md" }: DialogProps) =
     };
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocused?.focus();
+    };
   }, [onClose]);
 
-  return (
+  return createPortal(
     <div
       className={cn(
         "fixed inset-0 z-50 flex bg-gray-900/40 p-4",
@@ -68,10 +75,10 @@ export const Dialog = ({ title, children, onClose, size = "md" }: DialogProps) =
         )}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="dialog-title"
+        aria-labelledby={titleId}
       >
         <div className="flex items-center justify-between gap-4">
-          <h2 id="dialog-title" className="text-h4 font-semibold text-text-primary">
+          <h2 id={titleId} className="text-h4 font-semibold text-text-primary">
             {title}
           </h2>
           <button
@@ -84,6 +91,7 @@ export const Dialog = ({ title, children, onClose, size = "md" }: DialogProps) =
         </div>
         <div className="mt-5">{children}</div>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 };

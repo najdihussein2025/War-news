@@ -5,11 +5,14 @@ from app.news.dtos import (
     AirViolationDTO,
     AirViolationListParams,
     AirViolationListResponse,
+    MatchResultDTO,
 )
 from app.news.interfaces import AirViolationRepositoryInterface
 from app.news.models import (
     AirViolation,
     Condition,
+    RawMessage,
+    Village,
 )
 from app.sources.models import Source
 
@@ -97,6 +100,33 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         if row is None:
             return None
         return AirViolationDTO.model_validate(row._mapping)
+
+    def route_from_match(self, message: RawMessage, result: MatchResultDTO) -> None:
+        if result.matched_condition_id not in {35, 36, 38} or result.matched_village_id is None:
+            return
+        if self.db.scalar(select(AirViolation.id).where(AirViolation.raw_message_id == message.id)) is not None:
+            return
+        village = self.db.get(Village, result.matched_village_id)
+        if village is None:
+            return
+        occurred_at = message.message_datetime or message.received_at
+        payload = message.raw_payload or {}
+        link = next((payload.get(key) for key in ("source_link", "link", "url", "post_url") if payload.get(key)), None)
+        self.db.add(AirViolation(
+            raw_message_id=message.id,
+            condition_id=result.matched_condition_id,
+            source_id=message.source_id,
+            caza_en=village.caza_en,
+            caza_ar=village.caza_ar,
+            event_month=occurred_at.strftime("%B"),
+            event_date=occurred_at.date(),
+            event_time=occurred_at.time().replace(tzinfo=None),
+            khabar=message.raw_text or "",
+            note_1=payload.get("note_1") or payload.get("note"),
+            note_2=payload.get("note_2"),
+            source_link=str(link) if link else None,
+        ))
+        self.db.commit()
 
     @staticmethod
     def _filters(params: AirViolationListParams) -> list[object]:

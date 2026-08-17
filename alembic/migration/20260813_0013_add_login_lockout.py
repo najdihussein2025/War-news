@@ -16,14 +16,19 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "users",
-        sa.Column("failed_login_attempts", sa.Integer(), server_default=sa.text("0"), nullable=False),
-    )
-    op.add_column(
-        "users",
-        sa.Column("locked_until", sa.DateTime(timezone=True), nullable=True),
-    )
+    existing_columns = {
+        column["name"] for column in sa.inspect(op.get_bind()).get_columns("users")
+    }
+    if "failed_login_attempts" not in existing_columns:
+        op.add_column(
+            "users",
+            sa.Column("failed_login_attempts", sa.Integer(), server_default=sa.text("0"), nullable=False),
+        )
+    if "locked_until" not in existing_columns:
+        op.add_column(
+            "users",
+            sa.Column("locked_until", sa.DateTime(timezone=True), nullable=True),
+        )
 
 
 def downgrade() -> None:

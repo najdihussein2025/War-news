@@ -23,3 +23,15 @@ export type AccountUpdate = {
   role_id: number;
   password?: string;
 };
+
+export type AccountRole = "super_admin" | "admin";
+
+export type AccountRow = {
+  id: string;
+  username: string;
+  full_name: string;
+  role: AccountRole;
+  is_active: boolean;
+  last_login_at: string | null;
+  created_at: string;
+};

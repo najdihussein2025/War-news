@@ -4,6 +4,7 @@ from app.llm.dtos import ExtractionResult
 from app.news.dtos import MatchResultDTO
 from app.news.interfaces import MatchingServiceInterface
 from app.news.interfaces import RawMessageRepositoryInterface
+from app.news.interfaces import AirViolationRepositoryInterface
 
 
 class MatchIncidentAction:
@@ -11,9 +12,11 @@ class MatchIncidentAction:
         self,
         raw_messages: RawMessageRepositoryInterface,
         matching_service: MatchingServiceInterface,
+        air_violations: AirViolationRepositoryInterface | None = None,
     ) -> None:
         self.raw_messages = raw_messages
         self.matching_service = matching_service
+        self.air_violations = air_violations
 
     def execute(self, raw_message_id: int) -> MatchResultDTO:
         message = self.raw_messages.get_parsed_by_id(raw_message_id)
@@ -37,4 +40,6 @@ class MatchIncidentAction:
 
         result = self.matching_service.match(extraction_result)
         self.raw_messages.save_match_result(message, result)
+        if self.air_violations is not None:
+            self.air_violations.route_from_match(message, result)
         return result

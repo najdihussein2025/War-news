@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, func, text
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, Text, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -44,6 +44,15 @@ class IngestionLog(Base):
         nullable=False,
         default=0,
         server_default=text("0"),
+    )
+    status: Mapped[str] = mapped_column(
+        Text, nullable=False, default="completed", server_default=text("'completed'")
+    )
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    retry_of_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("ingestion_logs.id", ondelete="SET NULL"),
+        nullable=True,
     )
     started_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),

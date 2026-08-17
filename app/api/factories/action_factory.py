@@ -107,6 +107,7 @@ def build_ingest_source_action(db: Session) -> IngestSourceAction:
 
 def build_match_incident_action(db: Session) -> MatchIncidentAction:
     from app.news.repositories import (
+        AirViolationRepository,
         ConditionRepository,
         RawMessageRepository,
         VillageRepository,
@@ -119,4 +120,5 @@ def build_match_incident_action(db: Session) -> MatchIncidentAction:
             village_repository=VillageRepository(db),
             condition_repository=ConditionRepository(db),
         ),
+        air_violations=AirViolationRepository(db),
     )
