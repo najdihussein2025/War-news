@@ -69,6 +69,7 @@ class SourceRepositoryInterface(ABC):
         messages_failed: int,
         started_at: datetime,
         messages_blocked: int = 0,
+        messages_flagged: int = 0,
     ) -> None:
         pass
 

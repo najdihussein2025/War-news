@@ -32,6 +32,10 @@ from app.news.models import (
 MATCH_THRESHOLD = 0.6
 LOW_CONFIDENCE_THRESHOLD = 0.35
 DEFAULT_CANDIDATE_LIMIT = 5
+CONDITION_DISTINGUISHING_TOKENS: dict[int, tuple[str, ...]] = {
+    2: ("تحذيريه",),
+    39: ("وهميه",),
+}
 
 @dataclass(frozen=True)
 class _ClassifiedMatch:
@@ -91,14 +95,25 @@ class MatchingService(MatchingServiceInterface):
         if not candidates:
             return _ClassifiedMatch(None, None, MatchResultStatus.unmatched)
 
-        candidate, score = candidates[0]
-        score = max(0.0, min(float(score), 1.0))
-        if score >= MATCH_THRESHOLD:
-            return _ClassifiedMatch(candidate.id, score, MatchResultStatus.matched)
-        if score >= LOW_CONFIDENCE_THRESHOLD:
-            return _ClassifiedMatch(
-                candidate.id,
-                score,
-                MatchResultStatus.matched_low_confidence,
-            )
-        return _ClassifiedMatch(None, score, MatchResultStatus.unmatched)
+        for candidate, score in candidates:
+            if not self._condition_match_allowed(candidate.id, normalized):
+                continue
+            score = max(0.0, min(float(score), 1.0))
+            if score >= MATCH_THRESHOLD:
+                return _ClassifiedMatch(candidate.id, score, MatchResultStatus.matched)
+            if score >= LOW_CONFIDENCE_THRESHOLD:
+                return _ClassifiedMatch(
+                    candidate.id,
+                    score,
+                    MatchResultStatus.matched_low_confidence,
+                )
+            return _ClassifiedMatch(None, score, MatchResultStatus.unmatched)
+
+        return _ClassifiedMatch(None, None, MatchResultStatus.unmatched)
+
+    @staticmethod
+    def _condition_match_allowed(condition_id: int, normalized_text: str) -> bool:
+        required_tokens = CONDITION_DISTINGUISHING_TOKENS.get(condition_id)
+        if required_tokens is None:
+            return True
+        return any(token in normalized_text for token in required_tokens)

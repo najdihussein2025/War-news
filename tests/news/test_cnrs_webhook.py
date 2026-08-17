@@ -22,6 +22,7 @@ class _WebhookSourceRepository:
     messages: list[RawMessage] = []
     seen: set[tuple[int, str]] = set()
     blocked_sources: set[tuple[str, str]] = set()
+    ingestion_logs: list[dict] = []
 
     def __init__(self, db=None) -> None:
         self.db = db
@@ -31,6 +32,7 @@ class _WebhookSourceRepository:
         cls.messages = []
         cls.seen = set()
         cls.blocked_sources = set()
+        cls.ingestion_logs = []
 
     def get_by_id(self, source_id: int):
         return SimpleNamespace(id=source_id, name="CNRS Webhook")
@@ -72,8 +74,20 @@ class _WebhookSourceRepository:
         messages_parsed: int,
         messages_failed: int,
         started_at: datetime,
+        messages_blocked: int = 0,
+        messages_flagged: int = 0,
     ) -> None:
-        raise NotImplementedError
+        self.ingestion_logs.append(
+            {
+                "source_id": source_id,
+                "messages_fetched": messages_fetched,
+                "messages_parsed": messages_parsed,
+                "messages_failed": messages_failed,
+                "messages_flagged": messages_flagged,
+                "messages_blocked": messages_blocked,
+                "started_at": started_at,
+            }
+        )
 
     def rollback(self) -> None:
         return
@@ -150,6 +164,33 @@ def test_valid_secret_single_post_returns_202_and_writes_raw_message() -> None:
     assert message.raw_text == "Post text"
     assert message.raw_payload["extra_field"] == "preserved"
     assert message.message_datetime == datetime(2026, 8, 13, 10, 20, 30, tzinfo=timezone.utc)
+
+
+def test_webhook_writes_one_ingestion_log_with_counts() -> None:
+    client = _client()
+    payload = _payload("log-1")
+    payload.update({"include": False})
+
+    response = client.post(
+        "/webhooks/cnrs-posts?source_id=44",
+        headers=_headers(),
+        json=[payload, _payload("log-2")],
+    )
+
+    assert response.status_code == 202
+    assert response.json() == {"received": 2, "saved": 2, "duplicates": 0, "blocked": 0}
+    assert len(_WebhookSourceRepository.ingestion_logs) == 1
+    log = _WebhookSourceRepository.ingestion_logs[0]
+    assert log == {
+        "source_id": 44,
+        "messages_fetched": 2,
+        "messages_parsed": 2,
+        "messages_failed": 0,
+        "messages_flagged": 1,
+        "messages_blocked": 0,
+        "started_at": log["started_at"],
+    }
+    assert log["started_at"] is not None
 
 
 def test_valid_secret_array_of_posts_returns_202_and_writes_all_messages() -> None:

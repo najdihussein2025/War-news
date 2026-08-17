@@ -25,6 +25,7 @@ class RetryTrackingSourceRepository(SourceRepository):
         messages_failed: int,
         started_at: datetime,
         messages_blocked: int = 0,
+        messages_flagged: int = 0,
     ) -> None:
         self.db.rollback()
         row = self.db.get(IngestionLog, self.log_id)
@@ -34,6 +35,7 @@ class RetryTrackingSourceRepository(SourceRepository):
         row.messages_parsed = messages_parsed
         row.messages_failed = messages_failed
         row.messages_blocked = messages_blocked
+        row.messages_flagged = messages_flagged
         row.started_at = started_at
         row.finished_at = datetime.now(timezone.utc)
         row.status = "completed"

@@ -137,6 +137,7 @@ class SourceRepository(SourceRepositoryInterface):
         messages_failed: int,
         started_at: datetime,
         messages_blocked: int = 0,
+        messages_flagged: int = 0,
     ) -> None:
         self.db.rollback()
         self.db.add(
@@ -144,7 +145,7 @@ class SourceRepository(SourceRepositoryInterface):
                 source_id=source_id,
                 messages_fetched=messages_fetched,
                 messages_parsed=messages_parsed,
-                messages_flagged=0,
+                messages_flagged=messages_flagged,
                 messages_failed=messages_failed,
                 messages_blocked=messages_blocked,
                 started_at=started_at,

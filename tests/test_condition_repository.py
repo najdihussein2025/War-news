@@ -14,6 +14,8 @@ from app.core.text_normalization import (
     normalize_arabic_sql,
     normalize_arabic_text,
 )
+from app.llm.dtos import ExtractionResult
+from app.news.dtos import MatchResultStatus
 from app.news.models import Condition
 from app.news.repositories.condition_repository import ConditionRepository
 
@@ -82,6 +84,57 @@ def test_real_verbose_airstrike_prefers_warplane_over_artillery() -> None:
         assert candidates[0][0].action_ar == "طيران حربي"
         assert candidates[0][1] > 0.35
         assert float(artillery_score or 0.0) < 0.35
+    except (OperationalError, ProgrammingError) as exc:
+        pytest.skip(f"Condition schema or pg_trgm is unavailable: {exc}")
+    finally:
+        if "db" in locals():
+            db.close()
+
+
+def test_generic_strike_does_not_match_warning_or_feigned_with_real_repository() -> None:
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        pytest.skip("DATABASE_URL is required for pg_trgm integration coverage.")
+
+    from datetime import datetime, timezone
+
+    from sqlalchemy import create_engine
+
+    from app.news.repositories.village_repository import VillageRepository
+    from app.news.services.matching_service import MatchingService
+
+    def _extraction(action: str) -> ExtractionResult:
+        return ExtractionResult(
+            is_relevant=True,
+            village=None,
+            action_description=action,
+            model="test",
+            extracted_at=datetime.now(timezone.utc),
+        )
+
+    engine = create_engine(database_url)
+    try:
+        db = Session(bind=engine)
+        villages = VillageRepository(db)
+        conditions = ConditionRepository(db)
+        service = MatchingService(villages, conditions)
+
+        generic_strike = _extraction("غارة تستهدف بلدة المنصوري")
+        warning_raid = _extraction("غارة تحذيرية من مسيرة على البيسارية")
+        feigned_attacks = _extraction(
+            "طيران العدو الحربي يخرق أجواء منطقة النبطية وينفذ غارات وهمية"
+        )
+
+        generic_result = service.match(generic_strike)
+        warning_result = service.match(warning_raid)
+        feigned_result = service.match(feigned_attacks)
+
+        assert generic_result.matched_condition_id not in {2, 39}
+        assert generic_result.condition_match_status == MatchResultStatus.unmatched
+        assert warning_result.matched_condition_id == 2
+        assert warning_result.condition_match_status == MatchResultStatus.matched
+        assert feigned_result.matched_condition_id == 39
+        assert feigned_result.condition_match_status == MatchResultStatus.matched
     except (OperationalError, ProgrammingError) as exc:
         pytest.skip(f"Condition schema or pg_trgm is unavailable: {exc}")
     finally:

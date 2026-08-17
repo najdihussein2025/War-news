@@ -81,6 +81,53 @@ def test_matches_condition_and_preserves_raw_mentions() -> None:
     assert villages.calls == []
 
 
+def test_generic_strike_does_not_match_warning_or_feigned_without_distinguishing_words() -> (
+    None
+):
+    villages = _SimilarRepositoryStub(None, None)
+    warning_conditions = _SimilarRepositoryStub(2, 0.4615)
+    service = MatchingService(villages, warning_conditions)
+
+    result = service.match(
+        _extraction(village=None, action="غارة تستهدف بلدة المنصوري")
+    )
+
+    assert result.matched_condition_id is None
+    assert result.condition_match_status == MatchResultStatus.unmatched
+
+
+def test_warning_raid_still_matches_when_distinguishing_word_present() -> None:
+    villages = _SimilarRepositoryStub(None, None)
+    conditions = _SimilarRepositoryStub(2, 1.0)
+    service = MatchingService(villages, conditions)
+
+    result = service.match(
+        _extraction(
+            village=None,
+            action="غارة تحذيرية من مسيرة على البيسارية",
+        )
+    )
+
+    assert result.matched_condition_id == 2
+    assert result.condition_match_status == MatchResultStatus.matched
+
+
+def test_feigned_attacks_still_matches_when_distinguishing_word_present() -> None:
+    villages = _SimilarRepositoryStub(None, None)
+    conditions = _SimilarRepositoryStub(39, 1.0)
+    service = MatchingService(villages, conditions)
+
+    result = service.match(
+        _extraction(
+            village=None,
+            action="طيران العدو الحربي ينفذ غارات وهمية",
+        )
+    )
+
+    assert result.matched_condition_id == 39
+    assert result.condition_match_status == MatchResultStatus.matched
+
+
 def test_verbose_airstrike_uses_word_similarity_score_without_matching_artillery() -> (
     None
 ):
