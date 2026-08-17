@@ -15,6 +15,73 @@ ALLOWED_EXTRACTION_CATEGORY_KEYS = frozenset(
     category.value for category in ExtractionCategoryKey
 )
 LOW_TEMPERATURE = 0.0
+MUNICIPAL_INFRASTRUCTURE_TERMS = (
+    "بلدية",
+    "مبنى البلدية",
+    "مباني البلدية",
+    "مجلس بلدي",
+    "مجلس البلدة",
+    "موظف",
+    "موظفين",
+    "موظفي البلدية",
+    "عامل",
+    "عاملين",
+    "موظف بلدي",
+)
+VILLAGE_LOCATION_MARKERS = (
+    "بلدة",
+    "مدينة",
+    "قرية",
+    "مزارع",
+    "دوحة",
+    "مشاع",
+    "اطراف",
+    "أطراف",
+    "حرش",
+    "وادي",
+)
+TARGETING_VERBS = (
+    "استهدف",
+    "استهدفت",
+    "قصف",
+    "غارة",
+    "أغار",
+    "اعتد",
+)
+VEHICLE_TERMS = (
+    "سيارة",
+    "سيارات",
+    "مركبة",
+    "مركبات",
+    "آلية",
+    "آليات",
+    "دراجة",
+    "دراجات",
+    "موتور",
+    "موتورات",
+    "شاحنة",
+    "شاحنات",
+    "جرافة",
+    "جرافات",
+    "حفارة",
+    "حفارات",
+    "دبابة",
+    "دبابات",
+    "كميون",
+    "بلدوزر",
+)
+CIVIL_DEFENSE_ORG_TERMS = (
+    "الدفاع المدني",
+    "دفاع مدني",
+    "الصليب الأحمر",
+    "الهلال الأحمر",
+    "الإسعاف",
+    "إسعاف",
+    "مسعف",
+    "سيارة إسعاف",
+    "سيارات إسعاف",
+    "فرق الإنقاذ",
+)
 PROMPT_PATH = (
     Path(__file__).resolve().parents[3]
     / "scripts"
@@ -224,10 +291,69 @@ class OllamaPresenceGateService:
             filtered_categories.append(item.category_key)
             filtered_evidence.append(item)
 
+        filtered_categories, filtered_evidence = self._apply_deterministic_additions(
+            post_text=post_text,
+            categories=filtered_categories,
+            category_evidence=filtered_evidence,
+        )
+
         return PresenceGateResult(
             categories_present=filtered_categories,
             category_evidence=filtered_evidence,
         )
+
+    def _apply_deterministic_additions(
+        self,
+        post_text: str,
+        categories: list[ExtractionCategoryKey],
+        category_evidence: list[PresenceGateEvidence],
+    ) -> tuple[list[ExtractionCategoryKey], list[PresenceGateEvidence]]:
+        seen = set(categories)
+        updated_categories = list(categories)
+        updated_evidence = list(category_evidence)
+
+        if (
+            ExtractionCategoryKey.emergency_civil_defense not in seen
+            and self._has_civil_defense_organization_language(post_text)
+        ):
+            updated_categories.append(ExtractionCategoryKey.emergency_civil_defense)
+            updated_evidence.append(
+                PresenceGateEvidence(
+                    category_key=ExtractionCategoryKey.emergency_civil_defense,
+                    evidence_span=self._extract_civil_defense_evidence_span(post_text),
+                )
+            )
+
+        return updated_categories, updated_evidence
+
+    def _has_civil_defense_organization_language(self, post_text: str) -> bool:
+        return any(term in post_text for term in CIVIL_DEFENSE_ORG_TERMS)
+
+    def _extract_civil_defense_evidence_span(self, post_text: str) -> str:
+        for term in CIVIL_DEFENSE_ORG_TERMS:
+            index = post_text.find(term)
+            if index >= 0:
+                start = max(0, index - 20)
+                end = min(len(post_text), index + len(term) + 40)
+                return post_text[start:end].strip()
+        return post_text[:80].strip()
+
+    def _has_municipal_infrastructure_language(self, text: str) -> bool:
+        return any(term in text for term in MUNICIPAL_INFRASTRUCTURE_TERMS)
+
+    def _is_bare_village_targeting(self, evidence_span: str, post_text: str) -> bool:
+        text = evidence_span.strip() or post_text
+        has_location_marker = any(marker in text for marker in VILLAGE_LOCATION_MARKERS)
+        has_targeting = any(verb in text for verb in TARGETING_VERBS)
+        return (
+            has_location_marker
+            and has_targeting
+            and not self._has_municipal_infrastructure_language(text)
+        )
+
+    def _has_vehicle_language(self, evidence_span: str, post_text: str) -> bool:
+        text = f"{evidence_span}\n{post_text}"
+        return any(term in text for term in VEHICLE_TERMS)
 
     def _is_context_only_evidence(
         self,
@@ -315,6 +441,18 @@ class OllamaPresenceGateService:
                 term in text
                 for term in ("الدفاع المدني", "الصليب الأحمر", "إسعاف", "مسعف")
             ):
+                return True
+
+        if category_key == ExtractionCategoryKey.municipality:
+            if self._is_bare_village_targeting(evidence_span, post_text):
+                return True
+            if not self._has_municipal_infrastructure_language(
+                f"{evidence_span}\n{post_text}"
+            ) and any(marker in evidence_span for marker in VILLAGE_LOCATION_MARKERS):
+                return True
+
+        if category_key == ExtractionCategoryKey.vehicles:
+            if not self._has_vehicle_language(evidence_span, post_text):
                 return True
 
         if category_key == ExtractionCategoryKey.hospital:

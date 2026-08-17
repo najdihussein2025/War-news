@@ -93,7 +93,13 @@ def test_orchestration_skips_category_detail_when_presence_gate_is_empty() -> No
     assert presence_gate.calls == 1
     assert category_detail.calls == []
     assert result.village == "بنت جبيل"
-    assert result.categories == {}
+    assert result.categories == {
+        ExtractionCategoryKey.casualty_demographics: ExtractionCategory(
+            did=None,
+            name=None,
+            casualties=ExtractionCasualties(injuries=1),
+        )
+    }
 
 
 def test_orchestration_extracts_detail_once_per_present_category() -> None:
@@ -129,7 +135,8 @@ def test_orchestration_extracts_detail_once_per_present_category() -> None:
         ExtractionCategoryKey.health_center,
         ExtractionCategoryKey.vehicles,
     ]
-    assert len(result.categories) == 2
+    assert len(result.categories) == 3
+    assert ExtractionCategoryKey.casualty_demographics in result.categories
     assert (
         result.categories[ExtractionCategoryKey.health_center].name
         == "مركز صحي"
@@ -154,7 +161,7 @@ def test_presence_gate_drops_invalid_category_key_and_logs(caplog) -> None:
                         "category_evidence": [
                             {
                                 "category_key": "vehicles",
-                                "evidence_span": "vehicle was hit",
+                                "evidence_span": "استهدفت سيارة على الطريق",
                             },
                             {
                                 "category_key": "unifil",
@@ -211,7 +218,10 @@ def test_orchestration_isolates_malformed_category_detail(caplog) -> None:
     with caplog.at_level(logging.ERROR):
         result = service.extract("sample text", raw_message_id=42)
 
-    assert list(result.categories) == [ExtractionCategoryKey.vehicles]
+    assert set(result.categories) == {
+        ExtractionCategoryKey.vehicles,
+        ExtractionCategoryKey.casualty_demographics,
+    }
     assert any(
         "Failed to extract category detail category=health_center raw_message_id=42"
         in record.message

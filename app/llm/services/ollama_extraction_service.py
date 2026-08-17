@@ -163,6 +163,10 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             category_details,
             raw_message_id=raw_message_id,
         )
+        self._inject_casualty_demographics_from_root(
+            categories,
+            general_response.casualties,
+        )
 
         return ExtractionResult(
             is_relevant=general_response.is_relevant,
@@ -242,6 +246,30 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 casualties=raw_category.casualties,
             )
         return validated
+
+    def _has_populated_casualties(self, casualties: ExtractionCasualties) -> bool:
+        return any(
+            value is not None and value != 0
+            for value in casualties.model_dump(mode="python").values()
+        )
+
+    def _inject_casualty_demographics_from_root(
+        self,
+        categories: dict[ExtractionCategoryKey, ExtractionCategory],
+        root_casualties: ExtractionCasualties,
+    ) -> None:
+        if not self._has_populated_casualties(root_casualties):
+            return
+
+        category_key = ExtractionCategoryKey.casualty_demographics
+        if category_key in categories:
+            return
+
+        categories[category_key] = ExtractionCategory(
+            did=None,
+            name=None,
+            casualties=root_casualties,
+        )
 
     def _is_empty_category_detail(self, category: ExtractionCategory) -> bool:
         if category.did is not None or category.name is not None:

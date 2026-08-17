@@ -42,6 +42,12 @@ Examples:
 - "A shell landed on the road and blocked traffic" -> include road_bridge with an evidence span about the road being hit/blocked.
 - "An ambulance crew evacuated wounded people under fire" -> include emergency_civil_defense if the text identifies ambulance/emergency/civil defense crews as directly performing the incident response or being affected.
 
+Category-specific precision rules:
+- casualty_demographics: include when the message reports explicit casualty counts or demographic breakdowns (deaths, injuries, male/female/child casualties, martyrs with numbers, arrested counts). Do not include for generic "ضحايا" without numbers unless explicit demographic splits are stated.
+- emergency_civil_defense: include when الدفاع المدني, civil defense, Red Cross, ambulance crews, or rescue teams are named as performing rescue, recovery, evacuation, transport, or issuing an operational statement about the incident. "الدفاع المدني" in a statement about انتشال/إنقاذ/إخلاء is always positive evidence.
+- municipality: include ONLY when municipal infrastructure, municipal staff, or municipal buildings are affected — e.g. بلدية, مبنى البلدية, موظفي البلدية, مجلس بلدي. Do NOT include when the only subject is a village or town name (بلدة X, مدينة X, دوحة X, مشاع X) being shelled or raided with no municipal-building/staff language.
+- vehicles: include ONLY when an actual vehicle is named or targeted — e.g. سيارة, مركبة, آلية, دراجة, موتور, شاحنة, جرافة, حفارة. Do NOT include when a neighborhood, area, farm, or place name (دوحة, مشاع, حرش, وادي) is shelled but no vehicle is mentioned.
+
 Output rules:
 - Return exactly one valid JSON object.
 - Do not write text before or after JSON.
