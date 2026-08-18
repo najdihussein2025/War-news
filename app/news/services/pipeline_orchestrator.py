@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
+from collections.abc import Callable
 
 import app.accounts.models  # noqa: F401
 import app.logs.models  # noqa: F401
@@ -56,7 +58,11 @@ def _log_stage_result(result: StageSweepResult) -> None:
     )
 
 
-async def run_full_pipeline_sweep(*, max_rows: int | None = None) -> PipelineSweepResult:
+async def run_full_pipeline_sweep(
+    *,
+    max_rows: int | None = None,
+    on_stage: Callable[[StageSweepResult], None] | None = None,
+) -> PipelineSweepResult:
     """
     Run all pipeline stages in order, each sweeping every currently-eligible row.
     Per-stage, per-item failures do not abort the sweep.
@@ -67,6 +73,12 @@ async def run_full_pipeline_sweep(*, max_rows: int | None = None) -> PipelineSwe
     sweep_started_at = time.monotonic()
     db = SessionLocal()
     stages: list[StageSweepResult] = []
+
+    def _record_stage(result: StageSweepResult) -> None:
+        stages.append(result)
+        _log_stage_result(result)
+        if on_stage is not None:
+            on_stage(result)
 
     try:
         try:
@@ -88,33 +100,13 @@ async def run_full_pipeline_sweep(*, max_rows: int | None = None) -> PipelineSwe
                 logger.info("Pipeline sweep starting with max_rows=%s per stage", max_rows)
 
             try:
-                stage_result = await sweep_relevance_filter(db, max_rows=max_rows)
-                stages.append(stage_result)
-                _log_stage_result(stage_result)
-
-                stage_result = sweep_pre_extraction_dedup(db, max_rows=max_rows)
-                stages.append(stage_result)
-                _log_stage_result(stage_result)
-
-                stage_result = sweep_extraction(db, max_rows=max_rows)
-                stages.append(stage_result)
-                _log_stage_result(stage_result)
-
-                stage_result = sweep_matching(db, max_rows=max_rows)
-                stages.append(stage_result)
-                _log_stage_result(stage_result)
-
-                stage_result = sweep_embedding_generation(db, max_rows=max_rows)
-                stages.append(stage_result)
-                _log_stage_result(stage_result)
-
-                stage_result = sweep_clustering(db, max_rows=max_rows)
-                stages.append(stage_result)
-                _log_stage_result(stage_result)
-
-                stage_result = sweep_materialization(db, max_rows=max_rows)
-                stages.append(stage_result)
-                _log_stage_result(stage_result)
+                _record_stage(await sweep_relevance_filter(db, max_rows=max_rows))
+                _record_stage(sweep_pre_extraction_dedup(db, max_rows=max_rows))
+                _record_stage(sweep_extraction(db, max_rows=max_rows))
+                _record_stage(sweep_matching(db, max_rows=max_rows))
+                _record_stage(sweep_embedding_generation(db, max_rows=max_rows))
+                _record_stage(sweep_clustering(db, max_rows=max_rows))
+                _record_stage(sweep_materialization(db, max_rows=max_rows))
             finally:
                 _release_pipeline_lock(db)
 
@@ -141,3 +133,8 @@ async def run_full_pipeline_sweep(*, max_rows: int | None = None) -> PipelineSwe
             raise
     finally:
         db.close()
+
+
+def run_full_pipeline_sweep_sync(*, max_rows: int | None = None) -> None:
+    """Run the sweep in a worker thread (BackgroundTasks dispatches sync callables off-loop)."""
+    asyncio.run(run_full_pipeline_sweep(max_rows=max_rows))

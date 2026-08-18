@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { liveListQueryOptions } from "../../lib/liveListPolling";
 import { getAirViolations } from "./api";
 import type { AirViolationFilters } from "./types";
 
@@ -10,4 +11,5 @@ export const useAirViolationsQuery = (filters: AirViolationFilters) =>
   useQuery({
     queryKey: airViolationKeys.list(filters),
     queryFn: () => getAirViolations(filters),
+    ...liveListQueryOptions,
   });

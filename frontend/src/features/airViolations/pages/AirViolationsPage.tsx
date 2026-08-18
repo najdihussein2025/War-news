@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button, ConfirmDialog, DataTable, Dialog, EmptyState, Input, Label, type DataTableColumn } from "../../../components/ui";
+import { useLiveQueryTitleAddon } from "../../../hooks/useLiveQueryTitleAddon";
 import { formatDate } from "../../../lib/formatters";
 import { getBeirutDate } from "../../../lib/localDate";
 import { useAirViolationsQuery } from "../hooks";
@@ -66,7 +67,9 @@ export const AirViolationsPage = () => {
     [cazaEn, conditionId, eventDateFrom, eventDateTo, offset],
   );
 
-  const { data, isLoading, isError, refetch } = useAirViolationsQuery(filters);
+  const { data, isLoading, isError, refetch, dataUpdatedAt, isFetching } =
+    useAirViolationsQuery(filters);
+  useLiveQueryTitleAddon(dataUpdatedAt, isFetching);
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const rows = data?.items ?? [];

@@ -23,8 +23,16 @@ from app.news.repositories.raw_message_repository import RawMessageRepository
 from app.news.services.clustering_service import ClusteringService, village_ids_from_match_result
 from app.news.services.embedding_service import EmbeddingService
 from app.news.services.dedup_matching_service import DedupMatchingService
+from app.news.services.duplicate_match_reconciliation import (
+    reconcile_orphaned_soft_deleted_incidents,
+)
 from app.news.services.incident_materialization_service import (
     IncidentMaterializationService,
+)
+from app.news.services.pre_extraction_dedup import (
+    choose_pre_dedup_original_id,
+    find_pre_dedup_match,
+    is_valid_pre_dedup_original,
 )
 from app.news.services.raw_message_embedding_service import (
     RawMessageEmbeddingService,
@@ -162,35 +170,44 @@ def sweep_pre_extraction_dedup(
                 if msg.raw_text is None:
                     continue
 
-                score_col = func.word_similarity(
-                    RawMessage.raw_text,
-                    literal(msg.raw_text),
-                ).label("score")
-                best = db.execute(
-                    select(RawMessage.id, score_col)
-                    .where(
-                        RawMessage.status != MessageStatus.rejected,
-                        RawMessage.received_at
-                        >= func.now() - text("INTERVAL '48 hours'"),
-                        RawMessage.id != raw_message_id,
-                        RawMessage.raw_text.is_not(None),
-                    )
-                    .order_by(score_col.desc())
-                    .limit(1)
-                ).first()
+                best = find_pre_dedup_match(
+                    db,
+                    raw_message_id=raw_message_id,
+                    raw_text=msg.raw_text,
+                    threshold=threshold,
+                )
 
-                if best is not None and best.score >= threshold:
-                    msg.status = MessageStatus.duplicate
-                    msg.duplicate_of_id = best.id
-                    db.commit()
+                if best is None or best.score < threshold:
+                    continue
+
+                original_id = choose_pre_dedup_original_id(raw_message_id, best.id)
+                if original_id is None:
+                    continue
+
+                if not is_valid_pre_dedup_original(
+                    db,
+                    candidate_id=raw_message_id,
+                    original_id=original_id,
+                ):
                     logger.info(
-                        "pre_extraction_dedup raw_message_id=%s: word_similarity=%.3f"
-                        " similar_to_raw_message_id=%s",
+                        "pre_extraction_dedup raw_message_id=%s skipped match "
+                        "raw_message_id=%s: invalid original target",
                         raw_message_id,
-                        best.score,
-                        best.id,
+                        original_id,
                     )
-                    succeeded += 1
+                    continue
+
+                msg.status = MessageStatus.duplicate
+                msg.duplicate_of_id = original_id
+                db.commit()
+                logger.info(
+                    "pre_extraction_dedup raw_message_id=%s: word_similarity=%.3f"
+                    " similar_to_raw_message_id=%s",
+                    raw_message_id,
+                    best.score,
+                    original_id,
+                )
+                succeeded += 1
             except Exception as exc:
                 db.rollback()
                 failed += 1
@@ -454,6 +471,14 @@ def sweep_clustering(
             representative_id = representative.id
             rep_village_ids = village_ids_from_match_result(representative.match_result)
 
+            # Materialize the representative before soft-deleting member incidents so
+            # duplicate_matches can be written immediately when possible.
+            materialization_service = IncidentMaterializationService(
+                db,
+                dedup_service=DedupMatchingService(incident_repository),
+            )
+            materialization_service.materialize(representative)
+
             fully_subsumed_member_ids: list[int] = []
             partial_members: list[tuple[int, frozenset[int]]] = []
 
@@ -481,12 +506,27 @@ def sweep_clustering(
                     commit=False,
                 )
                 for member_id in fully_subsumed_member_ids:
-                    incident_repository.soft_delete_for_raw_message_id(member_id)
+                    incident_repository.soft_delete_for_raw_message_id(
+                        member_id,
+                        representative_raw_message_id=representative_id,
+                    )
 
             for member_id, shared_village_ids in partial_members:
                 for village_id in shared_village_ids:
+                    representative_incident = (
+                        incident_repository.find_active_incident_for_raw_message_village(
+                            representative_id,
+                            village_id,
+                        )
+                    )
                     incident_repository.soft_delete_for_village_incident(
-                        member_id, village_id
+                        member_id,
+                        village_id,
+                        matched_incident_id=(
+                            representative_incident.id
+                            if representative_incident is not None
+                            else None
+                        ),
                     )
 
             db.commit()
@@ -579,6 +619,12 @@ def sweep_materialization(
 
         if max_rows is not None and processed >= max_rows:
             break
+
+    reconciled = reconcile_orphaned_soft_deleted_incidents(db)
+    logger.info(
+        "duplicate_match_reconciliation backfilled=%s",
+        reconciled,
+    )
 
     succeeded = (
         service.stats.inserted

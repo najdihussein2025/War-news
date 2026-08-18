@@ -150,7 +150,10 @@ class IncidentMaterializationService:
                             new_candidate_data={
                                 "deaths": casualties.deaths,
                                 "injuries": casualties.injuries,
+                                "total_deaths": total_deaths,
+                                "total_injuries": total_injuries,
                                 "khabar": representative.raw_text or "",
+                                "mapped_fields": mapped_fields,
                             },
                             raw_message_id=representative.id,
                         )

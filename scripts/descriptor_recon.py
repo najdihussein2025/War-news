@@ -1,6 +1,7 @@
-"""Offline recon for village descriptor prefix candidates."""
+"""Offline or live-DB recon for village descriptor prefix candidates."""
 from __future__ import annotations
 
+import argparse
 import json
 import re
 from collections import Counter, defaultdict
@@ -43,9 +44,11 @@ SEED_WORDS = [
     "جبانة",
 ]
 
+PROPOSED_STRIP = ["حرش", "خراج", "اطراف"]
+PROPOSED_EXCLUDE = ["وادي", "مشاع", "ضهر", "مزارع"]
 
-def main() -> None:
-    root = Path(__file__).resolve().parents[1]
+
+def _load_reference_villages(root: Path) -> tuple[set[str], Counter[str]]:
     villages = json.loads((root / "Data/Villages.json").read_text(encoding="utf-8"))
     ref_names: set[str] = set()
     all_village_tokens: Counter[str] = Counter()
@@ -60,6 +63,10 @@ def main() -> None:
             for token in normalized.split():
                 all_village_tokens[token] += 1
 
+    return ref_names, all_village_tokens
+
+
+def _load_offline_corpus(root: Path) -> list[str]:
     texts: list[str] = []
     answer_key = json.loads(
         (root / "scripts/phase2-extraction-testing/answer_key.json").read_text(
@@ -75,7 +82,42 @@ def main() -> None:
 
     for path in (root / "scripts/phase2-extraction-testing/sample_texts").glob("*.txt"):
         texts.append(path.read_text(encoding="utf-8"))
+    return texts
 
+
+def _load_live_corpus(limit: int) -> list[str]:
+    from sqlalchemy import text
+
+    from app.core.database import SessionLocal
+
+    texts: list[str] = []
+    with SessionLocal() as session:
+        rows = session.execute(
+            text(
+                """
+                SELECT raw_text, extraction_result
+                FROM raw_messages
+                WHERE status = 'parsed'
+                  AND extraction_result IS NOT NULL
+                ORDER BY id DESC
+                LIMIT :limit
+                """
+            ),
+            {"limit": limit},
+        ).all()
+        for raw_text, extraction_result in rows:
+            extraction = extraction_result or {}
+            village = extraction.get("village")
+            if isinstance(village, list):
+                texts.extend(str(item) for item in village if item)
+            elif village:
+                texts.append(str(village))
+            if raw_text:
+                texts.append(str(raw_text))
+    return texts
+
+
+def _analyze_phrases(texts: list[str]) -> dict[str, list[str]]:
     phrase_hits: dict[str, list[str]] = defaultdict(list)
     for text in texts:
         normalized = normalize_arabic_text(text)
@@ -85,9 +127,19 @@ def main() -> None:
             pattern = rf"(?:^|\s)({re.escape(seed)}(?:\s+[\u0600-\u06FFa-zA-Z0-9]+){{1,4}})"
             for match in re.finditer(pattern, normalized):
                 phrase_hits[seed].append(match.group(1).strip())
+    return phrase_hits
 
+
+def _build_report(
+    *,
+    mode: str,
+    ref_names: set[str],
+    all_village_tokens: Counter[str],
+    texts: list[str],
+    phrase_hits: dict[str, list[str]],
+) -> list[str]:
     lines: list[str] = [
-        "=== DESCRIPTOR CANDIDATE RECON (offline) ===",
+        f"=== DESCRIPTOR CANDIDATE RECON ({mode}) ===",
         f"Reference villages loaded: {len(ref_names)}",
         f"Corpus texts scanned: {len(texts)}",
         "",
@@ -134,7 +186,11 @@ def main() -> None:
             lines.append(f"    - {example}")
             remainder = example[len(seed) :].strip()
             if remainder:
-                hits = [name for name in ref_names if remainder in name or name in remainder][:3]
+                hits = [
+                    name
+                    for name in ref_names
+                    if remainder in name or name in remainder
+                ][:3]
                 lines.append(f"      remainder after strip: {remainder!r} -> {hits}")
         lines.append(f"  RECOMMENDATION: {recommendation}")
         lines.append("")
@@ -144,6 +200,31 @@ def main() -> None:
             "=== PROPOSED STRIP-LIST (pending your confirmation) ===",
             ", ".join(confirmed),
             "",
+            "=== PRIOR OFFLINE PROPOSAL ===",
+            f"strip: {', '.join(PROPOSED_STRIP)}",
+            f"exclude (village-name prefix): {', '.join(PROPOSED_EXCLUDE)}",
+            "",
+            "=== DELTA VS PRIOR PROPOSAL ===",
+        ]
+    )
+
+    confirmed_set = set(confirmed)
+    strip_added = sorted(confirmed_set - set(PROPOSED_STRIP))
+    strip_removed = sorted(set(PROPOSED_STRIP) - confirmed_set)
+    exclude_now_high = sorted(
+        seed
+        for seed in PROPOSED_EXCLUDE
+        if any(name.startswith(seed + " ") for name in ref_names)
+    )
+    lines.append(f"  strip-list additions: {strip_added or '(none)'}")
+    lines.append(f"  strip-list removals: {strip_removed or '(none)'}")
+    lines.append(
+        "  prior exclude-list words that ARE registered village prefixes: "
+        f"{exclude_now_high or '(none)'}"
+    )
+    lines.extend(
+        [
+            "",
             "=== KNOWN CASE: حرش عيتا الجبل ===",
         ]
     )
@@ -151,7 +232,44 @@ def main() -> None:
         if "عيتا الجبل" in name:
             lines.append(f"  ref_name match: {name}")
 
-    output = root / "DESCRIPTOR_RECON.md"
+    return lines
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        help="Scan parsed raw_messages with extraction_result from DATABASE_URL.",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=5000,
+        help="Max raw_messages rows to scan in --live mode (default: 5000).",
+    )
+    args = parser.parse_args()
+
+    root = Path(__file__).resolve().parents[1]
+    ref_names, all_village_tokens = _load_reference_villages(root)
+
+    if args.live:
+        texts = _load_live_corpus(args.limit)
+        mode = "live DB"
+        output = root / "DESCRIPTOR_RECON_LIVE.md"
+    else:
+        texts = _load_offline_corpus(root)
+        mode = "offline"
+        output = root / "DESCRIPTOR_RECON.md"
+
+    phrase_hits = _analyze_phrases(texts)
+    lines = _build_report(
+        mode=mode,
+        ref_names=ref_names,
+        all_village_tokens=all_village_tokens,
+        texts=texts,
+        phrase_hits=phrase_hits,
+    )
     output.write_text("\n".join(lines), encoding="utf-8")
     print(output)
 
