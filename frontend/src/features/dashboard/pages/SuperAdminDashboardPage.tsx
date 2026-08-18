@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Button, Card, EmptyState } from "../../../components/ui";
+import { Card, EmptyState } from "../../../components/ui";
 import { formatDateTime } from "../../../lib/formatters";
 import { getBeirutDate } from "../../../lib/localDate";
 import { useAirViolationsQuery } from "../../airViolations/hooks";
@@ -71,11 +71,20 @@ export const SuperAdminDashboardPage = () => {
     }
   };
 
+  const refreshRef = useRef(refresh);
+  refreshRef.current = refresh;
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      void refreshRef.current();
+    }, 30_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   return (
     <div className="space-y-6">
-      <section className="flex flex-col gap-4 rounded-lg border border-border bg-surface-raised p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-        <div><p className="text-caption font-semibold uppercase tracking-wide text-accent">System administration</p><h2 className="mt-2 text-h3 font-semibold text-text-primary">System overview</h2><p className="mt-2 max-w-2xl text-small text-text-muted">Live operational and security information from the backend.</p><p className={`mt-2 text-caption ${refreshStatus === "error" ? "text-danger" : refreshStatus === "success" ? "text-success" : "text-text-muted"}`} role="status" aria-live="polite">{refreshStatus === "error" ? "Some dashboard data could not be refreshed. Try again." : refreshStatus === "success" ? `Dashboard updated successfully at ${lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : `Last updated ${lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`}</p></div>
-        <Button type="button" variant="secondary" isLoading={isRefreshing} loadingText="Refreshing data…" onClick={refresh}>Refresh data</Button>
+      <section className="rounded-lg border border-border bg-surface-raised p-5 sm:p-6">
+        <div><p className="text-caption font-semibold uppercase tracking-wide text-accent">System administration</p><h2 className="mt-2 text-h3 font-semibold text-text-primary">System overview</h2><p className="mt-2 max-w-2xl text-small text-text-muted">Live operational and security information from the backend. Updates automatically every 30 seconds.</p><p className={`mt-2 text-caption ${refreshStatus === "error" ? "text-danger" : refreshStatus === "success" ? "text-success" : "text-text-muted"}`} role="status" aria-live="polite">{refreshStatus === "error" ? "Some dashboard data could not be refreshed. The system will try again automatically." : refreshStatus === "success" ? `Automatically updated at ${lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : `Last updated ${lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`}</p></div>
       </section>
 
       <section aria-label="System metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

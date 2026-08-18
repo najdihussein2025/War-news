@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button, ConfirmDialog, DataTable, Dialog, EmptyState, Input, Label, type DataTableColumn } from "../../../components/ui";
 import { formatDate } from "../../../lib/formatters";
+import { getBeirutDate } from "../../../lib/localDate";
 import { useAirViolationsQuery } from "../hooks";
 import { createAirViolation, deleteAirViolation, exportAirViolations, updateAirViolation } from "../api";
 import type { AirViolation } from "../types";
@@ -341,7 +342,7 @@ export const AirViolationsPage = () => {
                   event_time: String(form.get("event_time") ?? "") || null,
                   khabar: String(form.get("khabar") ?? "").trim(),
                   note_1: String(form.get("note_1") ?? "").trim() || null,
-                  note_2: editingViolation?.note_2 ?? null,
+                  note_2: String(form.get("note_2") ?? "").trim() || null,
                   source_link: String(form.get("source_link") ?? "").trim() || null,
                 };
                 if (editingViolation) await updateAirViolation(editingViolation.id, payload);
@@ -361,11 +362,14 @@ export const AirViolationsPage = () => {
               <div><Label htmlFor="create-caza">District (Caza) *</Label><Input id="create-caza" name="caza_en" required placeholder="e.g. Sour" className="mt-2" defaultValue={editingViolation?.caza_en ?? ""} /></div>
               <div><Label htmlFor="create-caza-ar">District in Arabic (optional)</Label><Input id="create-caza-ar" name="caza_ar" dir="rtl" placeholder="مثال: صور" className="mt-2" defaultValue={editingViolation?.caza_ar ?? ""} /></div>
               <div className="sm:col-span-2"><Label htmlFor="create-condition">Action *</Label><select id="create-condition" name="condition_id" required defaultValue={editingViolation?.condition_id ?? 35} className="mt-2 h-11 w-full rounded-md border border-input-border bg-input-bg px-3"><option value="35">Warplane — طيران حربي</option><option value="36">Surveillance aircraft — طيران استطلاعي</option><option value="38">Helicopter hovering — طيران مروحي</option></select></div>
-              <div><Label htmlFor="create-date">Date *</Label><Input id="create-date" name="event_date" type="date" required className="mt-2" defaultValue={editingViolation?.event_date ?? ""} /></div>
+              <div><Label htmlFor="create-date">Date *</Label><Input id="create-date" name="event_date" type="date" required className="mt-2" defaultValue={editingViolation?.event_date ?? getBeirutDate()} /></div>
               <div><Label htmlFor="create-time">Time (optional)</Label><Input id="create-time" name="event_time" type="time" className="mt-2" defaultValue={editingViolation?.event_time?.slice(0, 5) ?? ""} /></div>
             </div>
             <div><Label htmlFor="create-news">News text *</Label><textarea id="create-news" name="khabar" required rows={5} dir="auto" placeholder="Enter the complete news report" defaultValue={editingViolation?.khabar ?? ""} className="mt-2 w-full rounded-md border border-input-border bg-input-bg px-3 py-2 text-body" /></div>
-            <div><Label htmlFor="create-note-1">Internal note (optional)</Label><Input id="create-note-1" name="note_1" placeholder="Add an internal note" className="mt-2" defaultValue={editingViolation?.note_1 ?? ""} /></div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><Label htmlFor="create-note-1">Note 1 (optional)</Label><Input id="create-note-1" name="note_1" placeholder="Add note 1" className="mt-2" defaultValue={editingViolation?.note_1 ?? ""} /></div>
+              <div><Label htmlFor="create-note-2">Note 2 (optional)</Label><Input id="create-note-2" name="note_2" placeholder="Add note 2" className="mt-2" defaultValue={editingViolation?.note_2 ?? ""} /></div>
+            </div>
             <div><Label htmlFor="create-link">Source link (optional)</Label><Input id="create-link" name="source_link" type="url" placeholder="https://..." className="mt-2" defaultValue={editingViolation?.source_link ?? ""} /></div>
             {createError ? <p className="text-small font-medium text-danger" role="alert">{createError}</p> : null}
             <div className="sticky bottom-0 -mx-6 flex justify-end gap-2 border-t border-border bg-surface-raised px-6 py-4"><Button type="button" variant="secondary" onClick={closeEditor}>Cancel</Button><Button type="submit" isLoading={isCreating} loadingText={editingViolation ? "Updating" : "Creating"}>{editingViolation ? "Update" : "Create"}</Button></div>
