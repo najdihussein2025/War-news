@@ -2,6 +2,7 @@ from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.news.dtos import (
+    AirViolationCreateDTO,
     AirViolationDTO,
     AirViolationListParams,
     AirViolationListResponse,
@@ -14,12 +15,75 @@ from app.news.models import (
     RawMessage,
     Village,
 )
-from app.sources.models import Source
+from app.sources.models import Source, SourceType
 
 
 class AirViolationRepository(AirViolationRepositoryInterface):
     def __init__(self, db: Session) -> None:
         self.db = db
+
+    def create(self, payload: AirViolationCreateDTO) -> AirViolationDTO:
+        source = self.db.scalar(
+            select(Source).where(Source.external_id == "manual_air_violations")
+        )
+        if source is None:
+            source = Source(
+                type=SourceType.manual,
+                name="Manual Entry",
+                external_id="manual_air_violations",
+                config={},
+            )
+            self.db.add(source)
+            self.db.flush()
+
+        record = AirViolation(
+            condition_id=payload.condition_id,
+            source_id=source.id,
+            caza_en=payload.caza_en,
+            caza_ar=payload.caza_ar,
+            event_month=payload.event_date.strftime("%B"),
+            event_date=payload.event_date,
+            event_time=payload.event_time,
+            khabar=payload.khabar,
+            note_1=payload.note_1,
+            note_2=payload.note_2,
+            source_link=payload.source_link,
+        )
+        self.db.add(record)
+        self.db.commit()
+        detail = self.get_detail(record.id)
+        if detail is None:
+            raise RuntimeError("Created air violation could not be loaded.")
+        return detail
+
+    def update(
+        self,
+        air_violation_id: int,
+        payload: AirViolationCreateDTO,
+    ) -> AirViolationDTO | None:
+        record = self.db.get(AirViolation, air_violation_id)
+        if record is None:
+            return None
+        record.condition_id = payload.condition_id
+        record.caza_en = payload.caza_en
+        record.caza_ar = payload.caza_ar
+        record.event_month = payload.event_date.strftime("%B")
+        record.event_date = payload.event_date
+        record.event_time = payload.event_time
+        record.khabar = payload.khabar
+        record.note_1 = payload.note_1
+        record.note_2 = payload.note_2
+        record.source_link = payload.source_link
+        self.db.commit()
+        return self.get_detail(record.id)
+
+    def delete(self, air_violation_id: int) -> bool:
+        record = self.db.get(AirViolation, air_violation_id)
+        if record is None:
+            return False
+        self.db.delete(record)
+        self.db.commit()
+        return True
 
     def list_all(self, params: AirViolationListParams) -> AirViolationListResponse:
         filters = self._filters(params)

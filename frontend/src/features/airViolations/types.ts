@@ -33,3 +33,14 @@ export type AirViolationFilters = {
   eventDateTo?: string;
   cazaEn?: string;
 };
+
+export type AirViolationCreateInput = {
+  condition_id: number;
+  caza_en: string;
+  event_date: string;
+  event_time?: string | null;
+  khabar: string;
+  note_1?: string | null;
+  note_2?: string | null;
+  source_link?: string | null;
+};

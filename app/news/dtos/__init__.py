@@ -1,4 +1,5 @@
 from app.news.dtos.air_violation_dto import (
+    AirViolationCreateDTO,
     AirViolationDTO,
     AirViolationListParams,
     AirViolationListResponse,
@@ -13,6 +14,7 @@ from app.news.dtos.incident_dto import (
 from app.news.dtos.match_result_dto import MatchResultDTO, MatchResultStatus
 
 __all__ = [
+    "AirViolationCreateDTO",
     "AirViolationDTO",
     "AirViolationListParams",
     "AirViolationListResponse",

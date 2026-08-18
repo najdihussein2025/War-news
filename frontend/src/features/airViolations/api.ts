@@ -1,5 +1,19 @@
 import { apiClient } from "../../lib/apiClient";
-import type { AirViolationFilters, AirViolationListResponse } from "./types";
+import type { AirViolation, AirViolationCreateInput, AirViolationFilters, AirViolationListResponse } from "./types";
+
+export const createAirViolation = async (payload: AirViolationCreateInput): Promise<AirViolation> => {
+  const response = await apiClient.post<AirViolation>("/api/air-violations", payload);
+  return response.data;
+};
+
+export const updateAirViolation = async (id: number, payload: AirViolationCreateInput): Promise<AirViolation> => {
+  const response = await apiClient.put<AirViolation>(`/api/air-violations/${id}`, payload);
+  return response.data;
+};
+
+export const deleteAirViolation = async (id: number): Promise<void> => {
+  await apiClient.delete(`/api/air-violations/${id}`);
+};
 
 export const getAirViolations = async (
   filters: AirViolationFilters,

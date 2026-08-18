@@ -25,6 +25,18 @@ class AirViolationDTO(BaseModel):
     source_name: str
 
 
+class AirViolationCreateDTO(BaseModel):
+    condition_id: int
+    caza_en: str = Field(min_length=1)
+    caza_ar: str | None = None
+    event_date: date
+    event_time: time | None = None
+    khabar: str = Field(min_length=1)
+    note_1: str | None = None
+    note_2: str | None = None
+    source_link: str | None = None
+
+
 class AirViolationListParams(BaseModel):
     model_config = ConfigDict(frozen=True)
 

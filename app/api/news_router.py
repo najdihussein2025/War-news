@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import require_super_admin
 from app.core.database import get_db
 from app.news.dtos import (
+    AirViolationCreateDTO,
     AirViolationDTO,
     AirViolationListParams,
     AirViolationListResponse,
@@ -20,6 +21,51 @@ from app.news.services import (
 )
 
 router = APIRouter(prefix="/api/air-violations", tags=["air-violations"])
+
+
+@router.post("", response_model=AirViolationDTO, status_code=status.HTTP_201_CREATED)
+def create_air_violation(
+    payload: AirViolationCreateDTO,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(require_super_admin),
+) -> AirViolationDTO:
+    try:
+        return AirViolationService(AirViolationRepository(db)).create(payload)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+
+
+@router.put("/{air_violation_id}", response_model=AirViolationDTO)
+def update_air_violation(
+    air_violation_id: int,
+    payload: AirViolationCreateDTO,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(require_super_admin),
+) -> AirViolationDTO:
+    try:
+        return AirViolationService(AirViolationRepository(db)).update(
+            air_violation_id,
+            payload,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except AirViolationNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.delete("/{air_violation_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_air_violation(
+    air_violation_id: int,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(require_super_admin),
+) -> None:
+    try:
+        AirViolationService(AirViolationRepository(db)).delete(air_violation_id)
+    except AirViolationNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.get("", response_model=AirViolationListResponse)

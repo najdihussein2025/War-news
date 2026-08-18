@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Button, DataTable, Dialog, EmptyState, Input, Label, type DataTableColumn } from "../../../components/ui";
 import { formatDate } from "../../../lib/formatters";
 import { useAirViolationsQuery } from "../hooks";
-import { exportAirViolations } from "../api";
+import { createAirViolation, deleteAirViolation, exportAirViolations, updateAirViolation } from "../api";
 import type { AirViolation } from "../types";
 
 const PAGE_SIZE = 25;
@@ -27,6 +27,11 @@ export const AirViolationsPage = () => {
   const [importMessage, setImportMessage] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const [selectedViolation, setSelectedViolation] = useState<AirViolation | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingViolation, setEditingViolation] = useState<AirViolation | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [createError, setCreateError] = useState("");
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Number(params.get("page") ?? "1") || 1);
   const offset = (page - 1) * PAGE_SIZE;
@@ -48,7 +53,7 @@ export const AirViolationsPage = () => {
     [cazaEn, conditionId, eventDateFrom, eventDateTo, offset],
   );
 
-  const { data, isLoading, isError } = useAirViolationsQuery(filters);
+  const { data, isLoading, isError, refetch } = useAirViolationsQuery(filters);
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const rows = data?.items ?? [];
@@ -75,6 +80,12 @@ export const AirViolationsPage = () => {
   };
 
   const columns: Array<DataTableColumn<AirViolation>> = [
+    {
+      key: "number",
+      header: "#",
+      className: "w-14 tabular-nums text-text-muted",
+      render: (row) => offset + rows.indexOf(row) + 1,
+    },
     {
       key: "caza",
       header: "Caza",
@@ -155,9 +166,12 @@ export const AirViolationsPage = () => {
             />
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
           <Button type="button" variant="secondary" isLoading={isExporting} loadingText="Exporting" onClick={async () => { setIsExporting(true); setImportMessage(""); try { await exportAirViolations(); } catch { setImportMessage("Export failed. Check the API connection and try again."); } finally { setIsExporting(false); } }}>
             Export Excel
+          </Button>
+          <Button type="button" onClick={() => { setEditingViolation(null); setCreateError(""); setIsCreateOpen(true); }}>
+            Create
           </Button>
           {hasFilters ? (
             <Button type="button" variant="ghost" className="h-9" onClick={() => setParams({})}>
@@ -196,7 +210,7 @@ export const AirViolationsPage = () => {
 
       {selectedViolation ? (
         <Dialog
-          title={`Air violation #${selectedViolation.id}`}
+          title="Air violation"
           onClose={() => setSelectedViolation(null)}
           size="lg"
         >
@@ -221,6 +235,88 @@ export const AirViolationsPage = () => {
               Open original source
             </a>
           ) : null}
+          <div className="mt-6 flex justify-end gap-2 border-t border-border pt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setEditingViolation(selectedViolation);
+                setSelectedViolation(null);
+                setCreateError("");
+                setIsCreateOpen(true);
+              }}
+            >
+              Update
+            </Button>
+            <Button
+              type="button"
+              isLoading={isDeleting}
+              loadingText="Deleting"
+              onClick={async () => {
+                if (!window.confirm("Delete this air violation? This action cannot be undone.")) return;
+                setIsDeleting(true);
+                try {
+                  await deleteAirViolation(selectedViolation.id);
+                  setSelectedViolation(null);
+                  await refetch();
+                } finally {
+                  setIsDeleting(false);
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        </Dialog>
+      ) : null}
+
+      {isCreateOpen ? (
+        <Dialog title={editingViolation ? "Update air violation" : "Create air violation"} onClose={() => setIsCreateOpen(false)} size="lg">
+          <form
+            className="space-y-5"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              const form = new FormData(event.currentTarget);
+              setIsCreating(true);
+              setCreateError("");
+              try {
+                const payload = {
+                  condition_id: Number(form.get("condition_id")),
+                  caza_en: String(form.get("caza_en") ?? "").trim(),
+                  event_date: String(form.get("event_date") ?? ""),
+                  event_time: String(form.get("event_time") ?? "") || null,
+                  khabar: String(form.get("khabar") ?? "").trim(),
+                  note_1: String(form.get("note_1") ?? "").trim() || null,
+                  note_2: String(form.get("note_2") ?? "").trim() || null,
+                  source_link: String(form.get("source_link") ?? "").trim() || null,
+                };
+                if (editingViolation) await updateAirViolation(editingViolation.id, payload);
+                else await createAirViolation(payload);
+                setIsCreateOpen(false);
+                setEditingViolation(null);
+                await refetch();
+              } catch {
+                setCreateError("Could not create the air violation. Check the required fields and try again.");
+              } finally {
+                setIsCreating(false);
+              }
+            }}
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><Label htmlFor="create-caza">Caza</Label><Input id="create-caza" name="caza_en" required className="mt-2" defaultValue={editingViolation?.caza_en ?? ""} /></div>
+              <div><Label htmlFor="create-condition">Condition</Label><select id="create-condition" name="condition_id" required defaultValue={editingViolation?.condition_id ?? 35} className="mt-2 h-11 w-full rounded-md border border-input-border bg-input-bg px-3"><option value="35">Warplane</option><option value="36">Surveillance aircraft</option><option value="38">Helicopter hovering</option></select></div>
+              <div><Label htmlFor="create-date">Date</Label><Input id="create-date" name="event_date" type="date" required className="mt-2" defaultValue={editingViolation?.event_date ?? ""} /></div>
+              <div><Label htmlFor="create-time">Time</Label><Input id="create-time" name="event_time" type="time" className="mt-2" defaultValue={editingViolation?.event_time?.slice(0, 5) ?? ""} /></div>
+            </div>
+            <div><Label htmlFor="create-news">News</Label><textarea id="create-news" name="khabar" required rows={5} defaultValue={editingViolation?.khabar ?? ""} className="mt-2 w-full rounded-md border border-input-border bg-input-bg px-3 py-2 text-body" /></div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><Label htmlFor="create-note-1">Note 1</Label><Input id="create-note-1" name="note_1" className="mt-2" defaultValue={editingViolation?.note_1 ?? ""} /></div>
+              <div><Label htmlFor="create-note-2">Note 2</Label><Input id="create-note-2" name="note_2" className="mt-2" defaultValue={editingViolation?.note_2 ?? ""} /></div>
+            </div>
+            <div><Label htmlFor="create-link">Source link</Label><Input id="create-link" name="source_link" type="url" className="mt-2" defaultValue={editingViolation?.source_link ?? ""} /></div>
+            {createError ? <p className="text-small font-medium text-danger" role="alert">{createError}</p> : null}
+            <div className="flex justify-end gap-2"><Button type="button" variant="secondary" onClick={() => setIsCreateOpen(false)}>Cancel</Button><Button type="submit" isLoading={isCreating} loadingText={editingViolation ? "Updating" : "Creating"}>{editingViolation ? "Update" : "Create"}</Button></div>
+          </form>
         </Dialog>
       ) : null}
 

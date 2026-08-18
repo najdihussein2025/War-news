@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from app.news.dtos import (
+    AirViolationCreateDTO,
     AirViolationDTO,
     AirViolationListParams,
     AirViolationListResponse,
@@ -10,6 +11,18 @@ from app.news.models import RawMessage
 
 
 class AirViolationRepositoryInterface(ABC):
+    @abstractmethod
+    def create(self, payload: AirViolationCreateDTO) -> AirViolationDTO:
+        pass
+
+    @abstractmethod
+    def update(self, air_violation_id: int, payload: AirViolationCreateDTO) -> AirViolationDTO | None:
+        pass
+
+    @abstractmethod
+    def delete(self, air_violation_id: int) -> bool:
+        pass
+
     @abstractmethod
     def list_all(self, params: AirViolationListParams) -> AirViolationListResponse:
         pass
