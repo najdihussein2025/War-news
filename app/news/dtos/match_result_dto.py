@@ -9,7 +9,7 @@ class MatchResultStatus(str, Enum):
     unmatched = "unmatched"
 
 
-class MatchResultDTO(BaseModel):
+class VillageMatchResult(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     matched_village_id: int | None
@@ -17,6 +17,18 @@ class MatchResultDTO(BaseModel):
     village_match_status: MatchResultStatus
     village_review_required: bool
     raw_village_text: str | None
+
+
+class MatchResultDTO(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    # Per-village results — one entry per input village string.
+    village_matches: list[VillageMatchResult]
+
+    # Denormalised flag stored at the top level so that the DB-level
+    # low-confidence query (RawMessage.match_result["any_village_low_confidence"])
+    # stays simple and backward-compatible.
+    any_village_low_confidence: bool
 
     matched_condition_id: int | None
     condition_confidence: float | None

@@ -57,6 +57,22 @@ export const IncidentsPage = () => {
   const { data, isLoading, isError } = useIncidentsQuery(filters);
   const rows = data?.items ?? [];
   const total = data?.total ?? 0;
+
+  // Collect raw_message_ids that appear on more than one incident in the current
+  // page — these share the same source bulletin (multi-village extraction).
+  const sharedBulletinIds = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const row of rows) {
+      if (row.raw_message_id != null) {
+        counts.set(row.raw_message_id, (counts.get(row.raw_message_id) ?? 0) + 1);
+      }
+    }
+    const shared = new Set<number>();
+    for (const [id, count] of counts) {
+      if (count > 1) shared.add(id);
+    }
+    return shared;
+  }, [rows]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const flaggedCount = rows.filter((incident) => !incident.matched).length;
   const duplicateCount = rows.filter(
@@ -102,6 +118,12 @@ export const IncidentsPage = () => {
             ) : null}
           </div>
           <p className="max-w-xl text-caption text-text-muted">{row.khabar}</p>
+          {row.raw_message_id != null &&
+            sharedBulletinIds.has(row.raw_message_id) ? (
+            <p className="text-caption text-text-muted">
+              Source: same bulletin as another village on this page
+            </p>
+          ) : null}
         </div>
       ),
     },

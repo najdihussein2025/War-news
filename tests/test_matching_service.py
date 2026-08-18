@@ -9,6 +9,7 @@ from app.news.dtos import (
     MatchResultDTO,
     MatchResultStatus,
 )
+from app.news.dtos.match_result_dto import VillageMatchResult
 from app.news.services.matching_service import MatchingService
 
 
@@ -26,9 +27,11 @@ class _SimilarRepositoryStub:
 
 
 def _extraction(
-    village: str | None = "  أَيْتَا الشَّعْب  ",
+    village: list[str] | None = None,
     action: str | None = "غارة جوية",
 ) -> ExtractionResult:
+    if village is None:
+        village = ["أَيْتَا الشَّعْب"]
     return ExtractionResult(
         is_relevant=True,
         village=village,
@@ -58,10 +61,12 @@ def test_classifies_village_thresholds(
 
     result = service.match(_extraction(action=None))
 
-    assert result.matched_village_id == expected_id
-    assert result.village_confidence == score
-    assert result.village_match_status == status
-    assert result.village_review_required is review_required
+    assert len(result.village_matches) == 1
+    vm = result.village_matches[0]
+    assert vm.matched_village_id == expected_id
+    assert vm.village_confidence == score
+    assert vm.village_match_status == status
+    assert vm.village_review_required is review_required
     assert villages.calls == [("ايتا الشعب", 5)]
 
 
@@ -76,9 +81,45 @@ def test_matches_condition_and_preserves_raw_mentions() -> None:
     assert result.matched_condition_id == 22
     assert result.condition_match_status == MatchResultStatus.matched
     assert result.condition_review_required is False
-    assert result.raw_village_text is None
+    assert result.village_matches == []
     assert result.raw_condition_text == "غارة جوية"
     assert villages.calls == []
+
+
+def test_multi_village_produces_two_match_entries() -> None:
+    """Extraction with two village strings produces two VillageMatchResult entries."""
+    villages = _SimilarRepositoryStub(11, 0.75)
+    conditions = _SimilarRepositoryStub(None, None)
+    service = MatchingService(villages, conditions)
+
+    result = service.match(
+        _extraction(
+            village=["كفرتبنيت", "حرش عيتا الجبل"],
+            action=None,
+        )
+    )
+
+    assert len(result.village_matches) == 2
+    assert result.village_matches[0].raw_village_text == "كفرتبنيت"
+    assert result.village_matches[1].raw_village_text == "حرش عيتا الجبل"
+    assert result.village_matches[0].matched_village_id == 11
+    assert result.village_matches[1].matched_village_id == 11
+
+
+def test_any_village_low_confidence_flag_set_correctly() -> None:
+    """any_village_low_confidence is True iff at least one village is low-confidence."""
+    villages_lc = _SimilarRepositoryStub(11, 0.40)  # matched_low_confidence
+    conditions = _SimilarRepositoryStub(None, None)
+    service = MatchingService(villages_lc, conditions)
+
+    result = service.match(_extraction(village=["بنت جبيل"], action=None))
+
+    assert result.any_village_low_confidence is True
+
+    villages_full = _SimilarRepositoryStub(11, 0.85)  # matched
+    service2 = MatchingService(villages_full, conditions)
+    result2 = service2.match(_extraction(village=["بنت جبيل"], action=None))
+    assert result2.any_village_low_confidence is False
 
 
 def test_generic_strike_does_not_match_warning_or_feigned_without_distinguishing_words() -> (
@@ -180,11 +221,16 @@ class _RawMessageRepositoryStub:
 
 def test_action_reads_extraction_and_persists_match_result() -> None:
     expected = MatchResultDTO(
-        matched_village_id=11,
-        village_confidence=0.7,
-        village_match_status=MatchResultStatus.matched,
-        village_review_required=False,
-        raw_village_text="بنت جبيل",
+        village_matches=[
+            VillageMatchResult(
+                matched_village_id=11,
+                village_confidence=0.7,
+                village_match_status=MatchResultStatus.matched,
+                village_review_required=False,
+                raw_village_text="بنت جبيل",
+            )
+        ],
+        any_village_low_confidence=False,
         matched_condition_id=None,
         condition_confidence=0.2,
         condition_match_status=MatchResultStatus.unmatched,
@@ -194,7 +240,7 @@ def test_action_reads_extraction_and_persists_match_result() -> None:
     message = SimpleNamespace(
         id=42,
         extraction_result=_extraction(
-            village="بنت جبيل",
+            village=["بنت جبيل"],
             action="حدث غير معروف",
         ).model_dump(mode="json"),
     )
@@ -205,7 +251,7 @@ def test_action_reads_extraction_and_persists_match_result() -> None:
 
     assert result == expected
     assert service.received is not None
-    assert service.received.village == "بنت جبيل"
+    assert service.received.village == ["بنت جبيل"]
     assert repository.saved == (message, expected)
 
 

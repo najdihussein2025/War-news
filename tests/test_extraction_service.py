@@ -67,11 +67,13 @@ def _client_for_model_contents(contents: list[str]) -> OllamaChatClient:
     )
 
 
-def _general_response() -> str:
+def _general_response(*, village_value: object = None) -> str:
+    if village_value is None:
+        village_value = ["بنت جبيل"]
     return json.dumps(
         {
             "is_relevant": True,
-            "village": "بنت جبيل",
+            "village": village_value,
             "action_description": "غارة على المدينة",
             "casualties": {"injuries": 1},
         },
@@ -92,7 +94,7 @@ def test_orchestration_skips_category_detail_when_presence_gate_is_empty() -> No
 
     assert presence_gate.calls == 1
     assert category_detail.calls == []
-    assert result.village == "بنت جبيل"
+    assert result.village == ["بنت جبيل"]
     assert result.categories == {
         ExtractionCategoryKey.casualty_demographics: ExtractionCategory(
             did=None,
@@ -227,3 +229,59 @@ def test_orchestration_isolates_malformed_category_detail(caplog) -> None:
         in record.message
         for record in caplog.records
     )
+
+
+# ---------------------------------------------------------------------------
+# Task-4: multi-village extraction tests
+# ---------------------------------------------------------------------------
+
+
+def test_comma_separated_village_string_is_parsed_into_list() -> None:
+    """Model returns old-style comma-separated string → normalised to list."""
+    presence_gate = _PresenceGateStub(categories=[])
+    category_detail = _CategoryDetailStub(details={})
+    service = OllamaExtractionService(
+        client=_client_for_model_contents(
+            [_general_response(village_value="كفرتبنيت, حرش عيتا الجبل")]
+        ),
+        presence_gate=presence_gate,
+        category_detail=category_detail,
+    )
+
+    result = service.extract("sample text", raw_message_id=99)
+
+    assert result.village == ["كفرتبنيت", "حرش عيتا الجبل"]
+
+
+def test_json_array_village_is_used_as_is() -> None:
+    """Model returns a JSON array of village names → used directly."""
+    presence_gate = _PresenceGateStub(categories=[])
+    category_detail = _CategoryDetailStub(details={})
+    service = OllamaExtractionService(
+        client=_client_for_model_contents(
+            [_general_response(village_value=["بنت جبيل", "عيترون"])]
+        ),
+        presence_gate=presence_gate,
+        category_detail=category_detail,
+    )
+
+    result = service.extract("sample text", raw_message_id=99)
+
+    assert result.village == ["بنت جبيل", "عيترون"]
+
+
+def test_null_village_from_model_is_preserved_as_none() -> None:
+    """Model returns null → village is None."""
+    presence_gate = _PresenceGateStub(categories=[])
+    category_detail = _CategoryDetailStub(details={})
+    service = OllamaExtractionService(
+        client=_client_for_model_contents(
+            [_general_response(village_value=None)]
+        ),
+        presence_gate=presence_gate,
+        category_detail=category_detail,
+    )
+
+    result = service.extract("sample text", raw_message_id=99)
+
+    assert result.village is None

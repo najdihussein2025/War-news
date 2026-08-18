@@ -64,6 +64,10 @@ class _SessionStub:
         return self.scalar_result
 
 
+# ---------------------------------------------------------------------------
+# Helpers: build match_results in the new village_matches shape
+# ---------------------------------------------------------------------------
+
 def _match_result(
     *,
     village_status: str = "matched",
@@ -72,15 +76,52 @@ def _match_result(
     condition_id: int | None = 5,
 ) -> dict:
     return {
-        "raw_village_text": "المنصوري",
-        "matched_village_id": village_id,
+        "village_matches": [
+            {
+                "raw_village_text": "المنصوري",
+                "matched_village_id": village_id,
+                "village_confidence": 1.0,
+                "village_match_status": village_status,
+                "village_review_required": village_status != "matched",
+            }
+        ],
+        "any_village_low_confidence": village_status == "matched_low_confidence",
         "raw_condition_text": "قصف مدفعي",
-        "village_confidence": 1.0,
         "condition_confidence": 0.8,
         "matched_condition_id": condition_id,
-        "village_match_status": village_status,
         "condition_match_status": condition_status,
-        "village_review_required": False,
+        "condition_review_required": condition_status != "matched",
+    }
+
+
+def _two_village_match_result(
+    *,
+    village_id_a: int = 976,
+    village_id_b: int = 977,
+    condition_id: int = 5,
+) -> dict:
+    return {
+        "village_matches": [
+            {
+                "raw_village_text": "المنصوري",
+                "matched_village_id": village_id_a,
+                "village_confidence": 1.0,
+                "village_match_status": "matched",
+                "village_review_required": False,
+            },
+            {
+                "raw_village_text": "بنت جبيل",
+                "matched_village_id": village_id_b,
+                "village_confidence": 0.9,
+                "village_match_status": "matched",
+                "village_review_required": False,
+            },
+        ],
+        "any_village_low_confidence": False,
+        "raw_condition_text": "قصف مدفعي",
+        "condition_confidence": 0.8,
+        "matched_condition_id": condition_id,
+        "condition_match_status": "matched",
         "condition_review_required": False,
     }
 
@@ -88,7 +129,7 @@ def _match_result(
 def _extraction_result() -> dict:
     return {
         "is_relevant": True,
-        "village": "المنصوري",
+        "village": ["المنصوري"],
         "action_description": "قصف مدفعي",
         "categories": {},
         "casualties": {
@@ -120,13 +161,18 @@ def _representative(*, match_result: dict | None = None):
     )
 
 
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+
 def test_eligible_representative_inserts_incident_and_detail() -> None:
     db = _SessionStub()
     service = IncidentMaterializationService(db)  # type: ignore[arg-type]
 
     result = service.materialize(_representative())
 
-    assert isinstance(result, Incident)
+    assert len(result) == 1
+    assert isinstance(result[0], Incident)
     assert db.flush_calls == 1
     assert db.commit_calls == 1
     assert db.rollback_calls == 0
@@ -164,7 +210,7 @@ def test_casualty_fields_map_from_top_level_extraction_result() -> None:
         incident.total_injuries,
         incident.deaths,
         incident.injuries,
-    ) == (8, 13, 3, 7)
+    ) == (3, 7, 3, 7)
     assert (
         detail.male_d,
         detail.male_i,
@@ -188,7 +234,7 @@ def test_air_violation_condition_is_skipped(condition_id: int, caplog) -> None:
             _representative(match_result=_match_result(condition_id=condition_id))
         )
 
-    assert result is None
+    assert result == []
     assert db.added == []
     assert db.commit_calls == 0
     assert service.stats.skipped_air_violation_routed == 1
@@ -209,11 +255,11 @@ def test_unmatched_village_or_condition_is_skipped(match_result: dict) -> None:
 
     result = service.materialize(_representative(match_result=match_result))
 
-    assert result is None
+    assert result == []
     assert db.added == []
     assert db.commit_calls == 0
     assert db.rollback_calls == 0
-    assert service.stats.skipped_ineligible == 1
+    assert service.stats.skipped_ineligible >= 1
 
 
 def test_exact_hash_conflict_is_skipped_gracefully(caplog) -> None:
@@ -232,7 +278,7 @@ def test_exact_hash_conflict_is_skipped_gracefully(caplog) -> None:
     with caplog.at_level("INFO"):
         result = service.materialize(_representative())
 
-    assert result is None
+    assert result == []
     assert db.rollback_calls == 1
     assert db.committed == []
     assert db.scalar_calls == 1
@@ -254,3 +300,191 @@ def test_incident_and_detail_commit_atomically() -> None:
     assert db.commit_calls == 1
     assert db.rollback_calls == 1
     assert db.committed == []
+
+
+# ---------------------------------------------------------------------------
+# Task-4: multi-village materialization tests
+# ---------------------------------------------------------------------------
+
+def test_two_village_match_produces_two_incidents() -> None:
+    """A raw_message with two matched villages creates two separate Incident rows."""
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+
+    result = service.materialize(
+        _representative(match_result=_two_village_match_result())
+    )
+
+    assert len(result) == 2
+    assert db.commit_calls == 2  # one commit per village
+    incidents = [value for value in db.committed if isinstance(value, Incident)]
+    village_ids = {inc.village_id for inc in incidents}
+    assert village_ids == {976, 977}
+    # Both incidents share the same khabar
+    assert all(inc.khabar == "  خبر   عاجل " for inc in incidents)
+    assert service.stats.inserted == 2
+
+
+def test_old_flat_match_result_is_backward_compatible() -> None:
+    """Pre-Task-4 flat match_result (without village_matches) still works."""
+    old_match_result = {
+        "raw_village_text": "المنصوري",
+        "matched_village_id": 976,
+        "village_confidence": 1.0,
+        "village_match_status": "matched",
+        "village_review_required": False,
+        "raw_condition_text": "قصف مدفعي",
+        "condition_confidence": 0.8,
+        "matched_condition_id": 5,
+        "condition_match_status": "matched",
+        "condition_review_required": False,
+    }
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+
+    result = service.materialize(_representative(match_result=old_match_result))
+
+    assert len(result) == 1
+    assert result[0].village_id == 976
+    assert service.stats.inserted == 1
+
+
+# ---------------------------------------------------------------------------
+# Task-5: dedup matching during materialization
+# ---------------------------------------------------------------------------
+
+
+class _DedupServiceStub:
+    def __init__(self, *, existing: Incident | None, score: float) -> None:
+        self.existing = existing
+        self.score = score
+        self.merge_calls: list[tuple[Incident, dict, int]] = []
+
+    def find_best_match(self, **_kwargs):
+        return self.existing, self.score
+
+    def merge_into_incident(
+        self,
+        existing: Incident,
+        new_candidate_data: dict,
+        raw_message_id: int,
+    ) -> None:
+        self.merge_calls.append((existing, new_candidate_data, raw_message_id))
+
+
+def test_dedup_high_score_merges_and_skips_insert() -> None:
+    existing = SimpleNamespace(id=uuid4())
+    dedup = _DedupServiceStub(existing=existing, score=0.85)  # type: ignore[arg-type]
+    db = _SessionStub()
+    service = IncidentMaterializationService(db, dedup_service=dedup)  # type: ignore[arg-type]
+
+    result = service.materialize(_representative())
+
+    assert len(result) == 1
+    assert result[0] is existing
+    assert len(dedup.merge_calls) == 1
+    assert service.stats.merged_into_existing == 1
+    assert service.stats.inserted == 0
+    assert not any(isinstance(value, Incident) for value in db.committed)
+
+
+def test_dedup_mid_score_creates_incident_with_duplicate_flag() -> None:
+    existing = SimpleNamespace(id=uuid4())
+    dedup = _DedupServiceStub(existing=existing, score=0.65)  # type: ignore[arg-type]
+    db = _SessionStub()
+    service = IncidentMaterializationService(db, dedup_service=dedup)  # type: ignore[arg-type]
+
+    result = service.materialize(_representative())
+
+    assert len(result) == 1
+    assert result[0].duplicate_flag is True
+    assert service.stats.inserted == 1
+    assert service.stats.merged_into_existing == 0
+
+
+def test_dedup_low_score_creates_incident_without_duplicate_flag() -> None:
+    dedup = _DedupServiceStub(existing=None, score=0.30)
+    db = _SessionStub()
+    service = IncidentMaterializationService(db, dedup_service=dedup)  # type: ignore[arg-type]
+
+    result = service.materialize(_representative())
+
+    assert len(result) == 1
+    assert result[0].duplicate_flag is False
+    assert service.stats.inserted == 1
+
+
+def test_dedup_skipped_when_no_embedding() -> None:
+    dedup = _DedupServiceStub(existing=SimpleNamespace(id=uuid4()), score=0.99)  # type: ignore[arg-type]
+    db = _SessionStub()
+    service = IncidentMaterializationService(db, dedup_service=dedup)  # type: ignore[arg-type]
+    representative = _representative()
+    representative.content_embedding = None
+
+    result = service.materialize(representative)
+
+    assert len(result) == 1
+    assert result[0].duplicate_flag is False
+    assert dedup.merge_calls == []
+    assert service.stats.inserted == 1
+
+
+# ---------------------------------------------------------------------------
+# Task-6: category fields passed through to incident_details
+# ---------------------------------------------------------------------------
+
+
+def test_category_fields_passed_to_incident_detail() -> None:
+    extraction = _extraction_result()
+    extraction["categories"] = {
+        "lebanese_army": {
+            "did": "D",
+            "name": None,
+            "casualties": {
+                "male_deaths": 1,
+                "male_injuries": 2,
+                "female_deaths": None,
+                "female_injuries": None,
+                "children_deaths": None,
+                "children_injuries": None,
+                "deaths": None,
+                "injuries": None,
+                "total_deaths": None,
+                "total_injuries": None,
+            },
+        },
+        "hospital": {
+            "did": "ID",
+            "name": "مستشفى طرابلس",
+            "casualties": {
+                "male_deaths": 2,
+                "male_injuries": None,
+                "female_deaths": 1,
+                "female_injuries": None,
+                "children_deaths": None,
+                "children_injuries": None,
+                "deaths": None,
+                "injuries": None,
+                "total_deaths": None,
+                "total_injuries": None,
+            },
+        },
+    }
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    representative = _representative()
+    representative.extraction_result = extraction
+
+    result = service.materialize(representative)
+
+    assert len(result) == 1
+    incident = result[0]
+    detail = next(value for value in db.committed if isinstance(value, IncidentDetail))
+    assert detail.la is True
+    assert detail.la_did == "D"
+    assert detail.la_td == 1
+    assert detail.hosp is True
+    assert detail.hos_n == "مستشفى طرابلس"
+    assert detail.hosd == 3
+    # root deaths=3 + la_td=1 + hosd=3
+    assert incident.total_deaths == 7

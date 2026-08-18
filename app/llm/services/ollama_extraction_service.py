@@ -42,7 +42,7 @@ GENERAL_EXTRACTION_PROMPT = """أنت مساعد لاستخراج الحقول �
 اقرأ النص فقط، ولا تستخدم أي معرفة خارجية. إذا لم يكن النص عن حادث أمني أو عسكري في لبنان، أرجع is_relevant false واجعل باقي القيم null أو {}.
 
 إذا كان النص ذا صلة:
-- village: اسم البلدة أو المكان المذكور في الخبر إذا وُجد. غالباً يَرِد اسم البلدة أو المكان مباشرة في النص بصيغ مثل "في مدينة X" أو "في بلدة X" أو "قرب X"؛ استخرجه كلما كان مذكوراً صراحة، ولا تُرجع null إلا إذا لم يظهر أي اسم مكان في النص كله.
+- village: مصفوفة من أسماء البلدات أو الأماكن المذكورة في الخبر. إذا ورد اسم مكان واحد أرجع مصفوفة بعنصر واحد. إذا وردت أسماء أماكن متعددة أرجعها جميعاً في المصفوفة. إذا لم يظهر أي اسم مكان في النص أرجع null. لا تُرجع سلسلة نصية واحدة بل دائماً مصفوفة أو null.
 - action_description: وصف نوع العمل أو الحادث من النص فقط.
 - casualties: أعداد الضحايا العامة غير المنسوبة إلى فئة محددة، فقط إذا ذُكرت حرفياً.
 
@@ -78,7 +78,7 @@ GENERAL_EXTRACTION_RESPONSE_SCHEMA: JsonObject = {
     "additionalProperties": False,
     "properties": {
         "is_relevant": {"type": "boolean"},
-        "village": {"type": ["string", "null"]},
+        "village": {"type": ["array", "null"], "items": {"type": "string"}},
         "action_description": {"type": ["string", "null"]},
         "casualties": {
             "type": "object",
@@ -105,7 +105,8 @@ class _RawExtractionResponse(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True)
 
     is_relevant: bool = True
-    village: str | None = None
+    # Accept both old single-string responses and new array responses.
+    village: list[str] | str | None = None
     action_description: str | None = None
     casualties: ExtractionCasualties = Field(default_factory=ExtractionCasualties)
 
@@ -170,9 +171,8 @@ class OllamaExtractionService(ExtractionClassifierInterface):
 
         return ExtractionResult(
             is_relevant=general_response.is_relevant,
-            village=self._validated_text(
+            village=self._validated_village_list(
                 general_response.village,
-                field_name="village",
                 raw_message_id=raw_message_id,
             ),
             action_description=self._validated_text(
@@ -217,6 +217,20 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 exc,
             )
             raise RuntimeError("Malformed extraction response.") from exc
+
+        # Normalise village to list[str] regardless of whether the model returned
+        # a string (old-format or non-compliant) or an array.
+        village_raw = response.village
+        if isinstance(village_raw, str):
+            parts = [p.strip() for p in village_raw.split(",") if p.strip()]
+            village_norm: list[str] | None = parts if parts else None
+        elif isinstance(village_raw, list):
+            village_norm = village_raw if village_raw else None
+        else:
+            village_norm = None
+
+        if village_norm is not response.village:
+            response = response.model_copy(update={"village": village_norm})
 
         return response
 
@@ -280,6 +294,31 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             value is None
             for value in category.casualties.model_dump(mode="python").values()
         )
+
+    def _validated_village_list(
+        self,
+        villages: list[str] | None,
+        raw_message_id: int | None,
+    ) -> list[str] | None:
+        if not villages:
+            return None
+        validated: list[str] = []
+        for entry in villages:
+            if is_valid_reason_text(entry):
+                validated.append(entry)
+            else:
+                logger.warning(
+                    "Invalid village text from model=%s for raw_message_id=%s",
+                    self.client.model,
+                    raw_message_id,
+                )
+                logger.debug(
+                    "Rejected village text from model=%s for raw_message_id=%s: %r",
+                    self.client.model,
+                    raw_message_id,
+                    entry,
+                )
+        return validated if validated else None
 
     def _validated_text(
         self,

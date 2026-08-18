@@ -85,7 +85,7 @@ def main() -> None:
                     f"route_from_match did not create air_violation for "
                     f"raw_message_id={raw_message_id} "
                     f"(condition_id={result.matched_condition_id}, "
-                    f"village_id={result.matched_village_id})"
+                    f"village_matches={result.village_matches!r})"
                 )
             if before_count is not None:
                 raise RuntimeError(

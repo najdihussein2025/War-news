@@ -4,7 +4,8 @@ from datetime import datetime, timedelta, timezone
 from math import sqrt
 from typing import Any
 
-from sqlalchemy import Integer, and_, cast, select
+from sqlalchemy import Integer, and_, cast, or_, select, type_coerce
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -53,15 +54,42 @@ def match_result_value(
     return match_result.get(key)
 
 
+def village_ids_from_match_result(
+    match_result: dict[str, Any] | None,
+) -> frozenset[int]:
+    """Return all matched village IDs from either the old flat or new list shape."""
+    if not match_result:
+        return frozenset()
+
+    # New shape: village_matches list of dicts
+    village_matches = match_result.get("village_matches")
+    if isinstance(village_matches, list):
+        ids: set[int] = set()
+        for vm in village_matches:
+            if not isinstance(vm, dict):
+                continue
+            vid = vm.get("matched_village_id")
+            if isinstance(vid, int) and not isinstance(vid, bool):
+                ids.add(vid)
+        return frozenset(ids)
+
+    # Old flat shape: matched_village_id at top level
+    vid = match_result.get("matched_village_id")
+    if isinstance(vid, bool):
+        return frozenset()
+    if isinstance(vid, int):
+        return frozenset({vid})
+    return frozenset()
+
+
 def village_id_from_match_result(
     match_result: dict[str, Any] | None,
 ) -> int | None:
-    village_id = match_result_value(match_result, "matched_village_id")
-    if isinstance(village_id, bool):
+    """Return a single village ID — the smallest one — for backward-compat callers."""
+    ids = village_ids_from_match_result(match_result)
+    if not ids:
         return None
-    if isinstance(village_id, int):
-        return village_id
-    return None
+    return min(ids)
 
 
 def conditions_allow_merge(
@@ -112,9 +140,14 @@ class ClusteringService:
         )
 
     def find_candidates(self, raw_message: RawMessage) -> list[RawMessage]:
-        village_id = village_id_from_match_result(raw_message.match_result)
-        if village_id is None or raw_message.message_datetime is None:
+        village_ids = village_ids_from_match_result(raw_message.match_result)
+        if not village_ids or raw_message.message_datetime is None:
             return []
+
+        # Use the smallest village_id for the index-friendly SQL filter.
+        # A secondary in-memory filter via _are_candidates handles messages that
+        # only overlap on other village IDs.
+        village_id = min(village_ids)
 
         window = timedelta(minutes=self.time_window_minutes)
         start = raw_message.message_datetime - window
@@ -130,11 +163,25 @@ class ClusteringService:
                         RawMessage.content_embedding.is_not(None),
                         RawMessage.message_datetime >= start,
                         RawMessage.message_datetime <= end,
-                        cast(
-                            RawMessage.match_result["matched_village_id"].astext,
-                            Integer,
-                        )
-                        == village_id,
+                        or_(
+                            # Old flat shape
+                            cast(
+                                RawMessage.match_result["matched_village_id"].astext,
+                                Integer,
+                            )
+                            == village_id,
+                            # New list shape — containment check
+                            RawMessage.match_result.op("@>")(
+                                type_coerce(
+                                    {
+                                        "village_matches": [
+                                            {"matched_village_id": village_id}
+                                        ]
+                                    },
+                                    JSONB,
+                                )
+                            ),
+                        ),
                     )
                 )
                 .order_by(RawMessage.message_datetime.asc(), RawMessage.id.asc())
@@ -199,9 +246,10 @@ class ClusteringService:
         return list(grouped.values())
 
     def _are_candidates(self, left: RawMessage, right: RawMessage) -> bool:
-        left_village_id = village_id_from_match_result(left.match_result)
-        right_village_id = village_id_from_match_result(right.match_result)
-        if left_village_id is None or left_village_id != right_village_id:
+        left_ids = village_ids_from_match_result(left.match_result)
+        right_ids = village_ids_from_match_result(right.match_result)
+        # At least one village ID must be shared between the two messages.
+        if not left_ids or not right_ids or not (left_ids & right_ids):
             return False
 
         if left.message_datetime is None or right.message_datetime is None:

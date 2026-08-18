@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ExtractionCategoryKey(str, Enum):
@@ -54,8 +54,19 @@ class ExtractionResult(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     is_relevant: bool
-    village: str | None = None
+    village: list[str] | None = None
     action_description: str | None = None
+
+    @field_validator("village", mode="before")
+    @classmethod
+    def _coerce_village(cls, v: object) -> list[str] | None:
+        """Accept old-shape strings (stored before Task-4 migration) and coerce to list."""
+        if v is None:
+            return None
+        if isinstance(v, str):
+            parts = [p.strip() for p in v.split(",") if p.strip()]
+            return parts if parts else None
+        return v
     categories: dict[ExtractionCategoryKey, ExtractionCategory] = Field(
         default_factory=dict
     )

@@ -41,6 +41,7 @@ class IncidentRepository(IncidentRepositoryInterface):
         base_query = (
             select(
                 Incident.id,
+                Incident.raw_message_id,
                 func.coalesce(Village.ref_name_en, Village.cad_name).label("village"),
                 Condition.action_en.label("condition"),
                 Incident.event_date,
@@ -323,6 +324,27 @@ class IncidentRepository(IncidentRepositoryInterface):
         self.db.flush()
         return [incident.id for incident in incidents]
 
+    def soft_delete_for_village_incident(
+        self,
+        raw_message_id: int,
+        village_id: int,
+    ) -> list[UUID]:
+        """Soft-delete only the incident(s) for a specific (raw_message_id, village_id) pair."""
+        incidents = list(
+            self.db.scalars(
+                select(Incident).where(
+                    Incident.raw_message_id == raw_message_id,
+                    Incident.village_id == village_id,
+                    Incident.is_deleted.is_(False),
+                )
+            ).all()
+        )
+        for incident in incidents:
+            incident.is_deleted = True
+            self.db.add(incident)
+        self.db.flush()
+        return [incident.id for incident in incidents]
+
     def begin_nested(self) -> AbstractContextManager[object]:
         return self.db.begin_nested()
 
@@ -331,7 +353,9 @@ class IncidentRepository(IncidentRepositoryInterface):
 
     @staticmethod
     def _low_confidence_match() -> object:
+        # New shape stores a pre-computed flag; old shape stores the status directly.
         return or_(
+            RawMessage.match_result["any_village_low_confidence"].astext == "true",
             RawMessage.match_result["village_match_status"].astext
             == "matched_low_confidence",
             RawMessage.match_result["condition_match_status"].astext

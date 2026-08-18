@@ -11,7 +11,7 @@ from app.news.dtos.incident_dto import (
     IncidentListParams,
     IncidentListResponse,
 )
-from app.news.dtos.match_result_dto import MatchResultDTO, MatchResultStatus
+from app.news.dtos.match_result_dto import MatchResultDTO, MatchResultStatus, VillageMatchResult
 
 __all__ = [
     "AirViolationCreateDTO",
@@ -25,4 +25,5 @@ __all__ = [
     "IncidentListResponse",
     "MatchResultDTO",
     "MatchResultStatus",
+    "VillageMatchResult",
 ]

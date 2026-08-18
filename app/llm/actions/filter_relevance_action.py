@@ -129,27 +129,36 @@ class FilterRelevanceAction:
                     continue
 
             for message, result in zip(chunk, results, strict=True):
-                policy = policy_for_result(result)
-                # Future reviewer classifiers can be invoked here for uncertain
-                # primary results; the optional dependency is intentionally idle now.
-                if (
-                    self.reviewer_classifier is not None
-                    and policy.verdict == RelevancePolicyVerdict.uncertain
-                ):
-                    pass
-                new_status = status_for_result(result)
-                self.raw_messages.save_filter_result(
-                    message=message,
-                    result=result,
-                    new_status=new_status,
-                    needs_review=policy.needs_review,
-                )
-                if policy.verdict == RelevancePolicyVerdict.proceed:
-                    relevant += 1
-                elif policy.verdict == RelevancePolicyVerdict.reject:
-                    rejected += 1
-                else:
-                    uncertain += 1
+                try:
+                    policy = policy_for_result(result)
+                    # Future reviewer classifiers can be invoked here for uncertain
+                    # primary results; the optional dependency is intentionally idle now.
+                    if (
+                        self.reviewer_classifier is not None
+                        and policy.verdict == RelevancePolicyVerdict.uncertain
+                    ):
+                        pass
+                    new_status = status_for_result(result)
+                    self.raw_messages.save_filter_result(
+                        message=message,
+                        result=result,
+                        new_status=new_status,
+                        needs_review=policy.needs_review,
+                    )
+                    if policy.verdict == RelevancePolicyVerdict.proceed:
+                        relevant += 1
+                    elif policy.verdict == RelevancePolicyVerdict.reject:
+                        rejected += 1
+                    else:
+                        uncertain += 1
+                except Exception as exc:
+                    self.raw_messages.rollback()
+                    errored += 1
+                    logger.error(
+                        "raw_message_id=%s relevance filter save failed: %s",
+                        message.id,
+                        _format_exception(exc),
+                    )
 
         return FilterBatchSummary(
             processed=processed,

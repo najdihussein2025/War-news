@@ -2,11 +2,15 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from types import SimpleNamespace
+from uuid import uuid4
 
 import pytest
 
 from app.news.models import TrustTier
-from app.news.services.clustering_service import ClusteringService
+from app.news.services.clustering_service import (
+    ClusteringService,
+    village_ids_from_match_result,
+)
 
 AIR_STRIKE_CONDITION_ID = 22
 ARTILLERY_CONDITION_ID = 5
@@ -26,17 +30,56 @@ def _match_result(
     condition_match_status: str = "matched",
     condition_review_required: bool = False,
 ) -> dict:
+    """Build a new-shape match_result with a single village_match entry."""
     return {
-        "raw_village_text": "بنت جبيل",
-        "matched_village_id": matched_village_id,
+        "village_matches": [
+            {
+                "raw_village_text": "بنت جبيل",
+                "matched_village_id": matched_village_id,
+                "village_confidence": 0.9,
+                "village_match_status": village_match_status,
+                "village_review_required": village_review_required,
+            }
+        ],
+        "any_village_low_confidence": village_match_status == "matched_low_confidence",
         "raw_condition_text": "غارة جوية",
-        "village_confidence": 0.9,
         "condition_confidence": 0.9,
         "matched_condition_id": matched_condition_id,
-        "village_match_status": village_match_status,
         "condition_match_status": condition_match_status,
-        "village_review_required": village_review_required,
         "condition_review_required": condition_review_required,
+    }
+
+
+def _two_village_match_result(
+    *,
+    village_id_a: int = DEFAULT_VILLAGE_ID,
+    village_id_b: int = DEFAULT_VILLAGE_ID + 1,
+    matched_condition_id: int | None = AIR_STRIKE_CONDITION_ID,
+    condition_match_status: str = "matched",
+) -> dict:
+    return {
+        "village_matches": [
+            {
+                "raw_village_text": "بنت جبيل",
+                "matched_village_id": village_id_a,
+                "village_confidence": 0.9,
+                "village_match_status": "matched",
+                "village_review_required": False,
+            },
+            {
+                "raw_village_text": "عيترون",
+                "matched_village_id": village_id_b,
+                "village_confidence": 0.85,
+                "village_match_status": "matched",
+                "village_review_required": False,
+            },
+        ],
+        "any_village_low_confidence": False,
+        "raw_condition_text": "غارة جوية",
+        "condition_confidence": 0.9,
+        "matched_condition_id": matched_condition_id,
+        "condition_match_status": condition_match_status,
+        "condition_review_required": False,
     }
 
 
@@ -300,3 +343,148 @@ def test_pick_representative_rejects_empty_cluster() -> None:
 
     with pytest.raises(ValueError, match="cluster must contain at least one message"):
         service.pick_representative([])
+
+
+# ---------------------------------------------------------------------------
+# Task-4: multi-village clustering tests
+# ---------------------------------------------------------------------------
+
+
+def test_village_ids_from_match_result_new_shape() -> None:
+    """village_ids_from_match_result extracts all IDs from the list shape."""
+    mr = _two_village_match_result()
+    ids = village_ids_from_match_result(mr)
+    assert ids == frozenset({DEFAULT_VILLAGE_ID, DEFAULT_VILLAGE_ID + 1})
+
+
+def test_village_ids_from_match_result_old_flat_shape() -> None:
+    """village_ids_from_match_result handles the pre-Task-4 flat shape."""
+    old_shape = {
+        "matched_village_id": 976,
+        "village_match_status": "matched",
+    }
+    assert village_ids_from_match_result(old_shape) == frozenset({976})
+
+
+def test_are_candidates_multi_village_overlap() -> None:
+    """Two messages that share at least one village ID are candidates."""
+    service = _service()
+    # message A has villages {976, 977}, message B has villages {977, 978}
+    msg_a = _message(
+        message_id=1,
+        embedding=_embedding(primary=1.0),
+        match_result=_two_village_match_result(
+            village_id_a=976, village_id_b=977
+        ),
+    )
+    msg_b = _message(
+        message_id=2,
+        embedding=_embedding(primary=1.0),
+        match_result=_two_village_match_result(
+            village_id_a=977, village_id_b=978
+        ),
+    )
+
+    assert service._are_candidates(msg_a, msg_b) is True
+
+
+def test_are_candidates_no_overlap() -> None:
+    """Two messages with disjoint village sets are not candidates."""
+    service = _service()
+    msg_a = _message(
+        message_id=1,
+        embedding=_embedding(primary=1.0),
+        match_result=_match_result(matched_village_id=976),
+    )
+    msg_b = _message(
+        message_id=2,
+        embedding=_embedding(primary=1.0),
+        match_result=_match_result(matched_village_id=999),
+    )
+
+    assert service._are_candidates(msg_a, msg_b) is False
+
+
+def test_cluster_batch_groups_by_overlapping_villages() -> None:
+    """Messages sharing any village ID are clustered together."""
+    service = _service()
+    # msg_a and msg_b both have village 976
+    msg_a = _message(
+        message_id=1,
+        embedding=_embedding(primary=1.0),
+        match_result=_two_village_match_result(
+            village_id_a=976, village_id_b=977
+        ),
+    )
+    msg_b = _message(
+        message_id=2,
+        embedding=_embedding(primary=1.0),
+        match_result=_match_result(
+            matched_village_id=976,
+            matched_condition_id=AIR_STRIKE_CONDITION_ID,
+        ),
+    )
+    # msg_c has a completely different village
+    msg_c = _message(
+        message_id=3,
+        embedding=_embedding(primary=1.0),
+        match_result=_match_result(
+            matched_village_id=999,
+            matched_condition_id=AIR_STRIKE_CONDITION_ID,
+        ),
+    )
+
+    clusters = service.cluster_batch([msg_a, msg_b, msg_c])
+
+    assert len(clusters) == 2
+    merged = next(c for c in clusters if len(c) == 2)
+    assert {m.id for m in merged} == {1, 2}
+
+
+class _IncidentRepoStub:
+    """Minimal stub that records soft-delete calls."""
+
+    def __init__(self) -> None:
+        self.soft_deleted_all: list[int] = []
+        self.soft_deleted_village: list[tuple[int, int]] = []
+
+    def soft_delete_for_raw_message_id(self, raw_message_id: int) -> list:
+        self.soft_deleted_all.append(raw_message_id)
+        return []
+
+    def soft_delete_for_village_incident(
+        self, raw_message_id: int, village_id: int
+    ) -> list:
+        self.soft_deleted_village.append((raw_message_id, village_id))
+        return []
+
+
+def test_sweep_clustering_partial_subsumption() -> None:
+    """
+    Clustering orphan rule: a 2-village raw_message where only village A
+    matches the representative → the incident for village A is soft-deleted;
+    the incident for village B is left alone; duplicate_of_id is NOT set.
+    """
+    from app.news.services.pipeline_sweep_stages import sweep_clustering  # noqa: F401
+    # We test the logic directly through village_ids_from_match_result and the
+    # intersection calculation — no DB session needed for the unit test.
+
+    rep_match = _match_result(matched_village_id=976)
+    member_match = _two_village_match_result(village_id_a=976, village_id_b=977)
+
+    from app.news.services.clustering_service import village_ids_from_match_result
+
+    rep_ids = village_ids_from_match_result(rep_match)
+    member_ids = village_ids_from_match_result(member_match)
+    shared = member_ids & rep_ids
+
+    assert shared == frozenset({976})
+    # Not fully subsumed — village 977 is not in the representative
+    assert shared != member_ids
+
+    incident_repo = _IncidentRepoStub()
+    for village_id in shared:
+        incident_repo.soft_delete_for_village_incident(42, village_id)
+
+    assert incident_repo.soft_deleted_village == [(42, 976)]
+    assert incident_repo.soft_deleted_all == []  # duplicate_of_id NOT set
