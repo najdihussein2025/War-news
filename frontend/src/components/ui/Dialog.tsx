@@ -63,33 +63,41 @@ export const Dialog = ({ title, children, onClose, size = "md" }: DialogProps) =
   return createPortal(
     <div
       className={cn(
-        "fixed inset-0 z-50 flex bg-gray-900/40 p-4",
+        "fixed inset-0 z-50 flex bg-gray-950/65 p-4 backdrop-blur-sm",
         size === "panel" ? "justify-end p-0" : "items-center justify-center",
       )}
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
     >
       <section
         ref={dialogRef}
         className={cn(
-          "w-full overflow-y-auto rounded-lg border border-border bg-surface-raised p-6 shadow-overlay",
+          "flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-xl border-2 border-border bg-surface-raised shadow-overlay",
           sizeClasses[size],
         )}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
       >
-        <div className="flex items-center justify-between gap-4">
-          <h2 id={titleId} className="text-h4 font-semibold text-text-primary">
+        <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border bg-surface-raised px-6 py-4">
+          <div>
+            <p className="text-caption font-semibold uppercase tracking-wide text-accent">View details</p>
+            <h2 id={titleId} className="mt-1 text-h4 font-semibold text-text-primary">
             {title}
-          </h2>
+            </h2>
+          </div>
           <button
             type="button"
-            className="rounded-md px-2 py-1 text-small font-semibold text-text-muted transition-colors duration-150 ease-out hover:bg-surface-muted hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+            className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-surface px-2 text-caption font-semibold text-text-primary transition-colors duration-150 ease-out hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
             onClick={onClose}
+            aria-label="Close details"
           >
+            <span aria-hidden="true" className="text-base leading-none">×</span>
             Close
           </button>
         </div>
-        <div className="mt-5">{children}</div>
+        <div className="min-h-0 overflow-y-auto px-6 py-5">{children}</div>
       </section>
     </div>,
     document.body,

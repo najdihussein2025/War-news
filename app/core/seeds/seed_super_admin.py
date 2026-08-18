@@ -1,3 +1,5 @@
+import os
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -6,8 +8,8 @@ from app.core.config import settings
 from app.accounts.models import Role, RoleName, User
 from app.accounts.services.auth_service import password_context
 
-SUPER_ADMIN_USERNAME = "superadmin"
-SUPER_ADMIN_FULL_NAME = "Super Admin"
+DEFAULT_SUPER_ADMIN_USERNAME = "superadmin"
+DEFAULT_SUPER_ADMIN_FULL_NAME = "Super Admin"
 
 
 def _ensure_roles(db: Session) -> dict[RoleName, Role]:
@@ -31,16 +33,18 @@ def _ensure_roles(db: Session) -> dict[RoleName, Role]:
 def seed_super_admin(db: Session) -> tuple[User, bool]:
     roles = _ensure_roles(db)
     super_admin_role = roles[RoleName.super_admin]
+    username = os.getenv("SUPER_ADMIN_SEED_USERNAME", DEFAULT_SUPER_ADMIN_USERNAME)
+    full_name = os.getenv("SUPER_ADMIN_SEED_FULL_NAME", DEFAULT_SUPER_ADMIN_FULL_NAME)
 
-    user = db.scalar(select(User).where(User.username == SUPER_ADMIN_USERNAME))
+    user = db.scalar(select(User).where(User.username == username))
     inserted = user is None
 
     if user is None:
-        user = User(username=SUPER_ADMIN_USERNAME)
+        user = User(username=username)
         db.add(user)
 
     user.password_hash = password_context.hash(settings.super_admin_seed_password)
-    user.full_name = SUPER_ADMIN_FULL_NAME
+    user.full_name = full_name
     user.role_id = super_admin_role.id
     user.is_active = True
     user.created_by_id = None

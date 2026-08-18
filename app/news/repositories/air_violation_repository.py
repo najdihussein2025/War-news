@@ -1,4 +1,4 @@
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.news.dtos import (
@@ -42,10 +42,21 @@ class AirViolationRepository(AirViolationRepositoryInterface):
                 AirViolation.created_at,
                 Condition.action_en,
                 Condition.action_ar,
-                Source.name.label("source_name"),
+                case(
+                    (
+                        RawMessage.id.is_not(None),
+                        func.coalesce(
+                            func.nullif(RawMessage.origin_account, "CNRS Webhook"),
+                            func.nullif(RawMessage.source_name, "CNRS Webhook"),
+                            "Unknown source",
+                        ),
+                    ),
+                    else_=Source.name,
+                ).label("source_name"),
             )
             .join(Condition, Condition.id == AirViolation.condition_id)
             .join(Source, Source.id == AirViolation.source_id)
+            .outerjoin(RawMessage, RawMessage.id == AirViolation.raw_message_id)
             .where(*filters)
         )
 
@@ -91,10 +102,21 @@ class AirViolationRepository(AirViolationRepositoryInterface):
                 AirViolation.created_at,
                 Condition.action_en,
                 Condition.action_ar,
-                Source.name.label("source_name"),
+                case(
+                    (
+                        RawMessage.id.is_not(None),
+                        func.coalesce(
+                            func.nullif(RawMessage.origin_account, "CNRS Webhook"),
+                            func.nullif(RawMessage.source_name, "CNRS Webhook"),
+                            "Unknown source",
+                        ),
+                    ),
+                    else_=Source.name,
+                ).label("source_name"),
             )
             .join(Condition, Condition.id == AirViolation.condition_id)
             .join(Source, Source.id == AirViolation.source_id)
+            .outerjoin(RawMessage, RawMessage.id == AirViolation.raw_message_id)
             .where(AirViolation.id == air_violation_id)
         ).one_or_none()
         if row is None:

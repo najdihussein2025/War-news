@@ -14,7 +14,6 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-do
 import { ROLES } from "../constants/roles";
 import { cn } from "../lib/cn";
 import { useAuthStore } from "../stores/authStore";
-import { Button } from "../components/ui";
 import { logout as revokeSession } from "../features/auth/api";
 
 type IconComponent = ComponentType<{ className?: string }>;
@@ -90,14 +89,6 @@ const LogsIcon = ({ className }: { className?: string }) => (
   </IconBase>
 );
 
-const ExportIcon = ({ className }: { className?: string }) => (
-  <IconBase className={className}>
-    <path d="M12 3v12" />
-    <path d="m8 11 4 4 4-4" />
-    <path d="M5 19h14" />
-  </IconBase>
-);
-
 const AccountsIcon = ({ className }: { className?: string }) => (
   <IconBase className={className}>
     <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
@@ -147,11 +138,6 @@ const adminNavItems: NavItem[] = [
     path: "incidents",
     icon: IncidentsIcon,
   },
-  {
-    label: "Export",
-    path: "export",
-    icon: ExportIcon,
-  },
 ];
 
 const superAdminNavItems: NavItem[] = [
@@ -181,11 +167,6 @@ const superAdminNavItems: NavItem[] = [
     icon: LogsIcon,
   },
   {
-    label: "Export",
-    path: "export",
-    icon: ExportIcon,
-  },
-  {
     label: "Accounts",
     path: "accounts",
     icon: AccountsIcon,
@@ -198,7 +179,6 @@ const pageMeta = [
   { match: (pathname: string) => pathname.includes("/incidents"), title: "Incidents" },
   { match: (pathname: string) => pathname.includes("/sources"), title: "Sources" },
   { match: (pathname: string) => pathname.includes("/logs"), title: "Logs" },
-  { match: (pathname: string) => pathname.includes("/export"), title: "Export", action: "Export" },
   { match: (pathname: string) => pathname.startsWith("/superadmin/accounts"), title: "Accounts" },
 ];
 
@@ -455,11 +435,7 @@ export const AppShell = ({ previewRole }: { previewRole?: string }) => {
                 <h1 className="text-h2 font-semibold text-text-primary">{meta.title}</h1>
                 {titleAddon}
               </div>
-              {pageAction ?? (meta.action ? (
-                <Button type="button" className="w-full sm:w-auto">
-                  {meta.action}
-                </Button>
-              ) : null)}
+              {pageAction}
             </div>
             <ShellContext.Provider value={shellContext}>
               <Outlet />

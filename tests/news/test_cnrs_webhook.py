@@ -23,6 +23,7 @@ class _WebhookSourceRepository:
     seen: set[tuple[int, str]] = set()
     blocked_sources: set[tuple[str, str]] = set()
     ingestion_logs: list[dict] = []
+    missing_source_ids: set[int] = set()
 
     def __init__(self, db=None) -> None:
         self.db = db
@@ -33,12 +34,17 @@ class _WebhookSourceRepository:
         cls.seen = set()
         cls.blocked_sources = set()
         cls.ingestion_logs = []
+        cls.missing_source_ids = set()
 
     def get_by_id(self, source_id: int):
+        if source_id in self.missing_source_ids:
+            return None
         return SimpleNamespace(id=source_id, name="CNRS Webhook")
 
     def get_active_by_external_id(self, external_id: str):
-        raise NotImplementedError
+        if external_id == "cnrs_webhook":
+            return SimpleNamespace(id=3, name="CNRS Webhook")
+        return None
 
     def add_raw_message(self, raw_message: RawMessage) -> None:
         key = (raw_message.source_id, raw_message.external_message_id or "")
@@ -110,6 +116,8 @@ def _payload(external_message_id: str = "cnrs-1") -> dict[str, str]:
         "external_message_id": external_message_id,
         "message_datetime": "2026-08-13T10:20:30+00:00",
         "raw_text": "Post text",
+        "source_platform": "telegram",
+        "source_name": "test-channel",
         "extra_field": "preserved",
     }
 
@@ -164,6 +172,21 @@ def test_valid_secret_single_post_returns_202_and_writes_raw_message() -> None:
     assert message.raw_text == "Post text"
     assert message.raw_payload["extra_field"] == "preserved"
     assert message.message_datetime == datetime(2026, 8, 13, 10, 20, 30, tzinfo=timezone.utc)
+
+
+def test_stale_source_id_falls_back_to_active_cnrs_source() -> None:
+    client = _client()
+    _WebhookSourceRepository.missing_source_ids = {5}
+
+    response = client.post(
+        "/webhooks/cnrs-posts?source_id=5",
+        headers=_headers(),
+        json=_payload("stale-source-id"),
+    )
+
+    assert response.status_code == 202
+    assert response.json() == {"received": 1, "saved": 1, "duplicates": 0, "blocked": 0}
+    assert _WebhookSourceRepository.messages[0].source_id == 3
 
 
 def test_webhook_writes_one_ingestion_log_with_counts() -> None:
@@ -277,6 +300,24 @@ def test_malformed_payload_missing_external_message_id_returns_422() -> None:
         json={
             "message_datetime": "2026-08-13T10:20:30+00:00",
             "raw_text": "Post text",
+        },
+    )
+
+    assert response.status_code == 422
+    assert _WebhookSourceRepository.messages == []
+
+
+def test_payload_missing_source_name_returns_422_instead_of_generic_fallback() -> None:
+    client = _client()
+
+    response = client.post(
+        "/webhooks/cnrs-posts?source_id=48",
+        headers=_headers(),
+        json={
+            "external_message_id": "telegram:missing-origin",
+            "message_datetime": "2026-08-13T10:20:30+00:00",
+            "raw_text": "Post text",
+            "source_platform": "telegram",
         },
     )
 

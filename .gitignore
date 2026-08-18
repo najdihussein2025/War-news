@@ -8,3 +8,5 @@ __pycache__/
 node_modules/
 dist/
 *.log
+Data/*.dump
+Data/pgadmin4-*.db

@@ -1,9 +1,9 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Button, DataTable, EmptyState, Input, Label, type DataTableColumn } from "../../../components/ui";
+import { Button, DataTable, Dialog, EmptyState, Input, Label, type DataTableColumn } from "../../../components/ui";
 import { formatDate } from "../../../lib/formatters";
 import { useAirViolationsQuery } from "../hooks";
-import { exportAirViolations, importAirViolations } from "../api";
+import { exportAirViolations } from "../api";
 import type { AirViolation } from "../types";
 
 const PAGE_SIZE = 25;
@@ -24,10 +24,9 @@ const TextCell = ({ value }: { value: string | null }) => (
 );
 
 export const AirViolationsPage = () => {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [importMessage, setImportMessage] = useState("");
-  const [isImporting, setIsImporting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [selectedViolation, setSelectedViolation] = useState<AirViolation | null>(null);
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Number(params.get("page") ?? "1") || 1);
   const offset = (page - 1) * PAGE_SIZE;
@@ -49,7 +48,7 @@ export const AirViolationsPage = () => {
     [cazaEn, conditionId, eventDateFrom, eventDateTo, offset],
   );
 
-  const { data, isLoading, isError, refetch } = useAirViolationsQuery(filters);
+  const { data, isLoading, isError } = useAirViolationsQuery(filters);
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const rows = data?.items ?? [];
@@ -83,76 +82,35 @@ export const AirViolationsPage = () => {
       sortValue: (row) => row.caza_en ?? row.caza_ar ?? "",
     },
     {
-      key: "month",
-      header: "Month",
-      render: (row) => row.event_month || emptyText,
-      sortValue: (row) => row.event_month ?? "",
-    },
-    {
       key: "action-en",
-      header: "Action_E",
+      header: "Action",
       render: (row) => <TextCell value={row.action_en} />,
       sortValue: (row) => row.action_en,
     },
     {
-      key: "action-ar",
-      header: "Action_A",
-      render: (row) => <span className="block max-w-sm whitespace-pre-wrap text-right text-text-primary" dir="rtl" lang="ar">{row.action_ar || emptyText}</span>,
-      sortValue: (row) => row.action_ar,
-    },
-    {
-      key: "khabar",
-      header: "Khabar",
-      render: (row) => <TextCell value={row.khabar} />,
+      key: "news",
+      header: "News",
+      render: (row) => {
+        const news = row.khabar.replace(/\s+/g, " ").trim();
+        return <span className="block max-w-md text-text-primary">{news.length > 110 ? `${news.slice(0, 110)}…` : news}</span>;
+      },
       sortValue: (row) => row.khabar,
     },
     {
-      key: "source",
-      header: "Source",
-      render: (row) => row.source_name,
-      sortValue: (row) => row.source_name,
-    },
-    {
-      key: "time",
-      header: "Time",
-      render: (row) => formatTime(row.event_time),
-      sortValue: (row) => row.event_time ?? "",
-    },
-    {
       key: "date",
-      header: "Date",
-      render: (row) => formatDate(row.event_date),
+      header: "Date / Time",
+      render: (row) => `${formatDate(row.event_date)} · ${formatTime(row.event_time)}`,
       sortValue: (row) => new Date(row.event_date).getTime(),
     },
     {
-      key: "note-1",
-      header: "Note 1",
-      render: (row) => <TextCell value={row.note_1} />,
-      sortValue: (row) => row.note_1 ?? "",
-    },
-    {
-      key: "note-2",
-      header: "Note 2",
-      render: (row) => <TextCell value={row.note_2} />,
-      sortValue: (row) => row.note_2 ?? "",
-    },
-    {
-      key: "link",
-      header: "Link",
-      render: (row) =>
-        row.source_link ? (
-          <a
-            className="font-semibold text-accent underline-offset-4 hover:underline"
-            href={row.source_link}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Open
-          </a>
-        ) : (
-          emptyText
-        ),
-      sortValue: (row) => row.source_link ?? "",
+      key: "details",
+      header: "Details",
+      className: "w-32",
+      render: (row) => (
+        <Button type="button" variant="secondary" className="h-9 whitespace-nowrap" onClick={() => setSelectedViolation(row)}>
+          View details
+        </Button>
+      ),
     },
   ];
 
@@ -170,7 +128,7 @@ export const AirViolationsPage = () => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="air-condition-filter">Condition ID</Label>
+            <Label htmlFor="air-condition-filter">Condition</Label>
             <select
               id="air-condition-filter"
               className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3 text-body text-text-primary"
@@ -198,31 +156,6 @@ export const AirViolationsPage = () => {
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <input
-            ref={fileInputRef}
-            className="hidden"
-            type="file"
-            accept=".xlsx"
-            onChange={async (event) => {
-              const file = event.target.files?.[0];
-              if (!file) return;
-              setIsImporting(true);
-              setImportMessage("");
-              try {
-                const result = await importAirViolations(file);
-                setImportMessage(`${result.imported} imported, ${result.skipped} skipped, ${result.failed} failed`);
-                await refetch();
-              } catch {
-                setImportMessage("Import failed. Check that the workbook uses the required template.");
-              } finally {
-                setIsImporting(false);
-                event.target.value = "";
-              }
-            }}
-          />
-          <Button type="button" isLoading={isImporting} loadingText="Importing" onClick={() => fileInputRef.current?.click()}>
-            Import Excel
-          </Button>
           <Button type="button" variant="secondary" isLoading={isExporting} loadingText="Exporting" onClick={async () => { setIsExporting(true); setImportMessage(""); try { await exportAirViolations(); } catch { setImportMessage("Export failed. Check the API connection and try again."); } finally { setIsExporting(false); } }}>
             Export Excel
           </Button>
@@ -241,7 +174,7 @@ export const AirViolationsPage = () => {
         getRowKey={(row) => String(row.id)}
         loading={isLoading}
         error={isError}
-        minWidth="1320px"
+        minWidth="100%"
         clientSort={false}
         emptyState={
           <EmptyState
@@ -260,6 +193,36 @@ export const AirViolationsPage = () => {
           />
         }
       />
+
+      {selectedViolation ? (
+        <Dialog
+          title={`Air violation #${selectedViolation.id}`}
+          onClose={() => setSelectedViolation(null)}
+          size="lg"
+        >
+          <dl className="grid gap-5 sm:grid-cols-2">
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Caza</dt><dd className="mt-1">{selectedViolation.caza_en || selectedViolation.caza_ar || emptyText}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Month</dt><dd className="mt-1">{selectedViolation.event_month || emptyText}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Action (English)</dt><dd className="mt-1">{selectedViolation.action_en}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Action (Arabic)</dt><dd className="mt-1 text-right" dir="rtl" lang="ar">{selectedViolation.action_ar}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Original source</dt><dd className="mt-1">{selectedViolation.source_name}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Date and time</dt><dd className="mt-1">{formatDate(selectedViolation.event_date)} at {formatTime(selectedViolation.event_time)}</dd></div>
+          </dl>
+          <div className="mt-5 rounded-md border border-border bg-surface p-4">
+            <p className="text-caption font-semibold uppercase text-text-muted">News</p>
+            <p className="mt-2 whitespace-pre-wrap text-body text-text-primary" dir="auto">{selectedViolation.khabar}</p>
+          </div>
+          <dl className="mt-5 grid gap-5 sm:grid-cols-2">
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Note 1</dt><dd className="mt-1 whitespace-pre-wrap">{selectedViolation.note_1 || emptyText}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Note 2</dt><dd className="mt-1 whitespace-pre-wrap">{selectedViolation.note_2 || emptyText}</dd></div>
+          </dl>
+          {selectedViolation.source_link ? (
+            <a className="mt-5 inline-block font-semibold text-accent underline-offset-4 hover:underline" href={selectedViolation.source_link} target="_blank" rel="noreferrer">
+              Open original source
+            </a>
+          ) : null}
+        </Dialog>
+      ) : null}
 
       {total > PAGE_SIZE ? (
         <div className="flex items-center justify-between gap-3">

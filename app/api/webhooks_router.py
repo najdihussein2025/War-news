@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, Query, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.sources.actions import ReceiveCnrsWebhookAction
@@ -19,8 +19,18 @@ router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 )
 def receive_cnrs_posts(
     payload: Annotated[CnrsWebhookPayload, Body()],
-    source_id: Annotated[int, Query(gt=0)],
+    source_id: Annotated[int | None, Query(gt=0)] = None,
     db: Session = Depends(get_db),
 ) -> dict[str, int]:
-    action = ReceiveCnrsWebhookAction(sources=SourceRepository(db))
-    return action.execute(payload=payload, source_id=source_id)
+    sources = SourceRepository(db)
+    source = sources.get_by_id(source_id) if source_id is not None else None
+    if source is None:
+        source = sources.get_active_by_external_id("cnrs_webhook")
+    if source is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Active CNRS webhook source is not configured.",
+        )
+
+    action = ReceiveCnrsWebhookAction(sources=sources)
+    return action.execute(payload=payload, source_id=source.id)

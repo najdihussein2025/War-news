@@ -20,6 +20,14 @@ import type { ContentSource, ContentSourceDetail } from "../types";
 const numberFormatter = new Intl.NumberFormat();
 const CONTENT_SOURCE_PAGE_SIZE = 25;
 const GENERIC_SOURCE_NAME = "CNRS Webhook";
+type SourceFilter = "all" | "active" | "paused";
+
+const getFreshness = (lastSeen: string) => {
+  const ageHours = (Date.now() - new Date(lastSeen).getTime()) / 3_600_000;
+  if (ageHours <= 24) return { label: "Live", variant: "success" as const };
+  if (ageHours <= 168) return { label: "Stale", variant: "warning" as const };
+  return { label: "Offline", variant: "danger" as const };
+};
 
 const formatNewsAge = (value: string | null) => {
   if (!value) {
@@ -73,46 +81,12 @@ const DetailItem = ({ label, children }: { label: string; children: ReactNode })
   </div>
 );
 
-type ContentSourceToggleProps = {
-  contentSource: Pick<
-    ContentSource,
-    "source_platform" | "origin_account" | "is_blocked"
-  >;
-};
-
-const ContentSourceToggle = ({ contentSource }: ContentSourceToggleProps) => {
-  const blockMutation = useSetContentSourceBlockedMutation();
-  const isThisSourceUpdating =
-    blockMutation.isPending &&
-    blockMutation.variables?.sourcePlatform === contentSource.source_platform &&
-    blockMutation.variables?.originAccount === contentSource.origin_account;
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <StatusBadge
-        label={contentSource.is_blocked ? "Paused" : "Active"}
-        variant={contentSource.is_blocked ? "warning" : "success"}
-      />
-      <Button
-        type="button"
-        variant="secondary"
-        className="h-8 px-3"
-        disabled={blockMutation.isPending && !isThisSourceUpdating}
-        isLoading={isThisSourceUpdating}
-        loadingText={contentSource.is_blocked ? "Resuming" : "Pausing"}
-        onClick={() =>
-          blockMutation.mutate({
-            sourcePlatform: contentSource.source_platform,
-            originAccount: contentSource.origin_account,
-            isBlocked: !contentSource.is_blocked,
-          })
-        }
-      >
-        {contentSource.is_blocked ? "Resume" : "Pause"}
-      </Button>
-    </div>
-  );
-};
+const ContentSourceStatus = ({ isBlocked }: { isBlocked: boolean }) => (
+  <StatusBadge
+    label={isBlocked ? "Paused" : "Active"}
+    variant={isBlocked ? "warning" : "success"}
+  />
+);
 
 const MessageSnippet = ({ text }: { text: string | null }) => {
   if (!text?.trim()) {
@@ -127,7 +101,10 @@ const MessageSnippet = ({ text }: { text: string | null }) => {
   );
 };
 
-const ContentSourceDetails = ({ detail }: { detail: ContentSourceDetail }) => (
+const ContentSourceDetails = ({ detail }: { detail: ContentSourceDetail }) => {
+  const blockMutation = useSetContentSourceBlockedMutation();
+
+  return (
   <div className="space-y-6">
     <dl className="grid gap-5 sm:grid-cols-2">
       <DetailItem label="Source Name">{detail.source_name}</DetailItem>
@@ -135,7 +112,25 @@ const ContentSourceDetails = ({ detail }: { detail: ContentSourceDetail }) => (
         <StatusBadge label={formatPlatform(detail.source_platform)} variant="accent" />
       </DetailItem>
       <DetailItem label="Status">
-        <ContentSourceToggle contentSource={detail} />
+        <div className="flex flex-wrap items-center gap-2">
+          <ContentSourceStatus isBlocked={detail.is_blocked} />
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-8 px-3"
+            isLoading={blockMutation.isPending}
+            loadingText={detail.is_blocked ? "Resuming" : "Pausing"}
+            onClick={() =>
+              blockMutation.mutate({
+                sourcePlatform: detail.source_platform,
+                originAccount: detail.origin_account,
+                isBlocked: !detail.is_blocked,
+              })
+            }
+          >
+            {detail.is_blocked ? "Resume" : "Pause"}
+          </Button>
+        </div>
       </DetailItem>
       <DetailItem label="Origin Account">{detail.origin_account}</DetailItem>
       <DetailItem label="Total News">
@@ -153,7 +148,7 @@ const ContentSourceDetails = ({ detail }: { detail: ContentSourceDetail }) => (
       </h3>
       {detail.recent_messages.length > 0 ? (
         <ol className="mt-3 space-y-3">
-          {detail.recent_messages.map((message) => (
+          {detail.recent_messages.slice(0, 3).map((message) => (
             <li
               className="rounded-md border border-border bg-surface px-3 py-3"
               key={message.id}
@@ -172,10 +167,12 @@ const ContentSourceDetails = ({ detail }: { detail: ContentSourceDetail }) => (
       )}
     </div>
   </div>
-);
+  );
+};
 
 export const SourcesPage = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<SourceFilter>("all");
   const [contentSearch, setContentSearch] = useState("");
   const [contentPage, setContentPage] = useState(1);
   const [selectedContentSource, setSelectedContentSource] =
@@ -190,8 +187,6 @@ export const SourcesPage = () => {
     selectedContentSource?.source_platform ?? null,
     selectedContentSource?.origin_account ?? null,
   );
-  const blockMutation = useSetContentSourceBlockedMutation();
-
   const allContentSources = useMemo(
     () =>
       (allContentSourcesQuery.data ?? []).filter(
@@ -210,12 +205,34 @@ export const SourcesPage = () => {
     [allContentSources],
   );
 
+  const platformCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        platformOptions.map((platform) => [
+          platform,
+          allContentSources.filter((source) => source.source_platform === platform).length,
+        ]),
+      ),
+    [allContentSources, platformOptions],
+  );
+
+  const summary = useMemo(() => ({
+    total: allContentSources.length,
+    active: allContentSources.filter((source) => !source.is_blocked).length,
+    paused: allContentSources.filter((source) => source.is_blocked).length,
+    reporting: allContentSources.filter((source) => getFreshness(source.last_seen).label === "Live").length,
+  }), [allContentSources]);
+
   const contentSources = useMemo(
     () =>
       (contentSourcesQuery.data ?? []).filter(
         (contentSource) => contentSource.source_name !== GENERIC_SOURCE_NAME,
-      ),
-    [contentSourcesQuery.data],
+      ).filter((contentSource) => {
+        if (selectedStatus === "active") return !contentSource.is_blocked;
+        if (selectedStatus === "paused") return contentSource.is_blocked;
+        return true;
+      }).sort((a, b) => a.source_name.localeCompare(b.source_name)),
+    [contentSourcesQuery.data, selectedStatus],
   );
   const totalContentPages = Math.max(
     1,
@@ -230,7 +247,7 @@ export const SourcesPage = () => {
 
   useEffect(() => {
     setContentPage(1);
-  }, [selectedPlatform, debouncedContentSearch]);
+  }, [selectedPlatform, selectedStatus, debouncedContentSearch]);
 
   useEffect(() => {
     if (contentPage > totalContentPages) {
@@ -244,7 +261,11 @@ export const SourcesPage = () => {
       header: "#",
       className: "w-16 tabular-nums text-text-muted",
       render: (contentSource) =>
-        numberFormatter.format(contentSources.indexOf(contentSource) + 1),
+        numberFormatter.format(
+          (contentPage - 1) * CONTENT_SOURCE_PAGE_SIZE
+            + paginatedContentSources.indexOf(contentSource)
+            + 1,
+        ),
     },
     {
       key: "source-name",
@@ -270,7 +291,7 @@ export const SourcesPage = () => {
     {
       key: "status",
       header: "Status",
-      render: (contentSource) => <ContentSourceToggle contentSource={contentSource} />,
+      render: (contentSource) => <ContentSourceStatus isBlocked={contentSource.is_blocked} />,
       sortValue: (contentSource) => contentSource.is_blocked,
     },
     {
@@ -300,11 +321,19 @@ export const SourcesPage = () => {
           </p>
         </div>
 
-        {blockMutation.isError ? (
-          <p className="text-small font-medium text-danger" role="alert">
-            The content source status could not be updated. Its previous status has been restored.
-          </p>
-        ) : null}
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            ["Total sources", summary.total],
+            ["Active", summary.active],
+            ["Paused", summary.paused],
+            ["Reporting in 24h", summary.reporting],
+          ].map(([label, value]) => (
+            <div className="rounded-lg border border-border bg-surface-raised px-4 py-3" key={label}>
+              <p className="text-caption font-semibold uppercase text-text-muted">{label}</p>
+              <p className="mt-1 text-h3 font-semibold tabular-nums text-text-primary">{numberFormatter.format(Number(value))}</p>
+            </div>
+          ))}
+        </div>
 
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-2">
@@ -314,7 +343,7 @@ export const SourcesPage = () => {
               className="h-9 px-3"
               onClick={() => setSelectedPlatform(null)}
             >
-              All
+              All ({numberFormatter.format(allContentSources.length)})
             </Button>
             {platformOptions.map((platform) => (
               <Button
@@ -324,7 +353,7 @@ export const SourcesPage = () => {
                 key={platform}
                 onClick={() => setSelectedPlatform(platform)}
               >
-                {formatPlatform(platform)}
+                {formatPlatform(platform)} ({numberFormatter.format(platformCounts[platform] ?? 0)})
               </Button>
             ))}
           </div>
@@ -337,6 +366,25 @@ export const SourcesPage = () => {
           />
         </div>
 
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-2" aria-label="Filter sources by status">
+            {(["all", "active", "paused"] as SourceFilter[]).map((status) => (
+              <Button
+                type="button"
+                variant={selectedStatus === status ? "primary" : "secondary"}
+                className="h-8 px-3 capitalize"
+                key={status}
+                onClick={() => setSelectedStatus(status)}
+              >
+                {status}
+              </Button>
+            ))}
+          </div>
+          <p className="text-small text-text-muted">
+            {numberFormatter.format(contentSources.length)} matching source{contentSources.length === 1 ? "" : "s"}
+          </p>
+        </div>
+
         <DataTable
           columns={contentColumns}
           rows={paginatedContentSources}
@@ -346,6 +394,7 @@ export const SourcesPage = () => {
           minWidth="980px"
           loading={contentSourcesQuery.isLoading}
           error={contentSourcesQuery.isError}
+          onRowClick={setSelectedContentSource}
           emptyState={
             <EmptyState
               title="No content sources found"
