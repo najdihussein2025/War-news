@@ -13,6 +13,7 @@ class IncidentListItemDTO(BaseModel):
     village: str | None
     condition: str
     event_date: date
+    event_time: time | None = None
     khabar: str
     source: str
     source_reference: str | None
@@ -27,10 +28,13 @@ class IncidentListParams(BaseModel):
     limit: int = Field(default=25, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
     village: str | None = None
+    condition: str | None = None
     source_type: str | None = None
     event_date_from: date | None = None
     event_date_to: date | None = None
     flagged_only: bool = False
+    verification_status: Literal["matched", "needs_verification"] | None = None
+    duplicate_only: bool = False
 
 
 class IncidentListResponse(BaseModel):
@@ -92,3 +96,27 @@ class IncidentDetailDTO(BaseModel):
     vehicles: None = None
     crossings_other: None = None
     warning_classification: None = None
+
+
+class IncidentUpdateDTO(BaseModel):
+    event_date: date
+    event_time: time | None = None
+    khabar: str = Field(min_length=1)
+    note: str | None = None
+    worker_name: str | None = None
+    source_link: str | None = None
+    source_link_2: str | None = None
+    total_deaths: int | None = Field(default=None, ge=0)
+    total_injuries: int | None = Field(default=None, ge=0)
+    deaths: int | None = Field(default=None, ge=0)
+    injuries: int | None = Field(default=None, ge=0)
+
+
+class IncidentCreateDTO(BaseModel):
+    village: str = Field(min_length=1)
+    condition: str = Field(min_length=1)
+    event_date: date
+    event_time: time | None = None
+    khabar: str = Field(min_length=1)
+    note: str | None = None
+    source_link: str | None = None

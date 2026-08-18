@@ -11,9 +11,11 @@ from app.llm.dtos import ExtractedCandidate
 from app.news.dtos import (
     CasualtyDemographicsDTO,
     IncidentDetailDTO,
+    IncidentCreateDTO,
     IncidentListItemDTO,
     IncidentListParams,
     IncidentListResponse,
+    IncidentUpdateDTO,
 )
 from app.news.interfaces import IncidentRepositoryInterface
 from app.news.models import (
@@ -47,8 +49,13 @@ class IncidentRepository(IncidentRepositoryInterface):
                 func.coalesce(Village.ref_name_en, Village.cad_name).label("village"),
                 Condition.action_en.label("condition"),
                 Incident.event_date,
+                Incident.event_time,
                 Incident.khabar,
                 case(
+                    (RawMessage.source_platform.is_not(None), func.initcap(RawMessage.source_platform)),
+                    (RawMessage.external_message_id.ilike("twitter:%"), "Twitter"),
+                    (RawMessage.external_message_id.ilike("telegram:%"), "Telegram"),
+                    (RawMessage.external_message_id.ilike("facebook:%"), "Facebook"),
                     (Source.type == SourceType.telegram, "Telegram"),
                     (Source.type == SourceType.api, "API"),
                     (Source.type == SourceType.manual, "Manual"),
@@ -166,6 +173,74 @@ class IncidentRepository(IncidentRepositoryInterface):
             children_i=values.pop("children_i"),
         )
         return IncidentDetailDTO.model_validate(values)
+
+    def create_manual(self, payload: IncidentCreateDTO, created_by: UUID) -> IncidentDetailDTO:
+        village_name = payload.village.strip()
+        condition_name = payload.condition.strip()
+        village = self.db.scalar(
+            select(Village).where(
+                Village.is_active.is_(True),
+                or_(
+                    func.lower(Village.ref_name_en) == village_name.lower(),
+                    func.lower(Village.cad_name) == village_name.lower(),
+                    func.lower(Village.ref_name_ar) == village_name.lower(),
+                ),
+            )
+        )
+        if village is None:
+            raise ValueError("Village was not found. Enter an existing village name.")
+        condition = self.db.scalar(
+            select(Condition).where(
+                Condition.is_active.is_(True),
+                or_(
+                    func.lower(Condition.action_en) == condition_name.lower(),
+                    func.lower(Condition.action_ar) == condition_name.lower(),
+                ),
+            )
+        )
+        if condition is None:
+            raise ValueError("Condition was not found. Enter an existing condition name.")
+        source = self.db.scalar(select(Source).where(Source.type == SourceType.manual).limit(1))
+        incident = Incident(
+            village_id=village.id,
+            condition_id=condition.id,
+            source_id=source.id if source else None,
+            event_month=payload.event_date.strftime("%B"),
+            event_date=payload.event_date,
+            event_time=payload.event_time,
+            khabar=payload.khabar.strip(),
+            note=payload.note,
+            source_link=payload.source_link,
+            created_by=created_by,
+        )
+        self.db.add(incident)
+        self.db.commit()
+        detail = self.get_by_id(incident.id)
+        if detail is None:
+            raise RuntimeError("Created incident could not be loaded.")
+        return detail
+
+    def update(self, incident_id: UUID, payload: IncidentUpdateDTO) -> IncidentDetailDTO | None:
+        incident = self.db.scalar(
+            select(Incident).where(Incident.id == incident_id, Incident.is_deleted.is_(False))
+        )
+        if incident is None:
+            return None
+        for field, value in payload.model_dump().items():
+            setattr(incident, field, value)
+        incident.event_month = payload.event_date.strftime("%B")
+        self.db.commit()
+        return self.get_by_id(incident_id)
+
+    def delete(self, incident_id: UUID) -> bool:
+        incident = self.db.scalar(
+            select(Incident).where(Incident.id == incident_id, Incident.is_deleted.is_(False))
+        )
+        if incident is None:
+            return False
+        incident.is_deleted = True
+        self.db.commit()
+        return True
 
     def list_duplicate_candidates(
         self,
@@ -433,6 +508,8 @@ class IncidentRepository(IncidentRepositoryInterface):
                     Village.cad_name.ilike(village_pattern),
                 )
             )
+        if params.condition:
+            filters.append(Condition.action_en.ilike(f"%{params.condition}%"))
         if params.source_type:
             filters.append(Source.type == params.source_type.lower())
         if params.event_date_from is not None:
@@ -446,6 +523,12 @@ class IncidentRepository(IncidentRepositoryInterface):
                     cls._low_confidence_match(),
                 )
             )
+        if params.verification_status == "needs_verification":
+            filters.append(func.coalesce(cls._low_confidence_match(), False).is_(True))
+        elif params.verification_status == "matched":
+            filters.append(func.coalesce(cls._low_confidence_match(), False).is_(False))
+        if params.duplicate_only:
+            filters.append(Incident.duplicate_flag.is_(True))
         return filters
 
     @staticmethod

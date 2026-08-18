@@ -13,6 +13,7 @@ export type Incident = {
   village: string | null;
   condition: string;
   event_date: string;
+  event_time: string | null;
   khabar: string;
   source: IncidentSource;
   source_reference: string | null;
@@ -32,10 +33,13 @@ export type IncidentFilters = {
   limit: number;
   offset: number;
   village?: string;
+  condition?: string;
   sourceType?: string;
   eventDateFrom?: string;
   eventDateTo?: string;
   flaggedOnly?: boolean;
+  verificationStatus?: "matched" | "needs_verification";
+  duplicateOnly?: boolean;
 };
 
 export type CasualtyDemographics = {
@@ -58,7 +62,6 @@ export type IncidentDetail = Incident & {
   total_injuries: number | null;
   deaths: number | null;
   injuries: number | null;
-  event_time: string | null;
   casualty_demographics: CasualtyDemographics;
   lebanese_army: null;
   unifil: null;
@@ -74,4 +77,28 @@ export type IncidentDetail = Incident & {
   vehicles: null;
   crossings_other: null;
   warning_classification: null;
+};
+
+export type IncidentUpdatePayload = {
+  event_date: string;
+  event_time: string | null;
+  khabar: string;
+  note: string | null;
+  worker_name: string | null;
+  source_link: string | null;
+  source_link_2: string | null;
+  total_deaths: number | null;
+  total_injuries: number | null;
+  deaths: number | null;
+  injuries: number | null;
+};
+
+export type IncidentCreatePayload = {
+  village: string;
+  condition: string;
+  event_date: string;
+  event_time: string | null;
+  khabar: string;
+  note: string | null;
+  source_link: string | null;
 };

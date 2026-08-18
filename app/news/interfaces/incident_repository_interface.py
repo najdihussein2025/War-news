@@ -7,8 +7,10 @@ from uuid import UUID
 from app.llm.dtos import ExtractedCandidate
 from app.news.dtos import (
     IncidentDetailDTO,
+    IncidentCreateDTO,
     IncidentListParams,
     IncidentListResponse,
+    IncidentUpdateDTO,
 )
 from app.news.models import (
     Incident,
@@ -23,6 +25,18 @@ class IncidentRepositoryInterface(ABC):
 
     @abstractmethod
     def get_by_id(self, incident_id: UUID) -> IncidentDetailDTO | None:
+        pass
+
+    @abstractmethod
+    def create_manual(self, payload: IncidentCreateDTO, created_by: UUID) -> IncidentDetailDTO:
+        pass
+
+    @abstractmethod
+    def update(self, incident_id: UUID, payload: IncidentUpdateDTO) -> IncidentDetailDTO | None:
+        pass
+
+    @abstractmethod
+    def delete(self, incident_id: UUID) -> bool:
         pass
 
     @abstractmethod

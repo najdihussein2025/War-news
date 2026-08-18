@@ -1,10 +1,12 @@
 import { isAxiosError } from "axios";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { StatusBadge } from "../../../components/StatusBadge";
-import { EmptyState } from "../../../components/ui";
+import { Button, ConfirmDialog, Dialog, EmptyState, Input, Label } from "../../../components/ui";
 import { formatDate, formatRelativeTime } from "../../../lib/formatters";
 import { roleBaseFromPath } from "../../../lib/rolePath";
 import { useIncidentQuery } from "../hooks";
+import { deleteIncident, updateIncident } from "../api";
 import type {
   CasualtyDemographics,
   IncidentDetail,
@@ -59,7 +61,12 @@ export const IncidentDetailPage = () => {
   const { incidentId } = useParams();
   const roleBase = roleBaseFromPath(useLocation().pathname);
   const incidentsPath = `${roleBase}/incidents`;
-  const { data: incident, isLoading, error } = useIncidentQuery(incidentId);
+  const navigate = useNavigate();
+  const { data: incident, isLoading, error, refetch } = useIncidentQuery(incidentId);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   if (isLoading) {
     return (
@@ -161,6 +168,15 @@ export const IncidentDetailPage = () => {
           </div>
         </dl>
       </section>
+
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="secondary" onClick={() => { setActionError(""); setIsEditing(true); }}>
+          Update
+        </Button>
+        <Button type="button" variant="destructive" onClick={() => { setActionError(""); setIsDeleting(true); }}>
+          Delete
+        </Button>
+      </div>
 
       <section className="rounded-lg border border-border bg-surface-raised p-5">
         <h2 className="text-h4 font-semibold text-text-primary">Report</h2>
@@ -278,6 +294,92 @@ export const IncidentDetailPage = () => {
           </details>
         ))}
       </section>
+
+
+      {isEditing ? (
+        <Dialog title="Update incident" eyebrow="Edit record" size="lg" onClose={() => !isSaving && setIsEditing(false)}>
+          <form
+            className="space-y-4"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              if (!incidentId) return;
+              const form = new FormData(event.currentTarget);
+              const nullable = (name: string) => String(form.get(name) ?? "").trim() || null;
+              const numberOrNull = (name: string) => {
+                const value = String(form.get(name) ?? "").trim();
+                return value === "" ? null : Number(value);
+              };
+              setIsSaving(true);
+              setActionError("");
+              try {
+                await updateIncident(incidentId, {
+                  event_date: String(form.get("event_date")),
+                  event_time: nullable("event_time"),
+                  khabar: String(form.get("khabar") ?? "").trim(),
+                  note: nullable("note"),
+                  worker_name: nullable("worker_name"),
+                  source_link: nullable("source_link"),
+                  source_link_2: nullable("source_link_2"),
+                  total_deaths: numberOrNull("total_deaths"),
+                  total_injuries: numberOrNull("total_injuries"),
+                  deaths: numberOrNull("deaths"),
+                  injuries: numberOrNull("injuries"),
+                });
+                await refetch();
+                setIsEditing(false);
+              } catch {
+                setActionError("Could not update the incident. Please check the values and try again.");
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><Label htmlFor="incident-date">Event date *</Label><Input id="incident-date" name="event_date" type="date" defaultValue={incident.event_date} required /></div>
+              <div><Label htmlFor="incident-time">Event time</Label><Input id="incident-time" name="event_time" type="time" defaultValue={incident.event_time?.slice(0, 5) ?? ""} /></div>
+            </div>
+            <div><Label htmlFor="incident-report">Report *</Label><textarea id="incident-report" name="khabar" required defaultValue={incident.khabar} className="mt-1 min-h-36 w-full rounded-md border border-border bg-surface px-3 py-2 text-body" /></div>
+            <div><Label htmlFor="incident-note">Note</Label><textarea id="incident-note" name="note" defaultValue={incident.note ?? ""} className="mt-1 min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-body" /></div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><Label htmlFor="incident-worker">Data worker</Label><Input id="incident-worker" name="worker_name" defaultValue={incident.worker_name ?? ""} /></div>
+              <div><Label htmlFor="incident-source-1">Source link 1</Label><Input id="incident-source-1" name="source_link" type="url" defaultValue={incident.source_link ?? ""} /></div>
+              <div><Label htmlFor="incident-source-2">Source link 2</Label><Input id="incident-source-2" name="source_link_2" type="url" defaultValue={incident.source_link_2 ?? ""} /></div>
+              {(["total_deaths", "total_injuries", "deaths", "injuries"] as const).map((field) => (
+                <div key={field}><Label htmlFor={`incident-${field}`}>{field.split("_").map((word) => word[0].toUpperCase() + word.slice(1)).join(" ")}</Label><Input id={`incident-${field}`} name={field} type="number" min="0" defaultValue={incident[field] ?? ""} /></div>
+              ))}
+            </div>
+            {actionError ? <p className="text-small text-danger">{actionError}</p> : null}
+            <div className="flex justify-end gap-2 border-t border-border pt-4">
+              <Button type="button" variant="secondary" disabled={isSaving} onClick={() => setIsEditing(false)}>Cancel</Button>
+              <Button type="submit" isLoading={isSaving} loadingText="Updating">Update</Button>
+            </div>
+          </form>
+        </Dialog>
+      ) : null}
+
+      {isDeleting ? (
+        <ConfirmDialog
+          title="Delete incident?"
+          description="This incident will be removed from the active records."
+          confirmLabel="Delete incident"
+          destructive
+          isLoading={isSaving}
+          onCancel={() => !isSaving && setIsDeleting(false)}
+          onConfirm={async () => {
+            if (!incidentId) return;
+            setIsSaving(true);
+            try {
+              await deleteIncident(incidentId);
+              navigate(incidentsPath, { replace: true });
+            } catch {
+              setActionError("Could not delete the incident. Please try again.");
+              setIsDeleting(false);
+            } finally {
+              setIsSaving(false);
+            }
+          }}
+        />
+      ) : null}
     </div>
   );
 };

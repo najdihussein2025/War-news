@@ -1,8 +1,10 @@
 import { apiClient } from "../../lib/apiClient";
 import type {
   IncidentDetail,
+  IncidentCreatePayload,
   IncidentFilters,
   IncidentListResponse,
+  IncidentUpdatePayload,
 } from "./types";
 
 export const getIncidents = async (
@@ -15,6 +17,9 @@ export const getIncidents = async (
   if (filters.village) {
     params.set("village", filters.village);
   }
+  if (filters.condition) {
+    params.set("condition", filters.condition);
+  }
   if (filters.sourceType) {
     params.set("source_type", filters.sourceType);
   }
@@ -26,6 +31,12 @@ export const getIncidents = async (
   }
   if (filters.flaggedOnly) {
     params.set("flagged_only", "true");
+  }
+  if (filters.verificationStatus) {
+    params.set("verification_status", filters.verificationStatus);
+  }
+  if (filters.duplicateOnly) {
+    params.set("duplicate_only", "true");
   }
 
   const response = await apiClient.get<IncidentListResponse>(
@@ -41,4 +52,18 @@ export const getIncidentById = async (
     `/api/incidents/${incidentId}`,
   );
   return response.data;
+};
+
+export const createIncident = async (payload: IncidentCreatePayload): Promise<IncidentDetail> => {
+  const response = await apiClient.post<IncidentDetail>("/api/incidents", payload);
+  return response.data;
+};
+
+export const updateIncident = async (incidentId: string, payload: IncidentUpdatePayload): Promise<IncidentDetail> => {
+  const response = await apiClient.put<IncidentDetail>(`/api/incidents/${incidentId}`, payload);
+  return response.data;
+};
+
+export const deleteIncident = async (incidentId: string): Promise<void> => {
+  await apiClient.delete(`/api/incidents/${incidentId}`);
 };
