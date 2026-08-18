@@ -188,11 +188,21 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         return AirViolationDTO.model_validate(row._mapping)
 
     def route_from_match(self, message: RawMessage, result: MatchResultDTO) -> None:
-        if result.matched_condition_id not in {35, 36, 38} or result.matched_village_id is None:
+        if result.matched_condition_id not in {35, 36, 38}:
+            return
+        matched_village_id: int | None = next(
+            (
+                vm.matched_village_id
+                for vm in result.village_matches
+                if vm.matched_village_id is not None
+            ),
+            None,
+        )
+        if matched_village_id is None:
             return
         if self.db.scalar(select(AirViolation.id).where(AirViolation.raw_message_id == message.id)) is not None:
             return
-        village = self.db.get(Village, result.matched_village_id)
+        village = self.db.get(Village, matched_village_id)
         if village is None:
             return
         occurred_at = message.message_datetime or message.received_at

@@ -6,6 +6,7 @@ from app.api.content_sources_router import router as content_sources_router
 from app.api.incidents_router import router as incidents_router
 from app.api.news_router import router as news_router
 from app.api.logs_router import router as logs_router
+from app.api.pipeline_router import router as pipeline_router
 from app.api.sources_router import router as sources_router
 from app.api.webhooks_router import router as webhooks_router
 
@@ -18,3 +19,4 @@ router.include_router(content_sources_router)
 router.include_router(incidents_router)
 router.include_router(news_router)
 router.include_router(logs_router)
+router.include_router(pipeline_router)

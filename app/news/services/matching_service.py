@@ -19,6 +19,7 @@ from app.news.dtos import (
     MatchResultDTO,
     MatchResultStatus,
 )
+from app.news.dtos.match_result_dto import VillageMatchResult
 from app.news.interfaces import MatchingServiceInterface
 from app.news.interfaces import (
     ConditionRepositoryInterface,
@@ -58,20 +59,32 @@ class MatchingService(MatchingServiceInterface):
         self.candidate_limit = candidate_limit
 
     def match(self, extraction_result: ExtractionResult) -> MatchResultDTO:
-        village = self._match_mention(
-            extraction_result.village,
-            self.villages.find_similar,
+        village_list = extraction_result.village or []
+        village_matches: list[VillageMatchResult] = []
+        for village_text in village_list:
+            classified = self._match_mention(village_text, self.villages.find_similar)
+            village_matches.append(
+                VillageMatchResult(
+                    matched_village_id=classified.matched_id,
+                    village_confidence=classified.confidence,
+                    village_match_status=classified.status,
+                    village_review_required=classified.status != MatchResultStatus.matched,
+                    raw_village_text=village_text,
+                )
+            )
+
+        any_village_low_confidence = any(
+            vm.village_match_status == MatchResultStatus.matched_low_confidence
+            for vm in village_matches
         )
+
         condition = self._match_mention(
             extraction_result.action_description,
             self.conditions.find_similar,
         )
         return MatchResultDTO(
-            matched_village_id=village.matched_id,
-            village_confidence=village.confidence,
-            village_match_status=village.status,
-            village_review_required=village.status != MatchResultStatus.matched,
-            raw_village_text=extraction_result.village,
+            village_matches=village_matches,
+            any_village_low_confidence=any_village_low_confidence,
             matched_condition_id=condition.matched_id,
             condition_confidence=condition.confidence,
             condition_match_status=condition.status,

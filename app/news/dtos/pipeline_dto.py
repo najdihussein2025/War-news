@@ -1,0 +1,20 @@
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class StageSweepResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    stage: str
+    processed: int
+    succeeded: int
+    failed: int
+    elapsed_seconds: float = Field(ge=0.0)
+
+
+class PipelineSweepResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    skipped: bool = False
+    skip_reason: str | None = None
+    stages: list[StageSweepResult] = Field(default_factory=list)
+    elapsed_seconds: float = Field(default=0.0, ge=0.0)

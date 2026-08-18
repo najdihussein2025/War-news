@@ -1,22 +1,20 @@
+import asyncio
+
+import app.accounts.models  # noqa: F401
+import app.logs.models  # noqa: F401
+import app.sources.models  # noqa: F401
 from app.core.database import SessionLocal
-from app.api.factories.action_factory import build_filter_relevance_action
-from app.llm.dtos import FilterPendingMessagesData
+from app.news.services.pipeline_sweep_stages import sweep_relevance_filter
 
 
 def main() -> None:
     db = SessionLocal()
     try:
-        summary = build_filter_relevance_action(db).execute(
-            FilterPendingMessagesData()
-        )
+        result = asyncio.run(sweep_relevance_filter(db))
         print("Relevance filter summary")
-        print(f"processed: {summary.processed}")
-        print(f"relevant: {summary.relevant}")
-        print(f"rejected: {summary.rejected}")
-        print(f"uncertain: {summary.uncertain}")
-        print(f"errored: {summary.errored}")
-        print(f"auto_rejected_by_keyword: {summary.auto_rejected_by_keyword}")
-        print(f"classifier_calls_made: {summary.classifier_calls_made}")
+        print(f"processed: {result.processed}")
+        print(f"succeeded: {result.succeeded}")
+        print(f"failed: {result.failed}")
     finally:
         db.close()
 

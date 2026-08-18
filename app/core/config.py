@@ -30,9 +30,19 @@ class Settings(BaseSettings):
     login_lockout_minutes: int = 5
     auth_secret_key: str = "development-only-change-me"
     super_admin_seed_password: str = "password"
-    cluster_time_window_minutes: int = 90
-    cluster_similarity_threshold: float = 0.90
+    # First-pass values derived from a single confirmed duplicate pair
+    # (248 min gap, 0.7675 cosine similarity — 2026-08-18).
+    # Revisit after 2–3 weeks of live backlog data to validate against a
+    # full similarity/time-gap distribution before treating as permanent.
+    cluster_time_window_minutes: int = 300
+    cluster_similarity_threshold: float = 0.75
     cluster_require_condition_match: bool = True
+    pre_dedup_similarity_threshold: float = 0.92
+    # Incident-level dedup thresholds and look-back window.
+    # Tune after reviewing real duplicate decisions; env vars override these.
+    dedup_time_window_days: int = 3
+    dedup_high_threshold: float = 0.80
+    dedup_low_threshold: float = 0.50
 
     class Config:
         env_file = ".env"
