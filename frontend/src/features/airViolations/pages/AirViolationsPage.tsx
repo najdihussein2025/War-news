@@ -30,6 +30,7 @@ export const AirViolationsPage = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingViolation, setEditingViolation] = useState<AirViolation | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isFormDirty, setIsFormDirty] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [createError, setCreateError] = useState("");
   const [params, setParams] = useSearchParams();
@@ -40,6 +41,12 @@ export const AirViolationsPage = () => {
   const eventDateTo = params.get("event_date_to") ?? "";
   const cazaEn = params.get("caza_en") ?? "";
   const hasFilters = Boolean(conditionId || eventDateFrom || eventDateTo || cazaEn);
+  const closeEditor = () => {
+    if (isFormDirty && !window.confirm("Discard your unsaved changes?")) return;
+    setIsCreateOpen(false);
+    setEditingViolation(null);
+    setIsFormDirty(false);
+  };
 
   const filters = useMemo(
     () => ({
@@ -170,7 +177,7 @@ export const AirViolationsPage = () => {
           <Button type="button" variant="secondary" isLoading={isExporting} loadingText="Exporting" onClick={async () => { setIsExporting(true); setImportMessage(""); try { await exportAirViolations(); } catch { setImportMessage("Export failed. Check the API connection and try again."); } finally { setIsExporting(false); } }}>
             Export Excel
           </Button>
-          <Button type="button" onClick={() => { setEditingViolation(null); setCreateError(""); setIsCreateOpen(true); }}>
+          <Button type="button" onClick={() => { setEditingViolation(null); setIsFormDirty(false); setCreateError(""); setIsCreateOpen(true); }}>
             Create
           </Button>
           {hasFilters ? (
@@ -243,6 +250,7 @@ export const AirViolationsPage = () => {
                 setEditingViolation(selectedViolation);
                 setSelectedViolation(null);
                 setCreateError("");
+                setIsFormDirty(false);
                 setIsCreateOpen(true);
               }}
             >
@@ -271,9 +279,15 @@ export const AirViolationsPage = () => {
       ) : null}
 
       {isCreateOpen ? (
-        <Dialog title={editingViolation ? "Update air violation" : "Create air violation"} onClose={() => setIsCreateOpen(false)} size="lg">
+        <Dialog
+          title={editingViolation ? "Update air violation" : "Create air violation"}
+          eyebrow={editingViolation ? "Edit record" : "Create record"}
+          onClose={closeEditor}
+          size="lg"
+        >
           <form
             className="space-y-5"
+            onChange={() => setIsFormDirty(true)}
             onSubmit={async (event) => {
               event.preventDefault();
               const form = new FormData(event.currentTarget);
@@ -283,17 +297,19 @@ export const AirViolationsPage = () => {
                 const payload = {
                   condition_id: Number(form.get("condition_id")),
                   caza_en: String(form.get("caza_en") ?? "").trim(),
+                  caza_ar: String(form.get("caza_ar") ?? "").trim() || null,
                   event_date: String(form.get("event_date") ?? ""),
                   event_time: String(form.get("event_time") ?? "") || null,
                   khabar: String(form.get("khabar") ?? "").trim(),
                   note_1: String(form.get("note_1") ?? "").trim() || null,
-                  note_2: String(form.get("note_2") ?? "").trim() || null,
+                  note_2: editingViolation?.note_2 ?? null,
                   source_link: String(form.get("source_link") ?? "").trim() || null,
                 };
                 if (editingViolation) await updateAirViolation(editingViolation.id, payload);
                 else await createAirViolation(payload);
                 setIsCreateOpen(false);
                 setEditingViolation(null);
+                setIsFormDirty(false);
                 await refetch();
               } catch {
                 setCreateError("Could not create the air violation. Check the required fields and try again.");
@@ -303,19 +319,17 @@ export const AirViolationsPage = () => {
             }}
           >
             <div className="grid gap-4 sm:grid-cols-2">
-              <div><Label htmlFor="create-caza">Caza</Label><Input id="create-caza" name="caza_en" required className="mt-2" defaultValue={editingViolation?.caza_en ?? ""} /></div>
-              <div><Label htmlFor="create-condition">Condition</Label><select id="create-condition" name="condition_id" required defaultValue={editingViolation?.condition_id ?? 35} className="mt-2 h-11 w-full rounded-md border border-input-border bg-input-bg px-3"><option value="35">Warplane</option><option value="36">Surveillance aircraft</option><option value="38">Helicopter hovering</option></select></div>
-              <div><Label htmlFor="create-date">Date</Label><Input id="create-date" name="event_date" type="date" required className="mt-2" defaultValue={editingViolation?.event_date ?? ""} /></div>
-              <div><Label htmlFor="create-time">Time</Label><Input id="create-time" name="event_time" type="time" className="mt-2" defaultValue={editingViolation?.event_time?.slice(0, 5) ?? ""} /></div>
+              <div><Label htmlFor="create-caza">District (Caza) *</Label><Input id="create-caza" name="caza_en" required placeholder="e.g. Sour" className="mt-2" defaultValue={editingViolation?.caza_en ?? ""} /></div>
+              <div><Label htmlFor="create-caza-ar">District in Arabic (optional)</Label><Input id="create-caza-ar" name="caza_ar" dir="rtl" placeholder="مثال: صور" className="mt-2" defaultValue={editingViolation?.caza_ar ?? ""} /></div>
+              <div className="sm:col-span-2"><Label htmlFor="create-condition">Condition *</Label><select id="create-condition" name="condition_id" required defaultValue={editingViolation?.condition_id ?? 35} className="mt-2 h-11 w-full rounded-md border border-input-border bg-input-bg px-3"><option value="35">Warplane</option><option value="36">Surveillance aircraft</option><option value="38">Helicopter hovering</option></select></div>
+              <div><Label htmlFor="create-date">Date *</Label><Input id="create-date" name="event_date" type="date" required className="mt-2" defaultValue={editingViolation?.event_date ?? ""} /></div>
+              <div><Label htmlFor="create-time">Time (optional)</Label><Input id="create-time" name="event_time" type="time" className="mt-2" defaultValue={editingViolation?.event_time?.slice(0, 5) ?? ""} /></div>
             </div>
-            <div><Label htmlFor="create-news">News</Label><textarea id="create-news" name="khabar" required rows={5} defaultValue={editingViolation?.khabar ?? ""} className="mt-2 w-full rounded-md border border-input-border bg-input-bg px-3 py-2 text-body" /></div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div><Label htmlFor="create-note-1">Note 1</Label><Input id="create-note-1" name="note_1" className="mt-2" defaultValue={editingViolation?.note_1 ?? ""} /></div>
-              <div><Label htmlFor="create-note-2">Note 2</Label><Input id="create-note-2" name="note_2" className="mt-2" defaultValue={editingViolation?.note_2 ?? ""} /></div>
-            </div>
-            <div><Label htmlFor="create-link">Source link</Label><Input id="create-link" name="source_link" type="url" className="mt-2" defaultValue={editingViolation?.source_link ?? ""} /></div>
+            <div><Label htmlFor="create-news">News text *</Label><textarea id="create-news" name="khabar" required rows={5} dir="auto" placeholder="Enter the complete news report" defaultValue={editingViolation?.khabar ?? ""} className="mt-2 w-full rounded-md border border-input-border bg-input-bg px-3 py-2 text-body" /></div>
+            <div><Label htmlFor="create-note-1">Internal note (optional)</Label><Input id="create-note-1" name="note_1" placeholder="Add an internal note" className="mt-2" defaultValue={editingViolation?.note_1 ?? ""} /></div>
+            <div><Label htmlFor="create-link">Source link (optional)</Label><Input id="create-link" name="source_link" type="url" placeholder="https://..." className="mt-2" defaultValue={editingViolation?.source_link ?? ""} /></div>
             {createError ? <p className="text-small font-medium text-danger" role="alert">{createError}</p> : null}
-            <div className="flex justify-end gap-2"><Button type="button" variant="secondary" onClick={() => setIsCreateOpen(false)}>Cancel</Button><Button type="submit" isLoading={isCreating} loadingText={editingViolation ? "Updating" : "Creating"}>{editingViolation ? "Update" : "Create"}</Button></div>
+            <div className="sticky bottom-0 -mx-6 flex justify-end gap-2 border-t border-border bg-surface-raised px-6 py-4"><Button type="button" variant="secondary" onClick={closeEditor}>Cancel</Button><Button type="submit" isLoading={isCreating} loadingText={editingViolation ? "Updating" : "Creating"}>{editingViolation ? "Update" : "Create"}</Button></div>
           </form>
         </Dialog>
       ) : null}

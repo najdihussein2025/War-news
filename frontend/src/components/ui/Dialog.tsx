@@ -4,6 +4,7 @@ import { cn } from "../../lib/cn";
 
 type DialogProps = {
   title: string;
+  eyebrow?: string;
   children: ReactNode;
   onClose: () => void;
   size?: "md" | "lg" | "xl" | "panel";
@@ -19,7 +20,7 @@ const sizeClasses = {
   panel: "ml-auto h-full max-w-3xl rounded-none border-y-0 border-r-0",
 };
 
-export const Dialog = ({ title, children, onClose, size = "md" }: DialogProps) => {
+export const Dialog = ({ title, eyebrow = "View details", children, onClose, size = "md" }: DialogProps) => {
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const titleId = useId();
 
@@ -82,7 +83,7 @@ export const Dialog = ({ title, children, onClose, size = "md" }: DialogProps) =
       >
         <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border bg-surface-raised px-6 py-4">
           <div>
-            <p className="text-caption font-semibold uppercase tracking-wide text-accent">View details</p>
+            <p className="text-caption font-semibold uppercase tracking-wide text-accent">{eyebrow}</p>
             <h2 id={titleId} className="mt-1 text-h4 font-semibold text-text-primary">
             {title}
             </h2>

@@ -37,6 +37,7 @@ export type AirViolationFilters = {
 export type AirViolationCreateInput = {
   condition_id: number;
   caza_en: string;
+  caza_ar?: string | null;
   event_date: string;
   event_time?: string | null;
   khabar: string;
