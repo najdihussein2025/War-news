@@ -122,6 +122,87 @@ class OllamaExtractionService(ExtractionClassifierInterface):
         self.presence_gate = presence_gate or OllamaPresenceGateService(client)
         self.category_detail = category_detail or OllamaCategoryDetailService(client)
 
+    def extract_tier1(
+        self,
+        post_text: str,
+        raw_message_id: int | None = None,
+    ) -> ExtractionResult:
+        categories_present = self.presence_gate.categories_present(
+            post_text,
+            raw_message_id=raw_message_id,
+        )
+        general_response = self._extract_general_fields(
+            post_text,
+            raw_message_id=raw_message_id,
+        )
+        categories: dict[ExtractionCategoryKey, ExtractionCategory] = {}
+        self._inject_casualty_demographics_from_root(
+            categories,
+            general_response.casualties,
+        )
+
+        return ExtractionResult(
+            is_relevant=general_response.is_relevant,
+            village=self._validated_village_list(
+                general_response.village,
+                raw_message_id=raw_message_id,
+            ),
+            action_description=self._validated_text(
+                general_response.action_description,
+                field_name="action_description",
+                raw_message_id=raw_message_id,
+            ),
+            categories=categories,
+            casualties=general_response.casualties,
+            presence_category_keys=list(categories_present),
+            extraction_tier=1,
+            model=self.client.model,
+            extracted_at=datetime.now(timezone.utc),
+        )
+
+    def extract_tier2_details(
+        self,
+        post_text: str,
+        presence_category_keys: list[ExtractionCategoryKey],
+        *,
+        root_casualties: ExtractionCasualties | None = None,
+        raw_message_id: int | None = None,
+    ) -> dict[ExtractionCategoryKey, ExtractionCategory]:
+        """Run per-category detail LLM calls for keys detected in Tier 1."""
+        category_details: dict[str, ExtractionCategory] = {}
+        for category_key in presence_category_keys:
+            try:
+                category_detail = self.category_detail.extract_detail(
+                    post_text,
+                    category_key=category_key,
+                    raw_message_id=raw_message_id,
+                )
+            except Exception:
+                logger.exception(
+                    "Failed to extract category detail category=%s raw_message_id=%s",
+                    category_key.value,
+                    raw_message_id,
+                )
+                continue
+
+            if self._is_empty_category_detail(category_detail):
+                logger.warning(
+                    "Dropped empty category detail category=%s raw_message_id=%s",
+                    category_key.value,
+                    raw_message_id,
+                )
+                continue
+
+            category_details[category_key.value] = category_detail
+
+        categories = self._validated_categories(
+            category_details,
+            raw_message_id=raw_message_id,
+        )
+        if root_casualties is not None:
+            self._inject_casualty_demographics_from_root(categories, root_casualties)
+        return categories
+
     def extract(
         self,
         post_text: str,
@@ -182,6 +263,8 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             ),
             categories=categories,
             casualties=general_response.casualties,
+            presence_category_keys=list(categories_present),
+            extraction_tier=2,
             model=self.client.model,
             extracted_at=datetime.now(timezone.utc),
         )

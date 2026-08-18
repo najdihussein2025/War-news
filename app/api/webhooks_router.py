@@ -1,11 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.sources.actions import ReceiveCnrsWebhookAction
 from app.core.database import get_db
-from app.news.services.pipeline_orchestrator import run_full_pipeline_sweep_sync
+from app.news.services.pipeline_jobs import enqueue_pipeline_sweep
 from app.sources.services.webhook_auth import verify_cnrs_webhook_secret
 from app.sources.dtos import CnrsWebhookPayload
 from app.sources.repositories import SourceRepository
@@ -20,7 +20,6 @@ router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 )
 def receive_cnrs_posts(
     payload: Annotated[CnrsWebhookPayload, Body()],
-    background_tasks: BackgroundTasks,
     source_id: Annotated[int | None, Query(gt=0)] = None,
     db: Session = Depends(get_db),
 ) -> dict[str, int]:
@@ -36,5 +35,5 @@ def receive_cnrs_posts(
 
     action = ReceiveCnrsWebhookAction(sources=sources)
     result = action.execute(payload=payload, source_id=source.id)
-    background_tasks.add_task(run_full_pipeline_sweep_sync)
+    enqueue_pipeline_sweep(db, use_advisory_lock=False)
     return result

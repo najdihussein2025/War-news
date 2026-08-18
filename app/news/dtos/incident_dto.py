@@ -19,6 +19,7 @@ class IncidentListItemDTO(BaseModel):
     source_reference: str | None
     matched: bool
     duplicate_flag: Literal["none", "possible"]
+    details_pending: bool
     created_at: datetime
 
 

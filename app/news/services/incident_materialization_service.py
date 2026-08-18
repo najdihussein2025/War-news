@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import select
@@ -12,14 +13,35 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.llm.dtos import ExtractionResult
 from app.news.interfaces import DedupMatchingInterface
-from app.news.models import Incident, IncidentDetail, RawMessage
+from app.news.models import Incident, IncidentDetail, MessageStatus, RawMessage
 from app.news.services.category_mapper import compute_rollups, map_categories
+from app.news.services.fast_path_dedup import (
+    FastPathDedupOutcome,
+    FastPathDedupService,
+)
+from app.news.services.fast_path_eligibility import (
+    AIR_VIOLATION_CONDITION_IDS,
+    ELIGIBLE_MATCH_STATUSES,
+    ERROR_AIR_VIOLATION,
+    ERROR_EXACT_HASH,
+    ERROR_UNMATERIALIZABLE,
+    permanent_ineligibility_reason,
+)
 
 logger = logging.getLogger(__name__)
 
-ELIGIBLE_MATCH_STATUSES = frozenset({"matched", "matched_low_confidence"})
-AIR_VIOLATION_CONDITION_IDS = frozenset({35, 36, 38})
 EXACT_HASH_CONSTRAINT = "uq_incidents_exact_hash_active"
+
+
+@dataclass
+class FastMaterializationStats:
+    inserted: int = 0
+    skipped_ineligible: int = 0
+    skipped_air_violation_routed: int = 0
+    skipped_duplicate_hash: int = 0
+    skipped_confident_duplicate: int = 0
+    marked_message_duplicate: int = 0
+    marked_unmaterializable: int = 0
 
 
 @dataclass
@@ -40,6 +62,219 @@ class IncidentMaterializationService:
         self.db = db
         self.dedup_service = dedup_service
         self.stats = MaterializationStats()
+        self.fast_stats = FastMaterializationStats()
+
+    def process_fast_path(
+        self,
+        representative: RawMessage,
+        fast_dedup: FastPathDedupService,
+    ) -> list[Incident]:
+        """Tier-1 fast materialize: dedup by village+condition, then insert minimal rows."""
+        match_result = self._normalize_match_result(representative.match_result)
+        ineligible_reason = permanent_ineligibility_reason(match_result)
+        if ineligible_reason is not None:
+            if ineligible_reason == ERROR_AIR_VIOLATION:
+                self.fast_stats.skipped_air_violation_routed += 1
+            else:
+                self.fast_stats.skipped_ineligible += 1
+            self._mark_unmaterializable(representative, ineligible_reason)
+            logger.info(
+                "raw_message_id=%s fast_path terminalized: %s",
+                representative.id,
+                ineligible_reason,
+            )
+            return []
+
+        assert match_result is not None
+        condition_id = self._required_int(match_result, "matched_condition_id")
+        condition_status = match_result.get("condition_match_status")
+
+        if representative.extraction_result is None:
+            raise ValueError(
+                f"raw_message id={representative.id} has no extraction_result"
+            )
+        extraction = ExtractionResult.model_validate(representative.extraction_result)
+
+        event_datetime = representative.message_datetime
+        if event_datetime is None:
+            raise ValueError(
+                f"raw_message id={representative.id} has no message_datetime"
+            )
+
+        village_matches: list[dict[str, Any]] = match_result.get("village_matches", [])
+
+        created: list[Incident] = []
+        confident_duplicate_villages = 0
+        materializable_villages = 0
+        representative_raw_message_id: int | None = None
+
+        for village_match in village_matches:
+            village_status = village_match.get("village_match_status")
+            village_id = self._optional_int(village_match.get("matched_village_id"))
+
+            decision = fast_dedup.decide_for_village(
+                village_match_status=village_status,
+                condition_match_status=condition_status,
+                village_id=village_id,
+                condition_id=condition_id,
+                message_datetime=event_datetime,
+                exclude_raw_message_id=representative.id,
+            )
+
+            if decision.outcome == FastPathDedupOutcome.skip_ineligible:
+                self.fast_stats.skipped_ineligible += 1
+                logger.info(
+                    "raw_message_id=%s village skipped fast_path: village_match_status=%r",
+                    representative.id,
+                    village_status,
+                )
+                continue
+
+            materializable_villages += 1
+
+            if decision.outcome == FastPathDedupOutcome.confident_duplicate:
+                confident_duplicate_villages += 1
+                self.fast_stats.skipped_confident_duplicate += 1
+                if decision.representative_raw_message_id is not None:
+                    representative_raw_message_id = decision.representative_raw_message_id
+                logger.info(
+                    "raw_message_id=%s village_id=%s fast_path confident_duplicate "
+                    "canonical_incident_id=%s representative_raw_message_id=%s",
+                    representative.id,
+                    village_id,
+                    decision.canonical_incident_id,
+                    decision.representative_raw_message_id,
+                )
+                continue
+
+            incident = self._insert_fast_incident(
+                representative=representative,
+                extraction=extraction,
+                village_id=village_id,
+                condition_id=condition_id,
+                event_datetime=event_datetime,
+            )
+            if incident is not None:
+                created.append(incident)
+
+        if (
+            materializable_villages > 0
+            and confident_duplicate_villages == materializable_villages
+            and not created
+            and representative_raw_message_id is not None
+        ):
+            representative.status = MessageStatus.duplicate
+            representative.duplicate_of_id = representative_raw_message_id
+            self.db.commit()
+            self.fast_stats.marked_message_duplicate += 1
+            logger.info(
+                "raw_message_id=%s marked duplicate_of_id=%s (all villages confident duplicate)",
+                representative.id,
+                representative_raw_message_id,
+            )
+            return created
+
+        if not created and representative.status == MessageStatus.parsed:
+            reason = (
+                ERROR_EXACT_HASH
+                if self.fast_stats.skipped_duplicate_hash > 0
+                and materializable_villages > 0
+                else ERROR_UNMATERIALIZABLE
+            )
+            self._mark_unmaterializable(representative, reason)
+            logger.info(
+                "raw_message_id=%s fast_path terminalized after villages: %s",
+                representative.id,
+                reason,
+            )
+
+        return created
+
+    def _mark_unmaterializable(self, representative: RawMessage, reason: str) -> None:
+        representative.status = MessageStatus.error
+        representative.error_message = reason
+        self.fast_stats.marked_unmaterializable += 1
+
+    def _insert_fast_incident(
+        self,
+        *,
+        representative: RawMessage,
+        extraction: ExtractionResult,
+        village_id: int | None,
+        condition_id: int,
+        event_datetime: datetime,
+    ) -> Incident | None:
+        if village_id is None:
+            self.fast_stats.skipped_ineligible += 1
+            return None
+
+        casualties = extraction.casualties
+        total_deaths, total_injuries = compute_rollups({}, casualties)
+
+        exact_hash = self._build_exact_hash(
+            khabar=representative.raw_text or "",
+            village_id=village_id,
+            condition_id=condition_id,
+            event_date=event_datetime.date().isoformat(),
+        )
+
+        incident = Incident(
+            raw_message_id=representative.id,
+            village_id=village_id,
+            condition_id=condition_id,
+            source_id=representative.source_id,
+            event_date=event_datetime.date(),
+            event_time=event_datetime.time(),
+            khabar=representative.raw_text or "",
+            khabar_embedding=None,
+            total_deaths=total_deaths,
+            total_injuries=total_injuries,
+            deaths=casualties.deaths,
+            injuries=casualties.injuries,
+            exact_hash=exact_hash,
+            duplicate_flag=False,
+            details_pending=True,
+            created_by=None,
+        )
+
+        try:
+            self.db.add(incident)
+            self.db.flush()
+            self.db.add(
+                IncidentDetail(
+                    incident_id=incident.id,
+                    male_d=casualties.male_deaths,
+                    male_i=casualties.male_injuries,
+                    female_d=casualties.female_deaths,
+                    female_i=casualties.female_injuries,
+                    children_d=casualties.children_deaths,
+                    children_i=casualties.children_injuries,
+                )
+            )
+            self.db.commit()
+            self.fast_stats.inserted += 1
+            logger.info(
+                "raw_message_id=%s village_id=%s fast_path incident_id=%s details_pending=true",
+                representative.id,
+                village_id,
+                incident.id,
+            )
+            return incident
+        except IntegrityError as exc:
+            self.db.rollback()
+            if not self._is_exact_hash_conflict(exc):
+                raise
+
+            self.fast_stats.skipped_duplicate_hash += 1
+            logger.info(
+                "fast_path incident already exists for hash raw_message_id=%s village_id=%s",
+                representative.id,
+                village_id,
+            )
+            return None
+        except Exception:
+            self.db.rollback()
+            raise
 
     def materialize(self, representative: RawMessage) -> list[Incident]:
         """Create one Incident per eligible village_match entry.

@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.llm.dtos import (
@@ -32,6 +32,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
                 )
                 .order_by(RawMessage.id.asc())
                 .limit(limit)
+                .with_for_update(skip_locked=True)
             ).all()
         )
 
@@ -49,6 +50,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
                 )
                 .order_by(RawMessage.id.asc())
                 .limit(limit)
+                .with_for_update(skip_locked=True)
             ).all()
         )
 
@@ -80,6 +82,9 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         message.error_message = None
         self.db.add(message)
         self.db.commit()
+
+    def get_by_id(self, raw_message_id: int) -> RawMessage | None:
+        return self.db.get(RawMessage, raw_message_id)
 
     def get_parsed_by_id(self, raw_message_id: int) -> RawMessage | None:
         return self.db.scalar(
@@ -120,6 +125,36 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         message.error_message = error_message
         self.db.add(message)
         self.db.commit()
+
+    def reset_retryable_extraction_errors(self, limit: int = 200) -> int:
+        """Re-queue transient extraction failures (timeouts) for another attempt."""
+        messages = list(
+            self.db.scalars(
+                select(RawMessage)
+                .where(
+                    RawMessage.status == MessageStatus.error,
+                    RawMessage.extraction_result.is_(None),
+                    RawMessage.error_message.is_not(None),
+                    or_(
+                        RawMessage.error_message.ilike("%ReadTimeout%"),
+                        RawMessage.error_message.ilike("%ConnectTimeout%"),
+                        RawMessage.error_message.ilike("%TimeoutException%"),
+                        RawMessage.error_message.ilike("%timed out%"),
+                    ),
+                )
+                .order_by(RawMessage.id.asc())
+                .limit(limit)
+            ).all()
+        )
+        if not messages:
+            return 0
+
+        for message in messages:
+            message.status = MessageStatus.parsed
+            message.error_message = None
+            self.db.add(message)
+        self.db.commit()
+        return len(messages)
 
     def mark_as_duplicate(
         self,

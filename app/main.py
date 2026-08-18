@@ -1,3 +1,4 @@
+import logging
 import secrets
 
 from fastapi import FastAPI, Request
@@ -12,6 +13,7 @@ from app.core.scheduler import start_scheduler, stop_scheduler
 from app.core.seeds.seed_super_admin import ensure_super_admin
 
 configure_logging()
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Lebanon News Monitor API")
 register_exception_handlers(app)
@@ -49,6 +51,19 @@ def startup() -> None:
     db = SessionLocal()
     try:
         ensure_super_admin(db)
+        from app.news.services.pipeline_advisory_lock import (
+            reclaim_stale_pipeline_advisory_locks,
+        )
+
+        terminated = reclaim_stale_pipeline_advisory_locks(
+            db,
+            reclaim_other_workers=False,
+        )
+        if terminated:
+            logger.warning(
+                "Backend startup reclaimed %s stale pipeline advisory lock(s)",
+                terminated,
+            )
     finally:
         db.close()
     start_scheduler()

@@ -1,6 +1,6 @@
 import hashlib
 from contextlib import AbstractContextManager
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -70,6 +70,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                     (Incident.duplicate_flag.is_(True), "possible"),
                     else_="none",
                 ).label("duplicate_flag"),
+                Incident.details_pending,
                 Incident.created_at,
             )
             .join(Village, Village.id == Incident.village_id)
@@ -81,9 +82,9 @@ class IncidentRepository(IncidentRepositoryInterface):
 
         rows = self.db.execute(
             base_query.order_by(
+                Incident.created_at.desc(),
                 Incident.event_date.desc(),
                 Incident.event_time.desc().nullslast(),
-                Incident.created_at.desc(),
             )
             .limit(params.limit)
             .offset(params.offset)
@@ -412,6 +413,47 @@ class IncidentRepository(IncidentRepositoryInterface):
                 Incident.village_id == village_id,
                 Incident.is_deleted.is_(False),
             )
+        )
+
+    def has_active_incidents_for_raw_message(self, raw_message_id: int) -> bool:
+        count = self.db.scalar(
+            select(func.count(Incident.id)).where(
+                Incident.raw_message_id == raw_message_id,
+                Incident.is_deleted.is_(False),
+            )
+        )
+        return int(count or 0) > 0
+
+    def find_active_incident_in_fast_dedup_window(
+        self,
+        *,
+        village_id: int,
+        condition_id: int,
+        message_datetime: datetime,
+        window_minutes: int,
+        exclude_raw_message_id: int | None = None,
+    ) -> Incident | None:
+        window = timedelta(minutes=window_minutes)
+        start = message_datetime - window
+        end = message_datetime + window
+
+        filters = [
+            Incident.village_id == village_id,
+            Incident.condition_id == condition_id,
+            Incident.is_deleted.is_(False),
+            RawMessage.message_datetime.is_not(None),
+            RawMessage.message_datetime >= start,
+            RawMessage.message_datetime <= end,
+        ]
+        if exclude_raw_message_id is not None:
+            filters.append(Incident.raw_message_id != exclude_raw_message_id)
+
+        return self.db.scalar(
+            select(Incident)
+            .join(RawMessage, RawMessage.id == Incident.raw_message_id)
+            .where(*filters)
+            .order_by(Incident.created_at.asc())
+            .limit(1)
         )
 
     def soft_delete_for_raw_message_id(

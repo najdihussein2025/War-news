@@ -59,6 +59,13 @@ class StubRelevanceClassifier:
 
 
 class StubExtractionClassifier(ExtractionClassifierInterface):
+    def extract_tier1(
+        self,
+        post_text: str,
+        raw_message_id: int | None = None,
+    ) -> ExtractionResult:
+        return self.extract(post_text, raw_message_id=raw_message_id)
+
     def extract(
         self,
         post_text: str,
@@ -105,6 +112,12 @@ class InMemoryRawMessageRepository(RawMessageRepositoryInterface):
         audited_candidates: list[dict[str, object]],
     ) -> None:
         message.extraction_result = result.model_dump(mode="json")
+
+    def get_by_id(self, raw_message_id: int) -> RawMessage | None:
+        return next(
+            (message for message in self.parsed_messages if message.id == raw_message_id),
+            None,
+        )
 
     def get_parsed_by_id(self, raw_message_id: int) -> RawMessage | None:
         return next(

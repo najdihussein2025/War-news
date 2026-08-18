@@ -28,6 +28,9 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    environment:
+      PG_APPLICATION_NAME: war-news-backend
+      PIPELINE_ROLE: api
     volumes:
       - .:/app
     ports:
@@ -39,6 +42,25 @@ services:
       timeout: 3s
       retries: 30
       start_period: 10s
+    networks:
+      - appnet
+
+  pipeline-worker:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      PG_APPLICATION_NAME: war-news-pipeline
+      PIPELINE_ROLE: worker
+    volumes:
+      - .:/app
+    command: python -m app.core.scripts.run_pipeline_worker
+    restart: unless-stopped
     networks:
       - appnet
 

@@ -39,12 +39,20 @@ class Settings(BaseSettings):
     cluster_time_window_minutes: int = 300
     cluster_similarity_threshold: float = 0.75
     cluster_require_condition_match: bool = True
+    # Fast-path materialization dedup: exact village_id + condition_id match window.
+    fast_dedup_time_window_minutes: int = 120
     pre_dedup_similarity_threshold: float = 0.92
+    # Max pre-dedup rows processed per full sweep before tier1 starts.
+    # Prevents multi-minute "frozen" sweeps on large backlogs.
+    pre_dedup_sweep_row_cap: int = 100
     # Incident-level dedup thresholds and look-back window.
     # Tune after reviewing real duplicate decisions; env vars override these.
     dedup_time_window_days: int = 3
     dedup_high_threshold: float = 0.80
     dedup_low_threshold: float = 0.50
+    pg_application_name: str = "war-news"
+    pipeline_role: str = "api"
+    pipeline_worker_poll_seconds: float = 2.0
 
     class Config:
         env_file = ".env"

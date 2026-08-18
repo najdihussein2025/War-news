@@ -29,11 +29,7 @@ from app.news.services.duplicate_match_reconciliation import (
 from app.news.services.incident_materialization_service import (
     IncidentMaterializationService,
 )
-from app.news.services.pre_extraction_dedup import (
-    choose_pre_dedup_original_id,
-    find_pre_dedup_match,
-    is_valid_pre_dedup_original,
-)
+from app.news.services.pre_extraction_dedup import process_pre_dedup_message
 from app.news.services.raw_message_embedding_service import (
     RawMessageEmbeddingService,
 )
@@ -164,50 +160,12 @@ def sweep_pre_extraction_dedup(
 
             processed += 1
             try:
-                msg = db.get(RawMessage, raw_message_id)
-                if msg is None:
-                    raise ValueError(f"RawMessage id={raw_message_id} not found")
-                if msg.raw_text is None:
-                    continue
-
-                best = find_pre_dedup_match(
+                if process_pre_dedup_message(
                     db,
                     raw_message_id=raw_message_id,
-                    raw_text=msg.raw_text,
                     threshold=threshold,
-                )
-
-                if best is None or best.score < threshold:
-                    continue
-
-                original_id = choose_pre_dedup_original_id(raw_message_id, best.id)
-                if original_id is None:
-                    continue
-
-                if not is_valid_pre_dedup_original(
-                    db,
-                    candidate_id=raw_message_id,
-                    original_id=original_id,
                 ):
-                    logger.info(
-                        "pre_extraction_dedup raw_message_id=%s skipped match "
-                        "raw_message_id=%s: invalid original target",
-                        raw_message_id,
-                        original_id,
-                    )
-                    continue
-
-                msg.status = MessageStatus.duplicate
-                msg.duplicate_of_id = original_id
-                db.commit()
-                logger.info(
-                    "pre_extraction_dedup raw_message_id=%s: word_similarity=%.3f"
-                    " similar_to_raw_message_id=%s",
-                    raw_message_id,
-                    best.score,
-                    original_id,
-                )
-                succeeded += 1
+                    succeeded += 1
             except Exception as exc:
                 db.rollback()
                 failed += 1

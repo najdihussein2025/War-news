@@ -67,9 +67,13 @@ def _client_for_model_contents(contents: list[str]) -> OllamaChatClient:
     )
 
 
-def _general_response(*, village_value: object = None) -> str:
-    if village_value is None:
-        village_value = ["بنت جبيل"]
+_GENERAL_RESPONSE_DEFAULT = ["بنت جبيل"]
+_UNSET = object()
+
+
+def _general_response(*, village_value: object = _UNSET) -> str:
+    if village_value is _UNSET:
+        village_value = _GENERAL_RESPONSE_DEFAULT
     return json.dumps(
         {
             "is_relevant": True,
@@ -79,6 +83,27 @@ def _general_response(*, village_value: object = None) -> str:
         },
         ensure_ascii=False,
     )
+
+
+def test_extract_tier1_skips_category_detail_calls() -> None:
+    presence_gate = _PresenceGateStub(
+        categories=[ExtractionCategoryKey.hospital]
+    )
+    category_detail = _CategoryDetailStub(details={})
+    service = OllamaExtractionService(
+        client=_client_for_model_contents([_general_response()]),
+        presence_gate=presence_gate,
+        category_detail=category_detail,
+    )
+
+    result = service.extract_tier1("sample text", raw_message_id=42)
+
+    assert presence_gate.calls == 1
+    assert category_detail.calls == []
+    assert result.extraction_tier == 1
+    assert result.presence_category_keys == [ExtractionCategoryKey.hospital]
+    assert ExtractionCategoryKey.hospital not in result.categories
+    assert ExtractionCategoryKey.casualty_demographics in result.categories
 
 
 def test_orchestration_skips_category_detail_when_presence_gate_is_empty() -> None:

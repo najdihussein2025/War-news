@@ -19,6 +19,7 @@ export type Incident = {
   source_reference: string | null;
   matched: boolean;
   duplicate_flag: "none" | "possible";
+  details_pending: boolean;
   created_at: string;
 };
 

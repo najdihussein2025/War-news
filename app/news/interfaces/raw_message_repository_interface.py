@@ -47,6 +47,10 @@ class RawMessageRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    def get_by_id(self, raw_message_id: int) -> RawMessage | None:
+        pass
+
+    @abstractmethod
     def get_parsed_by_id(self, raw_message_id: int) -> RawMessage | None:
         pass
 

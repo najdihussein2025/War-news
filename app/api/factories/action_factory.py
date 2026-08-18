@@ -90,24 +90,29 @@ def build_filter_relevance_action(
     )
 
 
+def build_extraction_classifier() -> ExtractionClassifierInterface:
+    from app.core.config import settings
+    from app.core.ollama_client import OllamaChatClient
+    from app.llm.services.ollama_extraction_service import OllamaExtractionService
+
+    return OllamaExtractionService(
+        OllamaChatClient(
+            base_url=settings.ollama_base_url,
+            api_key=settings.ollama_api_key,
+            model=settings.extraction_ollama_model,
+            timeout_seconds=settings.ollama_timeout_seconds,
+        )
+    )
+
+
 def build_extract_incidents_action(
     db: Session,
     classifier: ExtractionClassifierInterface | None = None,
 ) -> ExtractIncidentsAction:
-    from app.core.config import settings
-    from app.core.ollama_client import OllamaChatClient
     from app.news.repositories import RawMessageRepository
-    from app.llm.services.ollama_extraction_service import OllamaExtractionService
 
     if classifier is None:
-        classifier = OllamaExtractionService(
-            OllamaChatClient(
-                base_url=settings.ollama_base_url,
-                api_key=settings.ollama_api_key,
-                model=settings.extraction_ollama_model,
-                timeout_seconds=settings.ollama_timeout_seconds,
-            )
-        )
+        classifier = build_extraction_classifier()
 
     return ExtractIncidentsAction(
         raw_messages=RawMessageRepository(db),

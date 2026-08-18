@@ -71,6 +71,10 @@ class ExtractionResult(BaseModel):
         default_factory=dict
     )
     casualties: ExtractionCasualties = Field(default_factory=ExtractionCasualties)
+    # Tier 1 stores presence-gate keys here; category detail fills `categories` in Tier 2.
+    presence_category_keys: list[ExtractionCategoryKey] = Field(default_factory=list)
+    # 1 = fast path (general fields only); 2 = full category detail complete.
+    extraction_tier: int = Field(default=2, ge=1, le=2)
     model: str
     extracted_at: datetime
 

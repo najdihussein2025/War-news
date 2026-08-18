@@ -90,6 +90,12 @@ class Incident(Base):
         default=False,
         server_default=text("false"),
     )
+    details_pending: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=text("false"),
+    )
     is_deleted: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,

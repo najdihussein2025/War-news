@@ -134,6 +134,9 @@ export const IncidentsPage = () => {
             {row.duplicate_flag === "possible" ? (
               <StatusBadge label="Possible duplicate" variant="warning" />
             ) : null}
+            {row.details_pending ? (
+              <StatusBadge label="Details pending" variant="neutral" />
+            ) : null}
           </div>
           <p className="max-w-xl text-caption text-text-muted">{row.khabar.length > 180 ? `${row.khabar.slice(0, 180)}…` : row.khabar}</p>
           {row.raw_message_id != null &&

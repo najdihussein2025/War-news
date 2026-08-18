@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import logging
+
 from sqlalchemy import func, literal, select, text
 from sqlalchemy.orm import Session
 
 from app.news.models import MessageStatus, RawMessage
+
+logger = logging.getLogger(__name__)
 
 
 def choose_pre_dedup_original_id(
@@ -69,3 +73,59 @@ def find_pre_dedup_match(
         .order_by(score_col.desc(), RawMessage.id.asc())
         .limit(1)
     ).first()
+
+
+def process_pre_dedup_message(
+    db: Session,
+    *,
+    raw_message_id: int,
+    threshold: float,
+) -> bool:
+    """
+    Evaluate one message for pre-extraction dedup.
+
+    Returns True when the message was marked duplicate.
+    """
+    msg = db.get(RawMessage, raw_message_id)
+    if msg is None:
+        raise ValueError(f"RawMessage id={raw_message_id} not found")
+    if msg.raw_text is None:
+        return False
+
+    best = find_pre_dedup_match(
+        db,
+        raw_message_id=raw_message_id,
+        raw_text=msg.raw_text,
+        threshold=threshold,
+    )
+    if best is None or best.score < threshold:
+        return False
+
+    original_id = choose_pre_dedup_original_id(raw_message_id, best.id)
+    if original_id is None:
+        return False
+
+    if not is_valid_pre_dedup_original(
+        db,
+        candidate_id=raw_message_id,
+        original_id=original_id,
+    ):
+        logger.info(
+            "pre_extraction_dedup raw_message_id=%s skipped match "
+            "raw_message_id=%s: invalid original target",
+            raw_message_id,
+            original_id,
+        )
+        return False
+
+    msg.status = MessageStatus.duplicate
+    msg.duplicate_of_id = original_id
+    db.commit()
+    logger.info(
+        "pre_extraction_dedup raw_message_id=%s: word_similarity=%.3f"
+        " similar_to_raw_message_id=%s",
+        raw_message_id,
+        best.score,
+        original_id,
+    )
+    return True
