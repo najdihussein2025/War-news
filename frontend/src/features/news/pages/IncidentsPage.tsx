@@ -9,6 +9,7 @@ import {
   Label,
   type DataTableColumn,
 } from "../../../components/ui";
+import { useLiveQueryTitleAddon } from "../../../hooks/useLiveQueryTitleAddon";
 import { formatDate, formatRelativeTime } from "../../../lib/formatters";
 import { roleBaseFromPath } from "../../../lib/rolePath";
 import { useIncidentsQuery } from "../hooks";
@@ -54,7 +55,9 @@ export const IncidentsPage = () => {
     ],
   );
 
-  const { data, isLoading, isError } = useIncidentsQuery(filters);
+  const { data, isLoading, isError, dataUpdatedAt, isFetching } =
+    useIncidentsQuery(filters);
+  useLiveQueryTitleAddon(dataUpdatedAt, isFetching);
   const rows = data?.items ?? [];
   const total = data?.total ?? 0;
 

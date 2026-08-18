@@ -2,6 +2,7 @@ import { useEffect, useState, type FocusEvent, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { logout as revokeSession } from "../api";
 import { useLogin } from "../hooks";
+import { getLoginErrorMessage } from "../loginErrors";
 import { useAuthStore } from "../../../stores/authStore";
 import { ROLES } from "../../../constants/roles";
 import { Button, Card, FormField, Input } from "../../../components/ui";
@@ -189,9 +190,7 @@ export const LoginPage = () => {
   };
 
   const hasLoginError = loginMutation.isError;
-  const loginErrorMessage = (
-    loginMutation.error as { response?: { data?: { detail?: string } } } | null
-  )?.response?.data?.detail ?? "Incorrect username or password. Please check the credentials and try again.";
+  const loginErrorMessage = hasLoginError ? getLoginErrorMessage(loginMutation.error) : "";
 
   return (
     <main className="min-h-screen bg-surface font-sans text-text-primary lg:grid lg:grid-cols-5">

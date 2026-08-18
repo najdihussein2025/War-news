@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     extraction_ollama_model: str = "qwen2.5:7b"
     relevance_llm_batch_size: int = 4
     relevance_llm_timeout_seconds: int = 240
-    relevance_classifier_backend: str = "local_llm"
+    relevance_classifier_backend: str = "cnrs_provided"
     relevance_classifier_max_retries: int = 3
     relevance_classifier_retry_backoff_seconds: float = 1.0
     ingestion_poll_interval_seconds: int = 120

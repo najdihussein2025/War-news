@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.sources.actions import ReceiveCnrsWebhookAction
 from app.core.database import get_db
-from app.news.services.pipeline_orchestrator import run_full_pipeline_sweep
+from app.news.services.pipeline_orchestrator import run_full_pipeline_sweep_sync
 from app.sources.services.webhook_auth import verify_cnrs_webhook_secret
 from app.sources.dtos import CnrsWebhookPayload
 from app.sources.repositories import SourceRepository
@@ -36,5 +36,5 @@ def receive_cnrs_posts(
 
     action = ReceiveCnrsWebhookAction(sources=sources)
     result = action.execute(payload=payload, source_id=source.id)
-    background_tasks.add_task(run_full_pipeline_sweep)
+    background_tasks.add_task(run_full_pipeline_sweep_sync)
     return result

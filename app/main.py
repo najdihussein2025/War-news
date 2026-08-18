@@ -4,9 +4,17 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import router as api_router
+from app.core.cors import CORS_ORIGINS
+from app.core.database import SessionLocal
+from app.core.exception_handlers import register_exception_handlers
+from app.core.logging_config import configure_logging
 from app.core.scheduler import start_scheduler, stop_scheduler
+from app.core.seeds.seed_super_admin import ensure_super_admin
+
+configure_logging()
 
 app = FastAPI(title="Lebanon News Monitor API")
+register_exception_handlers(app)
 
 
 @app.middleware("http")
@@ -25,9 +33,10 @@ async def assign_login_device(request: Request, call_next):
         )
     return response
 
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=sorted(CORS_ORIGINS),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,6 +46,11 @@ app.include_router(api_router)
 
 @app.on_event("startup")
 def startup() -> None:
+    db = SessionLocal()
+    try:
+        ensure_super_admin(db)
+    finally:
+        db.close()
     start_scheduler()
 
 

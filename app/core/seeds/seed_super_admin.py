@@ -30,6 +30,30 @@ def _ensure_roles(db: Session) -> dict[RoleName, Role]:
     return roles
 
 
+def ensure_super_admin(db: Session) -> tuple[User, bool]:
+    roles = _ensure_roles(db)
+    super_admin_role = roles[RoleName.super_admin]
+    username = os.getenv("SUPER_ADMIN_SEED_USERNAME", DEFAULT_SUPER_ADMIN_USERNAME)
+    full_name = os.getenv("SUPER_ADMIN_SEED_FULL_NAME", DEFAULT_SUPER_ADMIN_FULL_NAME)
+
+    user = db.scalar(select(User).where(User.username == username))
+    if user is not None:
+        return user, False
+
+    user = User(
+        username=username,
+        password_hash=password_context.hash(settings.super_admin_seed_password),
+        full_name=full_name,
+        role_id=super_admin_role.id,
+        is_active=True,
+        created_by_id=None,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user, True
+
+
 def seed_super_admin(db: Session) -> tuple[User, bool]:
     roles = _ensure_roles(db)
     super_admin_role = roles[RoleName.super_admin]

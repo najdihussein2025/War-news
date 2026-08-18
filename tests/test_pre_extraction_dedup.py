@@ -81,6 +81,35 @@ class _StubSession:
         self.rolled_back += 1
 
 
+class _SameBatchStubSession(_StubSession):
+    """Returns per-message similarity matches for multi-row batch tests."""
+
+    def __init__(
+        self,
+        *,
+        batch_ids: list[int],
+        messages: dict[int, object],
+        similarity_targets: dict[int, object],
+    ) -> None:
+        super().__init__(
+            batch_ids=batch_ids,
+            messages=messages,
+            similarity_result=None,
+        )
+        self._similarity_targets = similarity_targets
+        self._current_message_id: int | None = None
+
+    def get(self, model, pk: int):
+        self._current_message_id = pk
+        return self._messages.get(pk)
+
+    def execute(self, stmt) -> _ExecuteResult:
+        assert self._current_message_id is not None
+        return _ExecuteResult(
+            self._similarity_targets.get(self._current_message_id)
+        )
+
+
 def _make_msg(
     id_: int,
     raw_text: str = "some news text",
@@ -105,12 +134,13 @@ def _make_msg(
 def test_near_duplicate_within_window_marked_as_duplicate() -> None:
     """
     When the similarity query finds a match with score >= threshold (0.92),
-    the message should be marked duplicate and duplicate_of_id should be set.
+    the higher-id message should be marked duplicate of the lower-id original.
     """
-    msg = _make_msg(1, "غارة جوية على بنت جبيل")
+    msg = _make_msg(100, "غارة جوية على بنت جبيل")
+    original = _make_msg(99, "غارة جوية على بنت جبيل")
     session = _StubSession(
-        batch_ids=[1],
-        messages={1: msg},
+        batch_ids=[100],
+        messages={100: msg, 99: original},
         similarity_result=SimpleNamespace(id=99, score=0.95),
     )
 
@@ -124,6 +154,34 @@ def test_near_duplicate_within_window_marked_as_duplicate() -> None:
     assert msg.duplicate_of_id == 99
     assert session.committed == 1
     assert session.rolled_back == 0
+
+
+def test_same_batch_pair_only_higher_id_marked_duplicate() -> None:
+    """
+    Two near-identical messages in one batch must not both become duplicates.
+    The lower id remains parsed; only the higher id points at the lower id.
+    """
+    lower = _make_msg(711, "غارة جوية على بنت جبيل")
+    higher = _make_msg(712, "غارة جوية على بنت جبيل")
+    session = _SameBatchStubSession(
+        batch_ids=[711, 712],
+        messages={711: lower, 712: higher},
+        similarity_targets={
+            711: SimpleNamespace(id=712, score=0.95),
+            712: SimpleNamespace(id=711, score=0.95),
+        },
+    )
+
+    result = sweep_pre_extraction_dedup(session)  # type: ignore[arg-type]
+
+    assert result.processed == 2
+    assert result.succeeded == 1
+    assert result.failed == 0
+    assert lower.status == MessageStatus.parsed
+    assert lower.duplicate_of_id is None
+    assert higher.status == MessageStatus.duplicate
+    assert higher.duplicate_of_id == 711
+    assert session.committed == 1
 
 
 def test_distinct_message_left_unchanged() -> None:

@@ -28,7 +28,9 @@ from app.news.models import (
     UpdateAction,
     Village,
 )
+from app.news.services.incident_detail_merge import merge_incident_detail_fields
 from app.sources.models import Source, SourceType
+
 
 class IncidentRepository(IncidentRepositoryInterface):
     def __init__(self, db: Session) -> None:
@@ -279,18 +281,33 @@ class IncidentRepository(IncidentRepositoryInterface):
             existing.deaths,
             new_candidate_data.get("deaths"),
         )
-        existing.total_deaths = self._max_preserving_empty(
-            existing.total_deaths,
-            new_candidate_data.get("deaths"),
-        )
         existing.injuries = self._max_preserving_empty(
             existing.injuries,
             new_candidate_data.get("injuries"),
         )
+        existing.total_deaths = self._max_preserving_empty(
+            existing.total_deaths,
+            new_candidate_data.get("total_deaths", new_candidate_data.get("deaths")),
+        )
         existing.total_injuries = self._max_preserving_empty(
             existing.total_injuries,
-            new_candidate_data.get("injuries"),
+            new_candidate_data.get(
+                "total_injuries",
+                new_candidate_data.get("injuries"),
+            ),
         )
+
+        mapped_fields = new_candidate_data.get("mapped_fields") or {}
+        if mapped_fields:
+            detail = self.db.scalar(
+                select(IncidentDetail).where(IncidentDetail.incident_id == existing.id)
+            )
+            if detail is None:
+                detail = IncidentDetail(incident_id=existing.id)
+                self.db.add(detail)
+                self.db.flush()
+            merge_incident_detail_fields(detail, mapped_fields)
+            self.db.add(detail)
 
         khabar = new_candidate_data.get("khabar")
         if khabar:
@@ -309,7 +326,26 @@ class IncidentRepository(IncidentRepositoryInterface):
             )
         self.db.add(existing)
 
-    def soft_delete_for_raw_message_id(self, raw_message_id: int) -> list[UUID]:
+    def find_active_incident_for_raw_message_village(
+        self,
+        raw_message_id: int,
+        village_id: int,
+    ) -> Incident | None:
+        return self.db.scalar(
+            select(Incident).where(
+                Incident.raw_message_id == raw_message_id,
+                Incident.village_id == village_id,
+                Incident.is_deleted.is_(False),
+            )
+        )
+
+    def soft_delete_for_raw_message_id(
+        self,
+        raw_message_id: int,
+        *,
+        representative_raw_message_id: int | None = None,
+        similarity_score: float | None = None,
+    ) -> list[UUID]:
         incidents = list(
             self.db.scalars(
                 select(Incident).where(
@@ -321,6 +357,17 @@ class IncidentRepository(IncidentRepositoryInterface):
         for incident in incidents:
             incident.is_deleted = True
             self.db.add(incident)
+            if representative_raw_message_id is not None:
+                representative_incident = self.find_active_incident_for_raw_message_village(
+                    representative_raw_message_id,
+                    incident.village_id,
+                )
+                if representative_incident is not None:
+                    self.create_duplicate_match(
+                        incident=incident,
+                        matched_incident=representative_incident,
+                        similarity_score=similarity_score or 0.0,
+                    )
         self.db.flush()
         return [incident.id for incident in incidents]
 
@@ -328,6 +375,9 @@ class IncidentRepository(IncidentRepositoryInterface):
         self,
         raw_message_id: int,
         village_id: int,
+        *,
+        matched_incident_id: UUID | None = None,
+        similarity_score: float | None = None,
     ) -> list[UUID]:
         """Soft-delete only the incident(s) for a specific (raw_message_id, village_id) pair."""
         incidents = list(
@@ -339,9 +389,19 @@ class IncidentRepository(IncidentRepositoryInterface):
                 )
             ).all()
         )
+        matched_incident: Incident | None = None
+        if matched_incident_id is not None:
+            matched_incident = self.db.get(Incident, matched_incident_id)
+
         for incident in incidents:
             incident.is_deleted = True
             self.db.add(incident)
+            if matched_incident is not None:
+                self.create_duplicate_match(
+                    incident=incident,
+                    matched_incident=matched_incident,
+                    similarity_score=similarity_score or 0.0,
+                )
         self.db.flush()
         return [incident.id for incident in incidents]
 

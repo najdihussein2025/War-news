@@ -12,24 +12,39 @@ from app.llm.interfaces import (
 )
 
 
-def build_relevance_classifier() -> RelevanceClassifierInterface:
+def _build_local_llm_relevance_classifier() -> RelevanceClassifierInterface:
     from app.core.config import settings
     from app.core.ollama_client import OllamaChatClient
     from app.llm.services.local_llm_relevance_classifier import (
         LocalLLMRelevanceClassifier,
     )
 
+    return LocalLLMRelevanceClassifier(
+        OllamaChatClient(
+            base_url=settings.ollama_base_url,
+            api_key=settings.ollama_api_key,
+            model=settings.relevance_ollama_model,
+            timeout_seconds=settings.relevance_llm_timeout_seconds,
+        ),
+        max_retries=settings.relevance_classifier_max_retries,
+        retry_backoff_seconds=settings.relevance_classifier_retry_backoff_seconds,
+    )
+
+
+def build_relevance_classifier() -> RelevanceClassifierInterface:
+    from app.core.config import settings
+    from app.llm.services.cnrs_relevance_classifier import (
+        CNRS_PROVIDED_BACKEND,
+        CnrsProvidedRelevanceClassifier,
+    )
+
     backend = settings.relevance_classifier_backend.lower()
     if backend == "local_llm":
-        return LocalLLMRelevanceClassifier(
-            OllamaChatClient(
-                base_url=settings.ollama_base_url,
-                api_key=settings.ollama_api_key,
-                model=settings.relevance_ollama_model,
-                timeout_seconds=settings.relevance_llm_timeout_seconds,
-            ),
-            max_retries=settings.relevance_classifier_max_retries,
-            retry_backoff_seconds=settings.relevance_classifier_retry_backoff_seconds,
+        return _build_local_llm_relevance_classifier()
+
+    if backend == CNRS_PROVIDED_BACKEND:
+        return CnrsProvidedRelevanceClassifier(
+            fallback=_build_local_llm_relevance_classifier(),
         )
 
     if backend == "gemini":
@@ -40,7 +55,8 @@ def build_relevance_classifier() -> RelevanceClassifierInterface:
 
     raise RuntimeError(
         "Unsupported RELEVANCE_CLASSIFIER_BACKEND="
-        f"{settings.relevance_classifier_backend!r}. Expected 'local_llm' or 'gemini'."
+        f"{settings.relevance_classifier_backend!r}. "
+        "Expected 'local_llm', 'cnrs_provided', or 'gemini'."
     )
 
 

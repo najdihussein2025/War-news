@@ -15,6 +15,7 @@ from app.llm.interfaces import (
     RelevanceClassifierInterface,
 )
 from app.news.models import RawMessage
+from app.llm.services.cnrs_relevance_classifier import classification_from_cnrs
 from app.llm.services.relevance_filter_service import (
     policy_for_result,
     status_for_result,
@@ -65,10 +66,38 @@ class FilterRelevanceAction:
         uncertain = 0
         errored = 0
         auto_rejected_by_keyword = 0
+        cnrs_resolved = 0
         classifier_calls_made = 0
 
         candidates: list[RawMessage] = []
         for message in messages:
+            cnrs_result = classification_from_cnrs(message)
+            if cnrs_result is not None:
+                try:
+                    policy = policy_for_result(cnrs_result)
+                    self.raw_messages.save_filter_result(
+                        message=message,
+                        result=cnrs_result,
+                        new_status=status_for_result(cnrs_result),
+                        needs_review=policy.needs_review,
+                    )
+                    cnrs_resolved += 1
+                    if policy.verdict == RelevancePolicyVerdict.proceed:
+                        relevant += 1
+                    elif policy.verdict == RelevancePolicyVerdict.reject:
+                        rejected += 1
+                    else:
+                        uncertain += 1
+                except Exception as exc:
+                    self.raw_messages.rollback()
+                    errored += 1
+                    logger.error(
+                        "raw_message_id=%s CNRS relevance save failed: %s",
+                        message.id,
+                        _format_exception(exc),
+                    )
+                continue
+
             if self.keyword_prefilter.has_candidate_keywords(message.raw_text or ""):
                 candidates.append(message)
                 continue
