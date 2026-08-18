@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, NavLink, useParams } from "react-router-dom";
+import { Navigate, NavLink, useParams, useSearchParams } from "react-router-dom";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { Button, DataTable, Dialog, EmptyState, Input, Label, type DataTableColumn } from "../../../components/ui";
 import { cn } from "../../../lib/cn";
@@ -22,7 +22,7 @@ const AuditTable = () => {
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const pageSize = 100;
+  const pageSize = 25;
   const debouncedSearch = useDebounce(search);
   const { data, isLoading, isError } = useAuditLogsQuery({ search: debouncedSearch, action, dateFrom, dateTo, page, pageSize });
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / pageSize));
@@ -37,15 +37,19 @@ const AuditTable = () => {
 };
 
 const LoginTable = () => {
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
+  const [result, setResult] = useState<"success" | "failure" | "all">(
+    searchParams.get("result") === "failure" ? "failure" : "success",
+  );
+  const [dateFrom, setDateFrom] = useState(searchParams.get("date_from") ?? "");
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
-  const pageSize = 100;
+  const pageSize = 25;
   const debouncedSearch = useDebounce(search);
   const { data, isLoading, isError } = useLoginLogsQuery({
     search: debouncedSearch,
-    result: "success",
+    result,
     dateFrom,
     dateTo,
     page,
@@ -62,13 +66,14 @@ const LoginTable = () => {
   ];
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 rounded-lg border border-border bg-surface-raised p-4 md:grid-cols-3">
+      <div className="grid gap-3 rounded-lg border border-border bg-surface-raised p-4 md:grid-cols-4">
         <div className="space-y-2"><Label htmlFor="login-search">Search</Label><Input
           id="login-search"
           placeholder="Search username or IP"
           value={search}
           onChange={(event) => { setSearch(event.target.value); resetPage(); }}
         /></div>
+        <div className="space-y-2"><Label htmlFor="login-result">Result</Label><select id="login-result" className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3" value={result} onChange={(event) => { setResult(event.target.value as "success" | "failure" | "all"); resetPage(); }}><option value="all">All results</option><option value="success">Successful</option><option value="failure">Failed</option></select></div>
         <div className="space-y-2"><Label htmlFor="login-from">From</Label><Input
           id="login-from"
           type="date"
@@ -114,7 +119,7 @@ const IngestionTable = () => {
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
   const [detailId, setDetailId] = useState<number | null>(null);
-  const pageSize = 100;
+  const pageSize = 25;
   const { data, isLoading, isError } = useIngestionLogsQuery({ sourceId: sourceId || undefined, status, dateFrom, dateTo, page, pageSize });
   const { data: sources = [] } = useSourcesQuery();
   const { data: detail } = useIngestionLogQuery(detailId);

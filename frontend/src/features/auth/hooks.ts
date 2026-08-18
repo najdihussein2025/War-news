@@ -12,7 +12,6 @@ export const useLogin = () => {
       storeLogin({
         user: data.user,
         role: data.role,
-        token: data.access_token,
       });
     },
   });
@@ -20,10 +19,8 @@ export const useLogin = () => {
 
 export const useLogout = () => {
   const storeLogout = useAuthStore((state) => state.logout);
-  const token = useAuthStore((state) => state.token);
-
   return useMutation({
-    mutationFn: () => logout(token),
+    mutationFn: logout,
     onSettled: () => {
       storeLogout();
     },

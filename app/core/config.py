@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     login_max_failed_attempts: int = 3
     login_lockout_minutes: int = 5
     auth_secret_key: str = "development-only-change-me"
+    auth_cookie_secure: bool = False
+    auth_cookie_samesite: str = "lax"
     super_admin_seed_password: str = "password"
     # First-pass values derived from a single confirmed duplicate pair
     # (248 min gap, 0.7675 cosine similarity — 2026-08-18).

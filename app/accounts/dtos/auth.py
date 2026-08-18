@@ -19,3 +19,8 @@ class LoginResponseDTO(BaseModel):
 class SessionResponseDTO(BaseModel):
     user: UserResponseDTO
     role: RoleName
+
+
+class CookieLoginResponseDTO(BaseModel):
+    user: UserResponseDTO
+    role: RoleName

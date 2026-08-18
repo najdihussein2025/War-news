@@ -12,12 +12,11 @@ export type AuthUser = {
 type StoredAuthState = {
   user: AuthUser | null;
   role: Role | null;
-  token: string | null;
 };
 
 type AuthState = StoredAuthState & {
   isAuthenticated: boolean;
-  login: (payload: { user: AuthUser; role: Role; token: string }) => void;
+  login: (payload: { user: AuthUser; role: Role }) => void;
   logout: () => void;
   hydrateFromStorage: () => void;
 };
@@ -25,7 +24,6 @@ type AuthState = StoredAuthState & {
 const emptyAuthState: StoredAuthState = {
   user: null,
   role: null,
-  token: null,
 };
 
 const readStoredAuth = (): StoredAuthState => {
@@ -36,11 +34,12 @@ const readStoredAuth = (): StoredAuthState => {
 
   try {
     const parsed = JSON.parse(raw) as Partial<StoredAuthState>;
-    return {
+    const safeState = {
       user: parsed.user ?? null,
       role: parsed.role ?? null,
-      token: parsed.token ?? null,
     };
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(safeState));
+    return safeState;
   } catch {
     localStorage.removeItem(AUTH_STORAGE_KEY);
     return emptyAuthState;
@@ -55,9 +54,9 @@ const initialAuthState = readStoredAuth();
 
 export const useAuthStore = create<AuthState>((set) => ({
   ...initialAuthState,
-  isAuthenticated: Boolean(initialAuthState.token),
-  login: ({ user, role, token }) => {
-    const nextState = { user, role, token };
+  isAuthenticated: Boolean(initialAuthState.user && initialAuthState.role),
+  login: ({ user, role }) => {
+    const nextState = { user, role };
     persistAuth(nextState);
     set({ ...nextState, isAuthenticated: true });
   },
@@ -67,6 +66,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   hydrateFromStorage: () => {
     const stored = readStoredAuth();
-    set({ ...stored, isAuthenticated: Boolean(stored.token) });
+    set({ ...stored, isAuthenticated: Boolean(stored.user && stored.role) });
   },
 }));

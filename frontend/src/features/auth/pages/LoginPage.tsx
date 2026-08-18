@@ -134,7 +134,7 @@ const EditorialMotif = () => (
 export const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [sessionOnEntry] = useState(() => useAuthStore.getState().token);
+  const [sessionOnEntry] = useState(() => useAuthStore.getState().isAuthenticated);
   const clearSession = useAuthStore((state) => state.logout);
   const loginMutation = useLogin();
   const [username, setUsername] = useState("");
@@ -147,7 +147,7 @@ export const LoginPage = () => {
 
   useEffect(() => {
     if (!sessionOnEntry) return;
-    void revokeSession(sessionOnEntry).catch(() => undefined);
+    void revokeSession().catch(() => undefined);
     clearSession();
   }, [clearSession, sessionOnEntry]);
 

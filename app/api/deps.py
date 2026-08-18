@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -13,10 +13,12 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> User:
-    session = AuthSessionRepository(db).get_active(hash_access_token(credentials.credentials)) if credentials else None
+    token = request.cookies.get("access_token") or (credentials.credentials if credentials else None)
+    session = AuthSessionRepository(db).get_active(hash_access_token(token)) if token else None
     user = session.user if session else None
     if user is None or not user.is_active:
         raise HTTPException(

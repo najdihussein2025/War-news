@@ -221,7 +221,6 @@ const SidebarContent = ({
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const role = useAuthStore((state) => state.role);
-  const token = useAuthStore((state) => state.token);
   const logout = useAuthStore((state) => state.logout);
   const displayRole = role ?? previewRole ?? ROLES.ADMIN;
   const roleBase = displayRole === ROLES.SUPER_ADMIN ? "/superadmin" : "/admin";
@@ -231,7 +230,7 @@ const SidebarContent = ({
   const visibleItems = displayRole === ROLES.SUPER_ADMIN ? superAdminNavItems : adminNavItems;
 
   const handleLogout = () => {
-    void revokeSession(token).catch(() => undefined);
+    void revokeSession().catch(() => undefined);
     logout();
     navigate("/login", { replace: true });
   };

@@ -1,4 +1,4 @@
-from app.accounts.dtos.auth import LoginDTO, LoginResponseDTO, SessionResponseDTO
+from app.accounts.dtos.auth import CookieLoginResponseDTO, LoginDTO, LoginResponseDTO, SessionResponseDTO
 from app.accounts.dtos.user import (
     RoleResponseDTO,
     UserActiveUpdateDTO,
@@ -8,6 +8,7 @@ from app.accounts.dtos.user import (
 )
 
 __all__ = [
+    "CookieLoginResponseDTO",
     "LoginDTO",
     "LoginResponseDTO",
     "RoleResponseDTO",

@@ -1,5 +1,6 @@
 export { Button } from "./Button";
 export { Card } from "./Card";
+export { ConfirmDialog } from "./ConfirmDialog";
 export { DataTable } from "./DataTable";
 export { Dialog } from "./Dialog";
 export { EmptyState } from "./EmptyState";

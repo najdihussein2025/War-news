@@ -78,7 +78,7 @@ export const DataTable = <T,>({
   getRowKey,
   actions,
   onRowClick,
-  minWidth = "980px",
+  minWidth = "760px",
   loading = false,
   error = false,
   emptyState,
@@ -124,7 +124,7 @@ export const DataTable = <T,>({
 
   return (
     <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full border-collapse" style={{ minWidth }} aria-busy={loading}>
           <thead className="sticky top-0 z-10 bg-surface-raised">
             <tr className="border-b border-border">
@@ -188,6 +188,23 @@ export const DataTable = <T,>({
             )}
           </tbody>
         </table>
+      </div>
+      <div className="divide-y divide-border md:hidden" aria-busy={loading}>
+        {loading ? (
+          <div className="space-y-3 p-4">
+            {Array.from({ length: 4 }).map((_, index) => <div className="h-20 animate-pulse rounded-md bg-surface-muted" key={index} />)}
+          </div>
+        ) : sortedRows.map((row) => (
+          <article className="space-y-3 p-4" key={getRowKey(row)}>
+            {columns.map((column) => (
+              <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-3" key={column.key}>
+                <p className="text-caption font-semibold uppercase text-text-muted">{column.header}</p>
+                <div className="min-w-0 text-small text-text-primary">{column.render(row)}</div>
+              </div>
+            ))}
+            {actions ? <div className="flex justify-end border-t border-border pt-3">{actions(row)}</div> : null}
+          </article>
+        ))}
       </div>
     </Card>
   );

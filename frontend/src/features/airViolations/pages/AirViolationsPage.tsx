@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Button, DataTable, Dialog, EmptyState, Input, Label, type DataTableColumn } from "../../../components/ui";
+import { Button, ConfirmDialog, DataTable, Dialog, EmptyState, Input, Label, type DataTableColumn } from "../../../components/ui";
 import { formatDate } from "../../../lib/formatters";
 import { useAirViolationsQuery } from "../hooks";
 import { createAirViolation, deleteAirViolation, exportAirViolations, updateAirViolation } from "../api";
@@ -32,6 +32,8 @@ export const AirViolationsPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [createError, setCreateError] = useState("");
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Number(params.get("page") ?? "1") || 1);
@@ -42,7 +44,10 @@ export const AirViolationsPage = () => {
   const cazaEn = params.get("caza_en") ?? "";
   const hasFilters = Boolean(conditionId || eventDateFrom || eventDateTo || cazaEn);
   const closeEditor = () => {
-    if (isFormDirty && !window.confirm("Discard your unsaved changes?")) return;
+    if (isFormDirty) {
+      setConfirmDiscard(true);
+      return;
+    }
     setIsCreateOpen(false);
     setEditingViolation(null);
     setIsFormDirty(false);
@@ -102,7 +107,12 @@ export const AirViolationsPage = () => {
     {
       key: "action-en",
       header: "Action",
-      render: (row) => <TextCell value={row.action_en} />,
+      render: (row) => (
+        <div>
+          <TextCell value={row.action_en} />
+          <span className="mt-1 block text-right text-text-muted" dir="rtl" lang="ar">{row.action_ar}</span>
+        </div>
+      ),
       sortValue: (row) => row.action_en,
     },
     {
@@ -146,13 +156,13 @@ export const AirViolationsPage = () => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="air-condition-filter">Condition</Label>
+            <Label htmlFor="air-condition-filter">Action</Label>
             <select
               id="air-condition-filter"
               className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3 text-body text-text-primary"
               value={conditionId}
               onChange={(event) => updateParam("condition_id", event.target.value)}
-            ><option value="">All conditions</option><option value="35">35</option><option value="36">36</option><option value="38">38</option></select>
+            ><option value="">All actions</option><option value="35">Warplane — طيران حربي</option><option value="36">Surveillance aircraft — طيران استطلاعي</option><option value="38">Helicopter hovering — طيران مروحي</option></select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="air-from-filter">From</Label>
@@ -218,7 +228,7 @@ export const AirViolationsPage = () => {
       {selectedViolation ? (
         <Dialog
           title="Air violation"
-          onClose={() => setSelectedViolation(null)}
+          onClose={() => { if (!confirmDelete) setSelectedViolation(null); }}
           size="lg"
         >
           <dl className="grid gap-5 sm:grid-cols-2">
@@ -258,19 +268,10 @@ export const AirViolationsPage = () => {
             </Button>
             <Button
               type="button"
+              variant="destructive"
               isLoading={isDeleting}
               loadingText="Deleting"
-              onClick={async () => {
-                if (!window.confirm("Delete this air violation? This action cannot be undone.")) return;
-                setIsDeleting(true);
-                try {
-                  await deleteAirViolation(selectedViolation.id);
-                  setSelectedViolation(null);
-                  await refetch();
-                } finally {
-                  setIsDeleting(false);
-                }
-              }}
+              onClick={() => setConfirmDelete(true)}
             >
               Delete
             </Button>
@@ -278,11 +279,49 @@ export const AirViolationsPage = () => {
         </Dialog>
       ) : null}
 
+      {confirmDiscard ? (
+        <ConfirmDialog
+          title="Discard unsaved changes?"
+          description="The changes in this form have not been saved and will be lost."
+          confirmLabel="Discard changes"
+          destructive
+          onCancel={() => setConfirmDiscard(false)}
+          onConfirm={() => {
+            setConfirmDiscard(false);
+            setIsCreateOpen(false);
+            setEditingViolation(null);
+            setIsFormDirty(false);
+          }}
+        />
+      ) : null}
+
+      {confirmDelete && selectedViolation ? (
+        <ConfirmDialog
+          title="Delete air violation?"
+          description="This record will be permanently deleted. This action cannot be undone."
+          confirmLabel="Delete record"
+          destructive
+          isLoading={isDeleting}
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={async () => {
+            setIsDeleting(true);
+            try {
+              await deleteAirViolation(selectedViolation.id);
+              setConfirmDelete(false);
+              setSelectedViolation(null);
+              await refetch();
+            } finally {
+              setIsDeleting(false);
+            }
+          }}
+        />
+      ) : null}
+
       {isCreateOpen ? (
         <Dialog
           title={editingViolation ? "Update air violation" : "Create air violation"}
           eyebrow={editingViolation ? "Edit record" : "Create record"}
-          onClose={closeEditor}
+          onClose={() => { if (!confirmDiscard) closeEditor(); }}
           size="lg"
         >
           <form
@@ -321,7 +360,7 @@ export const AirViolationsPage = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               <div><Label htmlFor="create-caza">District (Caza) *</Label><Input id="create-caza" name="caza_en" required placeholder="e.g. Sour" className="mt-2" defaultValue={editingViolation?.caza_en ?? ""} /></div>
               <div><Label htmlFor="create-caza-ar">District in Arabic (optional)</Label><Input id="create-caza-ar" name="caza_ar" dir="rtl" placeholder="مثال: صور" className="mt-2" defaultValue={editingViolation?.caza_ar ?? ""} /></div>
-              <div className="sm:col-span-2"><Label htmlFor="create-condition">Condition *</Label><select id="create-condition" name="condition_id" required defaultValue={editingViolation?.condition_id ?? 35} className="mt-2 h-11 w-full rounded-md border border-input-border bg-input-bg px-3"><option value="35">Warplane</option><option value="36">Surveillance aircraft</option><option value="38">Helicopter hovering</option></select></div>
+              <div className="sm:col-span-2"><Label htmlFor="create-condition">Action *</Label><select id="create-condition" name="condition_id" required defaultValue={editingViolation?.condition_id ?? 35} className="mt-2 h-11 w-full rounded-md border border-input-border bg-input-bg px-3"><option value="35">Warplane — طيران حربي</option><option value="36">Surveillance aircraft — طيران استطلاعي</option><option value="38">Helicopter hovering — طيران مروحي</option></select></div>
               <div><Label htmlFor="create-date">Date *</Label><Input id="create-date" name="event_date" type="date" required className="mt-2" defaultValue={editingViolation?.event_date ?? ""} /></div>
               <div><Label htmlFor="create-time">Time (optional)</Label><Input id="create-time" name="event_time" type="time" className="mt-2" defaultValue={editingViolation?.event_time?.slice(0, 5) ?? ""} /></div>
             </div>

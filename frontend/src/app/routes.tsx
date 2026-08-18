@@ -18,7 +18,6 @@ const RequireRole = ({ roles, children }: { roles: string[]; children: ReactNode
   const location = useLocation();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const role = useAuthStore((state) => state.role);
-  const token = useAuthStore((state) => state.token);
   const logout = useAuthStore((state) => state.logout);
   const [sessionValid, setSessionValid] = useState(false);
   const [validationError, setValidationError] = useState(false);
@@ -30,29 +29,46 @@ const RequireRole = ({ roles, children }: { roles: string[]; children: ReactNode
 
   useEffect(() => {
     let active = true;
-    if (!isAuthenticated || !token) {
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    if (!isAuthenticated) {
       setSessionValid(false);
       return;
     }
-    getSession()
-      .then((session) => {
-        if (!active) return;
-        if (session.role !== role) {
-          logout();
-          return;
-        }
-        setValidationError(false);
-        setSessionValid(true);
-      })
-      .catch((error: { response?: { status?: number } }) => {
-        if (!active) return;
-        if (error.response?.status === 401) logout();
-        else setValidationError(true);
-      });
+
+    setSessionValid(false);
+    setValidationError(false);
+
+    const validateSession = (attempt = 0) => {
+      getSession()
+        .then((session) => {
+          if (!active) return;
+          if (session.role !== role) {
+            logout();
+            return;
+          }
+          setValidationError(false);
+          setSessionValid(true);
+        })
+        .catch((error: { response?: { status?: number } }) => {
+          if (!active) return;
+          if (error.response?.status === 401) {
+            logout();
+            return;
+          }
+          if (attempt < 4) {
+            retryTimer = setTimeout(() => validateSession(attempt + 1), 1_000);
+            return;
+          }
+          setValidationError(true);
+        });
+    };
+
+    validateSession();
     return () => {
       active = false;
+      if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [isAuthenticated, logout, role, token, validationAttempt]);
+  }, [isAuthenticated, logout, role, validationAttempt]);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
