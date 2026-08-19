@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class ExtractionCategoryKey(str, Enum):
@@ -74,9 +74,21 @@ class ExtractionResult(BaseModel):
     # Tier 1 stores presence-gate keys here; category detail fills `categories` in Tier 2.
     presence_category_keys: list[ExtractionCategoryKey] = Field(default_factory=list)
     # 1 = fast path (general fields only); 2 = full category detail complete.
-    extraction_tier: int = Field(default=2, ge=1, le=2)
+    extraction_tier: int = Field(default=1, ge=1, le=2)
     model: str
     extracted_at: datetime
+
+    @model_validator(mode="before")
+    @classmethod
+    def _infer_legacy_extraction_tier(cls, data: object) -> object:
+        """Legacy rows omit extraction_tier; infer from stored category detail."""
+        if not isinstance(data, dict):
+            return data
+        if data.get("extraction_tier") is not None:
+            return data
+        categories = data.get("categories") or {}
+        inferred_tier = 2 if categories else 1
+        return {**data, "extraction_tier": inferred_tier}
 
 
 class ExtractedCandidate(BaseModel):
