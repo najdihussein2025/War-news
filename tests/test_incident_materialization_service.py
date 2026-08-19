@@ -11,7 +11,12 @@ from sqlalchemy.exc import IntegrityError
 import app.accounts.models  # noqa: F401
 import app.logs.models  # noqa: F401
 import app.sources.models  # noqa: F401
-from app.news.models import Incident, IncidentDetail
+from app.news.models import Incident, IncidentDetail, MessageStatus
+from app.news.services.fast_path_eligibility import (
+    ERROR_AIR_VIOLATION,
+    ERROR_NO_VILLAGE,
+    ERROR_UNMATCHED_CONDITION,
+)
 from app.news.services.incident_materialization_service import (
     EXACT_HASH_CONSTRAINT,
     IncidentMaterializationService,
@@ -158,6 +163,8 @@ def _representative(*, match_result: dict | None = None):
         content_embedding=[0.1, 0.2, 0.3],
         extraction_result=_extraction_result(),
         match_result=match_result if match_result is not None else _match_result(),
+        status=MessageStatus.parsed,
+        error_message=None,
     )
 
 
@@ -228,37 +235,50 @@ def test_casualty_fields_map_from_top_level_extraction_result() -> None:
 def test_air_violation_condition_is_skipped(condition_id: int, caplog) -> None:
     db = _SessionStub()
     service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    representative = _representative(match_result=_match_result(condition_id=condition_id))
 
     with caplog.at_level("INFO"):
-        result = service.materialize(
-            _representative(match_result=_match_result(condition_id=condition_id))
-        )
+        result = service.materialize(representative)
 
     assert result == []
     assert db.added == []
-    assert db.commit_calls == 0
+    assert db.commit_calls == 1
+    assert representative.status == MessageStatus.error
+    assert representative.error_message == ERROR_AIR_VIOLATION
     assert service.stats.skipped_air_violation_routed == 1
     assert service.stats.skipped_ineligible == 0
-    assert f"routed to air_violations, condition_id={condition_id}" in caplog.text
+    assert "air_violations" in caplog.text
 
 
 @pytest.mark.parametrize(
-    "match_result",
+    "match_result, expected_reason",
     [
-        _match_result(village_status="unmatched", village_id=None),
-        _match_result(condition_status="unmatched", condition_id=None),
+        (
+            _match_result(village_status="unmatched", village_id=None),
+            ERROR_NO_VILLAGE,
+        ),
+        (
+            _match_result(condition_status="unmatched", condition_id=None),
+            ERROR_UNMATCHED_CONDITION,
+        ),
     ],
 )
-def test_unmatched_village_or_condition_is_skipped(match_result: dict) -> None:
+def test_unmatched_village_or_condition_is_skipped(
+    match_result: dict,
+    expected_reason: str,
+) -> None:
     db = _SessionStub()
     service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    representative = _representative(match_result=match_result)
 
-    result = service.materialize(_representative(match_result=match_result))
+    result = service.materialize(representative)
 
     assert result == []
     assert db.added == []
-    assert db.commit_calls == 0
+    assert db.commit_calls == 1
     assert db.rollback_calls == 0
+    assert representative.status == MessageStatus.error
+    assert representative.error_message == expected_reason
     assert service.stats.skipped_ineligible >= 1
 
 

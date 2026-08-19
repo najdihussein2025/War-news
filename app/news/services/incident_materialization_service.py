@@ -20,10 +20,10 @@ from app.news.services.fast_path_dedup import (
     FastPathDedupService,
 )
 from app.news.services.fast_path_eligibility import (
-    AIR_VIOLATION_CONDITION_IDS,
     ELIGIBLE_MATCH_STATUSES,
     ERROR_AIR_VIOLATION,
     ERROR_EXACT_HASH,
+    ERROR_NO_VILLAGE,
     ERROR_UNMATERIALIZABLE,
     permanent_ineligibility_reason,
 )
@@ -191,9 +191,16 @@ class IncidentMaterializationService:
         return created
 
     def _mark_unmaterializable(self, representative: RawMessage, reason: str) -> None:
+        """Persist a terminal status in its own transaction.
+
+        Downstream incident-insert failures must not roll this back: the
+        concurrent fast-path worker wraps the rest of the unit of work in
+        ``except Exception: db.rollback()``.
+        """
         representative.status = MessageStatus.error
         representative.error_message = reason
         self.fast_stats.marked_unmaterializable += 1
+        self.db.commit()
 
     def _insert_fast_incident(
         self,
@@ -284,34 +291,22 @@ class IncidentMaterializationService:
         abort processing for other villages on the same message.
         """
         match_result = self._normalize_match_result(representative.match_result)
-        if match_result is None:
-            self.stats.skipped_ineligible += 1
+        ineligible_reason = permanent_ineligibility_reason(match_result)
+        if ineligible_reason is not None:
+            if ineligible_reason == ERROR_AIR_VIOLATION:
+                self.stats.skipped_air_violation_routed += 1
+            else:
+                self.stats.skipped_ineligible += 1
+            self._mark_unmaterializable(representative, ineligible_reason)
             logger.info(
-                "raw_message_id=%s skipped: match_result is missing",
+                "raw_message_id=%s materialize terminalized: %s",
                 representative.id,
+                ineligible_reason,
             )
             return []
 
-        condition_ineligible = self._condition_ineligible_reason(match_result)
-        if condition_ineligible is not None:
-            self.stats.skipped_ineligible += 1
-            logger.info(
-                "raw_message_id=%s skipped: %s",
-                representative.id,
-                condition_ineligible,
-            )
-            return []
-
+        assert match_result is not None
         condition_id = self._required_int(match_result, "matched_condition_id")
-
-        if condition_id in AIR_VIOLATION_CONDITION_IDS:
-            self.stats.skipped_air_violation_routed += 1
-            logger.info(
-                "raw_message_id=%s skipped: routed to air_violations, condition_id=%s",
-                representative.id,
-                condition_id,
-            )
-            return []
 
         if representative.extraction_result is None:
             raise ValueError(
@@ -333,9 +328,11 @@ class IncidentMaterializationService:
         village_matches: list[dict[str, Any]] = match_result.get("village_matches", [])
         if not village_matches:
             self.stats.skipped_ineligible += 1
+            self._mark_unmaterializable(representative, ERROR_NO_VILLAGE)
             logger.info(
-                "raw_message_id=%s skipped: village_matches is empty",
+                "raw_message_id=%s materialize terminalized: %s",
                 representative.id,
+                ERROR_NO_VILLAGE,
             )
             return []
 
@@ -505,17 +502,6 @@ class IncidentMaterializationService:
             "raw_village_text": match_result.get("raw_village_text"),
         }
         return {**match_result, "village_matches": [village_match]}
-
-    @staticmethod
-    def _condition_ineligible_reason(match_result: dict[str, Any]) -> str | None:
-        condition_status = match_result.get("condition_match_status")
-        if condition_status not in ELIGIBLE_MATCH_STATUSES:
-            return f"condition_match_status={condition_status!r} is ineligible"
-        if IncidentMaterializationService._optional_int(
-            match_result.get("matched_condition_id")
-        ) is None:
-            return "matched_condition_id is missing"
-        return None
 
     @staticmethod
     def _required_int(payload: dict[str, Any], key: str) -> int:

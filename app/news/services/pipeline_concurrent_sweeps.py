@@ -31,11 +31,19 @@ from app.news.services.pre_extraction_dedup import process_pre_dedup_message
 logger = logging.getLogger(__name__)
 
 
+def _format_exception(exc: BaseException) -> str:
+    message = str(exc).strip()
+    if message:
+        return f"{type(exc).__name__}: {message}"
+    return f"{type(exc).__name__} (no message)"
+
+
 @dataclass
 class _WorkerStats:
     processed: int = 0
     succeeded: int = 0
     failed: int = 0
+    terminalized: int = 0
     lock: threading.Lock = field(default_factory=threading.Lock)
 
     def record_success(self) -> None:
@@ -47,6 +55,12 @@ class _WorkerStats:
         with self.lock:
             self.processed += 1
             self.failed += 1
+
+    def record_terminalized(self) -> None:
+        with self.lock:
+            self.processed += 1
+            self.succeeded += 1
+            self.terminalized += 1
 
     def should_stop(self, max_rows: int | None) -> bool:
         if max_rows is None:
@@ -297,12 +311,16 @@ async def _fast_path_worker(
             try:
                 service.process_fast_path(message, fast_dedup)
                 db.commit()
-                stats.record_success()
-            except Exception:
+                if service.fast_stats.marked_unmaterializable:
+                    stats.record_terminalized()
+                else:
+                    stats.record_success()
+            except Exception as exc:
                 db.rollback()
                 logger.exception(
-                    "Concurrent fast_path failed raw_message_id=%s",
+                    "Concurrent fast_path failed raw_message_id=%s error=%s",
                     raw_message_id,
+                    _format_exception(exc),
                 )
                 stats.record_failure()
 
@@ -334,12 +352,13 @@ async def sweep_fast_path_concurrent(
     ]
     await asyncio.gather(*workers)
     elapsed_seconds = time.monotonic() - started_at
+    terminalized_total = terminalized + stats.terminalized
     logger.info(
         "Concurrent fast path completed processed=%s succeeded=%s failed=%s terminalized=%s",
         stats.processed + terminalized,
         stats.succeeded + terminalized,
         stats.failed,
-        terminalized,
+        terminalized_total,
     )
     return StageSweepResult(
         stage="fast_path",
