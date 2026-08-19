@@ -1,8 +1,30 @@
+import { APP_TIME_ZONE } from "./localDate";
+
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const toDate = (value: string | Date): Date =>
+  value instanceof Date ? value : new Date(value);
+
+/** Calendar dates (YYYY-MM-DD) are stored without timezone; anchor at noon UTC to avoid day shifts. */
+const calendarDateToReferenceInstant = (value: string): Date => {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day, 12));
+};
+
 export const formatDateTime = (value: string | Date) =>
   new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(new Date(value));
+    timeZone: APP_TIME_ZONE,
+  }).format(toDate(value));
+
+export const formatClockTime = (value: string | Date) =>
+  new Intl.DateTimeFormat(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZone: APP_TIME_ZONE,
+  }).format(toDate(value));
 
 const relativeFormatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
 
@@ -30,7 +52,14 @@ export const formatRelativeTime = (value: string | null) => {
   return relativeFormatter.format(Math.round(diffDays / 30), "month");
 };
 
-export const formatDate = (value: string | Date) =>
-  new Intl.DateTimeFormat(undefined, {
+export const formatDate = (value: string | Date) => {
+  const instant =
+    typeof value === "string" && DATE_ONLY_PATTERN.test(value)
+      ? calendarDateToReferenceInstant(value)
+      : toDate(value);
+
+  return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
-  }).format(new Date(value));
+    timeZone: APP_TIME_ZONE,
+  }).format(instant);
+};

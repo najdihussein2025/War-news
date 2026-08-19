@@ -13,6 +13,7 @@ import { ShellContext } from "../../../app/AppShell";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { Button, Card, EmptyState, FormField, Input, Label } from "../../../components/ui";
 import { cn } from "../../../lib/cn";
+import { formatDateTime } from "../../../lib/formatters";
 import { createAccount, deleteAccount, setAccountActive, updateAccount } from "../api";
 import { useAccounts } from "../hooks";
 import type { AccountRole, AccountRow } from "../types";
@@ -45,11 +46,6 @@ const roleLabels: Record<AccountRole, string> = {
   super_admin: "Super Admin",
   admin: "Admin",
 };
-
-const lastLoginFormatter = new Intl.DateTimeFormat(undefined, {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
 
 const IconBase = ({ children, className }: { children: ReactNode; className?: string }) => (
   <svg
@@ -114,7 +110,7 @@ const formatLastLogin = (value: string | null) => {
     return "Never";
   }
 
-  return lastLoginFormatter.format(new Date(value));
+  return formatDateTime(value);
 };
 
 const compareUsers = (a: AccountRow, b: AccountRow, key: SortKey) => {

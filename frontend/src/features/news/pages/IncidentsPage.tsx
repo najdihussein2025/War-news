@@ -13,6 +13,7 @@ import {
 } from "../../../components/ui";
 import { useLiveQueryTitleAddon } from "../../../hooks/useLiveQueryTitleAddon";
 import { formatDate, formatDateTime } from "../../../lib/formatters";
+import { getBeirutDate } from "../../../lib/localDate";
 import { roleBaseFromPath } from "../../../lib/rolePath";
 import { useIncidentsQuery } from "../hooks";
 import { createIncident } from "../api";
@@ -399,7 +400,7 @@ export const IncidentsPage = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2"><Label htmlFor="create-incident-village">Village *</Label><Input id="create-incident-village" name="village" placeholder="Existing village name" required /></div>
               <div className="space-y-2"><Label htmlFor="create-incident-condition">Condition *</Label><Input id="create-incident-condition" name="condition" placeholder="Existing condition name" required /></div>
-              <div className="space-y-2"><Label htmlFor="create-incident-date">Event date *</Label><Input id="create-incident-date" name="event_date" type="date" defaultValue={new Date().toLocaleDateString("en-CA")} required /></div>
+              <div className="space-y-2"><Label htmlFor="create-incident-date">Event date *</Label><Input id="create-incident-date" name="event_date" type="date" defaultValue={getBeirutDate()} required /></div>
               <div className="space-y-2"><Label htmlFor="create-incident-time">Event time</Label><Input id="create-incident-time" name="event_time" type="time" /></div>
             </div>
             <div className="space-y-2"><Label htmlFor="create-incident-report">Report *</Label><textarea id="create-incident-report" name="khabar" required placeholder="Enter the complete incident report" className="min-h-36 w-full rounded-md border border-input-border bg-input-bg px-3 py-2 text-body text-text-primary" /></div>

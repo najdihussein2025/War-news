@@ -1,4 +1,4 @@
-const APP_TIME_ZONE = "Asia/Beirut";
+export const APP_TIME_ZONE = "Asia/Beirut";
 
 export const getBeirutDate = (dayOffset = 0, now = new Date()): string => {
   const parts = new Intl.DateTimeFormat("en-US", {
