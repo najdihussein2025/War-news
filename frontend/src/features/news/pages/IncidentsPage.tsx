@@ -67,11 +67,11 @@ export const IncidentsPage = () => {
     ],
   );
 
-  const { data, isLoading, isError, dataUpdatedAt, isFetching, refetch } =
+  const { data, isLoading, isError, isFetching, refetch } =
     useIncidentsQuery(filters);
   const verificationSummary = useIncidentsQuery({ limit: 1, offset: 0, verificationStatus: "needs_verification" });
   const duplicateSummary = useIncidentsQuery({ limit: 1, offset: 0, duplicateOnly: true });
-  useLiveQueryTitleAddon(dataUpdatedAt, isFetching);
+  useLiveQueryTitleAddon(data?.latest_incident_at ?? null, isFetching);
   const rows = data?.items ?? [];
   const total = data?.total ?? 0;
 
@@ -184,7 +184,15 @@ export const IncidentsPage = () => {
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-lg border border-border bg-surface-raised p-4">
+          <p className="text-caption font-semibold uppercase text-text-muted">
+            {hasFilters ? "Matching incidents" : "Total incidents"}
+          </p>
+          <p className="mt-2 text-h3 font-semibold text-text-primary">
+            {total}
+          </p>
+        </div>
         <div className="rounded-lg border border-border bg-surface-raised p-4">
           <p className="text-caption font-semibold uppercase text-text-muted">
             Needs verification

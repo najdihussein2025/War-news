@@ -3,7 +3,7 @@ import { ShellContext } from "../app/AppShell";
 import { LiveQueryIndicator } from "../components/LiveQueryIndicator";
 
 export const useLiveQueryTitleAddon = (
-  dataUpdatedAt: number,
+  latestIncidentAt: string | null,
   isFetching: boolean,
 ) => {
   const shell = useContext(ShellContext);
@@ -11,10 +11,10 @@ export const useLiveQueryTitleAddon = (
   useEffect(() => {
     shell?.setTitleAddon(
       <LiveQueryIndicator
-        dataUpdatedAt={dataUpdatedAt}
+        latestIncidentAt={latestIncidentAt}
         isFetching={isFetching}
       />,
     );
     return () => shell?.setTitleAddon(null);
-  }, [shell, dataUpdatedAt, isFetching]);
+  }, [shell, latestIncidentAt, isFetching]);
 };

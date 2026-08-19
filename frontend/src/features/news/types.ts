@@ -28,6 +28,7 @@ export type IncidentListResponse = {
   total: number;
   limit: number;
   offset: number;
+  latest_incident_at: string | null;
 };
 
 export type IncidentFilters = {

@@ -1,29 +1,32 @@
 import { useEffect, useState } from "react";
+import { formatRelativeTime } from "../lib/formatters";
 import { cn } from "../lib/cn";
 
 type LiveQueryIndicatorProps = {
-  dataUpdatedAt: number;
+  latestIncidentAt: string | null;
   isFetching: boolean;
 };
 
 export const LiveQueryIndicator = ({
-  dataUpdatedAt,
+  latestIncidentAt,
   isFetching,
 }: LiveQueryIndicatorProps) => {
   const [, tick] = useState(0);
 
   useEffect(() => {
-    const id = window.setInterval(() => tick((value) => value + 1), 1000);
+    const id = window.setInterval(() => tick((value) => value + 1), 30_000);
     return () => window.clearInterval(id);
   }, []);
 
-  const secondsAgo = Math.max(0, Math.floor((Date.now() - dataUpdatedAt) / 1000));
-  const label =
-    isFetching && secondsAgo < 2
-      ? "Updating…"
-      : secondsAgo < 5
-        ? "Updated just now"
-        : `Updated ${secondsAgo}s ago`;
+  const label = (() => {
+    if (isFetching) {
+      return "Updating…";
+    }
+    if (!latestIncidentAt) {
+      return "No incidents yet";
+    }
+    return `Updated ${formatRelativeTime(latestIncidentAt)}`;
+  })();
 
   return (
     <span

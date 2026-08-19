@@ -100,6 +100,18 @@ class IncidentRepository(IncidentRepositoryInterface):
             .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
             .where(*filters)
         )
+        latest_incident_at = self.db.scalar(
+            select(
+                func.max(
+                    func.greatest(Incident.created_at, Incident.updated_at)
+                )
+            )
+            .join(Village, Village.id == Incident.village_id)
+            .join(Condition, Condition.id == Incident.condition_id)
+            .outerjoin(Source, Source.id == Incident.source_id)
+            .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
+            .where(*filters)
+        )
 
         return IncidentListResponse(
             items=[
@@ -109,6 +121,7 @@ class IncidentRepository(IncidentRepositoryInterface):
             total=int(total or 0),
             limit=params.limit,
             offset=params.offset,
+            latest_incident_at=latest_incident_at,
         )
 
     def get_by_id(self, incident_id: UUID) -> IncidentDetailDTO | None:

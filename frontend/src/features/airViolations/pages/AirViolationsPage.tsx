@@ -67,9 +67,10 @@ export const AirViolationsPage = () => {
     [cazaEn, conditionId, eventDateFrom, eventDateTo, offset],
   );
 
-  const { data, isLoading, isError, refetch, dataUpdatedAt, isFetching } =
+  const { data, isLoading, isError, refetch, isFetching } =
     useAirViolationsQuery(filters);
-  useLiveQueryTitleAddon(dataUpdatedAt, isFetching);
+  const latestViolationAt = data?.items[0]?.created_at ?? null;
+  useLiveQueryTitleAddon(latestViolationAt, isFetching);
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const rows = data?.items ?? [];

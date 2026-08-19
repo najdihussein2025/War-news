@@ -45,6 +45,7 @@ class IncidentListResponse(BaseModel):
     total: int
     limit: int
     offset: int
+    latest_incident_at: datetime | None = None
 
 
 class CasualtyDemographicsDTO(BaseModel):
