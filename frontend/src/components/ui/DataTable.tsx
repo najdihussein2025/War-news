@@ -7,7 +7,7 @@ export type SortDirection = "asc" | "desc";
 export type DataTableColumn<T> = {
   key: string;
   header: string;
-  render: (row: T) => ReactNode;
+  render: (row: T, rowIndex: number) => ReactNode;
   sortValue?: (row: T) => string | number | boolean | null;
   className?: string;
 };
@@ -157,7 +157,7 @@ export const DataTable = <T,>({
             {loading ? (
               <LoadingRows columns={columns.length + (actions ? 1 : 0)} />
             ) : (
-              sortedRows.map((row) => (
+              sortedRows.map((row, rowIndex) => (
                 <tr
                   key={getRowKey(row)}
                   className={cn(
@@ -175,7 +175,7 @@ export const DataTable = <T,>({
                 >
                   {columns.map((column) => (
                     <td className={cn("px-4 py-4 align-top text-small", column.className)} key={column.key}>
-                      {column.render(row)}
+                      {column.render(row, rowIndex)}
                     </td>
                   ))}
                   {actions ? (
@@ -194,12 +194,12 @@ export const DataTable = <T,>({
           <div className="space-y-3 p-4">
             {Array.from({ length: 4 }).map((_, index) => <div className="h-20 animate-pulse rounded-md bg-surface-muted" key={index} />)}
           </div>
-        ) : sortedRows.map((row) => (
+        ) : sortedRows.map((row, rowIndex) => (
           <article className="min-w-0 space-y-4 p-4" key={getRowKey(row)}>
             {columns.map((column) => (
               <div className="grid min-w-0 grid-cols-1 gap-1 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-3" key={column.key}>
                 <p className="text-caption font-semibold uppercase text-text-muted">{column.header}</p>
-                <div className="min-w-0 overflow-hidden break-words text-small text-text-primary">{column.render(row)}</div>
+                <div className="min-w-0 overflow-hidden break-words text-small text-text-primary">{column.render(row, rowIndex)}</div>
               </div>
             ))}
             {actions ? <div className="flex justify-stretch border-t border-border pt-3 sm:justify-end">{actions(row)}</div> : null}

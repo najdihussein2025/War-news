@@ -258,12 +258,12 @@ export const SourcesPage = () => {
   const contentColumns: Array<DataTableColumn<ContentSource>> = [
     {
       key: "number",
-      header: "#",
+      header: "Order",
       className: "w-16 tabular-nums text-text-muted",
-      render: (contentSource) =>
+      render: (_contentSource, rowIndex) =>
         numberFormatter.format(
           (contentPage - 1) * CONTENT_SOURCE_PAGE_SIZE
-            + paginatedContentSources.indexOf(contentSource)
+            + rowIndex
             + 1,
         ),
     },
