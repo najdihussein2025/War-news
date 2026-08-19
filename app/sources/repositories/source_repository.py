@@ -138,11 +138,15 @@ class SourceRepository(SourceRepositoryInterface):
         started_at: datetime,
         messages_blocked: int = 0,
         messages_flagged: int = 0,
+        source_platforms: list[str] | None = None,
+        platform_breakdown: dict[str, dict[str, int]] | None = None,
     ) -> None:
         self.db.rollback()
         self.db.add(
             IngestionLog(
                 source_id=source_id,
+                source_platforms=sorted({platform.lower() for platform in source_platforms or [] if platform}),
+                platform_breakdown=platform_breakdown or {},
                 messages_fetched=messages_fetched,
                 messages_parsed=messages_parsed,
                 messages_flagged=messages_flagged,

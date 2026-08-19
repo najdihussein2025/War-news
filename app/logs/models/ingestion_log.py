@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, Text, func, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -44,6 +45,18 @@ class IngestionLog(Base):
         nullable=False,
         default=0,
         server_default=text("0"),
+    )
+    source_platforms: Mapped[list[str]] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=list,
+        server_default=text("'[]'::jsonb"),
+    )
+    platform_breakdown: Mapped[dict[str, dict[str, int]]] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=dict,
+        server_default=text("'{}'::jsonb"),
     )
     status: Mapped[str] = mapped_column(
         Text, nullable=False, default="completed", server_default=text("'completed'")

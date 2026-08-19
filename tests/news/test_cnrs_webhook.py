@@ -82,6 +82,8 @@ class _WebhookSourceRepository:
         started_at: datetime,
         messages_blocked: int = 0,
         messages_flagged: int = 0,
+        source_platforms: list[str] | None = None,
+        platform_breakdown: dict[str, dict[str, int]] | None = None,
     ) -> None:
         self.ingestion_logs.append(
             {
@@ -92,6 +94,8 @@ class _WebhookSourceRepository:
                 "messages_flagged": messages_flagged,
                 "messages_blocked": messages_blocked,
                 "started_at": started_at,
+                "source_platforms": source_platforms or [],
+                "platform_breakdown": platform_breakdown or {},
             }
         )
 

@@ -34,6 +34,14 @@ export type IngestionLog = {
   id: number;
   source_id: number;
   source_name: string;
+  source_platforms: string[];
+  platform_breakdown: Record<string, {
+    fetched: number;
+    parsed: number;
+    flagged: number;
+    failed: number;
+    blocked: number;
+  }>;
   run_timestamp: string;
   started_at: string | null;
   finished_at: string | null;

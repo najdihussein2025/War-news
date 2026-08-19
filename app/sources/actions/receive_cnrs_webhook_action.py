@@ -17,6 +17,11 @@ from app.sources.services.cnrs_source import CNRS_CLASSIFICATION_FIELDS
 logger = logging.getLogger(__name__)
 
 
+def _platform_counts(breakdown: dict[str, dict[str, int]], platform: str | None) -> dict[str, int]:
+    key = (platform or "unknown").lower()
+    return breakdown.setdefault(key, {"fetched": 0, "parsed": 0, "flagged": 0, "failed": 0, "blocked": 0})
+
+
 def _derive_platform_from_external_id(external_message_id: str | None) -> str | None:
     if not external_message_id or ":" not in external_message_id:
         return None
@@ -37,9 +42,12 @@ class ReceiveCnrsWebhookAction:
         blocked = 0
         failed = 0
         flagged = 0
+        source_platforms: set[str] = set()
+        platform_breakdown: dict[str, dict[str, int]] = {}
 
         try:
             for post in posts:
+                counts: dict[str, int] | None = None
                 try:
                     raw_payload = post.model_dump(mode="json")
                     classification = {
@@ -52,6 +60,12 @@ class ReceiveCnrsWebhookAction:
                     source_platform = raw_payload.get(
                         "source_platform"
                     ) or _derive_platform_from_external_id(post.external_message_id)
+                    if source_platform:
+                        source_platforms.add(source_platform.lower())
+                    counts = _platform_counts(platform_breakdown, source_platform)
+                    counts["fetched"] += 1
+                    if classification.get("include") is False:
+                        counts["flagged"] += 1
                     source_name = raw_payload.get("source_name") or (
                         source.name if source is not None else None
                     )
@@ -61,6 +75,7 @@ class ReceiveCnrsWebhookAction:
                         origin_account,
                     ):
                         blocked += 1
+                        counts["blocked"] += 1
                         continue
 
                     self.sources.add_raw_message(
@@ -79,14 +94,19 @@ class ReceiveCnrsWebhookAction:
                         )
                     )
                     saved += 1
+                    counts["parsed"] += 1
                 except IntegrityError as exc:
                     if not self.sources.is_duplicate_raw_message_error(exc):
                         failed += 1
+                        if counts is not None:
+                            counts["failed"] += 1
                         self.sources.rollback()
                         raise
                     duplicates += 1
                 except Exception:
                     failed += 1
+                    if counts is not None:
+                        counts["failed"] += 1
                     logger.exception(
                         "Failed to ingest CNRS webhook post external_message_id=%s",
                         post.external_message_id,
@@ -108,6 +128,8 @@ class ReceiveCnrsWebhookAction:
                 messages_flagged=flagged,
                 started_at=started_at,
                 messages_blocked=blocked,
+                source_platforms=sorted(source_platforms),
+                platform_breakdown=platform_breakdown,
             )
 
     @staticmethod

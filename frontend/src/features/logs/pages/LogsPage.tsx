@@ -15,6 +15,27 @@ const logTabs = [
   { label: "Ingestion", value: "ingestion" },
 ];
 
+const auditTextValue = (values: Record<string, unknown> | null, key: string) => {
+  const value = values?.[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+};
+
+const shortAuditTargetId = (target: string) =>
+  target.length > 16 ? `${target.slice(0, 8)}…${target.slice(-4)}` : target;
+
+const AuditTarget = ({ row }: { row: AuditLog }) => {
+  if (row.target_type !== "account") {
+    return <div><span className="break-all">{row.target}</span><p className="text-caption text-text-muted">{row.target_type}</p></div>;
+  }
+
+  const currentValues = row.new_values ?? row.old_values;
+  const fullName = auditTextValue(currentValues, "full_name");
+  const username = auditTextValue(currentValues, "username");
+  const label = fullName ?? username ?? "Account";
+
+  return <div><p className="font-semibold text-text-primary">{label}</p>{username && username !== label ? <p className="text-caption text-text-muted">@{username}</p> : null}<p className="mt-1 font-mono text-caption text-text-muted" title={row.target}>ID {shortAuditTargetId(row.target)}</p></div>;
+};
+
 const AuditTable = () => {
   const [search, setSearch] = useState("");
   const [action, setAction] = useState("");
@@ -29,7 +50,7 @@ const AuditTable = () => {
   const columns: Array<DataTableColumn<AuditLog>> = [
     { key: "action", header: "Action", render: (row) => <span className="font-semibold text-text-primary">{row.action}</span> },
     { key: "by", header: "Performed by", render: (row) => <div>{row.performed_by}<p className="text-caption text-text-muted">{row.ip || "IP unavailable"}</p></div> },
-    { key: "target", header: "Target", render: (row) => <div>{row.target}<p className="text-caption text-text-muted">{row.target_type}</p></div> },
+    { key: "target", header: "Target", render: (row) => <AuditTarget row={row} /> },
     { key: "time", header: "Login Date & Time", render: (row) => formatDateTime(row.timestamp) },
     { key: "diff", header: "Changes", render: (row) => expandedId === row.id ? <pre className="max-w-xl overflow-x-auto whitespace-pre-wrap rounded-md border border-border bg-surface p-3 text-caption text-text-muted">{JSON.stringify({ before: row.old_values, after: row.new_values }, null, 2)}</pre> : <span className="text-text-muted">Collapsed</span> },
   ];
@@ -112,6 +133,8 @@ const LoginTable = () => {
   );
 };
 
+type PlatformIngestionRow = IngestionLog & { row_key: string; platform: string };
+
 const IngestionTable = () => {
   const [sourceId, setSourceId] = useState(0);
   const [status, setStatus] = useState<IngestionStatus | "all">("all");
@@ -119,17 +142,27 @@ const IngestionTable = () => {
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
   const [detailId, setDetailId] = useState<number | null>(null);
+  const [detailPlatform, setDetailPlatform] = useState<string | null>(null);
   const pageSize = 25;
   const { data, isLoading, isError } = useIngestionLogsQuery({ sourceId: sourceId || undefined, status, dateFrom, dateTo, page, pageSize });
   const { data: sources = [] } = useSourcesQuery();
   const { data: detail } = useIngestionLogQuery(detailId);
   const retryMutation = useRetryIngestionMutation();
-  const rows = data?.items ?? [];
+  const rows: PlatformIngestionRow[] = (data?.items ?? []).flatMap((run) => {
+    const platforms = Object.entries(run.platform_breakdown);
+    if (!platforms.length) return [{ ...run, row_key: `${run.id}-unrecorded`, platform: "Not recorded" }];
+    return platforms.map(([platform, counts]) => ({ ...run, row_key: `${run.id}-${platform}`, platform: platform.charAt(0).toUpperCase() + platform.slice(1), messages_fetched: counts.fetched, messages_parsed: counts.parsed, messages_flagged: counts.flagged, messages_failed: counts.failed, messages_blocked: counts.blocked }));
+  });
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / pageSize));
   const resetPage = () => setPage(1);
   const duration = (seconds: number | null) => seconds === null ? "In progress" : seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
-  const columns: Array<DataTableColumn<IngestionLog>> = [
-    { key: "source", header: "Source", render: (row) => <span className="font-semibold text-text-primary">{row.source_name}</span>, sortValue: (row) => row.source_name },
+  const detailCounts = detail && detailPlatform && detailPlatform !== "Not recorded"
+    ? detail.platform_breakdown[detailPlatform.toLowerCase()]
+    : detail
+      ? { fetched: detail.messages_fetched, parsed: detail.messages_parsed, flagged: detail.messages_flagged, failed: detail.messages_failed, blocked: detail.messages_blocked }
+      : null;
+  const columns: Array<DataTableColumn<PlatformIngestionRow>> = [
+    { key: "platform", header: "Platform", render: (row) => <span className="font-semibold text-brand-navy">{row.platform}</span>, sortValue: (row) => row.platform },
     { key: "time", header: "Run date & time", render: (row) => formatDateTime(row.run_timestamp), sortValue: (row) => new Date(row.run_timestamp).getTime() },
     { key: "fetched", header: "Fetched", render: (row) => row.messages_fetched, sortValue: (row) => row.messages_fetched },
     { key: "parsed", header: "Parsed", render: (row) => row.messages_parsed, sortValue: (row) => row.messages_parsed },
@@ -152,9 +185,9 @@ const IngestionTable = () => {
         <div className="space-y-2"><Label htmlFor="ingestion-from">From</Label><Input id="ingestion-from" type="date" value={dateFrom} max={dateTo || undefined} onChange={(event) => { setDateFrom(event.target.value); resetPage(); }} /></div>
         <div className="space-y-2"><Label htmlFor="ingestion-to">To</Label><Input id="ingestion-to" type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => { setDateTo(event.target.value); resetPage(); }} /></div>
       </div>
-      <DataTable columns={columns} rows={rows} initialSort={{ key: "time", direction: "desc" }} clientSort={false} getRowKey={(row) => String(row.id)} loading={isLoading} error={isError} minWidth="1120px" emptyState={<EmptyState title="No ingestion logs" description="No ingestion runs match these filters." />} errorState={<EmptyState title="Could not load ingestion logs" description="Check the API connection and try again." />} actions={(row) => <div className="flex justify-end gap-2"><Button type="button" variant="secondary" onClick={() => setDetailId(row.id)}>Details</Button>{row.status === "failed" ? <Button type="button" isLoading={retryMutation.isPending && retryMutation.variables === row.id} onClick={() => retryMutation.mutate(row.id)}>Retry</Button> : null}</div>} />
+      <DataTable columns={columns} rows={rows} initialSort={{ key: "time", direction: "desc" }} clientSort={false} getRowKey={(row) => row.row_key} loading={isLoading} error={isError} minWidth="1120px" emptyState={<EmptyState title="No ingestion logs" description="No ingestion runs match these filters." />} errorState={<EmptyState title="Could not load ingestion logs" description="Check the API connection and try again." />} actions={(row) => <div className="flex justify-end gap-2"><Button type="button" variant="secondary" onClick={() => { setDetailId(row.id); setDetailPlatform(row.platform); }}>Details</Button>{row.status === "failed" ? <Button type="button" isLoading={retryMutation.isPending && retryMutation.variables === row.id} onClick={() => retryMutation.mutate(row.id)}>Retry</Button> : null}</div>} />
       <div className="flex items-center justify-between text-small text-text-muted"><span>{data?.total ?? 0} results</span><div className="flex items-center gap-2"><Button type="button" variant="secondary" className="h-9" disabled={page <= 1 || isLoading} onClick={() => setPage((value) => value - 1)}>Previous</Button><span>Page {page} of {totalPages}</span><Button type="button" variant="secondary" className="h-9" disabled={page >= totalPages || isLoading} onClick={() => setPage((value) => value + 1)}>Next</Button></div></div>
-      {detailId !== null && detail ? <Dialog title={`Ingestion run #${detail.id}`} onClose={() => setDetailId(null)}><dl className="grid gap-4 sm:grid-cols-2"><div><dt className="text-caption font-semibold uppercase text-text-muted">Source</dt><dd>{detail.source_name}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Status</dt><dd>{detail.status}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Started</dt><dd>{detail.started_at ? formatDateTime(detail.started_at) : "Unknown"}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Finished</dt><dd>{detail.finished_at ? formatDateTime(detail.finished_at) : "Running"}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Duration</dt><dd>{duration(detail.duration_seconds)}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Retry of</dt><dd>{detail.retry_of_id ? `#${detail.retry_of_id}` : "Original run"}</dd></div></dl><div className="mt-5 rounded-md border border-border bg-surface p-4"><p className="text-caption font-semibold uppercase text-text-muted">Failure reason</p><p className="mt-2 whitespace-pre-wrap text-small">{detail.error_message || "No failure reason recorded."}</p></div></Dialog> : null}
+      {detailId !== null && detail ? <Dialog title={`${detailPlatform ?? "Unrecorded platform"} ingestion details`} onClose={() => { setDetailId(null); setDetailPlatform(null); }}><p className="mb-5 text-small text-text-muted">Run ID: {detail.id}</p><dl className="grid gap-4 sm:grid-cols-2"><div><dt className="text-caption font-semibold uppercase text-text-muted">Source</dt><dd>{detail.source_name}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Platform</dt><dd>{detailPlatform ?? "Not recorded"}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Status</dt><dd>{detail.status}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Started</dt><dd>{detail.started_at ? formatDateTime(detail.started_at) : "Unknown"}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Finished</dt><dd>{detail.finished_at ? formatDateTime(detail.finished_at) : "Running"}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Duration</dt><dd>{duration(detail.duration_seconds)}</dd></div>{detail.retry_of_id ? <div><dt className="text-caption font-semibold uppercase text-text-muted">Retry of run</dt><dd>{detail.retry_of_id}</dd></div> : null}</dl>{detailCounts ? <div className="mt-5 grid grid-cols-2 gap-3 rounded-md border border-border bg-surface p-4 sm:grid-cols-5"><div><p className="text-caption font-semibold uppercase text-text-muted">Fetched</p><p className="mt-1 text-lg font-semibold">{detailCounts.fetched}</p></div><div><p className="text-caption font-semibold uppercase text-text-muted">Parsed</p><p className="mt-1 text-lg font-semibold">{detailCounts.parsed}</p></div><div><p className="text-caption font-semibold uppercase text-text-muted">Flagged</p><p className="mt-1 text-lg font-semibold">{detailCounts.flagged}</p></div><div><p className="text-caption font-semibold uppercase text-text-muted">Failed</p><p className="mt-1 text-lg font-semibold">{detailCounts.failed}</p></div><div><p className="text-caption font-semibold uppercase text-text-muted">Blocked</p><p className="mt-1 text-lg font-semibold">{detailCounts.blocked}</p></div></div> : null}{detail.status === "failed" ? <div className="mt-5 rounded-md border border-border bg-surface p-4"><p className="text-caption font-semibold uppercase text-text-muted">Failure reason</p><p className="mt-2 whitespace-pre-wrap text-small">{detail.error_message || "No failure reason was provided."}</p></div> : null}</Dialog> : null}
     </div>
   );
 };

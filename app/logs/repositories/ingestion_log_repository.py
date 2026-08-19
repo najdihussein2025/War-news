@@ -21,6 +21,8 @@ class IngestionLogRepository(IngestionLogRepositoryInterface):
             id=row.id,
             source_id=row.source_id,
             source_name=row.source.name,
+            source_platforms=row.source_platforms,
+            platform_breakdown=row.platform_breakdown,
             run_timestamp=row.started_at or row.created_at,
             started_at=row.started_at,
             finished_at=row.finished_at,
@@ -64,7 +66,7 @@ class IngestionLogRepository(IngestionLogRepositoryInterface):
         original = self.db.scalar(select(IngestionLog).options(joinedload(IngestionLog.source)).where(IngestionLog.id == original_log_id))
         if original is None or original.status != "failed":
             return None
-        row = IngestionLog(source_id=original.source_id, status="running", retry_of_id=original.id, started_at=datetime.now(timezone.utc))
+        row = IngestionLog(source_id=original.source_id, source_platforms=original.source_platforms, platform_breakdown=original.platform_breakdown, status="running", retry_of_id=original.id, started_at=datetime.now(timezone.utc))
         self.db.add(row)
         self.db.commit()
         self.db.refresh(row)

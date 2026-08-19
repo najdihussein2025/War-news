@@ -26,6 +26,8 @@ class RetryTrackingSourceRepository(SourceRepository):
         started_at: datetime,
         messages_blocked: int = 0,
         messages_flagged: int = 0,
+        source_platforms: list[str] | None = None,
+        platform_breakdown: dict[str, dict[str, int]] | None = None,
     ) -> None:
         self.db.rollback()
         row = self.db.get(IngestionLog, self.log_id)
@@ -36,6 +38,8 @@ class RetryTrackingSourceRepository(SourceRepository):
         row.messages_failed = messages_failed
         row.messages_blocked = messages_blocked
         row.messages_flagged = messages_flagged
+        row.source_platforms = sorted({platform.lower() for platform in source_platforms or [] if platform})
+        row.platform_breakdown = platform_breakdown or {}
         row.started_at = started_at
         row.finished_at = datetime.now(timezone.utc)
         row.status = "completed"

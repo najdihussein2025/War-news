@@ -20,6 +20,8 @@ class IngestionLogItemDTO(BaseModel):
     id: int
     source_id: int
     source_name: str
+    source_platforms: list[str]
+    platform_breakdown: dict[str, dict[str, int]]
     run_timestamp: datetime
     started_at: datetime | None
     finished_at: datetime | None

@@ -70,6 +70,8 @@ class SourceRepositoryInterface(ABC):
         started_at: datetime,
         messages_blocked: int = 0,
         messages_flagged: int = 0,
+        source_platforms: list[str] | None = None,
+        platform_breakdown: dict[str, dict[str, int]] | None = None,
     ) -> None:
         pass
 

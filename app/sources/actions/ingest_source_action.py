@@ -58,6 +58,7 @@ class IngestSourceAction:
         total_skipped_before_cutoff = 0
         total_skipped_blocked = 0
         total_failed = 0
+        source_platforms: set[str] = set()
         source_db_id = source.id
 
         try:
@@ -88,6 +89,8 @@ class IngestSourceAction:
                         source_platform = item.get(
                             "source_platform"
                         ) or _derive_platform_from_external_id(external_message_id)
+                        if source_platform:
+                            source_platforms.add(source_platform.lower())
                         source_name = item.get("source_name") or source.name
                         origin_account = item.get("origin_account") or source_name
                         if self.sources.is_content_source_blocked(
@@ -147,6 +150,7 @@ class IngestSourceAction:
                 messages_failed=total_failed,
                 started_at=started_at,
                 messages_blocked=total_skipped_blocked,
+                source_platforms=sorted(source_platforms),
             )
             raise
 
@@ -157,6 +161,7 @@ class IngestSourceAction:
             messages_failed=total_failed,
             started_at=started_at,
             messages_blocked=total_skipped_blocked,
+            source_platforms=sorted(source_platforms),
         )
 
         return IngestionSummary(
