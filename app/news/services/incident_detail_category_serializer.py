@@ -36,6 +36,7 @@ _API_TO_DB_COLUMN: dict[str, str] = {
     "hos_m_i": "hosm_i",
     "hos_f_d": "hosf_d",
     "hos_f_i": "hosf_i",
+    "sch_damage_level": "school_damage_level",
 }
 
 # DID fields paired with their controlling gate column.

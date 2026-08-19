@@ -31,6 +31,18 @@ _ARCHEO_KEYWORDS: frozenset[str] = frozenset(
     {"أثري", "archeolog", "تراث", "heritage"}
 )
 _RELEG_KEYWORDS: frozenset[str] = frozenset({"ديني", "religious", "مزار", "shrine"})
+_BRIDGE_KEYWORDS: frozenset[str] = frozenset({"جسر", "bridge"})
+_ROAD_KEYWORDS: frozenset[str] = frozenset({"طريق", "road", "أوتوستراد", "autostrada"})
+_BLOCKED_KEYWORDS: frozenset[str] = frozenset(
+    {"قطع", "blocked", "تعذر", "مسدود", "blockage"}
+)
+_LITANI_KEYWORDS: frozenset[str] = frozenset({"litani", "ليتاني", "الليتاني"})
+_ZAHRANI_KEYWORDS: frozenset[str] = frozenset({"zahrani", "زرقاني", "الزرقاني"})
+_DRONE_KEYWORDS: frozenset[str] = frozenset({"drone", "محلقة", "مسيرة", "طائرة مسيرة"})
+_WATER_KEYWORDS: frozenset[str] = frozenset({"water", "مياه", "آبار", "بئر", "سقاية"})
+_ELECTRIC_KEYWORDS: frozenset[str] = frozenset({"electric", "كهرب", "محطة كهرب"})
+_OLIVE_KEYWORDS: frozenset[str] = frozenset({"olive", "زيتون", "أشجار"})
+_MJNOUB_KEYWORDS: frozenset[str] = frozenset({"mjnoub", "مجنوب"})
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -210,6 +222,8 @@ def _map_car_casualties(cat: ExtractionCategory, out: dict[str, Any]) -> None:
     out["carm_i"] = c.male_injuries
     out["carf_d"] = c.female_deaths
     out["carf_i"] = c.female_injuries
+    out["carc_d"] = c.children_deaths
+    out["carc_i"] = c.children_injuries
     out["card"] = _safe_add(c.male_deaths, c.female_deaths)
     out["cari"] = _safe_add(c.male_injuries, c.female_injuries)
 
@@ -222,8 +236,72 @@ def _map_emergency_civil_defense(cat: ExtractionCategory, out: dict[str, Any]) -
         out["emer_i"] = c.injuries
 
 
-def _map_crossings_other(cat: ExtractionCategory, out: dict[str, Any]) -> None:  # noqa: ARG001
-    out["crossing"] = True
+def _map_crossings_other(cat: ExtractionCategory, out: dict[str, Any]) -> None:
+    name = cat.name or ""
+    combined = name.lower()
+    did = _did_str(cat)
+
+    if _contains_any(combined, _LITANI_KEYWORDS):
+        out["litani"] = True
+    elif _contains_any(combined, _ZAHRANI_KEYWORDS):
+        out["zahrani"] = True
+    elif _contains_any(combined, _DRONE_KEYWORDS):
+        out["drone_f"] = True
+    elif _contains_any(name, _WATER_KEYWORDS):
+        out["water"] = True
+        out["water_did"] = did
+        if name.strip():
+            out["water_type"] = cat.name
+    elif _contains_any(name, _ELECTRIC_KEYWORDS):
+        out["electric"] = True
+        out["electric_did"] = did
+        if name.strip():
+            out["electric_type"] = cat.name
+    elif _contains_any(combined, _MJNOUB_KEYWORDS):
+        out["mjnoub"] = True
+        out["mj_did"] = did
+    elif _contains_any(name, _OLIVE_KEYWORDS):
+        if cat.casualties is not None and cat.casualties.deaths is not None:
+            out["olives_trees_d"] = cat.casualties.deaths
+        else:
+            out["other"] = True
+            out["other_did"] = did
+            out["other_type"] = cat.name or "olives_trees"
+    else:
+        out["crossing"] = True
+        out["other"] = True
+        out["other_did"] = did
+        if name.strip():
+            out["other_type"] = cat.name
+
+    c = cat.casualties
+    if c is not None:
+        if c.deaths is not None and "olives_trees_d" not in out:
+            out["other_d"] = c.deaths
+        if c.injuries is not None:
+            out["other_i"] = c.injuries
+
+
+def _map_road_bridge(cat: ExtractionCategory, out: dict[str, Any]) -> None:
+    name = cat.name or ""
+    did = _did_str(cat)
+    is_bridge = _contains_any(name, _BRIDGE_KEYWORDS)
+    is_road = _contains_any(name, _ROAD_KEYWORDS) or not is_bridge
+    blocked = _contains_any(name, _BLOCKED_KEYWORDS)
+
+    if is_bridge:
+        out["bridge"] = True
+        if name.strip():
+            out["bridge_name"] = cat.name
+        if blocked:
+            out["bridge_blocked"] = True
+    if is_road:
+        out["road"] = True
+        out["road_d_id"] = did
+        if name.strip():
+            out["road_name"] = cat.name
+        if blocked:
+            out["road_blocked"] = True
 
 
 def _map_warning_classification(cat: ExtractionCategory, out: dict[str, Any]) -> None:
@@ -232,6 +310,12 @@ def _map_warning_classification(cat: ExtractionCategory, out: dict[str, Any]) ->
         out["no_warning"] = True
     elif "warning" in name or "تحذير" in name:
         out["warning"] = True
+    if "genocide" in name or "إبادة" in name:
+        out["genocide"] = True
+    if "building" in name or "مبن" in name or "مبان" in name:
+        out["building"] = True
+    if "apart" in name or "شقة" in name or "شقق" in name:
+        out["apart"] = True
 
 
 def _map_school_university(cat: ExtractionCategory, out: dict[str, Any]) -> None:
@@ -247,6 +331,7 @@ def _map_school_university(cat: ExtractionCategory, out: dict[str, Any]) -> None
     else:
         # other/other_type columns confirmed present in incident_detail.py
         out["other"] = True
+        out["other_did"] = _did_str(cat)
         out["other_type"] = "school_university_unclassified"
         logger.warning(
             "school_university: could not classify name=%r; falling back to other=True",
@@ -279,6 +364,7 @@ def _map_religious_cultural(cat: ExtractionCategory, out: dict[str, Any]) -> Non
     else:
         # other/other_type columns confirmed present in incident_detail.py
         out["other"] = True
+        out["other_did"] = _did_str(cat)
         out["other_type"] = "religious_cultural_unclassified"
         logger.warning(
             "religious_cultural: could not classify name=%r; falling back to other=True",
@@ -306,8 +392,8 @@ _CATEGORY_HANDLERS: dict[ExtractionCategoryKey, _CategoryHandler] = {
     ExtractionCategoryKey.warning_classification: _map_warning_classification,
     ExtractionCategoryKey.school_university: _map_school_university,
     ExtractionCategoryKey.religious_cultural: _map_religious_cultural,
+    ExtractionCategoryKey.road_bridge: _map_road_bridge,
     # casualty_demographics → handled via root ExtractionCasualties; skip here
-    # road_bridge → not in the category mapping spec; skip silently
 }
 
 # ---------------------------------------------------------------------------

@@ -266,6 +266,57 @@ def test_rollup_returns_none_when_all_inputs_are_none() -> None:
     assert ti is None
 
 
+def test_vehicles_maps_children_casualties() -> None:
+    categories = {
+        ExtractionCategoryKey.vehicles: _cat(
+            vehicles=ExtractionVehicleDetails(car=True),
+            casualties=_cas(children_deaths=1, children_injuries=2),
+        )
+    }
+    out = map_categories(categories)
+
+    assert out["car"] is True
+    assert out["carc_d"] == 1
+    assert out["carc_i"] == 2
+
+
+def test_road_bridge_maps_road_name_and_blocked() -> None:
+    categories = {
+        ExtractionCategoryKey.road_bridge: _cat(
+            did=DidValue.direct,
+            name="الطريق بين شبعا وكفرشوبا قطع",
+        )
+    }
+    out = map_categories(categories)
+
+    assert out["road"] is True
+    assert out["road_d_id"] == "D"
+    assert out["road_name"] == "الطريق بين شبعا وكفرشوبا قطع"
+    assert out["road_blocked"] is True
+
+
+def test_crossings_other_maps_water_infrastructure() -> None:
+    categories = {
+        ExtractionCategoryKey.crossings_other: _cat(
+            did=DidValue.indirect,
+            name="محطة مياه بلدة",
+        )
+    }
+    out = map_categories(categories)
+
+    assert out["water"] is True
+    assert out["water_did"] == "ID"
+    assert out["water_type"] == "محطة مياه بلدة"
+
+
+def test_warning_classification_maps_building_flag() -> None:
+    categories = {
+        ExtractionCategoryKey.warning_classification: _cat(name="building")
+    }
+    out = map_categories(categories)
+    assert out["building"] is True
+
+
 def test_rollup_none_components_are_skipped_not_treated_as_zero() -> None:
     # Only root injuries present; LA category has no casualties object
     categories = {

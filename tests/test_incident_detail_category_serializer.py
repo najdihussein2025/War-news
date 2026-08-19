@@ -72,3 +72,16 @@ def test_serialize_did_locked_when_gate_off() -> None:
     assert sections["press"] is not None
     assert sections["press"]["press_did"] == "D"
     assert sections["health_center"] is None
+
+
+def test_serialize_school_damage_level_reads_db_column() -> None:
+    detail = IncidentDetail(
+        incident_id=uuid4(),
+        school=True,
+        school_damage_level="Partially Destroyed",
+    )
+
+    section = serialize_category_section(detail, "school_university")
+
+    assert section is not None
+    assert section["sch_damage_level"] == "Partially Destroyed"
