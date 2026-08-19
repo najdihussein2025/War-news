@@ -5,7 +5,10 @@ import logging
 from app.api.factories.action_factory import build_extraction_classifier
 from app.core.database import SessionLocal
 from app.llm.dtos import ExtractionResult
-from app.llm.services.transient_llm_errors import is_transient_llm_error
+from app.llm.services.transient_llm_errors import (
+    ExtractionRetryCappedError,
+    is_transient_llm_error,
+)
 from app.news.models import MessageStatus
 from app.news.repositories.raw_message_repository import RawMessageRepository
 
@@ -38,7 +41,31 @@ def run_tier1_extraction_for_message(raw_message_id: int) -> None:
             raw_message_id=raw_message_id,
         )
     except Exception as exc:
-        if not is_transient_llm_error(exc):
+        if is_transient_llm_error(exc):
+            with SessionLocal() as db:
+                raw_messages = RawMessageRepository(db)
+                message = raw_messages.get_by_id(raw_message_id)
+                if (
+                    message is not None
+                    and message.status == MessageStatus.parsed
+                    and message.extraction_result is None
+                ):
+                    capped = raw_messages.record_transient_extraction_failure(
+                        message,
+                        exc,
+                    )
+                    if capped:
+                        logger.error(
+                            "Tier1 extraction capped raw_message_id=%s "
+                            "retry_count=%s error_message=%s",
+                            raw_message_id,
+                            message.extraction_retry_count,
+                            message.error_message,
+                        )
+                        raise ExtractionRetryCappedError(
+                            message.error_message or "extraction retry cap reached"
+                        ) from exc
+        else:
             with SessionLocal() as db:
                 raw_messages = RawMessageRepository(db)
                 message = raw_messages.get_by_id(raw_message_id)

@@ -3,10 +3,12 @@ from typing import Any
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.llm.dtos import (
     ExtractionResult,
     RelevanceClassificationResult,
 )
+from app.llm.services.transient_llm_errors import extraction_retry_cap_message
 from app.news.dtos import MatchResultDTO
 from app.news.interfaces import RawMessageRepositoryInterface
 from app.news.models import (
@@ -80,6 +82,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         if audited_candidates:
             message.extraction_result["candidates"] = audited_candidates
         message.error_message = None
+        message.extraction_retry_count = 0
         self.db.add(message)
         self.db.commit()
 
@@ -126,8 +129,50 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         self.db.add(message)
         self.db.commit()
 
-    def reset_retryable_extraction_errors(self, limit: int = 200) -> int:
-        """Re-queue transient extraction failures (timeouts) for another attempt."""
+    def record_transient_extraction_failure(
+        self,
+        message: RawMessage,
+        exc: BaseException,
+        *,
+        max_retries: int | None = None,
+    ) -> bool:
+        """
+        Increment retry count for a transient extraction failure.
+
+        Returns True when the row is permanently capped (status=error).
+        """
+        limit = (
+            max_retries
+            if max_retries is not None
+            else settings.extraction_max_retries
+        )
+        message.extraction_retry_count += 1
+        if message.extraction_retry_count >= limit:
+            message.status = MessageStatus.error
+            message.error_message = extraction_retry_cap_message(
+                message.extraction_retry_count,
+                exc,
+            )
+            self.db.add(message)
+            self.db.commit()
+            return True
+
+        self.db.add(message)
+        self.db.commit()
+        return False
+
+    def reset_retryable_extraction_errors(
+        self,
+        limit: int = 200,
+        *,
+        max_retries: int | None = None,
+    ) -> tuple[int, int]:
+        """Re-queue transient extraction failures, respecting the retry cap."""
+        retry_limit = (
+            max_retries
+            if max_retries is not None
+            else settings.extraction_max_retries
+        )
         messages = list(
             self.db.scalars(
                 select(RawMessage)
@@ -147,14 +192,31 @@ class RawMessageRepository(RawMessageRepositoryInterface):
             ).all()
         )
         if not messages:
-            return 0
+            return 0, 0
 
+        reset_count = 0
+        capped_count = 0
         for message in messages:
+            if message.extraction_retry_count >= retry_limit:
+                if not (message.error_message or "").startswith(
+                    "extraction: exceeded max retries"
+                ):
+                    message.error_message = extraction_retry_cap_message(
+                        message.extraction_retry_count,
+                        RuntimeError(message.error_message or "timed out"),
+                    )
+                    self.db.add(message)
+                capped_count += 1
+                continue
+
             message.status = MessageStatus.parsed
             message.error_message = None
             self.db.add(message)
-        self.db.commit()
-        return len(messages)
+            reset_count += 1
+
+        if reset_count or capped_count:
+            self.db.commit()
+        return reset_count, capped_count
 
     def mark_as_duplicate(
         self,

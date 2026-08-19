@@ -6,6 +6,7 @@ import httpx
 import pytest
 
 from app.llm.actions.extract_incidents_action import ExtractIncidentsAction
+from app.llm.services.transient_llm_errors import ExtractionRetryCappedError
 from app.news.models import MessageStatus
 
 
@@ -19,6 +20,7 @@ def test_execute_one_does_not_save_error_on_read_timeout() -> None:
     message.raw_text = "test"
     raw_messages.get_by_id.return_value = message
     classifier.extract_tier1.side_effect = httpx.ReadTimeout("timed out")
+    raw_messages.record_transient_extraction_failure.return_value = False
 
     action = ExtractIncidentsAction(raw_messages=raw_messages, classifier=classifier)
 
@@ -26,6 +28,7 @@ def test_execute_one_does_not_save_error_on_read_timeout() -> None:
         action.execute_one(42)
 
     raw_messages.save_error.assert_not_called()
+    raw_messages.record_transient_extraction_failure.assert_called_once()
 
 
 def test_execute_one_saves_error_on_permanent_failure() -> None:
@@ -44,4 +47,27 @@ def test_execute_one_saves_error_on_permanent_failure() -> None:
     with pytest.raises(RuntimeError):
         action.execute_one(42)
 
-    raw_messages.save_error.assert_called_once()
+    raw_messages.record_transient_extraction_failure.assert_not_called()
+
+
+def test_execute_one_raises_capped_error_when_retry_limit_hit() -> None:
+    raw_messages = MagicMock()
+    classifier = MagicMock()
+    message = MagicMock()
+    message.id = 42
+    message.extraction_result = None
+    message.status = MessageStatus.parsed
+    message.raw_text = "test"
+    message.error_message = (
+        "extraction: exceeded max retries (5) — last error: ReadTimeout: timed out"
+    )
+    raw_messages.get_by_id.return_value = message
+    classifier.extract_tier1.side_effect = httpx.ReadTimeout("timed out")
+    raw_messages.record_transient_extraction_failure.return_value = True
+
+    action = ExtractIncidentsAction(raw_messages=raw_messages, classifier=classifier)
+
+    with pytest.raises(ExtractionRetryCappedError):
+        action.execute_one(42)
+
+    raw_messages.save_error.assert_not_called()

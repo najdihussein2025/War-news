@@ -18,3 +18,4 @@ class PipelineSweepResult(BaseModel):
     skip_reason: str | None = None
     stages: list[StageSweepResult] = Field(default_factory=list)
     elapsed_seconds: float = Field(default=0.0, ge=0.0)
+    partial_failure: bool = False

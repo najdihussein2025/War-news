@@ -141,6 +141,7 @@ def test_process_fast_path_terminalizes_unmatched_condition() -> None:
     assert message.status == MessageStatus.error
     assert "unmatched or missing condition" in (message.error_message or "")
     assert service.fast_stats.marked_unmaterializable == 1
+    db.commit.assert_called()
 
 
 def test_process_fast_path_terminalizes_air_violation_route() -> None:
@@ -165,3 +166,53 @@ def test_process_fast_path_terminalizes_air_violation_route() -> None:
     assert message.status == MessageStatus.error
     assert "air_violations" in (message.error_message or "")
     assert service.fast_stats.skipped_air_violation_routed == 1
+    db.commit.assert_called()
+
+
+class _RollbackAwareSession:
+    """Session stub whose rollback restores the last committed message snapshot."""
+
+    def __init__(self, message) -> None:
+        self._message = message
+        self._committed: dict[str, object] | None = None
+        self.commit_calls = 0
+        self.rollback_calls = 0
+
+    def commit(self) -> None:
+        self.commit_calls += 1
+        self._committed = {
+            "status": self._message.status,
+            "error_message": self._message.error_message,
+        }
+
+    def rollback(self) -> None:
+        self.rollback_calls += 1
+        if self._committed is None:
+            self._message.status = MessageStatus.parsed
+            self._message.error_message = None
+            return
+        self._message.status = self._committed["status"]
+        self._message.error_message = self._committed["error_message"]
+
+
+def test_terminalization_survives_worker_rollback_after_downstream_failure() -> None:
+    message = _raw_message(
+        match_result={
+            "matched_condition_id": None,
+            "condition_match_status": "unmatched",
+            "village_matches": [],
+        }
+    )
+    db = _RollbackAwareSession(message)
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+
+    created = service.process_fast_path(message, FastPathDedupService(MagicMock()))
+    assert created == []
+    assert db.commit_calls == 1
+
+    # Simulate the concurrent worker catching a later exception and rolling back.
+    db.rollback()
+
+    assert message.status == MessageStatus.error
+    assert "unmatched or missing condition" in (message.error_message or "")
+    assert db.rollback_calls == 1

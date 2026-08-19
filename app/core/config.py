@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     pg_application_name: str = "war-news"
     pipeline_role: str = "api"
     pipeline_worker_poll_seconds: float = 2.0
+    extraction_max_retries: int = 5
 
     class Config:
         env_file = ".env"

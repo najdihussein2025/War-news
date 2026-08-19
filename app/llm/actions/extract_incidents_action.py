@@ -5,7 +5,10 @@ from app.llm.dtos import (
     ExtractionBatchSummary,
 )
 from app.llm.interfaces import ExtractionClassifierInterface
-from app.llm.services.transient_llm_errors import is_transient_llm_error
+from app.llm.services.transient_llm_errors import (
+    ExtractionRetryCappedError,
+    is_transient_llm_error,
+)
 from app.news.interfaces import RawMessageRepositoryInterface
 from app.news.models import MessageStatus
 
@@ -46,7 +49,18 @@ class ExtractIncidentsAction:
                 self.raw_messages.rollback()
                 errored += 1
                 logger.exception("Failed to extract raw_message id=%s", message.id)
-                if not is_transient_llm_error(exc):
+                if is_transient_llm_error(exc):
+                    capped = self.raw_messages.record_transient_extraction_failure(
+                        message,
+                        exc,
+                    )
+                    if capped:
+                        logger.error(
+                            "Tier1 extraction capped raw_message_id=%s retry_count=%s",
+                            message.id,
+                            message.extraction_retry_count,
+                        )
+                elif message.status == MessageStatus.parsed:
                     self.raw_messages.save_error(
                         message=message,
                         error_message=str(exc),
@@ -81,10 +95,18 @@ class ExtractIncidentsAction:
             )
         except Exception as exc:
             self.raw_messages.rollback()
-            if not is_transient_llm_error(exc):
-                if message.status == MessageStatus.parsed:
-                    self.raw_messages.save_error(
-                        message=message,
-                        error_message=str(exc),
-                    )
+            if is_transient_llm_error(exc):
+                capped = self.raw_messages.record_transient_extraction_failure(
+                    message,
+                    exc,
+                )
+                if capped:
+                    raise ExtractionRetryCappedError(
+                        message.error_message or "extraction retry cap reached"
+                    ) from exc
+            elif message.status == MessageStatus.parsed:
+                self.raw_messages.save_error(
+                    message=message,
+                    error_message=str(exc),
+                )
             raise exc
