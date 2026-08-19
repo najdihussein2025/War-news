@@ -408,6 +408,12 @@ class OllamaExtractionService(ExtractionClassifierInterface):
     def _is_empty_category_detail(self, category: ExtractionCategory) -> bool:
         if category.did is not None or category.name is not None:
             return False
+        if category.vehicles is not None and any(
+            value
+            for value in category.vehicles.model_dump(mode="python").values()
+            if value is not None and value is not False
+        ):
+            return False
         if category.casualties is None:
             return True
         return all(

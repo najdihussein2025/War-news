@@ -12,6 +12,7 @@ from app.llm.dtos import (
     ExtractionCasualties,
     ExtractionCategory,
     ExtractionCategoryKey,
+    ExtractionVehicleDetails,
 )
 from app.llm.services.ollama_presence_gate_service import LOW_TEMPERATURE
 from app.llm.services.ollama_relevance_classifier_service import is_valid_reason_text
@@ -45,6 +46,24 @@ CATEGORY_DETAIL_RESPONSE_SCHEMA: JsonObject = {
                 "children_injuries": {"type": ["integer", "null"]},
             },
         },
+        "vehicles": {
+            "type": ["object", "null"],
+            "additionalProperties": False,
+            "properties": {
+                "car": {"type": ["boolean", "null"]},
+                "moto": {"type": ["boolean", "null"]},
+                "con_veh": {"type": ["boolean", "null"]},
+                "excavator": {"type": ["boolean", "null"]},
+                "bulldozer": {"type": ["boolean", "null"]},
+                "camion": {"type": ["boolean", "null"]},
+                "bobcat": {"type": ["boolean", "null"]},
+                "tracteur": {"type": ["boolean", "null"]},
+                "con_d": {"type": ["integer", "null"]},
+                "con_i": {"type": ["integer", "null"]},
+                "moto_d": {"type": ["integer", "null"]},
+                "moto_i": {"type": ["integer", "null"]},
+            },
+        },
     },
     "required": ["did", "name"],
 }
@@ -56,6 +75,7 @@ class _RawCategoryDetailResponse(BaseModel):
     did: DidValue | None = None
     name: str | None = None
     casualties: ExtractionCasualties | None = None
+    vehicles: ExtractionVehicleDetails | None = None
 
 
 class OllamaCategoryDetailService:
@@ -116,6 +136,7 @@ class OllamaCategoryDetailService:
                 raw_message_id=raw_message_id,
             ),
             casualties=response.casualties,
+            vehicles=response.vehicles,
         )
 
     def _validated_name(

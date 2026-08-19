@@ -12,6 +12,7 @@ from app.llm.dtos.extraction_dto import (
     ExtractionCategory,
     ExtractionCategoryKey,
     ExtractionResult,
+    ExtractionVehicleDetails,
 )
 from app.llm.dtos.relevance_filter_dto import (
     FilterBatchSummary,
@@ -33,6 +34,7 @@ __all__ = [
     "ExtractionCategory",
     "ExtractionCategoryKey",
     "ExtractionResult",
+    "ExtractionVehicleDetails",
     "FilterBatchSummary",
     "FilterPendingMessagesData",
     "RelevanceClassificationResult",

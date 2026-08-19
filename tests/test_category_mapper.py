@@ -7,6 +7,7 @@ from app.llm.dtos.extraction_dto import (
     ExtractionCasualties,
     ExtractionCategory,
     ExtractionCategoryKey,
+    ExtractionVehicleDetails,
 )
 from app.news.services.category_mapper import compute_rollups, map_categories
 
@@ -21,8 +22,14 @@ def _cat(
     did: DidValue | None = None,
     name: str | None = None,
     casualties: ExtractionCasualties | None = None,
+    vehicles: ExtractionVehicleDetails | None = None,
 ) -> ExtractionCategory:
-    return ExtractionCategory(did=did, name=name, casualties=casualties)
+    return ExtractionCategory(
+        did=did,
+        name=name,
+        casualties=casualties,
+        vehicles=vehicles,
+    )
 
 
 def _cas(**kwargs: int | None) -> ExtractionCasualties:
@@ -165,6 +172,59 @@ def test_warning_classification_no_warning_checked_first() -> None:
     out = map_categories(categories)
     assert out.get("no_warning") is True
     assert "warning" not in out
+
+
+# ---------------------------------------------------------------------------
+# vehicles
+# ---------------------------------------------------------------------------
+
+
+def test_vehicles_legacy_shape_defaults_to_car() -> None:
+    categories = {
+        ExtractionCategoryKey.vehicles: _cat(
+            casualties=_cas(male_injuries=1),
+        )
+    }
+    out = map_categories(categories)
+
+    assert out["car"] is True
+    assert out["carm_i"] == 1
+    assert "con_veh" not in out
+    assert "total_con" not in out
+
+
+def test_vehicles_maps_construction_subtypes_and_total_con() -> None:
+    categories = {
+        ExtractionCategoryKey.vehicles: _cat(
+            vehicles=ExtractionVehicleDetails(
+                con_veh=True,
+                excavator=True,
+                bulldozer=True,
+                con_d=1,
+            ),
+        )
+    }
+    out = map_categories(categories)
+
+    assert out["con_veh"] is True
+    assert out["excavator"] is True
+    assert out["bulldozer"] is True
+    assert out["con_d"] == 1
+    assert out["total_con"] == 2
+    assert "car" not in out
+
+
+def test_vehicles_construction_gate_keeps_subtypes_null_when_absent() -> None:
+    categories = {
+        ExtractionCategoryKey.vehicles: _cat(
+            vehicles=ExtractionVehicleDetails(car=True),
+        )
+    }
+    out = map_categories(categories)
+
+    assert out["car"] is True
+    assert "con_veh" not in out
+    assert "total_con" not in out
 
 
 # ---------------------------------------------------------------------------

@@ -151,16 +151,67 @@ def _map_government_building(cat: ExtractionCategory, out: dict[str, Any]) -> No
         out["gbi"] = _safe_add(c.male_injuries, c.female_injuries)
 
 
-def _map_vehicles(cat: ExtractionCategory, out: dict[str, Any]) -> None:  # noqa: ARG001
-    out["car"] = True
+def _map_vehicles(cat: ExtractionCategory, out: dict[str, Any]) -> None:
+    v = cat.vehicles
+    if v is None:
+        out["car"] = True
+        _map_car_casualties(cat, out)
+        return
+
+    if v.car:
+        out["car"] = True
+        _map_car_casualties(cat, out)
+
+    if v.moto:
+        out["moto"] = True
+        out["moto_did"] = _did_str(cat)
+        if v.moto_d is not None:
+            out["moto_d"] = v.moto_d
+        if v.moto_i is not None:
+            out["moto_i"] = v.moto_i
+
+    construction_flags = (
+        v.excavator,
+        v.bulldozer,
+        v.camion,
+        v.bobcat,
+        v.tracteur,
+    )
+    if v.con_veh or any(construction_flags):
+        out["con_veh"] = True
+        if v.excavator:
+            out["excavator"] = True
+        if v.bulldozer:
+            out["bulldozer"] = True
+        if v.camion:
+            out["camion"] = True
+        if v.bobcat:
+            out["bobcat"] = True
+        if v.tracteur:
+            out["tracteur"] = True
+        if v.con_d is not None:
+            out["con_d"] = v.con_d
+        if v.con_i is not None:
+            out["con_i"] = v.con_i
+        total_con = sum(
+            1
+            for flag in construction_flags
+            if flag
+        )
+        if total_con:
+            out["total_con"] = total_con
+
+
+def _map_car_casualties(cat: ExtractionCategory, out: dict[str, Any]) -> None:
     c = cat.casualties
-    if c is not None:
-        out["carm_d"] = c.male_deaths
-        out["carm_i"] = c.male_injuries
-        out["carf_d"] = c.female_deaths
-        out["carf_i"] = c.female_injuries
-        out["card"] = _safe_add(c.male_deaths, c.female_deaths)
-        out["cari"] = _safe_add(c.male_injuries, c.female_injuries)
+    if c is None:
+        return
+    out["carm_d"] = c.male_deaths
+    out["carm_i"] = c.male_injuries
+    out["carf_d"] = c.female_deaths
+    out["carf_i"] = c.female_injuries
+    out["card"] = _safe_add(c.male_deaths, c.female_deaths)
+    out["cari"] = _safe_add(c.male_injuries, c.female_injuries)
 
 
 def _map_emergency_civil_defense(cat: ExtractionCategory, out: dict[str, Any]) -> None:

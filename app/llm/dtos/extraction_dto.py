@@ -42,12 +42,30 @@ class ExtractionCasualties(BaseModel):
     children_injuries: int | None = None
 
 
+class ExtractionVehicleDetails(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    car: bool | None = None
+    moto: bool | None = None
+    con_veh: bool | None = None
+    excavator: bool | None = None
+    bulldozer: bool | None = None
+    camion: bool | None = None
+    bobcat: bool | None = None
+    tracteur: bool | None = None
+    con_d: int | None = None
+    con_i: int | None = None
+    moto_d: int | None = None
+    moto_i: int | None = None
+
+
 class ExtractionCategory(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     did: DidValue | None = None
     name: str | None = None
     casualties: ExtractionCasualties | None = None
+    vehicles: ExtractionVehicleDetails | None = None
 
 
 class ExtractionResult(BaseModel):

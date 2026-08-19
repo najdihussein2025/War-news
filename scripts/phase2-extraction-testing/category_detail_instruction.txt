@@ -58,4 +58,14 @@ Allowed output shape:
   }
 }
 
+When category_key is vehicles, also include a vehicles object describing every vehicle subtype explicitly mentioned and targeted in the text:
+- car: true when a civilian car/vehicle (سيارة, مركبة) was targeted.
+- moto: true when a motorcycle (دراجة, موتور) was targeted.
+- con_veh: true when any construction vehicle subtype below was targeted or destroyed.
+- excavator, bulldozer, camion, bobcat, tracteur: true for each construction subtype explicitly mentioned as destroyed or targeted (حفارة, بلدوزر, كميون, بوبكات, جرار).
+- con_d / con_i: deaths/injuries attributed to construction vehicles only when written explicitly.
+- moto_d / moto_i: motorcycle deaths/injuries only when written explicitly.
+Use null/false for subtypes not mentioned. Do not set con_veh or any construction subtype unless the text clearly says that equipment was targeted or destroyed.
+Do not compute total_con — the application sums construction subtypes automatically.
+
 Extract details for the requested category_key only:
