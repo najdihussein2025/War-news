@@ -195,14 +195,14 @@ export const DataTable = <T,>({
             {Array.from({ length: 4 }).map((_, index) => <div className="h-20 animate-pulse rounded-md bg-surface-muted" key={index} />)}
           </div>
         ) : sortedRows.map((row) => (
-          <article className="space-y-3 p-4" key={getRowKey(row)}>
+          <article className="min-w-0 space-y-4 p-4" key={getRowKey(row)}>
             {columns.map((column) => (
-              <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-3" key={column.key}>
+              <div className="grid min-w-0 grid-cols-1 gap-1 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-3" key={column.key}>
                 <p className="text-caption font-semibold uppercase text-text-muted">{column.header}</p>
-                <div className="min-w-0 text-small text-text-primary">{column.render(row)}</div>
+                <div className="min-w-0 overflow-hidden break-words text-small text-text-primary">{column.render(row)}</div>
               </div>
             ))}
-            {actions ? <div className="flex justify-end border-t border-border pt-3">{actions(row)}</div> : null}
+            {actions ? <div className="flex justify-stretch border-t border-border pt-3 sm:justify-end">{actions(row)}</div> : null}
           </article>
         ))}
       </div>

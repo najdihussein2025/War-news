@@ -10,21 +10,6 @@ import { cn } from "../../../lib/cn";
 
 type FieldName = "username" | "password";
 
-const ShieldIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6l-7-3Z" />
-  </svg>
-);
-
 const UserIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
@@ -93,8 +78,23 @@ const EyeOffIcon = ({ className }: { className?: string }) => (
 
 const IdentityHeader = ({ compact = false }: { compact?: boolean }) => (
   <div className={cn("space-y-4", compact && "space-y-3")}>
-    <div className="flex h-8 w-8 items-center justify-center rounded-md border border-accent text-accent">
-      <ShieldIcon className="h-4 w-4" />
+    <div
+      className={cn(
+        "flex items-center",
+        compact ? "max-w-xs gap-5" : "max-w-md gap-7",
+      )}
+      aria-label="National Council for Scientific Research and National Center for Natural Hazards and Early Warning"
+    >
+      <img
+        src="/cnrs-logo-transparent.png"
+        alt="National Council for Scientific Research"
+        className="h-auto min-w-0 flex-1 object-contain"
+      />
+      <img
+        src="/ncne-logo-transparent.png"
+        alt="National Center for Natural Hazards and Early Warning"
+        className="h-auto min-w-0 flex-1 object-contain"
+      />
     </div>
     <div className="space-y-2">
       <p className="text-caption font-semibold uppercase text-text-muted">Secure Records Access</p>
@@ -106,28 +106,6 @@ const IdentityHeader = ({ compact = false }: { compact?: boolean }) => (
       >
         War News 2026
       </h1>
-    </div>
-  </div>
-);
-
-const EditorialMotif = () => (
-  <div className="relative mt-10 max-w-md overflow-hidden border-y border-border py-8 text-text-muted">
-    <div className="absolute inset-y-0 right-0 flex items-center text-display font-semibold text-border opacity-40">
-      2026
-    </div>
-    <div className="relative space-y-5">
-      <div className="h-px w-10 bg-border" />
-      <div className="space-y-2">
-        <p className="text-caption font-semibold uppercase">Records</p>
-        <p className="w-fit text-h3 font-semibold text-text-primary" lang="ar" dir="rtl">
-          سجلات
-        </p>
-      </div>
-      <div className="grid grid-cols-3 gap-3">
-        <div className="h-px bg-border" />
-        <div className="h-px bg-border" />
-        <div className="h-px bg-border" />
-      </div>
     </div>
   </div>
 );
@@ -193,24 +171,23 @@ export const LoginPage = () => {
   const loginErrorMessage = hasLoginError ? getLoginErrorMessage(loginMutation.error) : "";
 
   return (
-    <main className="min-h-screen bg-surface font-sans text-text-primary lg:grid lg:grid-cols-5">
-      <section className="hidden min-h-screen border-r border-border bg-surface px-9 py-9 lg:col-span-3 lg:flex lg:flex-col lg:justify-center">
-        <div>
+    <main className="min-h-screen bg-surface font-sans text-text-primary lg:grid lg:h-screen lg:min-h-0 lg:grid-cols-2 lg:overflow-hidden">
+      <section className="brand-hero relative hidden overflow-hidden px-10 py-8 lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:items-center lg:justify-center">
+        <div className="relative z-10 w-full max-w-xl rounded-lg border border-white/40 bg-white/95 p-8 shadow-overlay backdrop-blur-sm xl:p-10">
           <IdentityHeader />
           <p className="mt-6 max-w-md text-body-large text-text-muted">
             Internal incident records for review, source control, and administrative oversight.
           </p>
-          <EditorialMotif />
         </div>
       </section>
 
-      <section className="flex min-h-screen items-center justify-center bg-surface-muted px-4 py-8 lg:col-span-2 lg:px-8 lg:py-9">
-        <div className="w-full min-w-0 max-w-xs space-y-5 sm:max-w-sm">
+      <section className="login-auth-panel flex min-h-screen items-center justify-center border-t-4 border-brand-gold px-4 py-8 lg:h-full lg:min-h-0 lg:border-l lg:border-border lg:border-t-0 lg:px-10 lg:py-8">
+        <div className="w-full min-w-0 max-w-md space-y-5">
           <div className="lg:hidden">
             <IdentityHeader compact />
           </div>
 
-          <Card className="animate-card-enter w-full p-6 sm:p-7">
+          <Card className="animate-card-enter w-full border-t-4 border-t-brand-gold p-7 shadow-overlay sm:p-8">
         <form onSubmit={handleSubmit} noValidate>
           <div className="space-y-2">
             <h2 className="text-h3 font-semibold text-text-primary">Sign in</h2>
@@ -222,6 +199,7 @@ export const LoginPage = () => {
               <Input
                 id="username"
                 name="username"
+                placeholder="Enter your username"
                 value={username}
                 onChange={(event) => {
                   setUsername(event.target.value);
@@ -241,6 +219,7 @@ export const LoginPage = () => {
                 id="password"
                 name="password"
                 type={isPasswordVisible ? "text" : "password"}
+                placeholder="Enter your password"
                 value={password}
                 onChange={(event) => {
                   setPassword(event.target.value);

@@ -5,37 +5,46 @@
 @tailwind utilities;
 
 :root {
-  /* Primitive colors */
-  --gray-50: #f4f1ea;
-  --gray-100: #ebe7df;
-  --gray-200: #d8d2c8;
-  --gray-300: #a89f92;
-  --gray-400: #8d857a;
-  --gray-500: #6f7680;
-  --gray-600: #5d6672;
-  --gray-700: #3d4854;
-  --gray-800: #25313d;
-  --gray-900: #18212b;
+  /* CNRS / NCNE institutional palette */
+  --brand-navy: #082d6f;
+  --brand-navy-hover: #062458;
+  --brand-navy-active: #041b43;
+  --brand-gold: #bc8e38;
+  --brand-gold-soft: #f4ead6;
+  --brand-green: #14752d;
+  --brand-sky: #dcecf8;
 
-  --accent-50: #eaf2f4;
-  --accent-100: #d5e5ea;
-  --accent-500: #245c73;
-  --accent-600: #1d4a5d;
-  --accent-700: #173b4a;
+  /* Neutral colors with a cool blue cast */
+  --gray-50: #f6f9fc;
+  --gray-100: #edf3f8;
+  --gray-200: #dbe5ed;
+  --gray-300: #b8c7d3;
+  --gray-400: #8ca0af;
+  --gray-500: #687c8c;
+  --gray-600: #506373;
+  --gray-700: #354959;
+  --gray-800: #1c3447;
+  --gray-900: #0b2236;
+
+  --accent-50: #eaf2fb;
+  --accent-100: #d3e4f6;
+  --accent-500: var(--brand-navy);
+  --accent-600: var(--brand-navy-hover);
+  --accent-700: var(--brand-navy-active);
 
   --red-50: #f8eaea;
   --red-600: #9b2c2c;
   --red-700: #7c2323;
-  --green-600: #2f6b4f;
+  --green-600: var(--brand-green);
   --yellow-600: #8a5a12;
 
   /* Semantic colors */
   --color-surface: var(--gray-50);
-  --color-surface-raised: #fffcf6;
+  --color-surface-raised: #ffffff;
   --color-surface-muted: var(--gray-100);
   --color-text-primary: var(--gray-900);
   --color-text-muted: var(--gray-600);
-  --color-text-inverse: #fffcf6;
+  --color-text-inverse: #ffffff;
   --color-border: var(--gray-300);
   --color-border-strong: var(--gray-500);
   --color-accent: var(--accent-500);
@@ -58,8 +67,8 @@
   --button-primary-text: var(--color-text-inverse);
   --card-bg: var(--color-surface-raised);
   --card-border: var(--color-border);
-  --shadow-raised: 0 1px 2px rgba(24, 33, 43, 0.06), 0 8px 24px rgba(24, 33, 43, 0.08);
-  --shadow-overlay: 0 2px 8px rgba(24, 33, 43, 0.10), 0 18px 48px rgba(24, 33, 43, 0.12);
+  --shadow-raised: 0 1px 2px rgba(8, 45, 111, 0.05), 0 10px 28px rgba(8, 45, 111, 0.08);
+  --shadow-overlay: 0 3px 10px rgba(8, 45, 111, 0.12), 0 20px 52px rgba(8, 45, 111, 0.16);
 
   /* Spacing tokens */
   --space-1: 0.25rem;
@@ -89,6 +98,30 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.brand-hero {
+  background:
+    radial-gradient(circle at 12% 12%, rgba(188, 142, 56, 0.3), transparent 30%),
+    radial-gradient(circle at 88% 84%, rgba(20, 117, 45, 0.38), transparent 34%),
+    linear-gradient(145deg, #041b43 0%, #082d6f 56%, #0a4b54 100%);
+}
+
+.brand-hero::after {
+  background: linear-gradient(90deg, var(--brand-green), #4b923e 62%, var(--brand-gold));
+  bottom: 0;
+  content: "";
+  height: 0.375rem;
+  left: 0;
+  position: absolute;
+  right: 0;
+}
+
+.login-auth-panel {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(220, 236, 248, 0.9), transparent 38%),
+    radial-gradient(circle at 0% 100%, rgba(244, 234, 214, 0.75), transparent 34%),
+    #f6f9fc;
 }
 
 * {

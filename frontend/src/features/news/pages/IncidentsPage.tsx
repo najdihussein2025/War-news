@@ -138,7 +138,7 @@ export const IncidentsPage = () => {
               <StatusBadge label="Details pending" variant="neutral" />
             ) : null}
           </div>
-          <p className="max-w-xl text-caption text-text-muted">{row.khabar.length > 180 ? `${row.khabar.slice(0, 180)}…` : row.khabar}</p>
+          <p className="max-w-xl break-words text-caption text-text-muted" dir="auto">{row.khabar.length > 180 ? `${row.khabar.slice(0, 180)}…` : row.khabar}</p>
           {row.raw_message_id != null &&
             sharedBulletinIds.has(row.raw_message_id) ? (
             <p className="text-caption text-text-muted">
@@ -170,7 +170,7 @@ export const IncidentsPage = () => {
         <div className="space-y-1">
           <StatusBadge label={row.source} variant={sourceVariant(row.source)} />
           {row.source_reference ? (
-            <p className="text-caption text-text-muted">{row.source_reference}</p>
+            <p className="break-all text-caption text-text-muted">{row.source_reference}</p>
           ) : null}
         </div>
       ),
@@ -266,8 +266,8 @@ export const IncidentsPage = () => {
             />
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <label className="flex h-11 items-center gap-3 rounded-md border border-border bg-surface px-3 text-small font-semibold text-text-primary">
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <label className="flex h-11 w-full items-center gap-3 rounded-md border border-border bg-surface px-3 text-small font-semibold text-text-primary sm:w-auto">
             <input
               type="checkbox"
               checked={flaggedOnly}
@@ -280,14 +280,14 @@ export const IncidentsPage = () => {
             />
             Show items needing attention
           </label>
-          <Button type="button" onClick={() => { setCreateError(""); setIsCreateOpen(true); }}>
+          <Button className="w-full sm:w-auto" type="button" onClick={() => { setCreateError(""); setIsCreateOpen(true); }}>
             Create
           </Button>
           {hasFilters ? (
             <Button
               type="button"
               variant="ghost"
-              className="h-9"
+              className="h-9 w-full sm:w-auto"
               onClick={() => setParams({})}
             >
               Clear filters
@@ -324,7 +324,7 @@ export const IncidentsPage = () => {
           <Button
             type="button"
             variant="secondary"
-            className="h-9"
+            className="h-9 w-full sm:w-auto"
             onClick={() => navigate(`${roleBase}/incidents/${row.id}`)}
           >
             View details
@@ -333,7 +333,7 @@ export const IncidentsPage = () => {
       />
 
       {total > PAGE_SIZE ? (
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-small text-text-muted">
             Showing {offset + 1}–{Math.min(offset + PAGE_SIZE, total)} of {total} incidents · Page {page} of {totalPages}
           </p>

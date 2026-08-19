@@ -188,24 +188,29 @@ const focusableSelector =
 const BrandMark = ({ to }: { to: string }) => (
   <Link
     to={to}
-    className="flex items-center gap-3 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus-ring"
+    className="block bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus-ring"
+    aria-label="War News 2026 dashboard"
   >
-    <span className="flex h-8 w-8 items-center justify-center rounded-md border border-accent text-accent">
-      <ShieldIcon className="h-4 w-4" />
+    <span className="flex h-[2.5rem] items-center justify-center gap-3 lg:h-20 lg:gap-4" aria-hidden="true">
+      <img
+        src="/cnrs-logo-transparent.png"
+        alt=""
+        className="h-full min-w-0 flex-1 object-contain"
+      />
+      <img
+        src="/ncne-logo-transparent.png"
+        alt=""
+        className="h-full min-w-0 flex-1 object-contain"
+      />
     </span>
-    <span className="min-w-0">
-      <span className="block text-caption font-semibold uppercase text-text-muted">
-        Secure Records
-      </span>
-      <span className="block truncate text-h4 font-semibold text-text-primary">
-        War News 2026
-      </span>
+    <span className="mt-3 hidden text-center text-small font-semibold uppercase tracking-[0.08em] text-brand-navy lg:block">
+      War News 2026
     </span>
   </Link>
 );
 
 const RoleBadge = ({ role }: { role: string | null }) => (
-  <span className="rounded-md border border-border bg-surface-muted px-2 py-1 text-caption font-semibold text-text-muted">
+  <span className="rounded-md border border-brand-gold bg-brand-gold-soft px-2 py-1 text-caption font-semibold text-brand-navy">
     {role === ROLES.SUPER_ADMIN ? "Super Admin" : "Admin"}
   </span>
 );
@@ -236,13 +241,13 @@ const SidebarContent = ({
   };
 
   return (
-    <div className="flex min-h-full flex-col bg-surface-raised">
-      <div className="px-6 py-6">
+    <div className="flex min-h-full flex-col bg-white">
+      <div className="border-b border-brand-gold px-6 py-6">
         <BrandMark to={`${roleBase}/dashboard`} />
       </div>
 
-      <nav className="flex-1 px-4" aria-label="Main navigation">
-        <div className="space-y-1">
+      <nav className="flex-1 bg-white px-5 py-6" aria-label="Main navigation">
+        <div className="space-y-2">
           {visibleItems.map((item) => {
             const Icon = item.icon;
             const to = `${roleBase}/${item.path}`;
@@ -259,8 +264,8 @@ const SidebarContent = ({
                   "transition-colors duration-150 ease-out",
                   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring",
                   isActive
-                    ? "border-accent bg-surface-muted text-accent"
-                    : "border-transparent text-text-muted hover:bg-surface-muted hover:text-text-primary",
+                    ? "border-brand-gold bg-brand-sky/50 font-semibold text-brand-navy"
+                    : "border-transparent text-text-muted hover:border-brand-gold/40 hover:bg-brand-sky/20 hover:text-brand-navy",
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -271,8 +276,8 @@ const SidebarContent = ({
         </div>
       </nav>
 
-      <div className="border-t border-border p-4">
-        <div className="rounded-lg border border-border bg-surface p-3">
+      <div className="border-t border-border bg-white p-5">
+        <div className="p-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="truncate text-small font-semibold text-text-primary">
@@ -404,20 +409,20 @@ export const AppShell = ({ previewRole }: { previewRole?: string }) => {
   };
 
   return (
-    <div className="min-h-screen bg-surface text-text-primary">
+    <div className="min-h-screen overflow-x-hidden bg-surface text-text-primary">
       {toast ? <Toast>{toast}</Toast> : null}
 
-      <aside className="fixed inset-y-0 left-0 hidden w-[260px] border-r border-border bg-surface-raised shadow-[1px_0_0_rgba(24,33,43,0.04)] lg:block">
+      <aside className="fixed inset-y-0 left-0 hidden w-[260px] border-r border-border bg-surface-raised shadow-[2px_0_16px_rgba(8,45,111,0.08)] lg:block">
         <SidebarContent previewRole={previewRole} />
       </aside>
 
-      <div className="lg:pl-[260px]">
+      <div className="min-w-0 lg:pl-[260px]">
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-surface-raised px-4 lg:hidden">
           <BrandMark to={`${location.pathname.startsWith("/superadmin") ? "/superadmin" : "/admin"}/dashboard`} />
           <button
             ref={toggleRef}
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-surface text-text-primary transition-colors duration-150 ease-out hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+            className="flex h-[2.5rem] w-[2.5rem] items-center justify-center rounded-md border border-border bg-white text-brand-navy transition-colors duration-150 ease-out hover:border-brand-gold hover:bg-brand-sky/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
             onClick={() => setIsDrawerOpen(true)}
             onKeyDown={handleToggleKeyDown}
             aria-label="Open main navigation"
@@ -427,11 +432,11 @@ export const AppShell = ({ previewRole }: { previewRole?: string }) => {
           </button>
         </header>
 
-        <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <main className="min-h-screen min-w-0 overflow-x-hidden px-3 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
           <div className="mx-auto max-w-6xl">
-            <div className="mb-6 flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative mb-6 flex flex-col gap-4 border-b border-border pb-5 after:absolute after:-bottom-px after:left-0 after:h-1 after:w-16 after:bg-brand-gold sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-h2 font-semibold text-text-primary">{meta.title}</h1>
+                <h1 className="text-h2 font-semibold text-brand-navy">{meta.title}</h1>
                 {titleAddon}
               </div>
               {pageAction}

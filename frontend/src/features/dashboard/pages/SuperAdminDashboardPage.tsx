@@ -10,11 +10,11 @@ import { useContentSourcesQuery } from "../../sources/hooks";
 import { refreshDashboardQueries } from "../refreshQueries";
 
 const Metric = ({ label, value, detail, to, alert = false, loading = false }: { label: string; value: number; detail: string; to: string; alert?: boolean; loading?: boolean }) => (
-  <Link to={to} className="block rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"><Card className="h-full p-5 transition-colors hover:bg-surface-muted"><div className="flex items-start justify-between gap-4"><div><p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{label}</p>{loading ? <div className="mt-3 h-10 w-20 animate-pulse rounded bg-surface-muted" /> : <p className="mt-2 text-h2 font-semibold tabular-nums text-text-primary">{value}</p>}</div><span className={`mt-1 h-2.5 w-2.5 rounded-full ${alert ? "bg-danger" : "bg-success"}`} aria-hidden="true" /></div><p className="mt-3 text-small text-text-muted">{detail}</p></Card></Link>
+  <Link to={to} className="block rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"><Card className="h-full p-5 transition-colors hover:border-brand-navy hover:bg-brand-sky/20"><div className="flex items-start justify-between gap-4"><div><p className="text-caption font-semibold uppercase tracking-wide text-brand-navy">{label}</p>{loading ? <div className="mt-3 h-10 w-20 animate-pulse rounded bg-surface-muted" /> : <p className="mt-2 text-h2 font-semibold tabular-nums text-brand-navy">{value}</p>}</div><span className={`mt-1 h-2.5 w-2.5 rounded-full ${alert ? "bg-danger" : "bg-success"}`} aria-hidden="true" /></div><p className="mt-3 text-small text-text-muted">{detail}</p></Card></Link>
 );
 
 const ActionLink = ({ to, title, description }: { to: string; title: string; description: string }) => (
-  <Link to={to} className="block rounded-lg border border-border bg-surface-raised p-5 shadow-raised transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"><p className="font-semibold text-text-primary">{title}</p><p className="mt-2 text-small text-text-muted">{description}</p><p className="mt-4 text-small font-semibold text-accent">Open {title.toLowerCase()} →</p></Link>
+  <Link to={to} className="block rounded-lg border border-border bg-surface-raised p-5 shadow-raised transition-colors hover:border-brand-navy hover:bg-brand-sky/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"><p className="font-semibold text-brand-navy">{title}</p><p className="mt-2 text-small text-text-muted">{description}</p><p className="mt-4 text-small font-semibold text-brand-green">Open {title.toLowerCase()} →</p></Link>
 );
 
 const yesterday = () => getBeirutDate(-1);
@@ -83,7 +83,7 @@ export const SuperAdminDashboardPage = () => {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border border-border bg-surface-raised p-5 sm:p-6">
+      <section className="rounded-lg border border-border border-l-4 border-l-brand-gold bg-gradient-to-r from-brand-gold-soft/60 to-white p-5 sm:p-6">
         <div><p className="text-caption font-semibold uppercase tracking-wide text-accent">System administration</p><h2 className="mt-2 text-h3 font-semibold text-text-primary">System overview</h2><p className="mt-2 max-w-2xl text-small text-text-muted">Live operational and security information from the backend. Updates automatically every 30 seconds.</p><p className={`mt-2 text-caption ${refreshStatus === "error" ? "text-danger" : refreshStatus === "success" ? "text-success" : "text-text-muted"}`} role="status" aria-live="polite">{refreshStatus === "error" ? "Some dashboard data could not be refreshed. The system will try again automatically." : refreshStatus === "success" ? `Automatically updated at ${lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : `Last updated ${lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`}</p></div>
       </section>
 
