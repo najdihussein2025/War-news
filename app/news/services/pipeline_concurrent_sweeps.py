@@ -84,17 +84,22 @@ def _claim_raw_message_id(claim_fn: Callable[[Session], RawMessage | None]) -> i
         return raw_message_id
 
 
-def _claim_tier2_raw_message_id() -> int | None:
-    """Claim one details_pending incident and return its raw_message_id."""
+def _claim_tier2_work() -> tuple[object, int] | None:
+    """Claim one details_pending incident; return (incident_id, raw_message_id)."""
     with SessionLocal() as db:
         incident = PipelineClaimRepository(db).claim_pending_tier2_detail_fill()
         if incident is None:
             return None
+        incident_id = incident.id
         raw_message_id = incident.raw_message_id
         db.commit()
         if raw_message_id is None:
+            logger.error(
+                "Concurrent tier2 detail fill claimed incident_id=%s with no raw_message_id",
+                incident_id,
+            )
             return None
-        return raw_message_id
+        return incident_id, raw_message_id
 
 
 def _effective_pre_dedup_max_rows(max_rows: int | None) -> int | None:
@@ -378,20 +383,24 @@ async def _tier2_detail_fill_worker(
         if stats.should_stop(max_rows):
             return
 
-        raw_message_id = await asyncio.to_thread(_claim_tier2_raw_message_id)
-        if raw_message_id is None:
+        claimed = await asyncio.to_thread(_claim_tier2_work)
+        if claimed is None:
             return
 
+        incident_id, raw_message_id = claimed
         try:
             await run_with_ollama_limit(
                 run_tier2_detail_fill_for_message,
                 raw_message_id,
             )
             stats.record_success()
-        except Exception:
+        except Exception as exc:
             logger.exception(
-                "Concurrent tier2 detail fill failed raw_message_id=%s",
+                "Concurrent tier2 detail fill failed incident_id=%s "
+                "raw_message_id=%s error=%s",
+                incident_id,
                 raw_message_id,
+                _format_exception(exc),
             )
             stats.record_failure()
 
@@ -411,6 +420,19 @@ async def sweep_tier2_detail_fill_concurrent(
     ]
     await asyncio.gather(*workers)
     elapsed_seconds = time.monotonic() - started_at
+    logger.info(
+        "Concurrent tier2 detail fill completed processed=%s succeeded=%s failed=%s",
+        stats.processed,
+        stats.succeeded,
+        stats.failed,
+    )
+    if stats.failed:
+        logger.warning(
+            "Concurrent tier2 detail fill had failures failed=%s — "
+            "details_pending rows may remain; search logs for incident_id / "
+            "raw_message_id on prior error lines",
+            stats.failed,
+        )
     return StageSweepResult(
         stage="tier2_detail_fill",
         processed=stats.processed,

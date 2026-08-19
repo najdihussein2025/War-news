@@ -170,6 +170,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
     ) -> dict[ExtractionCategoryKey, ExtractionCategory]:
         """Run per-category detail LLM calls for keys detected in Tier 1."""
         category_details: dict[str, ExtractionCategory] = {}
+        failed_categories: list[str] = []
         for category_key in presence_category_keys:
             try:
                 category_detail = self.category_detail.extract_detail(
@@ -177,12 +178,21 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                     category_key=category_key,
                     raw_message_id=raw_message_id,
                 )
-            except Exception:
+            except Exception as exc:
+                message = str(exc).strip()
+                error = (
+                    f"{type(exc).__name__}: {message}"
+                    if message
+                    else f"{type(exc).__name__} (no message)"
+                )
                 logger.exception(
-                    "Failed to extract category detail category=%s raw_message_id=%s",
+                    "Failed to extract category detail category=%s "
+                    "raw_message_id=%s error=%s",
                     category_key.value,
                     raw_message_id,
+                    error,
                 )
+                failed_categories.append(category_key.value)
                 continue
 
             if self._is_empty_category_detail(category_detail):
@@ -194,6 +204,15 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 continue
 
             category_details[category_key.value] = category_detail
+
+        if failed_categories:
+            logger.error(
+                "Tier2 category extraction incomplete raw_message_id=%s "
+                "failed_categories=%s succeeded_categories=%s",
+                raw_message_id,
+                failed_categories,
+                list(category_details.keys()),
+            )
 
         categories = self._validated_categories(
             category_details,
@@ -217,6 +236,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             raw_message_id=raw_message_id,
         )
         category_details: dict[str, ExtractionCategory] = {}
+        failed_categories: list[str] = []
         for category_key in categories_present:
             try:
                 category_detail = self.category_detail.extract_detail(
@@ -224,12 +244,21 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                     category_key=category_key,
                     raw_message_id=raw_message_id,
                 )
-            except Exception:
+            except Exception as exc:
+                message = str(exc).strip()
+                error = (
+                    f"{type(exc).__name__}: {message}"
+                    if message
+                    else f"{type(exc).__name__} (no message)"
+                )
                 logger.exception(
-                    "Failed to extract category detail category=%s raw_message_id=%s",
+                    "Failed to extract category detail category=%s "
+                    "raw_message_id=%s error=%s",
                     category_key.value,
                     raw_message_id,
+                    error,
                 )
+                failed_categories.append(category_key.value)
                 continue
 
             if self._is_empty_category_detail(category_detail):
@@ -241,6 +270,14 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 continue
 
             category_details[category_key.value] = category_detail
+        if failed_categories:
+            logger.error(
+                "Tier1 category extraction incomplete raw_message_id=%s "
+                "failed_categories=%s succeeded_categories=%s",
+                raw_message_id,
+                failed_categories,
+                list(category_details.keys()),
+            )
         categories = self._validated_categories(
             category_details,
             raw_message_id=raw_message_id,
