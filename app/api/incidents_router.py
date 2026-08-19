@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.news.dtos import (
     IncidentDetailDTO,
     IncidentCreateDTO,
+    IncidentDetailsPatchDTO,
     IncidentListParams,
     IncidentListResponse,
     IncidentUpdateDTO,
@@ -90,6 +91,28 @@ def update_incident(
         return IncidentService(IncidentRepository(db)).update(incident_id, payload)
     except IncidentNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.patch("/{incident_id}/details", response_model=IncidentDetailDTO)
+def update_incident_details(
+    incident_id: UUID,
+    payload: IncidentDetailsPatchDTO,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> IncidentDetailDTO:
+    try:
+        return IncidentService(IncidentRepository(db)).update_details(
+            incident_id,
+            payload,
+            current_user.id,
+        )
+    except IncidentNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
 
 
 @router.delete("/{incident_id}", status_code=status.HTTP_204_NO_CONTENT)

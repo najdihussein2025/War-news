@@ -64,6 +64,17 @@ export const updateIncident = async (incidentId: string, payload: IncidentUpdate
   return response.data;
 };
 
+export const updateIncidentDetails = async (
+  incidentId: string,
+  fields: Record<string, number | string>,
+): Promise<IncidentDetail> => {
+  const response = await apiClient.patch<IncidentDetail>(
+    `/api/incidents/${incidentId}/details`,
+    { fields },
+  );
+  return response.data;
+};
+
 export const deleteIncident = async (incidentId: string): Promise<void> => {
   await apiClient.delete(`/api/incidents/${incidentId}`);
 };

@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from typing import Any, TYPE_CHECKING
+from uuid import UUID
 
 from sqlalchemy import BigInteger, DateTime, Enum as SqlEnum, ForeignKey, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PgUUID
@@ -16,6 +17,7 @@ if TYPE_CHECKING:
 class UpdateAction(str, Enum):
     create = "create"
     edit = "edit"
+    pipeline_merge = "pipeline_merge"
     status_change = "status_change"
     delete = "delete"
     undo = "undo"
@@ -36,7 +38,7 @@ class IncidentUpdate(Base):
     )
     old_values: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     new_values: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
-    performed_by: Mapped[str | None] = mapped_column(
+    performed_by: Mapped[UUID | None] = mapped_column(
         PgUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,

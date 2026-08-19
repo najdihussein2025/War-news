@@ -33,6 +33,10 @@ from app.news.models import (
 from app.news.services.incident_detail_category_serializer import (
     serialize_incident_category_sections,
 )
+from app.news.services.incident_detail_edit_service import (
+    IncidentDetailEditError,
+    apply_incident_detail_edits,
+)
 from app.news.services.incident_detail_merge import merge_incident_detail_fields
 from app.sources.models import Source, SourceType
 
@@ -255,6 +259,54 @@ class IncidentRepository(IncidentRepositoryInterface):
         self.db.commit()
         return self.get_by_id(incident_id)
 
+    def update_details(
+        self,
+        incident_id: UUID,
+        fields: dict[str, Any],
+        performed_by: UUID,
+    ) -> IncidentDetailDTO | None:
+        incident = self.db.scalar(
+            select(Incident).where(
+                Incident.id == incident_id,
+                Incident.is_deleted.is_(False),
+            )
+        )
+        if incident is None:
+            return None
+
+        detail = self.db.scalar(
+            select(IncidentDetail).where(IncidentDetail.incident_id == incident_id)
+        )
+        if detail is None:
+            detail = IncidentDetail(incident_id=incident_id)
+            self.db.add(detail)
+            self.db.flush()
+
+        try:
+            old_values, new_values = apply_incident_detail_edits(
+                incident,
+                detail,
+                fields,
+            )
+        except IncidentDetailEditError as exc:
+            raise ValueError(str(exc)) from exc
+
+        if old_values != new_values:
+            self.db.add(
+                IncidentUpdate(
+                    incident_id=incident.id,
+                    action=UpdateAction.edit,
+                    old_values=old_values,
+                    new_values=new_values,
+                    performed_by=performed_by,
+                )
+            )
+
+        self.db.add(detail)
+        self.db.add(incident)
+        self.db.commit()
+        return self.get_by_id(incident_id)
+
     def delete(self, incident_id: UUID) -> bool:
         incident = self.db.scalar(
             select(Incident).where(Incident.id == incident_id, Incident.is_deleted.is_(False))
@@ -416,7 +468,7 @@ class IncidentRepository(IncidentRepositoryInterface):
             self.db.add(
                 IncidentUpdate(
                     incident_id=existing.id,
-                    action=UpdateAction.edit,
+                    action=UpdateAction.pipeline_merge,
                     old_values=old_values,
                     new_values=new_values,
                     performed_by=None,

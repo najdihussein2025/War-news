@@ -3,6 +3,7 @@ from uuid import UUID
 from app.news.dtos import (
     IncidentDetailDTO,
     IncidentCreateDTO,
+    IncidentDetailsPatchDTO,
     IncidentListParams,
     IncidentListResponse,
     IncidentUpdateDTO,
@@ -32,6 +33,21 @@ class IncidentService:
 
     def update(self, incident_id: UUID, payload: IncidentUpdateDTO) -> IncidentDetailDTO:
         incident = self.incidents.update(incident_id, payload)
+        if incident is None:
+            raise IncidentNotFoundError("Incident not found.")
+        return incident
+
+    def update_details(
+        self,
+        incident_id: UUID,
+        payload: IncidentDetailsPatchDTO,
+        performed_by: UUID,
+    ) -> IncidentDetailDTO:
+        incident = self.incidents.update_details(
+            incident_id,
+            payload.fields,
+            performed_by,
+        )
         if incident is None:
             raise IncidentNotFoundError("Incident not found.")
         return incident

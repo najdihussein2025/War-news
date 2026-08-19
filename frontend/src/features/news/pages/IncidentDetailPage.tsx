@@ -6,9 +6,11 @@ import { Button, ConfirmDialog, Dialog, EmptyState, Input, Label } from "../../.
 import { formatDate, formatRelativeTime } from "../../../lib/formatters";
 import { roleBaseFromPath } from "../../../lib/rolePath";
 import { useIncidentQuery } from "../hooks";
-import { deleteIncident, updateIncident } from "../api";
+import { deleteIncident, updateIncident, updateIncidentDetails } from "../api";
 import { IncidentCategorySectionFields } from "../components/IncidentCategorySectionFields";
+import { IncidentCategorySectionEditForm } from "../components/IncidentCategorySectionEditForm";
 import { incidentCategorySections } from "../incidentCategorySections";
+import type { IncidentCategorySectionKey } from "../incidentCategorySections";
 import type {
   CasualtyDemographics,
   IncidentSource,
@@ -44,6 +46,7 @@ export const IncidentDetailPage = () => {
   const navigate = useNavigate();
   const { data: incident, isLoading, error, refetch } = useIncidentQuery(incidentId);
   const [isEditing, setIsEditing] = useState(false);
+  const [editingSection, setEditingSection] = useState<IncidentCategorySectionKey | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [actionError, setActionError] = useState("");
@@ -260,14 +263,43 @@ export const IncidentDetailPage = () => {
           <details
             key={key}
             className="rounded-lg border border-border bg-surface-raised"
+            open={editingSection === key ? true : undefined}
           >
             <summary className="cursor-pointer px-5 py-4 text-small font-semibold text-text-primary">
-              {label}
+              <span className="flex items-center justify-between gap-3">
+                <span>{label}</span>
+                {editingSection !== key ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="shrink-0"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      setActionError("");
+                      setEditingSection(key);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                ) : null}
+              </span>
             </summary>
-            {incident[key] === null ? (
+            {editingSection === key ? (
+              <IncidentCategorySectionEditForm
+                sectionKey={key}
+                details={incident[key]}
+                onCancel={() => setEditingSection(null)}
+                onSave={async (fields) => {
+                  if (!incidentId) return;
+                  await updateIncidentDetails(incidentId, fields);
+                  await refetch();
+                  setEditingSection(null);
+                }}
+              />
+            ) : incident[key] === null ? (
               <EmptyState
                 title="No data"
-                description={`No ${label.toLowerCase()} information is recorded for this incident.`}
+                description={`No ${label.toLowerCase()} information is recorded for this incident. Use Edit to add data if automation missed it.`}
                 className="min-h-0 border-t border-border py-6"
               />
             ) : (

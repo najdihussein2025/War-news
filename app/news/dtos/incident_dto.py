@@ -1,8 +1,8 @@
 from datetime import date, datetime, time
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class IncidentListItemDTO(BaseModel):
@@ -128,3 +128,18 @@ class IncidentCreateDTO(BaseModel):
     khabar: str = Field(min_length=1)
     note: str | None = None
     source_link: str | None = None
+
+
+class IncidentDetailsPatchDTO(BaseModel):
+    """Partial incident_details update keyed by API field names."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    fields: dict[str, Any] = Field(min_length=1)
+
+    @field_validator("fields")
+    @classmethod
+    def fields_must_not_be_empty(cls, value: dict[str, Any]) -> dict[str, Any]:
+        if not value:
+            raise ValueError("At least one field must be provided.")
+        return value
