@@ -7,9 +7,10 @@ import { formatDate, formatRelativeTime } from "../../../lib/formatters";
 import { roleBaseFromPath } from "../../../lib/rolePath";
 import { useIncidentQuery } from "../hooks";
 import { deleteIncident, updateIncident } from "../api";
+import { IncidentCategorySectionFields } from "../components/IncidentCategorySectionFields";
+import { incidentCategorySections } from "../incidentCategorySections";
 import type {
   CasualtyDemographics,
-  IncidentDetail,
   IncidentSource,
 } from "../types";
 
@@ -28,28 +29,7 @@ const casualtyFields: Array<{
   { key: "children_i", label: "Children injuries" },
 ];
 
-const emptyCategories: Array<{
-  key: keyof IncidentDetail;
-  label: string;
-}> = [
-  { key: "lebanese_army", label: "Lebanese Army (LA)" },
-  { key: "unifil", label: "UNIFIL" },
-  { key: "municipality", label: "Municipality" },
-  { key: "school_university", label: "School / University" },
-  { key: "religious_cultural", label: "Religious & cultural" },
-  { key: "hospital", label: "Hospital" },
-  { key: "health_center", label: "Health Center" },
-  {
-    key: "emergency_civil_defense",
-    label: "Emergency / Civil Defense",
-  },
-  { key: "press", label: "Press" },
-  { key: "government_building", label: "Government building" },
-  { key: "road_bridge", label: "Road / Bridge" },
-  { key: "vehicles", label: "Vehicles" },
-  { key: "crossings_other", label: "Crossings & other" },
-  { key: "warning_classification", label: "Warning & classification" },
-];
+const emptyCategories = incidentCategorySections;
 
 const BackLink = ({ to }: { to: string }) => (
   <Link className="font-semibold text-accent hover:text-accent-hover" to={to}>
@@ -290,7 +270,12 @@ export const IncidentDetailPage = () => {
                 description={`No ${label.toLowerCase()} information is recorded for this incident.`}
                 className="min-h-0 border-t border-border py-6"
               />
-            ) : null}
+            ) : (
+              <IncidentCategorySectionFields
+                sectionKey={key}
+                details={incident[key]}
+              />
+            )}
           </details>
         ))}
       </section>

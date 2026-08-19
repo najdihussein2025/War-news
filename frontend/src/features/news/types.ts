@@ -52,6 +52,8 @@ export type CasualtyDemographics = {
   children_i: number | null;
 };
 
+export type IncidentCategorySection = Record<string, number | string>;
+
 export type IncidentDetail = Incident & {
   note: string | null;
   moh: string | null;
@@ -64,20 +66,20 @@ export type IncidentDetail = Incident & {
   deaths: number | null;
   injuries: number | null;
   casualty_demographics: CasualtyDemographics;
-  lebanese_army: null;
-  unifil: null;
-  municipality: null;
-  school_university: null;
-  religious_cultural: null;
-  hospital: null;
-  health_center: null;
-  emergency_civil_defense: null;
-  press: null;
-  government_building: null;
-  road_bridge: null;
-  vehicles: null;
-  crossings_other: null;
-  warning_classification: null;
+  lebanese_army: IncidentCategorySection | null;
+  unifil: IncidentCategorySection | null;
+  municipality: IncidentCategorySection | null;
+  school_university: IncidentCategorySection | null;
+  religious_cultural: IncidentCategorySection | null;
+  hospital: IncidentCategorySection | null;
+  health_center: IncidentCategorySection | null;
+  emergency_civil_defense: IncidentCategorySection | null;
+  press: IncidentCategorySection | null;
+  government_building: IncidentCategorySection | null;
+  road_bridge: IncidentCategorySection | null;
+  vehicles: IncidentCategorySection | null;
+  crossings_other: IncidentCategorySection | null;
+  warning_classification: IncidentCategorySection | null;
 };
 
 export type IncidentUpdatePayload = {
