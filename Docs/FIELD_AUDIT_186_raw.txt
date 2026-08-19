@@ -1,0 +1,178 @@
+﻿field|section|type|db|llm|mapper|serializer|frontend|gap
+arrested|Casualty demographics|Count|Y|N|N|N|Y|llm;serializer
+children_d|Casualty demographics|Count|Y|Y|Y|Y|Y|-
+children_i|Casualty demographics|Count|Y|Y|Y|Y|Y|-
+deaths|Casualty demographics|Count|Y|Y|Y|N|Y|-
+female_d|Casualty demographics|Count|Y|Y|Y|Y|Y|-
+female_i|Casualty demographics|Count|Y|Y|Y|Y|Y|-
+fire|Casualty demographics|Flag|Y|N|N|N|Y|llm;serializer
+injuries|Casualty demographics|Count|Y|Y|Y|N|Y|-
+isf_gs|Casualty demographics|Flag|Y|N|N|N|Y|llm;serializer
+lib_y_n|Casualty demographics|Free text|Y|N|N|N|Y|llm;serializer
+male_d|Casualty demographics|Count|Y|Y|Y|Y|Y|-
+male_i|Casualty demographics|Count|Y|Y|Y|Y|Y|-
+obs_duties|Casualty demographics|Flag|Y|N|N|N|Y|llm;serializer
+total_deaths|Casualty demographics|Automated|Y|Y|Y|N|Y|-
+total_injuries|Casualty demographics|Automated|Y|Y|Y|N|Y|-
+crossing|Crossings & other|Flag|Y|Y|Y|Y|Y|-
+drone_f|Crossings & other|Flag|Y|N|N|Y|Y|llm;mapper
+electric|Crossings & other|Flag|Y|N|N|Y|Y|llm;mapper
+electric_did|Crossings & other|Direct-Indirect|Y|N|N|Y|N|llm;mapper;frontend
+electric_type|Crossings & other|Free text|Y|N|N|Y|Y|llm;mapper
+litani|Crossings & other|Flag|Y|N|N|Y|Y|llm;mapper
+mj_did|Crossings & other|Direct-Indirect|Y|N|N|Y|N|llm;mapper;frontend
+mjnoub|Crossings & other|Flag|Y|N|N|Y|Y|llm;mapper
+olives_trees_d|Crossings & other|Count|Y|N|N|Y|Y|llm;mapper
+other|Crossings & other|Flag|Y|Y|Y|Y|Y|-
+other_d|Crossings & other|Count|Y|N|N|Y|Y|llm;mapper
+other_did|Crossings & other|Direct-Indirect|Y|Y|N|Y|N|mapper;frontend
+other_i|Crossings & other|Count|Y|N|N|Y|Y|llm;mapper
+other_type|Crossings & other|Free text|Y|Y|Y|Y|Y|-
+water|Crossings & other|Flag|Y|N|N|Y|Y|llm;mapper
+water_did|Crossings & other|Direct-Indirect|Y|N|N|Y|N|llm;mapper;frontend
+water_type|Crossings & other|Free text|Y|N|N|Y|Y|llm;mapper
+zahrani|Crossings & other|Flag|Y|N|N|Y|Y|llm;mapper
+car_nbr|Emergency / Civil Defense|Free text|Y|N|N|Y|Y|llm;mapper
+e_cars|Emergency / Civil Defense|Flag|Y|N|N|Y|Y|llm;mapper
+emer|Emergency / Civil Defense|Flag|Y|Y|Y|Y|Y|-
+emer_d|Emergency / Civil Defense|Count|Y|Y|Y|Y|Y|-
+emer_i|Emergency / Civil Defense|Count|Y|Y|Y|Y|Y|-
+emer_rela|Emergency / Civil Defense|Free text|Y|N|N|Y|Y|llm;mapper
+gb_did|Government building|Direct-Indirect|Y|Y|Y|Y|N|frontend
+gbd|Government building|Automated|Y|Y|Y|N|N|-
+gbf_d|Government building|Count|Y|Y|Y|Y|Y|-
+gbf_i|Government building|Count|Y|Y|Y|Y|Y|-
+gbi|Government building|Automated|Y|Y|Y|N|N|-
+gbm_d|Government building|Count|Y|Y|Y|Y|Y|-
+gbm_i|Government building|Count|Y|Y|Y|Y|Y|-
+gov|Government building|Flag|Y|Y|Y|Y|Y|-
+gov_bui|Government building|Free text|Y|N|N|Y|Y|llm;mapper
+gov_n|Government building|Free text|Y|Y|Y|Y|Y|-
+hc|Health Center|Flag|Y|Y|Y|Y|Y|-
+hc_damage_level|Health Center|Free text|Y|N|N|Y|Y|llm;mapper
+hc_did|Health Center|Direct-Indirect|Y|Y|Y|Y|N|frontend
+hc_rela|Health Center|Free text|Y|N|N|Y|Y|llm;mapper
+hcd|Health Center|Automated|Y|Y|Y|N|N|-
+hcf_d|Health Center|Count|Y|Y|Y|Y|Y|-
+hcf_i|Health Center|Count|Y|Y|Y|Y|Y|-
+hci|Health Center|Automated|Y|Y|Y|N|N|-
+hcm_d|Health Center|Count|Y|Y|Y|Y|Y|-
+hcm_i|Health Center|Count|Y|Y|Y|Y|Y|-
+hos_damage_level|Hospital|Free text|Y|N|N|Y|Y|llm;mapper
+hos_did|Hospital|Direct-Indirect|Y|Y|Y|Y|N|frontend
+hos_n|Hospital|Free text|Y|Y|Y|Y|Y|-
+hos_status|Hospital|Free text|Y|N|N|Y|Y|llm;mapper
+hosd|Hospital|Automated|Y|Y|Y|N|N|-
+hosf_d|Hospital|Count|Y|Y|Y|Y|Y|-
+hosf_i|Hospital|Count|Y|Y|Y|Y|Y|-
+hosi|Hospital|Automated|Y|Y|Y|N|N|-
+hosm_d|Hospital|Count|Y|Y|Y|Y|Y|-
+hosm_i|Hospital|Count|Y|Y|Y|Y|Y|-
+hosp|Hospital|Flag|Y|Y|Y|Y|Y|-
+nbr_evap|Hospital|Flag|Y|N|N|Y|Y|llm;mapper
+la|Lebanese Army (LA)|Flag|Y|Y|Y|Y|Y|-
+la_bldg|Lebanese Army (LA)|Flag|Y|N|N|Y|Y|llm;mapper
+la_did|Lebanese Army (LA)|Direct-Indirect|Y|Y|Y|Y|N|frontend
+la_td|Lebanese Army (LA)|Automated|Y|Y|Y|Y|Y|-
+la_ti|Lebanese Army (LA)|Automated|Y|Y|Y|Y|Y|-
+la_v|Lebanese Army (LA)|Flag|Y|N|N|Y|Y|llm;mapper
+laf_d|Lebanese Army (LA)|Count|Y|Y|Y|Y|Y|-
+laf_i|Lebanese Army (LA)|Count|Y|Y|Y|Y|Y|-
+lam_d|Lebanese Army (LA)|Count|Y|Y|Y|Y|Y|-
+lam_i|Lebanese Army (LA)|Count|Y|Y|Y|Y|Y|-
+muni|Municipality|Flag|Y|Y|Y|Y|Y|-
+muni_bldg|Municipality|Flag|Y|N|N|Y|Y|llm;mapper
+muni_did|Municipality|Direct-Indirect|Y|Y|Y|Y|N|frontend
+muni_empl|Municipality|Flag|Y|N|N|Y|Y|llm;mapper
+muni_td|Municipality|Automated|Y|Y|Y|Y|Y|-
+muni_ti|Municipality|Automated|Y|Y|Y|Y|Y|-
+munif_d|Municipality|Count|Y|Y|Y|Y|Y|-
+munif_i|Municipality|Count|Y|Y|Y|Y|Y|-
+munim_d|Municipality|Count|Y|Y|Y|Y|Y|-
+munim_i|Municipality|Count|Y|Y|Y|Y|Y|-
+channel|Press|Free text|Y|Y|Y|Y|Y|-
+press|Press|Flag|Y|Y|Y|Y|Y|-
+press_did|Press|Direct-Indirect|Y|Y|Y|Y|N|frontend
+pressd|Press|Automated|Y|Y|Y|N|N|-
+pressf_d|Press|Count|Y|Y|Y|Y|Y|-
+pressf_i|Press|Count|Y|Y|Y|Y|Y|-
+pressi|Press|Automated|Y|Y|Y|N|N|-
+pressm_d|Press|Count|Y|Y|Y|Y|Y|-
+pressm_i|Press|Count|Y|Y|Y|Y|Y|-
+arch_did|Religious & cultural|Direct-Indirect|Y|Y|Y|Y|N|frontend
+arch_n|Religious & cultural|Free text|Y|Y|Y|Y|Y|-
+archeo|Religious & cultural|Flag|Y|Y|Y|Y|Y|-
+ceme|Religious & cultural|Flag|Y|Y|Y|Y|Y|-
+ceme_did|Religious & cultural|Direct-Indirect|Y|Y|Y|Y|N|frontend
+ceme_n|Religious & cultural|Free text|Y|Y|Y|Y|Y|-
+chu_did|Religious & cultural|Direct-Indirect|Y|Y|Y|Y|N|frontend
+chu_n|Religious & cultural|Free text|Y|Y|Y|Y|Y|-
+church|Religious & cultural|Flag|Y|Y|Y|Y|Y|-
+mos_did|Religious & cultural|Direct-Indirect|Y|Y|Y|Y|N|frontend
+mosque|Religious & cultural|Flag|Y|Y|Y|Y|Y|-
+mosque_n|Religious & cultural|Free text|Y|Y|Y|Y|Y|-
+releg|Religious & cultural|Flag|Y|Y|Y|Y|Y|-
+releg_did|Religious & cultural|Direct-Indirect|Y|Y|Y|Y|N|frontend
+releg_n|Religious & cultural|Free text|Y|Y|Y|Y|Y|-
+bridge|Road / Bridge|Flag|Y|N|N|Y|Y|llm;mapper
+bridge_blocked|Road / Bridge|Flag|Y|N|N|Y|Y|llm;mapper
+bridge_name|Road / Bridge|Free text|Y|N|N|Y|Y|llm;mapper
+road|Road / Bridge|Flag|Y|N|N|Y|Y|llm;mapper
+road_blocked|Road / Bridge|Flag|Y|N|N|Y|Y|llm;mapper
+road_d_id|Road / Bridge|Direct-Indirect|Y|N|N|Y|N|llm;mapper;frontend
+road_name|Road / Bridge|Free text|Y|N|N|Y|Y|llm;mapper
+sch_damage_level|School / University|Free text|N|N|N|Y|Y|no-db-column;llm;mapper
+sch_did|School / University|Direct-Indirect|Y|Y|Y|Y|N|frontend
+school|School / University|Flag|Y|Y|Y|Y|Y|-
+school_name|School / University|Free text|Y|Y|Y|Y|Y|-
+uni|School / University|Flag|Y|Y|Y|Y|Y|-
+uni_did|School / University|Direct-Indirect|Y|Y|Y|Y|N|frontend
+uni_name|School / University|Free text|Y|Y|Y|Y|Y|-
+un_bldg|UNIFIL|Flag|Y|N|N|Y|Y|llm;mapper
+un_did|UNIFIL|Direct-Indirect|Y|Y|Y|Y|N|frontend
+un_td|UNIFIL|Automated|Y|Y|Y|Y|Y|-
+un_ti|UNIFIL|Automated|Y|Y|Y|Y|Y|-
+un_v|UNIFIL|Flag|Y|N|N|Y|Y|llm;mapper
+unf_d|UNIFIL|Count|Y|Y|Y|Y|Y|-
+unf_i|UNIFIL|Count|Y|Y|Y|Y|Y|-
+unifil|UNIFIL|Flag|Y|Y|Y|Y|Y|-
+unm_d|UNIFIL|Count|Y|Y|Y|Y|Y|-
+unm_i|UNIFIL|Count|Y|Y|Y|Y|Y|-
+bobcat|Vehicles|Flag|Y|Y|Y|Y|Y|-
+bulldozer|Vehicles|Flag|Y|Y|Y|Y|Y|-
+camion|Vehicles|Flag|Y|Y|Y|Y|Y|-
+car|Vehicles|Flag|Y|Y|Y|Y|Y|-
+carc_d|Vehicles|Count|Y|Y|N|Y|Y|mapper
+carc_i|Vehicles|Count|Y|Y|N|Y|Y|mapper
+card|Vehicles|Automated|Y|Y|Y|Y|Y|-
+carf_d|Vehicles|Count|Y|Y|Y|Y|Y|-
+carf_i|Vehicles|Count|Y|Y|Y|Y|Y|-
+cari|Vehicles|Automated|Y|Y|Y|Y|Y|-
+carm_d|Vehicles|Count|Y|Y|Y|Y|Y|-
+carm_i|Vehicles|Count|Y|Y|Y|Y|Y|-
+con_d|Vehicles|Count|Y|Y|Y|Y|Y|-
+con_i|Vehicles|Count|Y|Y|Y|Y|Y|-
+con_veh|Vehicles|Flag|Y|Y|Y|Y|Y|-
+excavator|Vehicles|Flag|Y|Y|Y|Y|Y|-
+moto|Vehicles|Flag|Y|Y|Y|Y|Y|-
+moto_d|Vehicles|Count|Y|Y|Y|Y|Y|-
+moto_did|Vehicles|Direct-Indirect|Y|Y|Y|Y|N|frontend
+moto_i|Vehicles|Count|Y|Y|Y|Y|Y|-
+total_con|Vehicles|Automated|Y|Y|Y|Y|Y|-
+tracteur|Vehicles|Flag|Y|Y|Y|Y|Y|-
+apart|Warning & classification|Flag|Y|N|N|Y|Y|llm;mapper
+building|Warning & classification|Flag|Y|N|N|Y|Y|llm;mapper
+genocide|Warning & classification|Flag|Y|N|N|Y|Y|llm;mapper
+no_warning|Warning & classification|Flag|Y|Y|Y|Y|Y|-
+warning|Warning & classification|Flag|Y|Y|Y|Y|Y|-
+
+TOTAL_FIELDS=166 GAPS=63
+
+=== DRIFT: code fields not in canonical ===
+  incident_id
+  school_damage_level
+
+=== º7 KNOWN ISSUES ===
+Muni_employees vs muni_empl: DB/serializer/frontend use muni_empl; Excel uses MUNI_Empl
+Dam_Level duplicate: Excel Hos_Damage_Level + HC_Damage_Level -> sch_damage_level, hos_damage_level, hc_damage_level in code
+Blocked duplicate: Excel Road_Blocked + Bridge_Blocked -> road_blocked, bridge_blocked in code
