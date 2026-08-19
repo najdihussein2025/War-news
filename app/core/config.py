@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     cnrs_api_key: str | None = None
     cnrs_api_base_url: str = "https://lebanon.cnrs.edu.lb/api/v1/inspected-posts"
     cnrs_webhook_secret: str
+    air_violation_webhook_enabled: bool = False
+    air_violation_webhook_url: str | None = None
+    air_violation_webhook_timeout_seconds: int = 10
+    air_violation_webhook_secret: str | None = None
     ollama_base_url: str = "http://192.168.40.25:11435/ollama"
     ollama_api_key: str | None = Field(
         default=None,

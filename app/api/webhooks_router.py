@@ -6,11 +6,37 @@ from sqlalchemy.orm import Session
 from app.sources.actions import ReceiveCnrsWebhookAction
 from app.core.database import get_db
 from app.news.services.pipeline_jobs import enqueue_pipeline_sweep
-from app.sources.services.webhook_auth import verify_cnrs_webhook_secret
+from app.news.dtos import AirViolationCreateDTO, AirViolationDTO
+from app.news.repositories import AirViolationRepository
+from app.news.services import AirViolationService
+from app.sources.services.webhook_auth import (
+    verify_air_violation_webhook_secret,
+    verify_cnrs_webhook_secret,
+)
 from app.sources.dtos import CnrsWebhookPayload
 from app.sources.repositories import SourceRepository
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
+
+
+@router.post(
+    "/air-violations",
+    response_model=AirViolationDTO,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(verify_air_violation_webhook_secret)],
+)
+def receive_air_violation(
+    payload: AirViolationCreateDTO,
+    db: Session = Depends(get_db),
+) -> AirViolationDTO:
+    """Validate and persist an air violation received from a trusted system."""
+    try:
+        return AirViolationService(AirViolationRepository(db)).create(payload)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
 
 
 @router.post(
