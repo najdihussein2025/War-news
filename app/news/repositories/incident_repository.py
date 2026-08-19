@@ -30,6 +30,9 @@ from app.news.models import (
     UpdateAction,
     Village,
 )
+from app.news.services.incident_detail_category_serializer import (
+    serialize_incident_category_sections,
+)
 from app.news.services.incident_detail_merge import merge_incident_detail_fields
 from app.sources.models import Source, SourceType
 
@@ -112,7 +115,7 @@ class IncidentRepository(IncidentRepositoryInterface):
         low_confidence = self._low_confidence_match()
         row = self.db.execute(
             select(
-                Incident.id,
+                Incident,
                 func.coalesce(Village.ref_name_en, Village.cad_name).label("village"),
                 Condition.action_en.label("condition"),
                 case(
@@ -125,31 +128,12 @@ class IncidentRepository(IncidentRepositoryInterface):
                     else_="Other",
                 ).label("source"),
                 RawMessage.external_message_id.label("source_reference"),
-                Incident.khabar,
-                Incident.note,
-                Incident.moh,
-                Incident.martyrs,
-                Incident.worker_name,
-                Incident.source_link,
-                Incident.source_link_2,
-                Incident.total_deaths,
-                Incident.total_injuries,
-                Incident.deaths,
-                Incident.injuries,
-                Incident.event_date,
-                Incident.event_time,
-                Incident.created_at,
                 case((low_confidence, False), else_=True).label("matched"),
                 case(
                     (Incident.duplicate_flag.is_(True), "possible"),
                     else_="none",
                 ).label("duplicate_flag"),
-                IncidentDetail.male_d,
-                IncidentDetail.male_i,
-                IncidentDetail.female_d,
-                IncidentDetail.female_i,
-                IncidentDetail.children_d,
-                IncidentDetail.children_i,
+                IncidentDetail,
             )
             .join(Village, Village.id == Incident.village_id)
             .join(Condition, Condition.id == Incident.condition_id)
@@ -164,15 +148,40 @@ class IncidentRepository(IncidentRepositoryInterface):
         if row is None:
             return None
 
-        values = dict(row._mapping)
-        values["casualty_demographics"] = CasualtyDemographicsDTO(
-            male_d=values.pop("male_d"),
-            male_i=values.pop("male_i"),
-            female_d=values.pop("female_d"),
-            female_i=values.pop("female_i"),
-            children_d=values.pop("children_d"),
-            children_i=values.pop("children_i"),
-        )
+        incident = row.Incident
+        detail = row.IncidentDetail
+        values = {
+            "id": incident.id,
+            "village": row.village,
+            "condition": row.condition,
+            "source": row.source,
+            "source_reference": row.source_reference,
+            "khabar": incident.khabar,
+            "note": incident.note,
+            "moh": incident.moh,
+            "martyrs": incident.martyrs,
+            "worker_name": incident.worker_name,
+            "source_link": incident.source_link,
+            "source_link_2": incident.source_link_2,
+            "total_deaths": incident.total_deaths,
+            "total_injuries": incident.total_injuries,
+            "deaths": incident.deaths,
+            "injuries": incident.injuries,
+            "event_date": incident.event_date,
+            "event_time": incident.event_time,
+            "created_at": incident.created_at,
+            "matched": row.matched,
+            "duplicate_flag": row.duplicate_flag,
+            "casualty_demographics": CasualtyDemographicsDTO(
+                male_d=detail.male_d if detail is not None else None,
+                male_i=detail.male_i if detail is not None else None,
+                female_d=detail.female_d if detail is not None else None,
+                female_i=detail.female_i if detail is not None else None,
+                children_d=detail.children_d if detail is not None else None,
+                children_i=detail.children_i if detail is not None else None,
+            ),
+            **serialize_incident_category_sections(detail),
+        }
         return IncidentDetailDTO.model_validate(values)
 
     def create_manual(self, payload: IncidentCreateDTO, created_by: UUID) -> IncidentDetailDTO:

@@ -163,6 +163,10 @@ def test_repository_get_by_id_returns_detail_and_hides_soft_deleted() -> None:
                 incident_id=incident.id,
                 male_d=1,
                 children_i=2,
+                la=True,
+                la_did="D",
+                lam_d=1,
+                la_td=1,
             )
         )
         db.flush()
@@ -178,7 +182,11 @@ def test_repository_get_by_id_returns_detail_and_hides_soft_deleted() -> None:
         assert result.duplicate_flag == "possible"
         assert result.casualty_demographics.male_d == 1
         assert result.casualty_demographics.children_i == 2
-        assert result.lebanese_army is None
+        assert result.lebanese_army is not None
+        assert result.lebanese_army.la == 1
+        assert result.lebanese_army.la_did == "D"
+        assert result.lebanese_army.lam_d == 1
+        assert result.health_center is None
 
         incident.is_deleted = True
         db.flush()

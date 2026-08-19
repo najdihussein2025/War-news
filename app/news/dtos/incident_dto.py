@@ -58,6 +58,12 @@ class CasualtyDemographicsDTO(BaseModel):
     children_i: int | None
 
 
+class IncidentCategorySectionDTO(BaseModel):
+    """Flat incident_details fields for one UI category section."""
+
+    model_config = ConfigDict(extra="allow", frozen=True)
+
+
 class IncidentDetailDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True, frozen=True)
 
@@ -83,20 +89,20 @@ class IncidentDetailDTO(BaseModel):
     matched: bool
     duplicate_flag: Literal["none", "possible"]
     casualty_demographics: CasualtyDemographicsDTO
-    lebanese_army: None = None
-    unifil: None = None
-    municipality: None = None
-    school_university: None = None
-    religious_cultural: None = None
-    hospital: None = None
-    health_center: None = None
-    emergency_civil_defense: None = None
-    press: None = None
-    government_building: None = None
-    road_bridge: None = None
-    vehicles: None = None
-    crossings_other: None = None
-    warning_classification: None = None
+    lebanese_army: IncidentCategorySectionDTO | None = None
+    unifil: IncidentCategorySectionDTO | None = None
+    municipality: IncidentCategorySectionDTO | None = None
+    school_university: IncidentCategorySectionDTO | None = None
+    religious_cultural: IncidentCategorySectionDTO | None = None
+    hospital: IncidentCategorySectionDTO | None = None
+    health_center: IncidentCategorySectionDTO | None = None
+    emergency_civil_defense: IncidentCategorySectionDTO | None = None
+    press: IncidentCategorySectionDTO | None = None
+    government_building: IncidentCategorySectionDTO | None = None
+    road_bridge: IncidentCategorySectionDTO | None = None
+    vehicles: IncidentCategorySectionDTO | None = None
+    crossings_other: IncidentCategorySectionDTO | None = None
+    warning_classification: IncidentCategorySectionDTO | None = None
 
 
 class IncidentUpdateDTO(BaseModel):
