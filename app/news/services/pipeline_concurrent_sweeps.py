@@ -22,6 +22,7 @@ from app.news.services.fast_path_dedup import FastPathDedupService
 from app.news.services.incident_materialization_service import (
     IncidentMaterializationService,
 )
+from app.llm.services.transient_llm_errors import ExtractionRetryCappedError
 from app.news.services.pipeline_llm_workers import (
     run_tier1_extraction_for_message,
     run_tier2_detail_fill_for_message,
@@ -44,6 +45,7 @@ class _WorkerStats:
     succeeded: int = 0
     failed: int = 0
     terminalized: int = 0
+    capped: int = 0
     lock: threading.Lock = field(default_factory=threading.Lock)
 
     def record_success(self) -> None:
@@ -61,6 +63,12 @@ class _WorkerStats:
             self.processed += 1
             self.succeeded += 1
             self.terminalized += 1
+
+    def record_capped(self) -> None:
+        with self.lock:
+            self.processed += 1
+            self.failed += 1
+            self.capped += 1
 
     def should_stop(self, max_rows: int | None) -> bool:
         if max_rows is None:
@@ -196,10 +204,18 @@ async def _tier1_extraction_worker(
                 raw_message_id,
             )
             stats.record_success()
-        except Exception:
-            logger.exception(
-                "Concurrent tier1 extraction failed raw_message_id=%s",
+        except ExtractionRetryCappedError as exc:
+            logger.error(
+                "Concurrent tier1 extraction capped raw_message_id=%s error=%s",
                 raw_message_id,
+                _format_exception(exc),
+            )
+            stats.record_capped()
+        except Exception as exc:
+            logger.exception(
+                "Concurrent tier1 extraction failed raw_message_id=%s error=%s",
+                raw_message_id,
+                _format_exception(exc),
             )
             stats.record_failure()
 
@@ -208,12 +224,17 @@ async def sweep_extraction_concurrent(
     *,
     max_rows: int | None = None,
 ) -> StageSweepResult:
+    reset_count = 0
+    reset_capped = 0
     with SessionLocal() as db:
-        reset_count = RawMessageRepository(db).reset_retryable_extraction_errors()
-        if reset_count:
+        reset_count, reset_capped = RawMessageRepository(
+            db
+        ).reset_retryable_extraction_errors()
+        if reset_count or reset_capped:
             logger.info(
-                "Re-queued %s retryable extraction errors before tier1 sweep",
+                "Extraction retry reset re_queued=%s capped=%s before tier1 sweep",
                 reset_count,
+                reset_capped,
             )
 
     started_at = time.monotonic()
@@ -227,6 +248,15 @@ async def sweep_extraction_concurrent(
     ]
     await asyncio.gather(*workers)
     elapsed_seconds = time.monotonic() - started_at
+    capped_total = reset_capped + stats.capped
+    logger.info(
+        "Concurrent tier1 extraction completed processed=%s succeeded=%s "
+        "failed=%s capped=%s",
+        stats.processed,
+        stats.succeeded,
+        stats.failed - stats.capped,
+        capped_total,
+    )
     return StageSweepResult(
         stage="tier1_extraction",
         processed=stats.processed,

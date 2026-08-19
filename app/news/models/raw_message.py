@@ -6,6 +6,7 @@ from sqlalchemy import (
     BigInteger,
     DateTime,
     ForeignKey,
+    Integer,
     String,
     Text,
     UniqueConstraint,
@@ -108,6 +109,12 @@ class RawMessage(Base):
         server_default=text("'pending'"),
     )
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    extraction_retry_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default=text("0"),
+    )
 
     source = relationship("Source", back_populates="raw_messages")
     duplicate_of: Mapped["RawMessage | None"] = relationship(
