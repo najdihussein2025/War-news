@@ -64,6 +64,25 @@ services:
     networks:
       - appnet
 
+  red-alert-collector:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      PG_APPLICATION_NAME: war-news-red-alert
+      PIPELINE_ROLE: red-alert-collector
+    volumes:
+      - .:/app
+    command: python -m app.core.scripts.run_red_alert_collector
+    restart: unless-stopped
+    networks:
+      - appnet
+
   frontend:
     build:
       context: ./frontend

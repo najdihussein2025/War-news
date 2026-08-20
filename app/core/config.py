@@ -6,6 +6,11 @@ class Settings(BaseSettings):
     database_url: str
     telegram_api_id: str | None = None
     telegram_api_hash: str | None = None
+    red_alert_enabled: bool = False
+    red_alert_channel_username: str = "redlinkleb"
+    red_alert_poll_seconds: float = 10.0
+    red_alert_request_timeout_seconds: int = 30
+    red_alert_ocr_enabled: bool = True
     cnrs_api_key: str | None = None
     cnrs_api_base_url: str = "https://lebanon.cnrs.edu.lb/api/v1/inspected-posts"
     cnrs_webhook_secret: str

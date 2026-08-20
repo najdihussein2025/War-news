@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button, ConfirmDialog, DataTable, Dialog, EmptyState, Input, Label, type DataTableColumn } from "../../../components/ui";
 import { useLiveQueryTitleAddon } from "../../../hooks/useLiveQueryTitleAddon";
@@ -20,7 +20,10 @@ const formatTime = (value: string | null) => {
 };
 
 const TextCell = ({ value }: { value: string | null }) => (
-  <span className="block max-w-sm whitespace-pre-wrap text-text-primary">
+  <span
+    className="block max-w-lg truncate whitespace-nowrap text-text-primary"
+    title={value || undefined}
+  >
     {value || emptyText}
   </span>
 );
@@ -69,11 +72,35 @@ export const AirViolationsPage = () => {
 
   const { data, isLoading, isError, refetch, isFetching } =
     useAirViolationsQuery(filters);
-  const latestViolationAt = data?.items[0]?.created_at ?? null;
+  // The API orders rows by event date/time, which is not necessarily the order
+  // they were received. Use the newest creation timestamp on the current page
+  // so the live indicator reflects newly collected Telegram records.
+  const latestViolationAt = useMemo(
+    () =>
+      data?.items.reduce<string | null>((latest, item) => {
+        if (!latest || new Date(item.created_at).getTime() > new Date(latest).getTime()) {
+          return item.created_at;
+        }
+        return latest;
+      }, null) ?? null,
+    [data?.items],
+  );
   useLiveQueryTitleAddon(latestViolationAt, isFetching);
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const rows = data?.items ?? [];
+
+  // Keep an open details dialog synchronized with the live-polled list. Without
+  // this, corrected OCR/news text remains stale until the dialog is reopened.
+  useEffect(() => {
+    if (!selectedViolation) {
+      return;
+    }
+    const refreshed = rows.find((row) => row.id === selectedViolation.id);
+    if (refreshed) {
+      setSelectedViolation(refreshed);
+    }
+  }, [rows, selectedViolation?.id]);
 
   const updateParam = (key: string, value: string) => {
     const next = new URLSearchParams(params);

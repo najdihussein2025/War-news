@@ -1,5 +1,9 @@
+import re
+import unicodedata
+
 from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
+from zoneinfo import ZoneInfo
 
 from app.news.dtos import (
     AirViolationCreateDTO,
@@ -16,6 +20,68 @@ from app.news.models import (
     Village,
 )
 from app.sources.models import Source, SourceType
+
+
+BEIRUT_TIMEZONE = ZoneInfo("Asia/Beirut")
+
+
+def as_beirut_datetime(value):
+    """Convert aware upstream timestamps to local Beirut time for display/storage."""
+    if value.tzinfo is None:
+        return value
+    return value.astimezone(BEIRUT_TIMEZONE)
+
+
+def air_violation_news_text(
+    message: RawMessage,
+    village: Village,
+    condition: Condition | None,
+) -> str:
+    """Return readable news text while keeping raw OCR in the source record."""
+    payload = message.raw_payload or {}
+    if not payload.get("ocr_text") or condition is None:
+        return clean_air_violation_news(message.raw_text or "")
+
+    location = village.caza_ar or village.caza_en
+    summary = f"{condition.action_ar} في قضاء {location}"
+    raw_text = message.raw_text or ""
+    if "حيطة" in raw_text and "حذر" in raw_text:
+        summary += " - حيطة وحذر"
+    return clean_air_violation_news(summary)
+
+
+def clean_air_violation_news(value: str) -> str:
+    """Remove decorative symbols while preserving meaningful multilingual text."""
+    cleaned_lines: list[str] = []
+    for raw_line in value.splitlines():
+        line = "".join(
+            character
+            for character in raw_line
+            if unicodedata.category(character) not in {"So", "Sk", "Cf"}
+            and character != "\ufe0f"
+        )
+        line = re.sub(r"[ \t]+", " ", line).strip()
+        if line:
+            cleaned_lines.append(line)
+    return "\n".join(cleaned_lines)
+
+
+def air_violation_caza_labels(
+    text: str,
+    default_caza_en: str | None,
+    default_caza_ar: str | None,
+    known_cazas: list[tuple[str | None, str | None]],
+) -> tuple[str | None, str | None]:
+    """Label bulletins naming several cazas without choosing a false locality."""
+    normalized_text = text.casefold()
+    mentioned: set[tuple[str | None, str | None]] = set()
+    for caza_en, caza_ar in known_cazas:
+        names = [name.casefold() for name in (caza_en, caza_ar) if name and len(name) >= 4]
+        if any(re.search(rf"(?<!\w){re.escape(name)}(?!\w)", normalized_text) for name in names):
+            mentioned.add((caza_en, caza_ar))
+    if len(mentioned) > 1:
+        return "Multiple regions", "مناطق متعددة"
+    return default_caza_en, default_caza_ar
 
 
 class AirViolationRepository(AirViolationRepositoryInterface):
@@ -205,19 +271,29 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         village = self.db.get(Village, matched_village_id)
         if village is None:
             return
-        occurred_at = message.message_datetime or message.received_at
+        condition = self.db.get(Condition, result.matched_condition_id)
+        occurred_at = as_beirut_datetime(message.message_datetime or message.received_at)
         payload = message.raw_payload or {}
         link = next((payload.get(key) for key in ("source_link", "link", "url", "post_url") if payload.get(key)), None)
+        known_cazas = list(
+            self.db.execute(select(Village.caza_en, Village.caza_ar).distinct()).all()
+        )
+        caza_en, caza_ar = air_violation_caza_labels(
+            message.raw_text or "",
+            village.caza_en,
+            village.caza_ar,
+            known_cazas,
+        )
         self.db.add(AirViolation(
             raw_message_id=message.id,
             condition_id=result.matched_condition_id,
             source_id=message.source_id,
-            caza_en=village.caza_en,
-            caza_ar=village.caza_ar,
+            caza_en=caza_en,
+            caza_ar=caza_ar,
             event_month=occurred_at.strftime("%B"),
             event_date=occurred_at.date(),
             event_time=occurred_at.time().replace(tzinfo=None),
-            khabar=message.raw_text or "",
+            khabar=air_violation_news_text(message, village, condition),
             note_1=payload.get("note_1") or payload.get("note"),
             note_2=payload.get("note_2"),
             source_link=str(link) if link else None,

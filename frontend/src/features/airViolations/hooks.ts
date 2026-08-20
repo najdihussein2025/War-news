@@ -12,4 +12,5 @@ export const useAirViolationsQuery = (filters: AirViolationFilters) =>
     queryKey: airViolationKeys.list(filters),
     queryFn: () => getAirViolations(filters),
     ...liveListQueryOptions,
+    refetchInterval: 10_000,
   });
