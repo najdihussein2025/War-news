@@ -6,8 +6,9 @@ from sqlalchemy import select
 
 from app.core.database import SessionLocal
 from app.core.text_sanitizer import strip_emoji_and_pictographs
-from app.news.models.air_violation import AirViolation
-from app.news.models.incident import Incident
+from app.logs import models as _log_models  # noqa: F401
+from app.news.models import AirViolation, Incident
+from app.sources import models as _source_models  # noqa: F401
 
 
 def sanitized_text(value: str | None) -> str:

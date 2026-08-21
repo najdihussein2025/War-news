@@ -6,8 +6,10 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
 from app.core.database import SessionLocal
+from app.logs import models as _log_models  # noqa: F401
 from app.news.models.raw_message import RawMessage
 from app.sources.models.source_platform import SourcePlatform
+from app.sources import models as _source_models  # noqa: F401
 
 
 def main() -> None:
