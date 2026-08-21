@@ -159,7 +159,7 @@ class IngestSourceAction:
                 total_skipped_blocked,
                 total_failed,
             )
-            if write_log:
+            if write_log and (total_inserted > 0 or total_failed > 0):
                 self.sources.write_ingestion_log(
                     source_id=source_db_id,
                     messages_fetched=total_fetched,
@@ -171,7 +171,7 @@ class IngestSourceAction:
                 )
             raise
 
-        if write_log:
+        if write_log and (total_inserted > 0 or total_failed > 0):
             self.sources.write_ingestion_log(
                 source_id=source_db_id,
                 messages_fetched=total_fetched,

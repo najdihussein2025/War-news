@@ -4,8 +4,6 @@ import time
 from datetime import datetime, timedelta, timezone
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from sqlalchemy import update
-
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.logs.models import IngestionLog
@@ -27,29 +25,13 @@ def _poll_cnrs() -> None:
         return
 
     db = SessionLocal()
-    run_log: IngestionLog | None = None
     try:
         repository = SourceRepository(db)
         source = repository.get_active_by_external_id("cnrs_webhook")
         if source is None:
             logger.error("CNRS polling skipped: active cnrs_webhook source was not found")
             return
-
-        db.execute(
-            update(IngestionLog)
-            .where(IngestionLog.source_id == source.id, IngestionLog.status == "running")
-            .values(
-                status="interrupted",
-                error_message="Ingestion was interrupted by an application restart.",
-                finished_at=datetime.now(timezone.utc),
-            )
-        )
-        db.commit()
-
-        run_log = IngestionLog(source_id=source.id, status="running", started_at=datetime.now(timezone.utc))
-        db.add(run_log)
-        db.commit()
-        db.refresh(run_log)
+        started_at = datetime.now(timezone.utc)
 
         result = IngestSourceAction(
             repository,
@@ -65,22 +47,33 @@ def _poll_cnrs() -> None:
             ),
             write_log=False,
         )
-        run_log.status = "completed"
-        run_log.messages_fetched = result.fetched
-        run_log.messages_parsed = result.inserted
-        run_log.messages_failed = result.failed
-        run_log.messages_blocked = result.skipped_blocked
-        run_log.finished_at = datetime.now(timezone.utc)
-        db.add(run_log)
-        db.commit()
+        if result.inserted > 0 or result.failed > 0:
+            db.add(
+                IngestionLog(
+                    source_id=source.id,
+                    status="completed",
+                    messages_fetched=result.fetched,
+                    messages_parsed=result.inserted,
+                    messages_failed=result.failed,
+                    messages_blocked=result.skipped_blocked,
+                    started_at=started_at,
+                    finished_at=datetime.now(timezone.utc),
+                )
+            )
+            db.commit()
         logger.info("CNRS polling ingestion result=%s", result.model_dump())
     except Exception as exc:
         db.rollback()
-        if run_log is not None:
-            run_log.status = "failed"
-            run_log.error_message = str(exc)[:2000]
-            run_log.finished_at = datetime.now(timezone.utc)
-            db.add(run_log)
+        if 'source' in locals() and source is not None:
+            db.add(
+                IngestionLog(
+                    source_id=source.id,
+                    status="failed",
+                    error_message=str(exc)[:2000],
+                    started_at=started_at if 'started_at' in locals() else None,
+                    finished_at=datetime.now(timezone.utc),
+                )
+            )
             db.commit()
         logger.exception("CNRS polling ingestion failed")
     finally:

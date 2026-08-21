@@ -1,4 +1,4 @@
-import { useContext, useState, type ChangeEvent, type FormEvent } from "react";
+import { useContext, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShellContext } from "../../../app/AppShell";
 import { Button, Card, FormField, Input } from "../../../components/ui";
@@ -6,7 +6,7 @@ import { changeAccountPassword } from "../../accounts/api";
 import { useAuthStore } from "../../../stores/authStore";
 import { logout as revokeSession } from "../../auth/api";
 import { importAirViolations } from "../../airViolations/api";
-import { importIncidents, type WorkbookImportSummary } from "../../news/api";
+import { importIncidents } from "../../news/api";
 import { ROLES } from "../../../constants/roles";
 
 type PasswordFormState = {
@@ -27,45 +27,129 @@ type ImportState = {
   file: File | null;
   isSubmitting: boolean;
   error: string | null;
-  summary: WorkbookImportSummary | null;
 };
 
 const emptyImportState: ImportState = {
   file: null,
   isSubmitting: false,
   error: null,
-  summary: null,
 };
 
-const SummaryPanel = ({ summary }: { summary: WorkbookImportSummary }) => (
-  <div className="rounded-lg border border-border bg-surface p-4">
-    <div className="grid gap-3 sm:grid-cols-3">
-      <div>
-        <p className="text-caption font-semibold uppercase text-text-muted">Processed</p>
-        <p className="mt-1 text-body font-semibold text-text-primary">{summary.processed}</p>
+const UploadIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+    <path
+      d="M12 16V7m0 0-3.5 3.5M12 7l3.5 3.5M5 16.5v1a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5v-1"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const ShieldIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+    <path
+      d="M12 3.75 6.75 6v5.1c0 4.25 2.83 8.2 6.73 9.26 3.9-1.06 6.77-5.01 6.77-9.26V6L12 3.75Z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const DatabaseIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+    <ellipse cx="12" cy="6.5" rx="6.5" ry="2.75" stroke="currentColor" strokeWidth="1.8" />
+    <path
+      d="M5.5 6.5v5c0 1.52 2.9 2.75 6.5 2.75s6.5-1.23 6.5-2.75v-5M5.5 11.5v5c0 1.52 2.9 2.75 6.5 2.75s6.5-1.23 6.5-2.75v-5"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    />
+  </svg>
+);
+
+const ImportPanel = ({
+  id,
+  label,
+  description,
+  buttonLabel,
+  state,
+  onChange,
+  onSubmit,
+  accent,
+  icon,
+}: {
+  id: string;
+  label: string;
+  description: string;
+  buttonLabel: string;
+  state: ImportState;
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onSubmit: () => void;
+  accent: string;
+  icon: ReactNode;
+}) => (
+  <section className={`group flex h-full flex-col rounded-[1.75rem] border ${accent} bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(244,248,252,0.98)_100%)] p-5 shadow-[0_18px_40px_rgba(11,34,54,0.08)] transition-transform duration-200 ease-out hover:-translate-y-0.5`}>
+    <div className="space-y-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-accent shadow-[0_10px_20px_rgba(8,45,111,0.12)]">
+          {icon}
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-h4 font-semibold text-text-primary">{label}</h3>
+          <p className="text-small leading-6 text-text-muted">{description}</p>
+        </div>
       </div>
-      <div>
-        <p className="text-caption font-semibold uppercase text-text-muted">Succeeded</p>
-        <p className="mt-1 text-body font-semibold text-text-primary">{summary.succeeded}</p>
+
+      <input
+        id={id}
+        type="file"
+        accept=".xlsx"
+        onChange={onChange}
+        className="sr-only"
+      />
+
+      <div className="rounded-2xl border border-border bg-white p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <label
+            htmlFor={id}
+            className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-small font-semibold text-text-primary transition-colors duration-150 ease-out hover:border-input-border-hover hover:bg-surface-muted"
+          >
+            <UploadIcon />
+            Choose file
+          </label>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-small font-medium text-text-primary">
+              {state.file?.name ?? "No file selected"}
+            </p>
+          </div>
+        </div>
       </div>
-      <div>
-        <p className="text-caption font-semibold uppercase text-text-muted">Failed</p>
-        <p className="mt-1 text-body font-semibold text-text-primary">{summary.failed}</p>
-      </div>
+
+      {state.error ? (
+        <p className="text-small font-medium text-danger" role="alert">
+          {state.error}
+        </p>
+      ) : null}
     </div>
-    {summary.row_errors.length > 0 ? (
-      <div className="mt-4 space-y-2">
-        <h3 className="text-small font-semibold text-text-primary">Failed rows</h3>
-        <ul className="space-y-2 text-small text-text-muted">
-          {summary.row_errors.map((rowError) => (
-            <li key={`${rowError.row}-${rowError.error}`} className="rounded-md border border-border bg-surface-raised px-3 py-2">
-              Row {rowError.row}: {rowError.error}
-            </li>
-          ))}
-        </ul>
+
+    <div className="mt-auto pt-5">
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          onClick={onSubmit}
+          disabled={!state.file}
+          isLoading={state.isSubmitting}
+          loadingText="Importing"
+        >
+          {buttonLabel}
+        </Button>
       </div>
-    ) : null}
-  </div>
+
+    </div>
+  </section>
 );
 
 export const SettingsPage = () => {
@@ -144,7 +228,6 @@ export const SettingsPage = () => {
       ...current,
       isSubmitting: true,
       error: null,
-      summary: null,
     }));
 
     try {
@@ -155,12 +238,15 @@ export const SettingsPage = () => {
       setter((current) => ({
         ...current,
         isSubmitting: false,
-        summary,
+        file: null,
       }));
+      const label = kind === "incidents" ? "Incident import" : "Air violation import";
+      const toastMessage =
+        summary.failed > 0
+          ? `${label} finished: ${summary.succeeded} succeeded, ${summary.failed} failed.`
+          : `${label} completed successfully: ${summary.succeeded} rows imported.`;
       shell?.showToast(
-        kind === "incidents"
-          ? "Incident import completed."
-          : "Air violation import completed.",
+        toastMessage,
       );
     } catch (error) {
       const detail = (error as { response?: { data?: { detail?: string } } }).response?.data?.detail;
@@ -174,9 +260,21 @@ export const SettingsPage = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="max-w-2xl p-6 sm:p-8">
+      <div className="grid gap-6 2xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] 2xl:items-start">
+      <Card className="overflow-hidden p-6 sm:p-8">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-sky/50 text-accent">
+            <ShieldIcon />
+          </div>
+          <div>
+            <p className="text-caption font-semibold uppercase tracking-[0.14em] text-text-muted">
+              Account security
+            </p>
+            <h2 className="text-h4 font-semibold text-text-primary">Change password</h2>
+          </div>
+        </div>
+
         <div className="space-y-2">
-          <h2 className="text-h4 font-semibold text-text-primary">Change password</h2>
           <p className="text-small text-text-muted">
             Update your account password. You will need your current password to confirm the change.
           </p>
@@ -234,89 +332,52 @@ export const SettingsPage = () => {
       </Card>
 
       {isSuperAdmin ? (
-        <Card className="max-w-2xl p-6 sm:p-8">
+        <Card className="overflow-hidden p-6 sm:p-8">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-gold-soft/70 text-accent">
+              <DatabaseIcon />
+            </div>
+            <div>
+              <p className="text-caption font-semibold uppercase tracking-[0.14em] text-text-muted">
+                Data operations
+              </p>
+              <h2 className="text-h4 font-semibold text-text-primary">Import data</h2>
+            </div>
+          </div>
+
           <div className="space-y-2">
-            <h2 className="text-h4 font-semibold text-text-primary">Import data</h2>
             <p className="text-small text-text-muted">
               Upload legacy Excel workbooks to create incidents or air-violation records in bulk.
             </p>
           </div>
 
-          <div className="mt-6 space-y-6">
-            <div className="space-y-4">
-              <FormField
-                id="settings-import-incidents"
-                label="Import incidents"
-                hint="Legacy 191-column .xlsx format"
-              >
-                <Input
-                  id="settings-import-incidents"
-                  type="file"
-                  accept=".xlsx"
-                  onChange={handleFileChange("incidents")}
-                />
-              </FormField>
-
-              {incidentImport.error ? (
-                <p className="text-small font-medium text-danger" role="alert">
-                  {incidentImport.error}
-                </p>
-              ) : null}
-
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  onClick={() => void handleImport("incidents")}
-                  disabled={!incidentImport.file}
-                  isLoading={incidentImport.isSubmitting}
-                  loadingText="Importing"
-                >
-                  Import incidents
-                </Button>
-              </div>
-
-              {incidentImport.summary ? <SummaryPanel summary={incidentImport.summary} /> : null}
-            </div>
-
-            <div className="border-t border-border pt-6">
-              <div className="space-y-4">
-                <FormField
-                  id="settings-import-air-violations"
-                  label="Import air violations"
-                  hint="11-column .xlsx format"
-                >
-                  <Input
-                    id="settings-import-air-violations"
-                    type="file"
-                    accept=".xlsx"
-                    onChange={handleFileChange("air_violations")}
-                  />
-                </FormField>
-
-                {airViolationImport.error ? (
-                  <p className="text-small font-medium text-danger" role="alert">
-                    {airViolationImport.error}
-                  </p>
-                ) : null}
-
-                <div className="flex justify-end">
-                  <Button
-                    type="button"
-                    onClick={() => void handleImport("air_violations")}
-                    disabled={!airViolationImport.file}
-                    isLoading={airViolationImport.isSubmitting}
-                    loadingText="Importing"
-                  >
-                    Import air violations
-                  </Button>
-                </div>
-
-                {airViolationImport.summary ? <SummaryPanel summary={airViolationImport.summary} /> : null}
-              </div>
-            </div>
+          <div className="mt-6 grid gap-5 xl:grid-cols-2">
+            <ImportPanel
+              id="settings-import-incidents"
+              label="Import incidents"
+              description="Bulk-create incident records from the legacy workbook without duplicate checks."
+              buttonLabel="Import incidents"
+              state={incidentImport}
+              onChange={handleFileChange("incidents")}
+              onSubmit={() => void handleImport("incidents")}
+              accent="border-brand-sky/70"
+              icon={<UploadIcon />}
+            />
+            <ImportPanel
+              id="settings-import-air-violations"
+              label="Import air violations"
+              description="Bulk-create air-violation records using the established workbook template."
+              buttonLabel="Import air violations"
+              state={airViolationImport}
+              onChange={handleFileChange("air_violations")}
+              onSubmit={() => void handleImport("air_violations")}
+              accent="border-brand-gold/60"
+              icon={<UploadIcon />}
+            />
           </div>
         </Card>
       ) : null}
+      </div>
     </div>
   );
 };

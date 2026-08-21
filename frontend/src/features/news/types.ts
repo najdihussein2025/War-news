@@ -42,6 +42,7 @@ export type IncidentFilters = {
   flaggedOnly?: boolean;
   verificationStatus?: "matched" | "needs_verification";
   duplicateOnly?: boolean;
+  sortOrder?: "newest" | "oldest";
 };
 
 export type ConditionOption = {

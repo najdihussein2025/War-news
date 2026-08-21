@@ -36,6 +36,7 @@ class IncidentListParams(BaseModel):
     flagged_only: bool = False
     verification_status: Literal["matched", "needs_verification"] | None = None
     duplicate_only: bool = False
+    sort_order: Literal["newest", "oldest"] = "newest"
 
 
 class IncidentListResponse(BaseModel):

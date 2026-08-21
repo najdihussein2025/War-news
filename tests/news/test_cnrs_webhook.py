@@ -217,14 +217,21 @@ def test_webhook_writes_one_ingestion_log_with_counts() -> None:
     assert response.json() == {"received": 2, "saved": 2, "duplicates": 0, "blocked": 0}
     assert len(_WebhookSourceRepository.ingestion_logs) == 1
     log = _WebhookSourceRepository.ingestion_logs[0]
-    assert log == {
-        "source_id": 44,
-        "messages_fetched": 2,
-        "messages_parsed": 2,
-        "messages_failed": 0,
-        "messages_flagged": 1,
-        "messages_blocked": 0,
-        "started_at": log["started_at"],
+    assert log["source_id"] == 44
+    assert log["messages_fetched"] == 2
+    assert log["messages_parsed"] == 2
+    assert log["messages_failed"] == 0
+    assert log["messages_flagged"] == 1
+    assert log["messages_blocked"] == 0
+    assert log["source_platforms"] == ["telegram"]
+    assert log["platform_breakdown"] == {
+        "telegram": {
+            "fetched": 2,
+            "parsed": 2,
+            "failed": 0,
+            "flagged": 1,
+            "blocked": 0,
+        }
     }
     assert log["started_at"] is not None
 
@@ -280,6 +287,7 @@ def test_duplicate_external_message_id_is_noop_not_error() -> None:
     assert second.status_code == 202
     assert second.json() == {"received": 1, "saved": 0, "duplicates": 1, "blocked": 0}
     assert len(_WebhookSourceRepository.messages) == 1
+    assert len(_WebhookSourceRepository.ingestion_logs) == 1
 
 
 def test_blocked_content_source_webhook_skips_raw_message_insert() -> None:
@@ -302,6 +310,7 @@ def test_blocked_content_source_webhook_skips_raw_message_insert() -> None:
     assert response.status_code == 202
     assert response.json() == {"received": 1, "saved": 0, "duplicates": 0, "blocked": 1}
     assert _WebhookSourceRepository.messages == []
+    assert _WebhookSourceRepository.ingestion_logs == []
 
 
 def test_malformed_payload_missing_external_message_id_returns_422() -> None:

@@ -91,9 +91,7 @@ class IncidentRepository(IncidentRepositoryInterface):
 
         rows = self.db.execute(
             base_query.order_by(
-                Incident.created_at.desc(),
-                Incident.event_date.desc(),
-                Incident.event_time.desc().nullslast(),
+                *self._list_ordering(params),
             )
             .limit(params.limit)
             .offset(params.offset)
@@ -688,6 +686,20 @@ class IncidentRepository(IncidentRepositoryInterface):
         if params.duplicate_only:
             filters.append(Incident.duplicate_flag.is_(True))
         return filters
+
+    @staticmethod
+    def _list_ordering(params: IncidentListParams) -> tuple[object, ...]:
+        if params.sort_order == "oldest":
+            return (
+                Incident.event_date.asc(),
+                Incident.event_time.asc().nullslast(),
+                Incident.created_at.asc(),
+            )
+        return (
+            Incident.event_date.desc(),
+            Incident.event_time.desc().nullslast(),
+            Incident.created_at.desc(),
+        )
 
     @staticmethod
     def _build_exact_hash(

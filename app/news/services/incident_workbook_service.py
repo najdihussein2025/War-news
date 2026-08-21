@@ -5,6 +5,7 @@ from typing import Any, BinaryIO
 from uuid import UUID
 
 from openpyxl import load_workbook
+from sqlalchemy import inspect
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.sqltypes import Boolean, Enum, Integer
@@ -233,6 +234,7 @@ class IncidentWorkbookService:
         *,
         created_by: UUID | None = None,
     ) -> WorkbookImportSummaryDTO:
+        self._ensure_schema_compatible()
         workbook = load_workbook(stream, read_only=True, data_only=True)
         sheet = workbook.active
         rows = sheet.iter_rows(values_only=True)
@@ -305,6 +307,27 @@ class IncidentWorkbookService:
             failed=len(row_errors),
             row_errors=row_errors,
         )
+
+    def _ensure_schema_compatible(self) -> None:
+        bind_getter = getattr(self.db, "get_bind", None)
+        if bind_getter is None:
+            return
+
+        bind = bind_getter()
+        if bind is None:
+            return
+
+        incident_columns = {
+            column_info["name"]
+            for column_info in inspect(bind).get_columns(Incident.__tablename__)
+        }
+        missing_columns = sorted({"note_extra_2"} - incident_columns)
+        if missing_columns:
+            raise ValueError(
+                "Database schema is out of date for incident imports. "
+                f"Missing incidents columns: {', '.join(missing_columns)}. "
+                "Apply the latest Alembic migrations before importing incidents."
+            )
 
     def _conditions_by_action(self) -> dict[str, int]:
         conditions_by_action: dict[str, int] = {}

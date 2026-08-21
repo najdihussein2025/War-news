@@ -50,6 +50,15 @@ class _FakeSession:
         self.rollbacks += 1
 
 
+class _SchemaAwareSession(_FakeSession):
+    def __init__(self, *, bind, villages=None, conditions=None, sources=None):
+        super().__init__(villages=villages, conditions=conditions, sources=sources)
+        self._bind = bind
+
+    def get_bind(self):
+        return self._bind
+
+
 def _legacy_headers() -> list[object]:
     workbook_path = Path("Data") / "Database Sample.xlsx"
     workbook = load_workbook(workbook_path, read_only=True, data_only=True)
@@ -182,3 +191,32 @@ def test_import_workbook_leaves_lookup_fields_null_when_unmatched() -> None:
     assert incident.village_id is None
     assert incident.condition_id is None
     assert incident.source_id is None
+
+
+def test_import_workbook_requires_note_extra_2_schema_column(monkeypatch) -> None:
+    headers = _legacy_headers()
+    row = [None] * len(headers)
+    _set_header_value(row, headers, "Khabar", "Workbook incident")
+    _set_header_value(row, headers, "Date", date(2026, 8, 21))
+
+    class _Inspector:
+        @staticmethod
+        def get_columns(_table_name):
+            return [{"name": "id"}, {"name": "note"}, {"name": "note_extra"}]
+
+    monkeypatch.setattr(
+        "app.news.services.incident_workbook_service.inspect",
+        lambda _bind: _Inspector(),
+    )
+
+    session = _SchemaAwareSession(bind=object())
+
+    try:
+        IncidentWorkbookService(session).import_workbook(_build_workbook(row))
+        raise AssertionError("Expected import to fail when note_extra_2 is missing.")
+    except ValueError as exc:
+        assert str(exc) == (
+            "Database schema is out of date for incident imports. "
+            "Missing incidents columns: note_extra_2. "
+            "Apply the latest Alembic migrations before importing incidents."
+        )

@@ -53,6 +53,7 @@ export const IncidentsPage = () => {
   const verificationStatus = params.get("verification_status") as "matched" | "needs_verification" | "";
   const eventDateFrom = params.get("event_date_from") ?? "";
   const eventDateTo = params.get("event_date_to") ?? "";
+  const sortOrder = (params.get("sort_order") as "newest" | "oldest" | null) ?? "newest";
   const flaggedOnly = params.get("flagged_only") === "true";
   const duplicateOnly = params.get("duplicate_only") === "true";
   const hasFilters = Boolean(
@@ -71,6 +72,7 @@ export const IncidentsPage = () => {
       eventDateTo,
       flaggedOnly,
       duplicateOnly,
+      sortOrder,
     }),
     [
       condition,
@@ -79,6 +81,7 @@ export const IncidentsPage = () => {
       flaggedOnly,
       duplicateOnly,
       offset,
+      sortOrder,
       sourceType,
       verificationStatus,
       village,
@@ -130,6 +133,10 @@ export const IncidentsPage = () => {
     { value: "facebook", label: "Facebook" },
     { value: "website", label: "Website" },
     { value: "manual", label: "Manual" },
+  ];
+  const dateSortOptions: SelectOption[] = [
+    { value: "newest", label: "Newest to oldest" },
+    { value: "oldest", label: "Oldest to newest" },
   ];
 
   const updateParam = (key: string, value: string) => {
@@ -381,6 +388,17 @@ export const IncidentsPage = () => {
                 onChange={(event) =>
                   updateParam("event_date_to", event.target.value)
                 }
+              />
+            </div>
+            <div className="space-y-2 xl:col-span-1">
+              <Label htmlFor="incident-sort-order">Date order</Label>
+              <Select
+                id="incident-sort-order"
+                value={sortOrder}
+                options={dateSortOptions}
+                placeholder="Newest to oldest"
+                className="w-full"
+                onChange={(value) => updateParam("sort_order", value || "newest")}
               />
             </div>
           </div>

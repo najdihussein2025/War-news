@@ -125,17 +125,18 @@ class ReceiveCnrsWebhookAction:
                 "blocked": blocked,
             }
         finally:
-            self.sources.write_ingestion_log(
-                source_id=source_id,
-                messages_fetched=len(posts),
-                messages_parsed=saved,
-                messages_failed=failed,
-                messages_flagged=flagged,
-                started_at=started_at,
-                messages_blocked=blocked,
-                source_platforms=sorted(source_platforms),
-                platform_breakdown=platform_breakdown,
-            )
+            if saved > 0 or failed > 0:
+                self.sources.write_ingestion_log(
+                    source_id=source_id,
+                    messages_fetched=len(posts),
+                    messages_parsed=saved,
+                    messages_failed=failed,
+                    messages_flagged=flagged,
+                    started_at=started_at,
+                    messages_blocked=blocked,
+                    source_platforms=sorted(source_platforms),
+                    platform_breakdown=platform_breakdown,
+                )
 
     @staticmethod
     def _normalize_payload(payload: CnrsWebhookPayload) -> list[CnrsWebhookPostDTO]:

@@ -61,5 +61,6 @@ def receive_cnrs_posts(
 
     action = ReceiveCnrsWebhookAction(sources=sources)
     result = action.execute(payload=payload, source_id=source.id)
-    enqueue_pipeline_sweep(db, use_advisory_lock=False)
+    if db is not None:
+        enqueue_pipeline_sweep(db, use_advisory_lock=False)
     return result

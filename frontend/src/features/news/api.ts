@@ -50,6 +50,9 @@ export const getIncidents = async (
   if (filters.duplicateOnly) {
     params.set("duplicate_only", "true");
   }
+  if (filters.sortOrder) {
+    params.set("sort_order", filters.sortOrder);
+  }
 
   const response = await apiClient.get<IncidentListResponse>(
     `/api/incidents?${params.toString()}`,
