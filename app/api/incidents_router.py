@@ -2,11 +2,11 @@ from datetime import date
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.accounts.models import User
-from app.api.deps import require_admin
+from app.api.deps import require_admin, require_super_admin
 from app.core.database import get_db
 from app.news.dtos import (
     IncidentDetailDTO,
@@ -15,9 +15,10 @@ from app.news.dtos import (
     IncidentListParams,
     IncidentListResponse,
     IncidentUpdateDTO,
+    WorkbookImportSummaryDTO,
 )
 from app.news.repositories import IncidentRepository
-from app.news.services import IncidentNotFoundError, IncidentService
+from app.news.services import IncidentNotFoundError, IncidentService, IncidentWorkbookService
 from app.sources.models import SourceType
 
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])
@@ -63,6 +64,30 @@ def list_incidents(
         duplicate_only=duplicate_only,
     )
     return IncidentService(IncidentRepository(db)).list_all(params)
+
+
+@router.post("/import", response_model=WorkbookImportSummaryDTO)
+def import_incidents(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin),
+) -> WorkbookImportSummaryDTO:
+    if not file.filename or not file.filename.lower().endswith(".xlsx"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Upload an .xlsx workbook.",
+        )
+
+    try:
+        return IncidentWorkbookService(db).import_workbook(
+            file.file,
+            created_by=current_user.id,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
 
 
 @router.get("/{incident_id}", response_model=IncidentDetailDTO)

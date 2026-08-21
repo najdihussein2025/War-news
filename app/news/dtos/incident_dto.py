@@ -11,11 +11,11 @@ class IncidentListItemDTO(BaseModel):
     id: UUID
     raw_message_id: int | None
     village: str | None
-    condition: str
+    condition: str | None
     event_date: date
     event_time: time | None = None
     khabar: str
-    source: str
+    source: str | None
     source_reference: str | None
     matched: bool
     duplicate_flag: Literal["none", "possible"]
@@ -59,6 +59,23 @@ class CasualtyDemographicsDTO(BaseModel):
     children_i: int | None
 
 
+class IncidentVillageDetailDTO(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    id: int
+    acs_code: int
+    acs_name: str | None
+    cad_name: str | None
+    ref_name_en: str | None
+    ref_name_ar: str | None
+    caza_en: str | None
+    caza_ar: str | None
+    mohafaza_en: str | None
+    mohafaza_ar: str | None
+    coord_x: float | None
+    coord_y: float | None
+
+
 class IncidentCategorySectionDTO(BaseModel):
     """Flat incident_details fields for one UI category section."""
 
@@ -70,8 +87,9 @@ class IncidentDetailDTO(BaseModel):
 
     id: UUID
     village: str | None
-    condition: str
-    source: str
+    village_details: IncidentVillageDetailDTO | None = None
+    condition: str | None
+    source: str | None
     source_reference: str | None
     khabar: str
     note: str | None

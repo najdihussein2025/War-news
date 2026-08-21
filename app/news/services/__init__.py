@@ -13,6 +13,7 @@ from app.news.services.incident_service import (
     IncidentNotFoundError,
     IncidentService,
 )
+from app.news.services.incident_workbook_service import IncidentWorkbookService
 from app.news.services.matching_service import MatchingService
 from app.news.services.red_alert_air_violation_service import RedAlertAirViolationService
 from app.news.services.village_matching_service import VillageMatchingService
@@ -27,6 +28,7 @@ __all__ = [
     "DedupMatchingService",
     "IncidentNotFoundError",
     "IncidentService",
+    "IncidentWorkbookService",
     "MatchingService",
     "RedAlertAirViolationService",
     "VillageMatchingService",

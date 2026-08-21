@@ -13,6 +13,7 @@ from app.news.dtos import (
     CasualtyDemographicsDTO,
     IncidentDetailDTO,
     IncidentCreateDTO,
+    IncidentVillageDetailDTO,
     IncidentListItemDTO,
     IncidentListParams,
     IncidentListResponse,
@@ -70,7 +71,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                     (Source.type == SourceType.twitter, "Twitter"),
                     (Source.type == SourceType.facebook, "Facebook"),
                     (Source.type == SourceType.website, "Website"),
-                    else_="Other",
+                    else_=None,
                 ).label("source"),
                 self._source_reference_expression().label("source_reference"),
                 case((low_confidence, False), else_=True).label("matched"),
@@ -81,8 +82,8 @@ class IncidentRepository(IncidentRepositoryInterface):
                 Incident.details_pending,
                 Incident.created_at,
             )
-            .join(Village, Village.id == Incident.village_id)
-            .join(Condition, Condition.id == Incident.condition_id)
+            .outerjoin(Village, Village.id == Incident.village_id)
+            .outerjoin(Condition, Condition.id == Incident.condition_id)
             .outerjoin(Source, Source.id == Incident.source_id)
             .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
             .where(*filters)
@@ -99,8 +100,8 @@ class IncidentRepository(IncidentRepositoryInterface):
         ).all()
         total = self.db.scalar(
             select(func.count(Incident.id))
-            .join(Village, Village.id == Incident.village_id)
-            .join(Condition, Condition.id == Incident.condition_id)
+            .outerjoin(Village, Village.id == Incident.village_id)
+            .outerjoin(Condition, Condition.id == Incident.condition_id)
             .outerjoin(Source, Source.id == Incident.source_id)
             .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
             .where(*filters)
@@ -111,8 +112,8 @@ class IncidentRepository(IncidentRepositoryInterface):
                     func.greatest(Incident.created_at, Incident.updated_at)
                 )
             )
-            .join(Village, Village.id == Incident.village_id)
-            .join(Condition, Condition.id == Incident.condition_id)
+            .outerjoin(Village, Village.id == Incident.village_id)
+            .outerjoin(Condition, Condition.id == Incident.condition_id)
             .outerjoin(Source, Source.id == Incident.source_id)
             .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
             .where(*filters)
@@ -134,6 +135,7 @@ class IncidentRepository(IncidentRepositoryInterface):
         row = self.db.execute(
             select(
                 Incident,
+                Village,
                 func.coalesce(Village.ref_name_en, Village.cad_name).label("village"),
                 Condition.action_en.label("condition"),
                 case(
@@ -143,7 +145,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                     (Source.type == SourceType.twitter, "Twitter"),
                     (Source.type == SourceType.facebook, "Facebook"),
                     (Source.type == SourceType.website, "Website"),
-                    else_="Other",
+                    else_=None,
                 ).label("source"),
                 self._source_reference_expression().label("source_reference"),
                 case((low_confidence, False), else_=True).label("matched"),
@@ -153,8 +155,8 @@ class IncidentRepository(IncidentRepositoryInterface):
                 ).label("duplicate_flag"),
                 IncidentDetail,
             )
-            .join(Village, Village.id == Incident.village_id)
-            .join(Condition, Condition.id == Incident.condition_id)
+            .outerjoin(Village, Village.id == Incident.village_id)
+            .outerjoin(Condition, Condition.id == Incident.condition_id)
             .outerjoin(Source, Source.id == Incident.source_id)
             .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
             .outerjoin(IncidentDetail, IncidentDetail.incident_id == Incident.id)
@@ -168,9 +170,28 @@ class IncidentRepository(IncidentRepositoryInterface):
 
         incident = row.Incident
         detail = row.IncidentDetail
+        village = row.Village
         values = {
             "id": incident.id,
             "village": row.village,
+            "village_details": (
+                IncidentVillageDetailDTO(
+                    id=village.id,
+                    acs_code=village.acs_code,
+                    acs_name=village.acs_name,
+                    cad_name=village.cad_name,
+                    ref_name_en=village.ref_name_en,
+                    ref_name_ar=village.ref_name_ar,
+                    caza_en=village.caza_en,
+                    caza_ar=village.caza_ar,
+                    mohafaza_en=village.mohafaza_en,
+                    mohafaza_ar=village.mohafaza_ar,
+                    coord_x=village.coord_x,
+                    coord_y=village.coord_y,
+                )
+                if village is not None
+                else None
+            ),
             "condition": row.condition,
             "source": row.source,
             "source_reference": row.source_reference,
@@ -637,10 +658,16 @@ class IncidentRepository(IncidentRepositoryInterface):
                 or_(
                     Village.ref_name_en.ilike(village_pattern),
                     Village.cad_name.ilike(village_pattern),
+                    Village.ref_name_ar.ilike(village_pattern),
                 )
             )
         if params.condition:
-            filters.append(Condition.action_en.ilike(f"%{params.condition}%"))
+            filters.append(
+                or_(
+                    Condition.action_en.ilike(f"%{params.condition}%"),
+                    Condition.action_ar.ilike(f"%{params.condition}%"),
+                )
+            )
         if params.source_type:
             filters.append(Source.type == params.source_type.lower())
         if params.event_date_from is not None:
