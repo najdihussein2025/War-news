@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, 
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from app.api.deps import require_super_admin
+from app.api.deps import require_admin
 from app.core.database import get_db
 from app.news.dtos import (
     AirViolationCreateDTO,
@@ -27,7 +27,7 @@ router = APIRouter(prefix="/api/air-violations", tags=["air-violations"])
 def create_air_violation(
     payload: AirViolationCreateDTO,
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    _current_user: User = Depends(require_admin),
 ) -> AirViolationDTO:
     try:
         return AirViolationService(AirViolationRepository(db)).create(payload)
@@ -43,7 +43,7 @@ def update_air_violation(
     air_violation_id: int,
     payload: AirViolationCreateDTO,
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    _current_user: User = Depends(require_admin),
 ) -> AirViolationDTO:
     try:
         return AirViolationService(AirViolationRepository(db)).update(
@@ -60,7 +60,7 @@ def update_air_violation(
 def delete_air_violation(
     air_violation_id: int,
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    _current_user: User = Depends(require_admin),
 ) -> None:
     try:
         AirViolationService(AirViolationRepository(db)).delete(air_violation_id)
@@ -77,7 +77,7 @@ def list_air_violations(
     event_date_to: date | None = Query(default=None),
     caza_en: str | None = Query(default=None),
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    _current_user: User = Depends(require_admin),
 ) -> AirViolationListResponse:
     params = AirViolationListParams(
         limit=limit,
@@ -94,7 +94,7 @@ def list_air_violations(
 def import_air_violations(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    _current_user: User = Depends(require_admin),
 ) -> dict[str, int]:
     if not file.filename or not file.filename.lower().endswith(".xlsx"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Upload an .xlsx workbook.")
@@ -107,7 +107,7 @@ def import_air_violations(
 @router.get("/export")
 def export_air_violations(
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    _current_user: User = Depends(require_admin),
 ) -> StreamingResponse:
     workbook = AirViolationWorkbookService(db).export_workbook()
     return StreamingResponse(
@@ -121,7 +121,7 @@ def export_air_violations(
 def get_air_violation(
     air_violation_id: int,
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    _current_user: User = Depends(require_admin),
 ) -> AirViolationDTO:
     try:
         return AirViolationService(AirViolationRepository(db)).get_detail(

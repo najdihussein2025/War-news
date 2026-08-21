@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.sources.actions import ListContentSourcesAction
-from app.api.deps import require_super_admin
+from app.api.deps import require_admin
 from app.core.database import get_db
 from app.sources.dtos import (
     ContentSourceBlockDTO,
@@ -23,7 +23,7 @@ def list_content_sources(
     platform: str | None = None,
     search: str | None = None,
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    _current_user: User = Depends(require_admin),
 ) -> list[ContentSourceListItemDTO]:
     return ListContentSourcesAction(ContentSourceRepository(db)).execute(
         ContentSourceFilterData(platform=platform, search=search)
@@ -40,7 +40,7 @@ def set_content_source_blocked(
     data: ContentSourceBlockUpdateData,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_super_admin),
+    current_user: User = Depends(require_admin),
 ) -> ContentSourceBlockDTO:
     result = ContentSourceRepository(db).set_blocked(
         source_platform=source_platform,
@@ -60,7 +60,7 @@ def get_content_source(
     source_platform: str,
     origin_account: str,
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    _current_user: User = Depends(require_admin),
 ) -> ContentSourceDetailDTO:
     detail = ContentSourceRepository(db).get_detail(
         source_platform=source_platform,

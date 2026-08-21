@@ -7,7 +7,7 @@ from app.sources.actions import (
     SetSourceActiveAction,
     SourceNotFoundError,
 )
-from app.api.deps import require_super_admin
+from app.api.deps import require_admin
 from app.core.database import get_db
 from app.sources.dtos import (
     SourceActiveUpdateData,
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/api/sources", tags=["sources"])
 @router.get("", response_model=list[SourceListItemDTO])
 def list_sources(
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    _current_user: User = Depends(require_admin),
 ) -> list[SourceListItemDTO]:
     return ListSourcesAction(SourceRepository(db)).execute()
 
@@ -34,7 +34,7 @@ def list_sources(
 def get_source(
     source_id: int,
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    _current_user: User = Depends(require_admin),
 ) -> SourceDetailDTO:
     try:
         return GetSourceAction(SourceRepository(db)).execute(
@@ -68,7 +68,7 @@ def pause_source(
     source_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_super_admin),
+    current_user: User = Depends(require_admin),
 ) -> SourceDetailDTO:
     result = _set_source_active(source_id, False, db)
     AuditLogRepository(db).record(action="source.paused", target_type="source", target_id=str(source_id), actor_id=current_user.id, actor_name=current_user.full_name, client_ip=request.client.host if request.client else None, new_values=result.model_dump(mode="json"))
@@ -80,7 +80,7 @@ def resume_source(
     source_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_super_admin),
+    current_user: User = Depends(require_admin),
 ) -> SourceDetailDTO:
     result = _set_source_active(source_id, True, db)
     AuditLogRepository(db).record(action="source.resumed", target_type="source", target_id=str(source_id), actor_id=current_user.id, actor_name=current_user.full_name, client_ip=request.client.host if request.client else None, new_values=result.model_dump(mode="json"))

@@ -5,7 +5,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, s
 from sqlalchemy.orm import Session
 
 from app.accounts.models import User
-from app.api.deps import require_super_admin
+from app.api.deps import require_admin
 from app.core.database import get_db
 from app.logs.actions import ListIngestionLogsAction, ListLoginLogsAction
 from app.logs.dtos import AuditLogFilterData, AuditLogPageDTO, IngestionLogFilterData, IngestionLogItemDTO, IngestionLogPageDTO, LoginLogFilterData, LoginLogPageDTO
@@ -15,7 +15,7 @@ from app.logs.services import run_ingestion_retry
 router = APIRouter(prefix="/api/logs", tags=["logs"])
 
 @router.get("/audit", response_model=AuditLogPageDTO)
-def list_audit_logs(search: str | None = None, action: str | None = None, date_from: date | None = None, date_to: date | None = None, page: int = Query(default=1, ge=1), page_size: int = Query(default=100, ge=1, le=100), db: Session = Depends(get_db), _current_user: User = Depends(require_super_admin)) -> AuditLogPageDTO:
+def list_audit_logs(search: str | None = None, action: str | None = None, date_from: date | None = None, date_to: date | None = None, page: int = Query(default=1, ge=1), page_size: int = Query(default=100, ge=1, le=100), db: Session = Depends(get_db), _current_user: User = Depends(require_admin)) -> AuditLogPageDTO:
     return AuditLogRepository(db).list_page(AuditLogFilterData(search=search, action=action, date_from=date_from, date_to=date_to, page=page, page_size=page_size))
 
 
@@ -28,7 +28,7 @@ def list_login_logs(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=1, le=100),
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    _current_user: User = Depends(require_admin),
 ) -> LoginLogPageDTO:
     return ListLoginLogsAction(LoginLogRepository(db)).execute(
         LoginLogFilterData(
@@ -51,7 +51,7 @@ def list_ingestion_logs(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=100, ge=1, le=100),
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    _current_user: User = Depends(require_admin),
 ) -> IngestionLogPageDTO:
     return ListIngestionLogsAction(IngestionLogRepository(db)).execute(
         IngestionLogFilterData(source_id=source_id, status=run_status, date_from=date_from, date_to=date_to, page=page, page_size=page_size)
@@ -62,7 +62,7 @@ def list_ingestion_logs(
 def get_ingestion_log(
     log_id: int,
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    _current_user: User = Depends(require_admin),
 ) -> IngestionLogItemDTO:
     row = IngestionLogRepository(db).get(log_id)
     if row is None:
@@ -75,7 +75,7 @@ def retry_ingestion(
     log_id: int,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_super_admin),
+    _current_user: User = Depends(require_admin),
 ) -> IngestionLogItemDTO:
     retry = IngestionLogRepository(db).start_retry(log_id)
     if retry is None:
