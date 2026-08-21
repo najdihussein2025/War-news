@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiClient } from "../lib/apiClient";
 import { login } from "./auth/api";
 import { createAirViolation, deleteAirViolation, updateAirViolation } from "./airViolations/api";
+import { getConditions, getVillages } from "./news/api";
 import { getContentSource, getContentSources } from "./sources/api";
 
 vi.mock("../lib/apiClient", () => ({
@@ -25,6 +26,18 @@ describe("frontend API contracts", () => {
     await getContentSource("telegram", "account/name");
     expect(client.get).toHaveBeenNthCalledWith(1, "/api/content-sources", { params: { platform: "telegram", search: "news" } });
     expect(client.get).toHaveBeenNthCalledWith(2, "/api/content-sources/telegram/account%2Fname");
+  });
+
+  it("loads active conditions for the incidents filter", async () => {
+    vi.mocked(client.get).mockResolvedValue({ data: [] });
+    await getConditions();
+    expect(client.get).toHaveBeenCalledWith("/api/conditions");
+  });
+
+  it("loads active villages for the create incident form", async () => {
+    vi.mocked(client.get).mockResolvedValue({ data: [] });
+    await getVillages();
+    expect(client.get).toHaveBeenCalledWith("/api/villages");
   });
 
   it("uses the expected Air Violations CRUD endpoints", async () => {

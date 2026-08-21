@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import io
 import logging
 import re
@@ -81,6 +82,8 @@ NON_EVENT_NOTICE_PARTS = (
     "redalertlb twasol bot",
 )
 
+SUPPORTED_DELIVERY_METHODS = frozenset({"public_preview", "telegram_api"})
+
 
 def normalize_arabic(value: str) -> str:
     value = value.replace("_", " ").strip().casefold()
@@ -103,6 +106,8 @@ class RedAlertPost:
     text: str
     link: str
     image_urls: tuple[str, ...] = ()
+    image_blobs: tuple[bytes, ...] = ()
+    collector: str = "telegram_public_preview"
 
     def raw_payload(self, channel_username: str) -> dict[str, object]:
         return {
@@ -114,7 +119,7 @@ class RedAlertPost:
             "origin_account": f"@{channel_username}",
             "source_link": self.link,
             "image_urls": list(self.image_urls),
-            "collector": "telegram_public_preview",
+            "collector": self.collector,
         }
 
 
@@ -232,14 +237,18 @@ class RedAlertCollector:
         self,
         db: Session,
         *,
+        delivery_method: str = "public_preview",
         channel_username: str = "redlinkleb",
+        fetch_limit: int = 20,
         request_timeout: int = 30,
         ocr_enabled: bool = True,
         http_get: Callable[..., httpx.Response] = httpx.get,
         air_violation_service: RedAlertAirViolationService | None = None,
     ) -> None:
         self.db = db
+        self.delivery_method = self._normalize_delivery_method(delivery_method)
         self.channel_username = channel_username.removeprefix("@")
+        self.fetch_limit = max(1, fetch_limit)
         self.request_timeout = request_timeout
         self.ocr_enabled = ocr_enabled
         self.http_get = http_get
@@ -251,14 +260,7 @@ class RedAlertCollector:
         source = self._ensure_source()
         self._ensure_unclassified_air_condition()
         started_at = datetime.now(timezone.utc)
-        response = self.http_get(
-            f"https://t.me/s/{self.channel_username}",
-            follow_redirects=True,
-            timeout=self.request_timeout,
-            headers={"User-Agent": "Mozilla/5.0"},
-        )
-        response.raise_for_status()
-        posts = parse_public_preview(response.text, self.channel_username)
+        posts = self._fetch_posts()
         villages = list(self.db.scalars(select(Village).where(Village.is_active.is_(True))))
         saved = duplicates = failed = air_violations = 0
         for post in posts:
@@ -337,9 +339,10 @@ class RedAlertCollector:
         }
 
     def _text_with_optional_ocr(self, post: RedAlertPost) -> str:
-        if not post.image_urls or (post.text.strip() and not is_preview_boilerplate(post.text)):
+        has_images = bool(post.image_urls or post.image_blobs)
+        if not has_images or (post.text.strip() and not is_preview_boilerplate(post.text)):
             return post.text
-        return self._ocr_images(post.image_urls) or post.text
+        return self._ocr_images(post) or post.text
 
     def _enrich_existing_with_ocr(
         self,
@@ -348,9 +351,11 @@ class RedAlertCollector:
         villages: list[Village],
     ) -> bool:
         payload = dict(message.raw_payload or {})
-        if payload.get("ocr_text") or not post.image_urls or not is_preview_boilerplate(post.text):
+        if payload.get("ocr_text") or (
+            not post.image_urls and not post.image_blobs
+        ) or not is_preview_boilerplate(post.text):
             return False
-        text = self._ocr_images(post.image_urls)
+        text = self._ocr_images(post)
         if not text:
             return False
         payload["preview_text"] = post.text
@@ -362,8 +367,79 @@ class RedAlertCollector:
         message.error_message = None
         return self.air_violation_service.process(message, villages)
 
-    def _ocr_images(self, image_urls: tuple[str, ...]) -> str:
-        if not self.ocr_enabled or not image_urls:
+    def _fetch_posts(self) -> list[RedAlertPost]:
+        if self.delivery_method == "telegram_api":
+            return self._fetch_posts_from_telegram_api()
+        return self._fetch_posts_from_public_preview()
+
+    def _fetch_posts_from_public_preview(self) -> list[RedAlertPost]:
+        response = self.http_get(
+            f"https://t.me/s/{self.channel_username}",
+            follow_redirects=True,
+            timeout=self.request_timeout,
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        response.raise_for_status()
+        return parse_public_preview(response.text, self.channel_username)
+
+    def _fetch_posts_from_telegram_api(self) -> list[RedAlertPost]:
+        return asyncio.run(self._fetch_posts_from_telegram_api_async())
+
+    async def _fetch_posts_from_telegram_api_async(self) -> list[RedAlertPost]:
+        try:
+            from telethon import TelegramClient
+            from telethon.sessions import StringSession
+        except ImportError as exc:
+            raise RuntimeError(
+                "telethon is required when RED_ALERT_DELIVERY_METHOD=telegram_api"
+            ) from exc
+
+        from app.core.config import settings
+
+        if not settings.telegram_api_id or not settings.telegram_api_hash:
+            raise RuntimeError(
+                "TELEGRAM_API_ID and TELEGRAM_API_HASH are required for telegram_api mode"
+            )
+        if not settings.telegram_session_string:
+            raise RuntimeError(
+                "TELEGRAM_SESSION_STRING is required for telegram_api mode in Docker"
+            )
+
+        client = TelegramClient(
+            StringSession(settings.telegram_session_string),
+            int(settings.telegram_api_id),
+            settings.telegram_api_hash,
+            auto_reconnect=True,
+        )
+
+        async with client:
+            entity = await client.get_entity(self.channel_username)
+            posts: list[RedAlertPost] = []
+            async for message in client.iter_messages(entity, limit=self.fetch_limit):
+                if message is None or message.id is None or message.date is None:
+                    continue
+                text = (message.message or "").strip()
+                image_blobs: list[bytes] = []
+                document = getattr(message, "document", None)
+                mime_type = getattr(document, "mime_type", None)
+                if message.photo or (isinstance(mime_type, str) and mime_type.startswith("image/")):
+                    blob = await client.download_media(message, file=bytes)
+                    if isinstance(blob, bytes) and blob:
+                        image_blobs.append(blob)
+                posts.append(
+                    RedAlertPost(
+                        message_id=message.id,
+                        message_datetime=message.date.astimezone(timezone.utc),
+                        text=text,
+                        link=f"https://t.me/{self.channel_username}/{message.id}",
+                        image_blobs=tuple(image_blobs),
+                        collector="telegram_api",
+                    )
+                )
+        return sorted(posts, key=lambda post: post.message_id, reverse=True)
+
+    def _ocr_images(self, post: RedAlertPost) -> str:
+        if not self.ocr_enabled or (not post.image_urls and not post.image_blobs):
             return ""
         try:
             import pytesseract
@@ -371,7 +447,7 @@ class RedAlertCollector:
             logger.warning("OCR dependencies unavailable; skipping image-only Red Alert post")
             return ""
         output: list[str] = []
-        for url in image_urls:
+        for url in post.image_urls:
             try:
                 response = self.http_get(
                     url,
@@ -407,6 +483,34 @@ class RedAlertCollector:
                     output.append(combined)
             except Exception:
                 logger.exception("OCR failed for Red Alert image url=%s", url)
+        for index, blob in enumerate(post.image_blobs):
+            try:
+                image = Image.open(io.BytesIO(blob))
+                text = pytesseract.image_to_string(image, lang="ara+eng")
+                header = image.crop(
+                    (
+                        int(image.width * 0.55),
+                        0,
+                        image.width,
+                        int(image.height * 0.16),
+                    )
+                )
+                header = ImageOps.autocontrast(ImageOps.grayscale(header))
+                header = header.resize((header.width * 5, header.height * 5))
+                header_text = pytesseract.image_to_string(
+                    header,
+                    lang="ara+eng",
+                    config="--psm 6",
+                )
+                combined = "\n".join(part.strip() for part in (text, header_text) if part.strip())
+                if combined:
+                    output.append(combined)
+            except Exception:
+                logger.exception(
+                    "OCR failed for Red Alert telegram image message_id=%s image_index=%s",
+                    post.message_id,
+                    index,
+                )
         return "\n".join(output)
 
     def _ensure_source(self) -> Source:
@@ -414,7 +518,13 @@ class RedAlertCollector:
         if source is not None:
             if not source.is_active:
                 source.is_active = True
-                self.db.commit()
+            source.config = {
+                **(source.config or {}),
+                "channel_username": self.channel_username,
+                "channel_url": f"https://t.me/{self.channel_username}",
+                "delivery_method": self.delivery_method,
+            }
+            self.db.commit()
             return source
         source = Source(
             type=SourceType.telegram,
@@ -423,7 +533,7 @@ class RedAlertCollector:
             config={
                 "channel_username": self.channel_username,
                 "channel_url": f"https://t.me/{self.channel_username}",
-                "delivery_method": "public_preview",
+                "delivery_method": self.delivery_method,
             },
             is_active=True,
         )
@@ -444,6 +554,16 @@ class RedAlertCollector:
             )
         )
         self.db.commit()
+
+    @staticmethod
+    def _normalize_delivery_method(value: str) -> str:
+        normalized = value.strip().casefold().replace("-", "_")
+        if normalized not in SUPPORTED_DELIVERY_METHODS:
+            supported = ", ".join(sorted(SUPPORTED_DELIVERY_METHODS))
+            raise ValueError(
+                f"Unsupported Red Alert delivery method {value!r}; expected one of: {supported}"
+            )
+        return normalized
 
     def _write_log(
         self,

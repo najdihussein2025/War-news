@@ -44,6 +44,20 @@ export type IncidentFilters = {
   duplicateOnly?: boolean;
 };
 
+export type ConditionOption = {
+  id: number;
+  action_en: string;
+  action_ar: string;
+};
+
+export type VillageOption = {
+  id: number;
+  value: string;
+  label: string;
+  ref_name_en: string | null;
+  ref_name_ar: string | null;
+};
+
 export type CasualtyDemographics = {
   male_d: number | null;
   male_i: number | null;

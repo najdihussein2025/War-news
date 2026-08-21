@@ -100,7 +100,9 @@ def build_extraction_classifier() -> ExtractionClassifierInterface:
             base_url=settings.ollama_base_url,
             api_key=settings.ollama_api_key,
             model=settings.extraction_ollama_model,
-            timeout_seconds=settings.ollama_timeout_seconds,
+            timeout_seconds=settings.extraction_llm_timeout_seconds,
+            max_request_retries=settings.extraction_llm_request_retries,
+            retry_backoff_seconds=settings.extraction_llm_retry_backoff_seconds,
         )
     )
 

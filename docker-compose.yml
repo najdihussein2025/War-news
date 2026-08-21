@@ -59,7 +59,46 @@ services:
       PIPELINE_ROLE: worker
     volumes:
       - .:/app
-    command: python -m app.core.scripts.run_pipeline_worker
+    command: python -m app.core.scripts.run_module_with_reload app.core.scripts.run_pipeline_worker
+    restart: unless-stopped
+    networks:
+      - appnet
+
+  live-sweep-worker:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      PG_APPLICATION_NAME: war-news-live-sweep-worker
+      PIPELINE_ROLE: live-sweep-worker
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - .:/app
+    command: sh -c "while true; do python -m scripts.live_sweep_new_only; sleep 300; done"
+    restart: unless-stopped
+    networks:
+      - appnet
+
+  cnrs-poll-worker:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      PG_APPLICATION_NAME: war-news-cnrs-poll
+      PIPELINE_ROLE: cnrs-poll-worker
+    volumes:
+      - .:/app
+    command: sh -c "while true; do python scripts/cnrs_poll_worker.py; sleep 300; done"
     restart: unless-stopped
     networks:
       - appnet
@@ -78,7 +117,7 @@ services:
       PIPELINE_ROLE: red-alert-collector
     volumes:
       - .:/app
-    command: python -m app.core.scripts.run_red_alert_collector
+    command: python -m app.core.scripts.run_module_with_reload app.core.scripts.run_red_alert_collector
     restart: unless-stopped
     networks:
       - appnet

@@ -139,6 +139,10 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         """
         Increment retry count for a transient extraction failure.
 
+        Transient failures are parked in ``status=error`` so the same row is
+        not immediately reclaimed again within the same sweep. A later sweep can
+        re-queue it via ``reset_retryable_extraction_errors``.
+
         Returns True when the row is permanently capped (status=error).
         """
         limit = (
@@ -147,8 +151,8 @@ class RawMessageRepository(RawMessageRepositoryInterface):
             else settings.extraction_max_retries
         )
         message.extraction_retry_count += 1
+        message.status = MessageStatus.error
         if message.extraction_retry_count >= limit:
-            message.status = MessageStatus.error
             message.error_message = extraction_retry_cap_message(
                 message.extraction_retry_count,
                 exc,
@@ -157,6 +161,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
             self.db.commit()
             return True
 
+        message.error_message = f"{type(exc).__name__}: {str(exc).strip() or 'timed out'}"
         self.db.add(message)
         self.db.commit()
         return False

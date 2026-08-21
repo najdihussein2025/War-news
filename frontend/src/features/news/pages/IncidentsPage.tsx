@@ -9,13 +9,16 @@ import {
   EmptyState,
   Input,
   Label,
+  Select,
   type DataTableColumn,
+  type SelectOption,
 } from "../../../components/ui";
 import { useLiveQueryTitleAddon } from "../../../hooks/useLiveQueryTitleAddon";
 import { formatDate, formatDateTime } from "../../../lib/formatters";
 import { getBeirutDate } from "../../../lib/localDate";
 import { roleBaseFromPath } from "../../../lib/rolePath";
-import { useIncidentsQuery } from "../hooks";
+import { ConditionSelect } from "../components/ConditionSelect";
+import { useConditionsQuery, useIncidentsQuery, useVillagesQuery } from "../hooks";
 import { createIncident } from "../api";
 import type { Incident, IncidentSource } from "../types";
 
@@ -70,6 +73,15 @@ export const IncidentsPage = () => {
 
   const { data, isLoading, isError, isFetching, refetch } =
     useIncidentsQuery(filters);
+  const {
+    data: conditions = [],
+    isLoading: isConditionsLoading,
+    isError: isConditionsError,
+  } = useConditionsQuery();
+  const {
+    data: villages = [],
+    isLoading: isVillagesLoading,
+  } = useVillagesQuery();
   const verificationSummary = useIncidentsQuery({ limit: 1, offset: 0, verificationStatus: "needs_verification" });
   const duplicateSummary = useIncidentsQuery({ limit: 1, offset: 0, duplicateOnly: true });
   useLiveQueryTitleAddon(data?.latest_incident_at ?? null, isFetching);
@@ -94,6 +106,17 @@ export const IncidentsPage = () => {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const flaggedCount = verificationSummary.data?.total ?? 0;
   const duplicateCount = duplicateSummary.data?.total ?? 0;
+  const verificationOptions: SelectOption[] = [
+    { value: "needs_verification", label: "Needs verification" },
+    { value: "matched", label: "Matched" },
+  ];
+  const sourceOptions: SelectOption[] = [
+    { value: "telegram", label: "Telegram" },
+    { value: "twitter", label: "Twitter" },
+    { value: "facebook", label: "Facebook" },
+    { value: "website", label: "Website" },
+    { value: "manual", label: "Manual" },
+  ];
 
   const updateParam = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -213,8 +236,8 @@ export const IncidentsPage = () => {
       </div>
 
       <div className="rounded-lg border border-border bg-surface-raised p-4">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <div className="space-y-2">
+        <div className="grid gap-x-6 gap-y-5 md:grid-cols-2 xl:grid-cols-4 xl:gap-x-8 xl:gap-y-6">
+          <div className="space-y-2 xl:col-span-1">
             <Label htmlFor="incident-village-filter">Village</Label>
             <Input
               id="incident-village-filter"
@@ -223,36 +246,47 @@ export const IncidentsPage = () => {
               placeholder="Search village"
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 xl:col-span-1">
             <Label htmlFor="incident-condition-filter">Condition</Label>
-            <Input id="incident-condition-filter" value={condition} onChange={(event) => updateParam("condition", event.target.value)} placeholder="Search condition" />
+            <ConditionSelect
+              id="incident-condition-filter"
+              value={condition}
+              conditions={conditions}
+              isLoading={isConditionsLoading}
+              disabled={isConditionsLoading && conditions.length === 0}
+              placeholder="All conditions"
+              className="w-full min-w-0"
+              onChange={(value) => updateParam("condition", value)}
+            />
+            {isConditionsError ? (
+              <p className="text-caption text-text-muted">
+                Could not load condition options.
+              </p>
+            ) : null}
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 xl:col-span-1">
             <Label htmlFor="incident-verification-filter">Verification</Label>
-            <select id="incident-verification-filter" className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3 text-body text-text-primary" value={verificationStatus} onChange={(event) => updateParam("verification_status", event.target.value)}>
-              <option value="">All verification states</option>
-              <option value="needs_verification">Needs verification</option>
-              <option value="matched">Matched</option>
-            </select>
+            <Select
+              id="incident-verification-filter"
+              value={verificationStatus}
+              placeholder="All verification states"
+              options={verificationOptions}
+              className="w-full"
+              onChange={(value) => updateParam("verification_status", value)}
+            />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 xl:col-span-1">
             <Label htmlFor="incident-source-filter">Source</Label>
-            <select
+            <Select
               id="incident-source-filter"
-              className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3 text-body text-text-primary"
               value={sourceType}
-              onChange={(event) => updateParam("source_type", event.target.value)}
-            >
-              <option value="">All sources</option>
-              <option value="telegram">Telegram</option>
-              <option value="twitter">Twitter</option>
-              <option value="facebook">Facebook</option>
-              <option value="website">Website</option>
-              <option value="api">API</option>
-              <option value="manual">Manual</option>
-            </select>
+              placeholder="All sources"
+              options={sourceOptions}
+              className="w-full"
+              onChange={(value) => updateParam("source_type", value)}
+            />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 xl:col-span-1">
             <Label htmlFor="incident-from-filter">From</Label>
             <Input
               id="incident-from-filter"
@@ -263,7 +297,7 @@ export const IncidentsPage = () => {
               }
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 xl:col-span-1">
             <Label htmlFor="incident-to-filter">To</Label>
             <Input
               id="incident-to-filter"
@@ -275,33 +309,37 @@ export const IncidentsPage = () => {
             />
           </div>
         </div>
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-          <label className="flex h-11 w-full items-center gap-3 rounded-md border border-border bg-surface px-3 text-small font-semibold text-text-primary sm:w-auto">
-            <input
-              type="checkbox"
-              checked={flaggedOnly}
-              onChange={(event) =>
-                updateParam(
-                  "flagged_only",
-                  event.target.checked ? "true" : "",
-                )
-              }
-            />
-            Show items needing attention
-          </label>
-          <Button className="w-full sm:w-auto" type="button" onClick={() => { setCreateError(""); setIsCreateOpen(true); }}>
-            Create
-          </Button>
-          {hasFilters ? (
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-9 w-full sm:w-auto"
-              onClick={() => setParams({})}
-            >
-              Clear filters
+        <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <label className="flex h-11 w-full items-center gap-3 rounded-md border border-border bg-surface px-3 text-small font-semibold text-text-primary sm:w-auto">
+              <input
+                type="checkbox"
+                checked={flaggedOnly}
+                onChange={(event) =>
+                  updateParam(
+                    "flagged_only",
+                    event.target.checked ? "true" : "",
+                  )
+                }
+              />
+              Show items needing attention
+            </label>
+            {hasFilters ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-9 w-full sm:w-auto"
+                onClick={() => setParams({})}
+              >
+                Clear filters
+              </Button>
+            ) : null}
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <Button className="w-full sm:w-auto" type="button" onClick={() => { setCreateError(""); setIsCreateOpen(true); }}>
+              Create
             </Button>
-          ) : null}
+          </div>
         </div>
       </div>
 
@@ -397,9 +435,36 @@ export const IncidentsPage = () => {
               }
             }}
           >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2"><Label htmlFor="create-incident-village">Village *</Label><Input id="create-incident-village" name="village" placeholder="Existing village name" required /></div>
-              <div className="space-y-2"><Label htmlFor="create-incident-condition">Condition *</Label><Input id="create-incident-condition" name="condition" placeholder="Existing condition name" required /></div>
+            <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="create-incident-village">Village *</Label>
+                <Select
+                  id="create-incident-village"
+                  name="village"
+                  required
+                  options={villages}
+                  searchable
+                  searchPlaceholder="Search village in English or Arabic"
+                  placeholder={isVillagesLoading && villages.length === 0 ? "Loading villages..." : "Select village"}
+                  className="w-full min-w-0"
+                  disabled={isVillagesLoading && villages.length === 0}
+                  defaultValue=""
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-incident-condition">Condition *</Label>
+                <ConditionSelect
+                  id="create-incident-condition"
+                  name="condition"
+                  required
+                  conditions={conditions}
+                  isLoading={isConditionsLoading}
+                  disabled={isConditionsLoading && conditions.length === 0}
+                  placeholder="Select condition"
+                  className="w-full min-w-0"
+                  defaultValue=""
+                />
+              </div>
               <div className="space-y-2"><Label htmlFor="create-incident-date">Event date *</Label><Input id="create-incident-date" name="event_date" type="date" defaultValue={getBeirutDate()} required /></div>
               <div className="space-y-2"><Label htmlFor="create-incident-time">Event time</Label><Input id="create-incident-time" name="event_time" type="time" /></div>
             </div>
