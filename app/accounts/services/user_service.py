@@ -4,7 +4,7 @@ from app.accounts.dtos import (
     UserUpdateDTO,
 )
 from app.accounts.models import RoleName, User
-from app.accounts.repositories import RoleRepository, UserRepository
+from app.accounts.repositories import AuthSessionRepository, RoleRepository, UserRepository
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -34,9 +34,15 @@ class PasswordChangeError(Exception):
 
 
 class UserService:
-    def __init__(self, roles: RoleRepository, users: UserRepository) -> None:
+    def __init__(
+        self,
+        roles: RoleRepository,
+        users: UserRepository,
+        sessions: AuthSessionRepository,
+    ) -> None:
         self.roles = roles
         self.users = users
+        self.sessions = sessions
 
     def create_user(
         self,
@@ -155,4 +161,6 @@ class UserService:
             raise PasswordChangeError("Current password is incorrect.")
 
         target_user.password_hash = password_context.hash(new_password)
-        return self.users.update(target_user)
+        updated = self.users.update(target_user)
+        self.sessions.revoke_all_for_user(target_user.id)
+        return updated

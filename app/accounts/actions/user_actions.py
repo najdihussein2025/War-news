@@ -8,7 +8,7 @@ from app.accounts.dtos import (
     UserUpdateDTO,
 )
 from app.accounts.models import User
-from app.accounts.repositories import RoleRepository, UserRepository
+from app.accounts.repositories import AuthSessionRepository, RoleRepository, UserRepository
 from app.accounts.services import UserService
 
 
@@ -16,6 +16,7 @@ def _service(db: Session) -> UserService:
     return UserService(
         roles=RoleRepository(db),
         users=UserRepository(db),
+        sessions=AuthSessionRepository(db),
     )
 
 
