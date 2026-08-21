@@ -177,7 +177,7 @@ export const IncidentCategorySectionEditForm = ({
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {editableFields.map((def) => {
-          const disabled = !isFieldEditable(formDetails, def);
+          const disabled = !isFieldEditable(group, formDetails, def);
           return (
             <div key={def.name} className="rounded-md border border-border bg-surface p-4">
               <Label htmlFor={`edit-${def.name}`}>{labelFor(def.name)}</Label>

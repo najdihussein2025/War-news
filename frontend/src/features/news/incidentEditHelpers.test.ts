@@ -4,6 +4,7 @@ import {
   applyGateOff,
   initialFormDetails,
   isGateActive,
+  isFieldEditable,
   validateSectionForm,
 } from "./incidentEditHelpers";
 
@@ -36,5 +37,22 @@ describe("incident edit gating helpers", () => {
     expect(form.hosp).toBe(0);
     expect(form.hos_did).toBe(0);
     expect(form.hos_n).toBe("");
+  });
+
+  it("disables clean-chain subgroup fields until DID is selected", () => {
+    const group = fieldGroupForSection("unifil")!;
+    const awaitingDid = { unifil: 1, un_did: "", un_bldg: 0 };
+    const ready = { unifil: 1, un_did: "D", un_bldg: 0 };
+    const field = group.fields.find((def) => def.name === "un_bldg")!;
+
+    expect(isFieldEditable(group, awaitingDid, field)).toBe(false);
+    expect(isFieldEditable(group, ready, field)).toBe(true);
+  });
+
+  it("keeps irregular sections behaving as before", () => {
+    const group = fieldGroupForSection("press")!;
+    const field = group.fields.find((def) => def.name === "channel")!;
+
+    expect(isFieldEditable(group, { press: 1, press_did: "" }, field)).toBe(true);
   });
 });

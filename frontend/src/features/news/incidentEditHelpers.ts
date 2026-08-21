@@ -51,6 +51,40 @@ export const isRollupField = (name: string) =>
   name === "car_i" ||
   name === "total_con";
 
+const DID_READY_VALUES = new Set(["D", "ID"]);
+const CLEAN_CHAIN_GATES = new Set([
+  "la",
+  "unifil",
+  "muni",
+  "hosp",
+  "hc",
+  "water",
+  "electric",
+  "mjnoub",
+  "other",
+]);
+
+const cleanChainDidField = (group: FieldGroup, def: FieldDef) => {
+  const subgroup = gateSubgroups(group).find((entry) =>
+    entry.fields.some((field) => field.name === def.name),
+  );
+  if (!subgroup || !CLEAN_CHAIN_GATES.has(subgroup.gate)) {
+    return null;
+  }
+
+  const didField = subgroup.fields.find((field) => field.kind === "did");
+  if (!didField || didField.controlledBy !== subgroup.gate) {
+    return null;
+  }
+
+  const firstField = subgroup.fields[0];
+  if (!firstField || firstField.kind !== "flag" || firstField.name !== subgroup.gate) {
+    return null;
+  }
+
+  return didField;
+};
+
 /** When a gate is turned off, clear its dependent fields in form state. */
 export const applyGateOff = (
   details: IncidentDetails,
@@ -72,11 +106,34 @@ export const applyGateOff = (
   return next;
 };
 
-export const isFieldEditable = (details: IncidentDetails, def: FieldDef): boolean => {
+export const isFieldEditable = (
+  group: FieldGroup,
+  details: IncidentDetails,
+  def: FieldDef,
+): boolean => {
   if (def.kind === "did") {
     return isGateActive(details, def.controlledBy!);
   }
-  return true;
+
+  const didField = cleanChainDidField(group, def);
+  if (!didField || def.name === didField.name) {
+    return true;
+  }
+
+  const subgroup = gateSubgroups(group).find((entry) =>
+    entry.fields.some((field) => field.name === def.name),
+  );
+  if (!subgroup) {
+    return true;
+  }
+
+  const didIndex = subgroup.fields.findIndex((field) => field.name === didField.name);
+  const fieldIndex = subgroup.fields.findIndex((field) => field.name === def.name);
+  if (fieldIndex <= didIndex) {
+    return true;
+  }
+
+  return DID_READY_VALUES.has(String(details[didField.name] ?? ""));
 };
 
 /** Seed edit form from API section payload or blank defaults for empty sections. */
