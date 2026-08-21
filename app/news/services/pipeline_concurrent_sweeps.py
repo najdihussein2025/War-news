@@ -81,6 +81,10 @@ def _worker_count() -> int:
     return max(1, settings.ollama_max_concurrent_requests)
 
 
+def _extraction_worker_count() -> int:
+    return max(1, settings.extraction_llm_max_concurrent_requests)
+
+
 def _claim_raw_message_id(claim_fn: Callable[[Session], RawMessage | None]) -> int | None:
     """Claim one row and commit immediately so the FOR UPDATE lock is released."""
     with SessionLocal() as db:
@@ -202,6 +206,7 @@ async def _tier1_extraction_worker(
             await run_with_ollama_limit(
                 run_tier1_extraction_for_message,
                 raw_message_id,
+                max_concurrent_requests=settings.extraction_llm_max_concurrent_requests,
             )
             stats.record_success()
         except ExtractionRetryCappedError as exc:
@@ -244,7 +249,7 @@ async def sweep_extraction_concurrent(
             _tier1_extraction_worker(stats, max_rows=max_rows),
             name=f"tier1-extraction-worker-{index}",
         )
-        for index in range(_worker_count())
+        for index in range(_extraction_worker_count())
     ]
     await asyncio.gather(*workers)
     elapsed_seconds = time.monotonic() - started_at
@@ -422,6 +427,7 @@ async def _tier2_detail_fill_worker(
             await run_with_ollama_limit(
                 run_tier2_detail_fill_for_message,
                 raw_message_id,
+                max_concurrent_requests=settings.extraction_llm_max_concurrent_requests,
             )
             stats.record_success()
         except Exception as exc:
@@ -446,7 +452,7 @@ async def sweep_tier2_detail_fill_concurrent(
             _tier2_detail_fill_worker(stats, max_rows=max_rows),
             name=f"tier2-detail-fill-worker-{index}",
         )
-        for index in range(_worker_count())
+        for index in range(_extraction_worker_count())
     ]
     await asyncio.gather(*workers)
     elapsed_seconds = time.monotonic() - started_at

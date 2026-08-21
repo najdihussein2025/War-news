@@ -1,6 +1,6 @@
 """add ingestion log source platforms
 
-Revision ID: 20260819_0025
+Revision ID: 20260819_0027
 Revises: 20260818_0024
 Create Date: 2026-08-19
 
@@ -11,7 +11,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision: str = "20260819_0025"
+revision: str = "20260819_0027"
 down_revision: Union[str, Sequence[str], None] = "20260818_0024"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

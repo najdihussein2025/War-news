@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 from app.sources.services.red_alert_collector import (
     RedAlertPost,
+    RedAlertCollector,
     classify_condition,
     is_preview_boilerplate,
     match_village,
@@ -57,6 +58,28 @@ def test_payload_uses_configured_channel() -> None:
 
     assert payload["external_message_id"] == "telegram:custom:7"
     assert payload["origin_account"] == "@custom"
+
+
+def test_payload_preserves_collector_name() -> None:
+    post = RedAlertPost(
+        message_id=8,
+        message_datetime=parse_public_preview(
+            '<div class="tgme_widget_message" data-post="x/8">'
+            '<time datetime="2026-08-20T08:30:00+00:00"></time></div>',
+            "x",
+        )[0].message_datetime,
+        text="news",
+        link="https://t.me/custom/8",
+        collector="telegram_api",
+    )
+
+    payload = post.raw_payload("custom")
+
+    assert payload["collector"] == "telegram_api"
+
+
+def test_normalize_delivery_method_accepts_hyphenated_alias() -> None:
+    assert RedAlertCollector._normalize_delivery_method("telegram-api") == "telegram_api"
 
 
 def test_classifies_supported_air_violation_actions() -> None:

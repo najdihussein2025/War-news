@@ -1,10 +1,12 @@
 import { apiClient } from "../../lib/apiClient";
 import type {
+  ConditionOption,
   IncidentDetail,
   IncidentCreatePayload,
   IncidentFilters,
   IncidentListResponse,
   IncidentUpdatePayload,
+  VillageOption,
 } from "./types";
 
 export const getIncidents = async (
@@ -42,6 +44,16 @@ export const getIncidents = async (
   const response = await apiClient.get<IncidentListResponse>(
     `/api/incidents?${params.toString()}`,
   );
+  return response.data;
+};
+
+export const getConditions = async (): Promise<ConditionOption[]> => {
+  const response = await apiClient.get<ConditionOption[]>("/api/conditions");
+  return response.data;
+};
+
+export const getVillages = async (): Promise<VillageOption[]> => {
+  const response = await apiClient.get<VillageOption[]>("/api/villages");
   return response.data;
 };
 

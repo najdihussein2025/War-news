@@ -6,8 +6,17 @@ class Settings(BaseSettings):
     database_url: str
     telegram_api_id: str | None = None
     telegram_api_hash: str | None = None
+    telegram_session_string: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "TELEGRAM_SESSION_STRING",
+            "RED_ALERT_TELEGRAM_SESSION_STRING",
+        ),
+    )
     red_alert_enabled: bool = False
+    red_alert_delivery_method: str = "public_preview"
     red_alert_channel_username: str = "redlinkleb"
+    red_alert_fetch_limit: int = 20
     red_alert_poll_seconds: float = 10.0
     red_alert_request_timeout_seconds: int = 30
     red_alert_ocr_enabled: bool = True
@@ -28,6 +37,10 @@ class Settings(BaseSettings):
     ollama_max_concurrent_requests: int = 4
     relevance_ollama_model: str = "gpt-oss:20b"
     extraction_ollama_model: str = "qwen2.5:7b"
+    extraction_llm_timeout_seconds: int = 240
+    extraction_llm_max_concurrent_requests: int = 2
+    extraction_llm_request_retries: int = 2
+    extraction_llm_retry_backoff_seconds: float = 2.0
     relevance_llm_batch_size: int = 4
     relevance_llm_timeout_seconds: int = 240
     relevance_classifier_backend: str = "cnrs_provided"

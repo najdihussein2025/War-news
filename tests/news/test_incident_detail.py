@@ -13,7 +13,7 @@ import app.api.incidents_router as incidents_router_module
 from app.api.deps import require_admin
 from app.core.database import get_db
 from app.main import app
-from app.news.dtos import CasualtyDemographicsDTO, IncidentDetailDTO
+from app.news.dtos import CasualtyDemographicsDTO, IncidentCreateDTO, IncidentDetailDTO
 from app.news.models import Condition, Incident, IncidentDetail, RawMessage, Village
 from app.news.repositories import IncidentRepository
 from app.sources.models import Source, SourceType
@@ -136,6 +136,9 @@ def test_repository_get_by_id_returns_detail_and_hides_soft_deleted() -> None:
         raw_message = RawMessage(
             source_id=source.id,
             external_message_id=f"message-{marker}",
+            source_platform="telegram",
+            source_name="Red Alert Lebanon",
+            origin_account="@redlinkleb",
             raw_payload={},
             match_result={
                 "village_match_status": "matched",
@@ -177,7 +180,7 @@ def test_repository_get_by_id_returns_detail_and_hides_soft_deleted() -> None:
         assert result.village == village.ref_name_en
         assert result.condition == condition.action_en
         assert result.source == "API"
-        assert result.source_reference == raw_message.external_message_id
+        assert result.source_reference == "@redlinkleb"
         assert result.matched is False
         assert result.duplicate_flag == "possible"
         assert result.casualty_demographics.male_d == 1
@@ -191,6 +194,123 @@ def test_repository_get_by_id_returns_detail_and_hides_soft_deleted() -> None:
         incident.is_deleted = True
         db.flush()
         assert IncidentRepository(db).get_by_id(incident.id) is None
+    except (OperationalError, ProgrammingError) as exc:
+        pytest.skip(f"Incident detail schema is unavailable: {exc}")
+    finally:
+        db.close()
+        transaction.rollback()
+        connection.close()
+
+
+def test_repository_get_by_id_falls_back_to_external_message_id_when_source_name_missing() -> None:
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        pytest.skip("DATABASE_URL is required for repository integration coverage.")
+
+    engine = create_engine(database_url)
+    try:
+        connection = engine.connect()
+    except OperationalError as exc:
+        pytest.skip(f"Database is unavailable: {exc}")
+
+    transaction = connection.begin()
+    db = Session(bind=connection)
+    marker = uuid4().hex
+    try:
+        source = Source(type=SourceType.api, name=f"Incident source {marker}", config={})
+        village = Village(
+            acs_code=int(marker[:7], 16),
+            ref_name_en=f"Village {marker}",
+        )
+        condition = Condition(
+            action_en=f"Condition {marker}",
+            action_ar=f"Ø­Ø§Ù„Ø© {marker}",
+        )
+        db.add_all([source, village, condition])
+        db.flush()
+
+        raw_message = RawMessage(
+            source_id=source.id,
+            external_message_id=f"telegram:{marker}",
+            source_platform="telegram",
+            source_name="",
+            origin_account="",
+            raw_payload={},
+            received_at=datetime.now(timezone.utc),
+        )
+        db.add(raw_message)
+        db.flush()
+
+        incident = Incident(
+            raw_message_id=raw_message.id,
+            village_id=village.id,
+            condition_id=condition.id,
+            source_id=source.id,
+            event_date=date(2026, 8, 17),
+            event_time=time(9, 45),
+            khabar="Repository detail fallback test",
+        )
+        db.add(incident)
+        db.flush()
+
+        result = IncidentRepository(db).get_by_id(incident.id)
+
+        assert result is not None
+        assert result.source_reference == raw_message.external_message_id
+    except (OperationalError, ProgrammingError) as exc:
+        pytest.skip(f"Incident detail schema is unavailable: {exc}")
+    finally:
+        db.close()
+        transaction.rollback()
+        connection.close()
+
+
+def test_create_manual_creates_manual_source_when_missing() -> None:
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        pytest.skip("DATABASE_URL is required for repository integration coverage.")
+
+    engine = create_engine(database_url)
+    try:
+        connection = engine.connect()
+    except OperationalError as exc:
+        pytest.skip(f"Database is unavailable: {exc}")
+
+    transaction = connection.begin()
+    db = Session(bind=connection)
+    marker = uuid4().hex
+    try:
+        village = Village(
+            acs_code=int(marker[:7], 16),
+            ref_name_en=f"Village {marker}",
+        )
+        condition = Condition(
+            action_en=f"Condition {marker}",
+            action_ar=f"حالة {marker}",
+        )
+        db.add_all([village, condition])
+        db.flush()
+
+        repository = IncidentRepository(db)
+        result = repository.create_manual(
+            IncidentCreateDTO(
+                village=village.ref_name_en,
+                condition=condition.action_en,
+                event_date=date(2026, 8, 21),
+                event_time=time(12, 15),
+                khabar="Manual repository create test",
+                note=None,
+                source_link=None,
+            ),
+            created_by=uuid4(),
+        )
+
+        assert result.source == "Manual"
+        manual_source = db.scalar(
+            select(Source).where(Source.external_id == "manual_incidents")
+        )
+        assert manual_source is not None
+        assert manual_source.type == SourceType.manual
     except (OperationalError, ProgrammingError) as exc:
         pytest.skip(f"Incident detail schema is unavailable: {exc}")
     finally:

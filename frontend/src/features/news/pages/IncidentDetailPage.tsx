@@ -135,10 +135,10 @@ export const IncidentDetailPage = () => {
           </div>
           <div>
             <dt className="text-caption font-semibold uppercase text-text-muted">
-              Source reference
+              Source
             </dt>
             <dd className="mt-1 text-small text-text-primary">
-              {incident.source_reference || "No data"}
+              {incident.source || "No data"}
             </dd>
           </div>
           <div>
@@ -295,12 +295,6 @@ export const IncidentDetailPage = () => {
                   await refetch();
                   setEditingSection(null);
                 }}
-              />
-            ) : incident[key] === null ? (
-              <EmptyState
-                title="No data"
-                description={`No ${label.toLowerCase()} information is recorded for this incident. Use Edit to add data if automation missed it.`}
-                className="min-h-0 border-t border-border py-6"
               />
             ) : (
               <IncidentCategorySectionFields

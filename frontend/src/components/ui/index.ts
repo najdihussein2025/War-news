@@ -7,4 +7,6 @@ export { EmptyState } from "./EmptyState";
 export { FormField } from "./FormField";
 export { Input } from "./Input";
 export { Label } from "./Label";
+export { Select } from "./Select";
+export type { SelectOption } from "./Select";
 export type { DataTableColumn } from "./DataTable";

@@ -53,7 +53,8 @@ def test_record_transient_extraction_failure_increments_under_cap() -> None:
 
     assert capped is False
     assert message.extraction_retry_count == 1
-    assert message.status == MessageStatus.parsed
+    assert message.status == MessageStatus.error
+    assert message.error_message == "ReadTimeout: timed out"
     assert db.commit_calls == 1
 
 
