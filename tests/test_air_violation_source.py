@@ -51,6 +51,15 @@ def test_written_news_removes_decorative_symbol_lines_but_keeps_text() -> None:
     )
 
 
+def test_air_violation_news_text_strips_inline_emoji_from_raw_text() -> None:
+    message = type("Message", (), {
+        "raw_payload": {},
+        "raw_text": "🚨 Ø·ÙŠØ±Ø§Ù† Ø­Ø±Ø¨ÙŠ ÙÙˆÙ‚ Ø§Ù„Ø¬Ù†ÙˆØ¨ 🔴",
+    })()
+
+    assert air_violation_news_text(message, None, None) == "Ø·ÙŠØ±Ø§Ù† Ø­Ø±Ø¨ÙŠ ÙÙˆÙ‚ Ø§Ù„Ø¬Ù†ÙˆØ¨"
+
+
 def test_multi_region_bulletin_does_not_get_a_false_single_caza() -> None:
     labels = air_violation_caza_labels(
         "الجنوب: النبطية والجوار\nخط الساحل / بيروت\nالهرمل",

@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.text_sanitizer import strip_emoji_and_pictographs
 from app.llm.dtos import ExtractionResult
 from app.news.interfaces import DedupMatchingInterface
 from app.news.models import Incident, IncidentDetail, MessageStatus, RawMessage
@@ -217,9 +218,10 @@ class IncidentMaterializationService:
 
         casualties = extraction.casualties
         total_deaths, total_injuries = compute_rollups({}, casualties)
+        sanitized_khabar = strip_emoji_and_pictographs(representative.raw_text or "")
 
         exact_hash = self._build_exact_hash(
-            khabar=representative.raw_text or "",
+            khabar=sanitized_khabar,
             village_id=village_id,
             condition_id=condition_id,
             event_date=event_datetime.date().isoformat(),
@@ -232,7 +234,7 @@ class IncidentMaterializationService:
             source_id=representative.source_id,
             event_date=event_datetime.date(),
             event_time=event_datetime.time(),
-            khabar=representative.raw_text or "",
+            khabar=sanitized_khabar,
             khabar_embedding=None,
             total_deaths=total_deaths,
             total_injuries=total_injuries,
@@ -357,8 +359,11 @@ class IncidentMaterializationService:
                 self.stats.skipped_ineligible += 1
                 continue
 
+            sanitized_khabar = strip_emoji_and_pictographs(
+                representative.raw_text or ""
+            )
             exact_hash = self._build_exact_hash(
-                khabar=representative.raw_text or "",
+                khabar=sanitized_khabar,
                 village_id=village_id,
                 condition_id=condition_id,
                 event_date=event_datetime.date().isoformat(),
@@ -425,7 +430,7 @@ class IncidentMaterializationService:
                 source_id=representative.source_id,
                 event_date=event_datetime.date(),
                 event_time=event_datetime.time(),
-                khabar=representative.raw_text or "",
+                khabar=sanitized_khabar,
                 khabar_embedding=khabar_embedding,
                 total_deaths=total_deaths,
                 total_injuries=total_injuries,

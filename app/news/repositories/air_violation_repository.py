@@ -1,10 +1,10 @@
 import re
-import unicodedata
 
 from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 from zoneinfo import ZoneInfo
 
+from app.core.text_sanitizer import strip_emoji_and_pictographs
 from app.news.dtos import (
     AirViolationCreateDTO,
     AirViolationDTO,
@@ -56,13 +56,8 @@ def air_violation_news_text(
 def clean_air_violation_news(value: str) -> str:
     """Remove decorative symbols while preserving meaningful multilingual text."""
     cleaned_lines: list[str] = []
-    for raw_line in value.splitlines():
-        line = "".join(
-            character
-            for character in raw_line
-            if unicodedata.category(character) not in {"So", "Sk", "Cf"}
-            and character != "\ufe0f"
-        )
+    for raw_line in strip_emoji_and_pictographs(value).splitlines():
+        line = raw_line
         line = re.sub(r"[ \t]+", " ", line).strip()
         if line:
             cleaned_lines.append(line)

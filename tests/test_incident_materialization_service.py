@@ -12,6 +12,7 @@ import app.accounts.models  # noqa: F401
 import app.logs.models  # noqa: F401
 import app.sources.models  # noqa: F401
 from app.news.models import Incident, IncidentDetail, MessageStatus
+from app.news.services.fast_path_dedup import FastPathDedupOutcome
 from app.news.services.fast_path_eligibility import (
     ERROR_AIR_VIOLATION,
     ERROR_NO_VILLAGE,
@@ -228,6 +229,46 @@ def test_casualty_fields_map_from_top_level_extraction_result() -> None:
     ) == (2, 4, 1, 2, 0, 1)
     assert incident.exact_hash == hashlib.sha256(
         "خبر عاجل|976|5|2026-08-17".encode("utf-8")
+    ).hexdigest()
+
+
+def test_materialization_strips_emoji_from_khabar_and_hash() -> None:
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    representative = _representative()
+    representative.raw_text = "🚨 \u062e\u0628\u0631   \u0639\u0627\u062c\u0644 🔴"
+
+    service.materialize(representative)
+
+    incident = next(value for value in db.committed if isinstance(value, Incident))
+    assert incident.khabar == " \u062e\u0628\u0631   \u0639\u0627\u062c\u0644 "
+    assert incident.exact_hash == hashlib.sha256(
+        "\u062e\u0628\u0631 \u0639\u0627\u062c\u0644|976|5|2026-08-17".encode("utf-8")
+    ).hexdigest()
+
+
+def test_fast_path_strips_emoji_from_khabar_and_hash() -> None:
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    representative = _representative()
+    representative.raw_text = "🚨 \u062e\u0628\u0631   \u0639\u0627\u062c\u0644 🔴"
+
+    result = service.process_fast_path(
+        representative,
+        SimpleNamespace(
+            decide_for_village=lambda **_kwargs: SimpleNamespace(
+                outcome=FastPathDedupOutcome.materialize,
+                representative_raw_message_id=None,
+                canonical_incident_id=None,
+            )
+        ),
+    )
+
+    assert len(result) == 1
+    incident = next(value for value in db.committed if isinstance(value, Incident))
+    assert incident.khabar == " \u062e\u0628\u0631   \u0639\u0627\u062c\u0644 "
+    assert incident.exact_hash == hashlib.sha256(
+        "\u062e\u0628\u0631 \u0639\u0627\u062c\u0644|976|5|2026-08-17".encode("utf-8")
     ).hexdigest()
 
 
