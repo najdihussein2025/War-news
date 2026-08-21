@@ -4,13 +4,14 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, 
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from app.api.deps import require_admin
+from app.api.deps import require_admin, require_super_admin
 from app.core.database import get_db
 from app.news.dtos import (
     AirViolationCreateDTO,
     AirViolationDTO,
     AirViolationListParams,
     AirViolationListResponse,
+    WorkbookImportSummaryDTO,
 )
 from app.accounts.models import User
 from app.news.repositories import AirViolationRepository
@@ -90,12 +91,12 @@ def list_air_violations(
     return AirViolationService(AirViolationRepository(db)).list_all(params)
 
 
-@router.post("/import")
+@router.post("/import", response_model=WorkbookImportSummaryDTO)
 def import_air_violations(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_admin),
-) -> dict[str, int]:
+    _current_user: User = Depends(require_super_admin),
+) -> WorkbookImportSummaryDTO:
     if not file.filename or not file.filename.lower().endswith(".xlsx"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Upload an .xlsx workbook.")
     try:

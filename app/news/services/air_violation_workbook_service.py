@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.accounts import models as account_models  # noqa: F401
 from app.logs import models as log_models  # noqa: F401
+from app.news.dtos import WorkbookImportRowErrorDTO, WorkbookImportSummaryDTO
 from app.news.models import AirViolation, Condition
 from app.sources.models import Source, SourceType
 
@@ -20,7 +21,7 @@ class AirViolationWorkbookService:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def import_workbook(self, stream: BinaryIO) -> dict[str, int]:
+    def import_workbook(self, stream: BinaryIO) -> WorkbookImportSummaryDTO:
         workbook = load_workbook(stream, read_only=True, data_only=True)
         sheet = workbook.active
         headers = [str(value).strip() if value is not None else "" for value in next(sheet.iter_rows(min_row=1, max_row=1, values_only=True))]
@@ -31,17 +32,18 @@ class AirViolationWorkbookService:
         conditions = list(self.db.scalars(select(Condition).where(Condition.id.in_(AIR_CONDITION_IDS))).all())
         by_action = {condition.action_en.strip().casefold(): condition for condition in conditions}
         by_action.update({condition.action_ar.strip().casefold(): condition for condition in conditions})
-        imported = skipped = failed = 0
-        for row in sheet.iter_rows(min_row=2, values_only=True):
+        processed = succeeded = 0
+        row_errors: list[WorkbookImportRowErrorDTO] = []
+        for row_number, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
             if not any(value not in (None, "") for value in row):
                 continue
+            processed += 1
             try:
                 action_en = str(row[indexes["Action_E"]] or "").strip()
                 action_ar = str(row[indexes["Action_A"]] or "").strip()
                 condition = by_action.get(action_en.casefold()) or by_action.get(action_ar.casefold())
                 if condition is None:
-                    failed += 1
-                    continue
+                    raise ValueError("Condition was not found for Action_E/Action_A.")
                 source_name = str(row[indexes["Source"]] or "Manual import").strip()
                 source = self.db.scalar(select(Source).where(Source.name == source_name))
                 if source is None:
@@ -52,16 +54,6 @@ class AirViolationWorkbookService:
                 event_time = self._time(row[indexes["Time"]])
                 khabar = str(row[indexes["Khabar"]] or "").strip()
                 caza = str(row[indexes["Caza"]] or "").strip() or None
-                duplicate = self.db.scalar(select(AirViolation.id).where(
-                    AirViolation.condition_id == condition.id,
-                    AirViolation.source_id == source.id,
-                    AirViolation.event_date == event_date,
-                    AirViolation.event_time == event_time,
-                    AirViolation.khabar == khabar,
-                ))
-                if duplicate is not None:
-                    skipped += 1
-                    continue
                 self.db.add(AirViolation(
                     condition_id=condition.id,
                     source_id=source.id,
@@ -74,11 +66,22 @@ class AirViolationWorkbookService:
                     note_2=self._optional(row[indexes["Note 2"]]),
                     source_link=self._optional(row[indexes["Link"]]),
                 ))
-                imported += 1
-            except (TypeError, ValueError):
-                failed += 1
-        self.db.commit()
-        return {"imported": imported, "skipped": skipped, "failed": failed}
+                self.db.commit()
+                succeeded += 1
+            except (TypeError, ValueError) as exc:
+                self.db.rollback()
+                row_errors.append(
+                    WorkbookImportRowErrorDTO(
+                        row=row_number,
+                        error=self._format_exception(exc),
+                    )
+                )
+        return WorkbookImportSummaryDTO(
+            processed=processed,
+            succeeded=succeeded,
+            failed=len(row_errors),
+            row_errors=row_errors,
+        )
 
     def export_workbook(self) -> BytesIO:
         rows = self.db.execute(
@@ -140,3 +143,10 @@ class AirViolationWorkbookService:
         if isinstance(value, time):
             return value.replace(tzinfo=None)
         return time.fromisoformat(str(value).strip())
+
+    @staticmethod
+    def _format_exception(exc: Exception) -> str:
+        message = str(exc).strip()
+        if message:
+            return f"{type(exc).__name__}: {message}"
+        return f"{type(exc).__name__} (no message)"
