@@ -55,8 +55,9 @@ export const IncidentsPage = () => {
   const eventDateFrom = params.get("event_date_from") ?? "";
   const eventDateTo = params.get("event_date_to") ?? "";
   const flaggedOnly = params.get("flagged_only") === "true";
+  const duplicateOnly = params.get("duplicate_only") === "true";
   const hasFilters = Boolean(
-    village || condition || sourceType || verificationStatus || eventDateFrom || eventDateTo || flaggedOnly,
+    village || condition || sourceType || verificationStatus || eventDateFrom || eventDateTo || flaggedOnly || duplicateOnly,
   );
 
   const filters = useMemo(
@@ -70,12 +71,14 @@ export const IncidentsPage = () => {
       eventDateFrom,
       eventDateTo,
       flaggedOnly,
+      duplicateOnly,
     }),
     [
       condition,
       eventDateFrom,
       eventDateTo,
       flaggedOnly,
+      duplicateOnly,
       offset,
       sourceType,
       verificationStatus,
