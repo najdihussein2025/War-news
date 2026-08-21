@@ -24,6 +24,11 @@ export type AccountUpdate = {
   password?: string;
 };
 
+export type AccountPasswordChange = {
+  current_password: string;
+  new_password: string;
+};
+
 export type AccountRole = "super_admin" | "admin";
 
 export type AccountRow = {

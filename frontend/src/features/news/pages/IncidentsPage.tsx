@@ -27,6 +27,18 @@ const PAGE_SIZE = 25;
 const sourceVariant = (source: IncidentSource) =>
   source === "Telegram" ? "accent" : source === "API" ? "neutral" : "warning";
 
+const PlusIcon = () => (
+  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none">
+    <path
+      d="M10 4.167v11.666M4.167 10h11.666"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 export const IncidentsPage = () => {
   const navigate = useNavigate();
   const roleBase = roleBaseFromPath(useLocation().pathname);
@@ -207,43 +219,89 @@ export const IncidentsPage = () => {
   ];
 
   return (
-    <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border border-border bg-surface-raised p-4">
+    <div className="space-y-6">
+      <section className="space-y-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-1">
+            <p className="text-caption font-semibold uppercase tracking-[0.14em] text-text-muted">
+              Incident operations
+            </p>
+            <h1 className="text-h3 font-semibold text-text-primary">
+              Incidents
+            </h1>
+          </div>
+          {isFetching ? (
+            <p className="text-small text-text-muted">
+              Refreshing incident feed...
+            </p>
+          ) : null}
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-border bg-surface-raised p-4 shadow-[0_1px_2px_rgba(11,34,54,0.04)]">
           <p className="text-caption font-semibold uppercase text-text-muted">
             {hasFilters ? "Matching incidents" : "Total incidents"}
           </p>
           <p className="mt-2 text-h3 font-semibold text-text-primary">
             {total}
           </p>
-        </div>
-        <div className="rounded-lg border border-border bg-surface-raised p-4">
+          </div>
+          <div className="rounded-xl border border-border bg-surface-raised p-4 shadow-[0_1px_2px_rgba(11,34,54,0.04)]">
           <p className="text-caption font-semibold uppercase text-text-muted">
             Needs verification
           </p>
           <p className="mt-2 text-h3 font-semibold text-text-primary">
             {flaggedCount}
           </p>
-        </div>
-        <div className="rounded-lg border border-border bg-surface-raised p-4">
+          </div>
+          <div className="rounded-xl border border-border bg-surface-raised p-4 shadow-[0_1px_2px_rgba(11,34,54,0.04)]">
           <p className="text-caption font-semibold uppercase text-text-muted">
             Possible duplicates
           </p>
           <p className="mt-2 text-h3 font-semibold text-text-primary">
             {duplicateCount}
           </p>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="rounded-lg border border-border bg-surface-raised p-4">
-        <div className="grid gap-x-6 gap-y-5 md:grid-cols-2 xl:grid-cols-4 xl:gap-x-8 xl:gap-y-6">
+      <section className="overflow-hidden rounded-[1.125rem] border border-border bg-surface-raised shadow-raised">
+        <div className="flex flex-col gap-4 border-b border-border bg-[linear-gradient(180deg,rgba(234,242,251,0.82)_0%,rgba(255,255,255,0.98)_100%)] px-4 py-4 sm:px-5 lg:flex-row lg:items-end lg:justify-between lg:px-6">
+          <div className="space-y-2">
+            <p className="text-caption font-semibold uppercase tracking-[0.14em] text-text-muted">
+              Incident workspace
+            </p>
+            <h2 className="text-h4 font-semibold text-text-primary">
+              Refine the incident list
+            </h2>
+          </div>
+          <Button
+            className="h-12 w-full rounded-xl px-5 sm:w-auto"
+            type="button"
+            onClick={() => {
+              setCreateError("");
+              setIsCreateOpen(true);
+            }}
+          >
+            <PlusIcon />
+            Create incident
+          </Button>
+        </div>
+
+        <div className="px-4 py-4 sm:px-5 sm:py-5 lg:px-6">
+          <div className="grid gap-x-6 gap-y-5 md:grid-cols-2 xl:grid-cols-4 xl:gap-x-8 xl:gap-y-6">
           <div className="space-y-2 xl:col-span-1">
             <Label htmlFor="incident-village-filter">Village</Label>
-            <Input
+            <Select
               id="incident-village-filter"
               value={village}
-              onChange={(event) => updateParam("village", event.target.value)}
-              placeholder="Search village"
+              options={villages}
+              searchable
+              searchPlaceholder="Search village in English or Arabic"
+              placeholder={isVillagesLoading && villages.length === 0 ? "Loading villages..." : "All villages"}
+              className="w-full min-w-0"
+              disabled={isVillagesLoading && villages.length === 0}
+              onChange={(value) => updateParam("village", value)}
             />
           </div>
           <div className="space-y-2 xl:col-span-1">
@@ -308,10 +366,10 @@ export const IncidentsPage = () => {
               }
             />
           </div>
-        </div>
-        <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <label className="flex h-11 w-full items-center gap-3 rounded-md border border-border bg-surface px-3 text-small font-semibold text-text-primary sm:w-auto">
+          </div>
+          <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-border bg-surface p-3 sm:p-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <label className="flex min-h-[3rem] w-full items-center gap-3 rounded-xl border border-border bg-surface-raised px-3.5 py-2.5 text-small font-semibold text-text-primary shadow-[0_1px_2px_rgba(11,34,54,0.04)] transition-colors hover:border-input-border-hover hover:bg-surface sm:w-auto">
               <input
                 type="checkbox"
                 checked={flaggedOnly}
@@ -321,63 +379,76 @@ export const IncidentsPage = () => {
                     event.target.checked ? "true" : "",
                   )
                 }
+                className="h-4 w-4 rounded border-border text-accent focus:ring-focus-ring"
               />
-              Show items needing attention
-            </label>
+                <span className="leading-5">Show items needing attention</span>
+              </label>
+              {hasFilters ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-11 w-full rounded-xl px-4 sm:w-auto"
+                  onClick={() => setParams({})}
+                >
+                  Clear filters
+                </Button>
+              ) : null}
+            </div>
             {hasFilters ? (
-              <Button
-                type="button"
-                variant="ghost"
-                className="h-9 w-full sm:w-auto"
-                onClick={() => setParams({})}
-              >
-                Clear filters
-              </Button>
+              <StatusBadge label="Filters active" variant="neutral" />
             ) : null}
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-            <Button className="w-full sm:w-auto" type="button" onClick={() => { setCreateError(""); setIsCreateOpen(true); }}>
-              Create
-            </Button>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-h4 font-semibold text-text-primary">
+              Incident records
+            </h2>
+            <p className="text-small text-text-muted">
+              {total} result{total === 1 ? "" : "s"}
+            </p>
           </div>
         </div>
-      </div>
 
-      <DataTable
-        columns={columns}
-        rows={rows}
-        getRowKey={(row) => row.id}
-        loading={isLoading}
-        error={isError}
-        minWidth="1100px"
-        clientSort={false}
-        emptyState={
-          <EmptyState
-            title={hasFilters ? "No matching incidents" : "No incidents yet"}
-            description={
-              hasFilters
-                ? "Adjust or clear the filters to broaden the results."
-                : "Materialized incidents will appear here."
-            }
-          />
-        }
-        errorState={
-          <EmptyState
-            title="Could not load incidents"
-            description="The incidents list could not be loaded. Please try again."
-          />
-        }
-        actions={(row) => (
-          <Button
-            type="button"
-            variant="secondary"
-            className="h-9 w-full sm:w-auto"
-            onClick={() => navigate(`${roleBase}/incidents/${row.id}`)}
-          >
-            View details
-          </Button>
-        )}
-      />
+        <DataTable
+          columns={columns}
+          rows={rows}
+          getRowKey={(row) => row.id}
+          loading={isLoading}
+          error={isError}
+          minWidth="1100px"
+          clientSort={false}
+          emptyState={
+            <EmptyState
+              title={hasFilters ? "No matching incidents" : "No incidents yet"}
+              description={
+                hasFilters
+                  ? "Adjust or clear the filters to broaden the results."
+                  : "Materialized incidents will appear here."
+              }
+            />
+          }
+          errorState={
+            <EmptyState
+              title="Could not load incidents"
+              description="The incidents list could not be loaded. Please try again."
+            />
+          }
+          actions={(row) => (
+            <Button
+              type="button"
+              variant="secondary"
+              className="h-9 w-full sm:w-auto"
+              onClick={() => navigate(`${roleBase}/incidents/${row.id}`)}
+            >
+              View details
+            </Button>
+          )}
+        />
+      </section>
 
       {total > PAGE_SIZE ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

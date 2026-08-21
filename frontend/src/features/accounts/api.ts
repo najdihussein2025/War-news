@@ -1,5 +1,5 @@
 import { apiClient } from "../../lib/apiClient";
-import type { Account, AccountCreate, AccountUpdate } from "./types";
+import type { Account, AccountCreate, AccountPasswordChange, AccountUpdate } from "./types";
 
 export const getAccounts = async (): Promise<Account[]> => {
   const response = await apiClient.get<Account[]>("/api/accounts");
@@ -39,4 +39,11 @@ export const setAccountActive = async (userId: string, isActive: boolean): Promi
     is_active: isActive,
   });
   return response.data;
+};
+
+export const changeAccountPassword = async (
+  userId: string,
+  payload: AccountPasswordChange,
+): Promise<void> => {
+  await apiClient.patch(`/api/accounts/${userId}/password`, payload);
 };

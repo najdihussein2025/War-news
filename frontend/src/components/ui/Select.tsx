@@ -157,7 +157,7 @@ export const Select = ({
         <div
           className={cn(
             "absolute left-0 top-full z-20 mt-1 overflow-hidden rounded-md border border-border bg-surface-raised shadow-raised",
-            "w-max min-w-[240px] max-w-[320px]",
+            "w-full min-w-full max-w-full",
             panelClassName,
           )}
         >
@@ -169,7 +169,7 @@ export const Select = ({
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={searchPlaceholder}
-                className="h-10 w-full rounded-md border border-input-border bg-input-bg px-3 text-body text-text-primary outline-none"
+                className="h-9 w-full rounded-md border border-input-border bg-input-bg px-2.5 text-body text-text-primary outline-none"
               />
             </div>
           ) : null}
@@ -183,7 +183,7 @@ export const Select = ({
                 )}
                 onClick={() => updateValue("")}
               >
-                {placeholder}
+                <span className="block truncate">{placeholder}</span>
               </button>
             </li>
             {filteredOptions.map((option) => (
@@ -196,13 +196,13 @@ export const Select = ({
                   )}
                   onClick={() => updateValue(option.value)}
                 >
-                  {option.label}
+                  <span className="block truncate">{option.label}</span>
                 </button>
               </li>
             ))}
             {searchable && filteredOptions.length === 0 ? (
               <li className="px-3 py-2 text-small text-text-muted">
-                No matching conditions.
+                No matching options.
               </li>
             ) : null}
           </ul>

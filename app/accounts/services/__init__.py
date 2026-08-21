@@ -8,6 +8,7 @@ from app.accounts.services.auth_service import (
 )
 from app.accounts.services.user_service import (
     DuplicateUserError,
+    PasswordChangeError,
     RoleNotFoundError,
     UserBootstrapError,
     UserNotFoundError,
@@ -21,6 +22,7 @@ __all__ = [
     "DuplicateUserError",
     "InvalidCredentialsError",
     "LoginRateLimitError",
+    "PasswordChangeError",
     "RoleNotFoundError",
     "UserBootstrapError",
     "UserNotFoundError",

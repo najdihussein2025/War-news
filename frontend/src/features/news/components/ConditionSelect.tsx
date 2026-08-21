@@ -42,10 +42,7 @@ export const ConditionSelect = ({
       value: item.action_en,
       label: `${item.action_en} - ${item.action_ar}`,
     }))}
-    className={
-      className ??
-      "w-full sm:w-[320px]"
-    }
+    className={className ?? "w-full min-w-0"}
     searchable
     searchPlaceholder="Search condition in English or Arabic"
     onChange={onChange}

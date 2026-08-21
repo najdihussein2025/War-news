@@ -9,6 +9,7 @@ import { LogsPage } from "../features/logs/pages/LogsPage";
 import { AirViolationsPage } from "../features/airViolations/pages/AirViolationsPage";
 import { IncidentDetailPage } from "../features/news/pages/IncidentDetailPage";
 import { IncidentsPage } from "../features/news/pages/IncidentsPage";
+import { SettingsPage } from "../features/settings/pages/SettingsPage";
 import { SourcesPage } from "../features/sources/pages/SourcesPage";
 import { AppShell } from "./AppShell";
 import { useAuthStore } from "../stores/authStore";
@@ -99,6 +100,11 @@ export const createRoutes = (): RouteObject[] => [
         { path: "dashboard", element: <AdminDashboardPage /> },
         { path: "incidents", element: <IncidentsPage /> },
         { path: "incidents/:incidentId", element: <IncidentDetailPage /> },
+        { path: "air-violations", element: <AirViolationsPage /> },
+        { path: "sources", element: <SourcesPage /> },
+        { path: "logs", element: <Navigate to="audit" replace /> },
+        { path: "logs/:logType", element: <LogsPage /> },
+        { path: "settings", element: <SettingsPage /> },
         { path: "*", element: <Navigate to="dashboard" replace /> },
       ],
     },
@@ -114,6 +120,7 @@ export const createRoutes = (): RouteObject[] => [
         { path: "sources", element: <SourcesPage /> },
         { path: "logs", element: <Navigate to="audit" replace /> },
         { path: "logs/:logType", element: <LogsPage /> },
+        { path: "settings", element: <SettingsPage /> },
         { path: "accounts", element: <AccountsPage /> },
         { path: "*", element: <Navigate to="dashboard" replace /> },
       ],

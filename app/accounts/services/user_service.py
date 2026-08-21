@@ -29,6 +29,10 @@ class UserNotFoundError(Exception):
     pass
 
 
+class PasswordChangeError(Exception):
+    pass
+
+
 class UserService:
     def __init__(self, roles: RoleRepository, users: UserRepository) -> None:
         self.roles = roles
@@ -135,3 +139,20 @@ class UserService:
         if dto.password:
             user.password_hash = password_context.hash(dto.password)
         return self.users.update(user)
+
+    def change_password(self, user_id, current_password: str, new_password: str, requested_by_user: User) -> User:
+        target_user = self.users.get_by_id(user_id)
+        if target_user is None:
+            raise UserNotFoundError("User does not exist.")
+
+        is_self = requested_by_user.id == user_id
+        is_super_admin_override = requested_by_user.role.name == RoleName.super_admin
+
+        if not is_self and not is_super_admin_override:
+            raise UserPermissionError("You do not have permission to change this password.")
+
+        if not password_context.verify(current_password, requested_by_user.password_hash):
+            raise PasswordChangeError("Current password is incorrect.")
+
+        target_user.password_hash = password_context.hash(new_password)
+        return self.users.update(target_user)

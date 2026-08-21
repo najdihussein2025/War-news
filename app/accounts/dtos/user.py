@@ -24,6 +24,11 @@ class UserUpdateDTO(BaseModel):
     password: str | None = Field(default=None, min_length=8)
 
 
+class PasswordChangeDTO(BaseModel):
+    current_password: str = Field(min_length=1)
+    new_password: str = Field(min_length=8)
+
+
 class RoleResponseDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

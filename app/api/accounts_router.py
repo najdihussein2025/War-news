@@ -4,13 +4,15 @@ from uuid import UUID
 
 from app.accounts.actions import create_account as create_account_action
 from app.accounts.actions import bootstrap_super_admin as bootstrap_super_admin_action
+from app.accounts.actions import change_account_password as change_account_password_action
 from app.accounts.actions import list_accounts as list_accounts_action
 from app.accounts.actions import delete_account as delete_account_action
 from app.accounts.actions import set_account_active as set_account_active_action
 from app.accounts.actions import update_account as update_account_action
-from app.api.deps import require_super_admin
+from app.api.deps import get_current_user, require_super_admin
 from app.core.database import get_db
 from app.accounts.dtos import (
+    PasswordChangeDTO,
     UserActiveUpdateDTO,
     UserCreateDTO,
     UserResponseDTO,
@@ -20,6 +22,7 @@ from app.accounts.models import User
 from app.logs.repositories import AuditLogRepository
 from app.accounts.services import (
     DuplicateUserError,
+    PasswordChangeError,
     RoleNotFoundError,
     UserPermissionError,
     UserBootstrapError,
@@ -147,5 +150,32 @@ def update_account(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     except RoleNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except UserNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.patch("/{user_id}/password", status_code=status.HTTP_204_NO_CONTENT)
+def change_account_password(
+    user_id: UUID,
+    dto: PasswordChangeDTO,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> None:
+    try:
+        change_account_password_action(db, user_id, dto, current_user)
+        _audit(
+            db,
+            request,
+            current_user,
+            "password_change" if user_id == current_user.id else "password_reset",
+            user_id,
+            None,
+            None,
+        )
+    except PasswordChangeError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
+    except UserPermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
     except UserNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

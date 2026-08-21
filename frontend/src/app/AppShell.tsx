@@ -11,7 +11,7 @@ import {
   type SetStateAction,
 } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { ROLES } from "../constants/roles";
+import { ROLES, type Role } from "../constants/roles";
 import { cn } from "../lib/cn";
 import { useAuthStore } from "../stores/authStore";
 import { logout as revokeSession } from "../features/auth/api";
@@ -98,6 +98,13 @@ const AccountsIcon = ({ className }: { className?: string }) => (
   </IconBase>
 );
 
+const SettingsIcon = ({ className }: { className?: string }) => (
+  <IconBase className={className}>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a2 2 0 0 1 0 2.8 2 2 0 0 1-2.8 0l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a2 2 0 0 1-2.8 0 2 2 0 0 1 0-2.8l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a2 2 0 0 1 0-2.8 2 2 0 0 1 2.8 0l.1.1a1 1 0 0 0 1.1.2 1 1 0 0 0 .6-.9V4a2 2 0 0 1 4 0v.2a1 1 0 0 0 .6.9 1 1 0 0 0 1.1-.2l.1-.1a2 2 0 0 1 2.8 0 2 2 0 0 1 0 2.8l-.1.1a1 1 0 0 0-.2 1.1 1 1 0 0 0 .9.6H20a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" />
+  </IconBase>
+);
+
 const SignOutIcon = ({ className }: { className?: string }) => (
   <IconBase className={className}>
     <path d="M10 17l5-5-5-5" />
@@ -125,51 +132,51 @@ type NavItem = {
   label: string;
   path: string;
   icon: IconComponent;
+  hiddenFrom: Role[];
 };
 
-const adminNavItems: NavItem[] = [
+const navItems: NavItem[] = [
   {
     label: "Dashboard",
     path: "dashboard",
     icon: ShieldIcon,
+    hiddenFrom: [],
   },
   {
     label: "Incidents",
     path: "incidents",
     icon: IncidentsIcon,
-  },
-];
-
-const superAdminNavItems: NavItem[] = [
-  {
-    label: "Dashboard",
-    path: "dashboard",
-    icon: ShieldIcon,
-  },
-  {
-    label: "Incidents",
-    path: "incidents",
-    icon: IncidentsIcon,
+    hiddenFrom: [],
   },
   {
     label: "Air Violations",
     path: "air-violations",
     icon: AirViolationsIcon,
+    hiddenFrom: [],
   },
   {
     label: "Sources",
     path: "sources",
     icon: SourcesIcon,
+    hiddenFrom: [],
   },
   {
     label: "Logs",
     path: "logs/audit",
     icon: LogsIcon,
+    hiddenFrom: [],
+  },
+  {
+    label: "Settings",
+    path: "settings",
+    icon: SettingsIcon,
+    hiddenFrom: [],
   },
   {
     label: "Accounts",
     path: "accounts",
     icon: AccountsIcon,
+    hiddenFrom: [ROLES.ADMIN],
   },
 ];
 
@@ -179,6 +186,7 @@ const pageMeta = [
   { match: (pathname: string) => pathname.includes("/incidents"), title: "Incidents" },
   { match: (pathname: string) => pathname.includes("/sources"), title: "Sources" },
   { match: (pathname: string) => pathname.includes("/logs"), title: "Logs" },
+  { match: (pathname: string) => pathname.includes("/settings"), title: "Settings" },
   { match: (pathname: string) => pathname.startsWith("/superadmin/accounts"), title: "Accounts" },
 ];
 
@@ -220,7 +228,7 @@ const SidebarContent = ({
   previewRole,
 }: {
   onNavigate?: () => void;
-  previewRole?: string;
+  previewRole?: Role;
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -232,7 +240,7 @@ const SidebarContent = ({
   const displayUser = user ?? (displayRole === ROLES.SUPER_ADMIN
     ? { username: "super.admin", displayName: "Super Admin" }
     : { username: "admin", displayName: "Operations Admin" });
-  const visibleItems = displayRole === ROLES.SUPER_ADMIN ? superAdminNavItems : adminNavItems;
+  const visibleItems = navItems.filter((item) => !item.hiddenFrom.includes(displayRole));
 
   const handleLogout = () => {
     void revokeSession().catch(() => undefined);
@@ -312,7 +320,7 @@ const Toast = ({ children }: { children: ReactNode }) => (
   </div>
 );
 
-export const AppShell = ({ previewRole }: { previewRole?: string }) => {
+export const AppShell = ({ previewRole }: { previewRole?: Role }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
