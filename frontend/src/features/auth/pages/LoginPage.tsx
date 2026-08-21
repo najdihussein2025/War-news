@@ -130,7 +130,9 @@ export const LoginPage = () => {
     clearSession();
   }, [clearSession, sessionOnEntry]);
 
-  const requestedPath = (location.state as { from?: string } | null)?.from;
+  const locationState = (location.state as { from?: string; passwordChanged?: boolean } | null) ?? null;
+  const requestedPath = locationState?.from;
+  const passwordChanged = locationState?.passwordChanged === true;
 
   const fieldErrors: Partial<Record<FieldName, string>> = {
     username: touchedFields.username && username.trim() === "" ? "Username is required." : "",
@@ -256,6 +258,16 @@ export const LoginPage = () => {
               aria-live="polite"
             >
               {loginErrorMessage}
+            </p>
+          ) : null}
+
+          {passwordChanged && !hasLoginError ? (
+            <p
+              className="mt-5 rounded-md border border-border bg-surface-raised px-3 py-2 text-small text-text-primary"
+              role="status"
+              aria-live="polite"
+            >
+              Password changed successfully. Please sign in again.
             </p>
           ) : null}
 

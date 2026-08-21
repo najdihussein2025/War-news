@@ -1,8 +1,10 @@
 import { useContext, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { ShellContext } from "../../../app/AppShell";
 import { Button, Card, FormField, Input } from "../../../components/ui";
 import { changeAccountPassword } from "../../accounts/api";
 import { useAuthStore } from "../../../stores/authStore";
+import { logout as revokeSession } from "../../auth/api";
 
 type PasswordFormState = {
   currentPassword: string;
@@ -18,7 +20,9 @@ const emptyPasswordForm: PasswordFormState = {
 
 export const SettingsPage = () => {
   const shell = useContext(ShellContext);
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const clearSession = useAuthStore((state) => state.logout);
   const [form, setForm] = useState<PasswordFormState>(emptyPasswordForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -45,7 +49,10 @@ export const SettingsPage = () => {
         new_password: form.newPassword,
       });
       setForm(emptyPasswordForm);
-      shell?.showToast("Password changed successfully.");
+      shell?.showToast("Password changed successfully. Please sign in again.");
+      await revokeSession().catch(() => undefined);
+      clearSession();
+      navigate("/login", { replace: true, state: { passwordChanged: true } });
     } catch (error) {
       const detail = (error as { response?: { data?: { detail?: string } } }).response?.data?.detail;
       setSubmitError(detail ?? "Could not change password. Please try again.");
