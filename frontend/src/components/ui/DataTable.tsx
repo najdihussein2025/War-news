@@ -6,10 +6,13 @@ export type SortDirection = "asc" | "desc";
 
 export type DataTableColumn<T> = {
   key: string;
-  header: string;
+  header: ReactNode;
   render: (row: T, rowIndex: number) => ReactNode;
   sortValue?: (row: T) => string | number | boolean | null;
   className?: string;
+  headerClassName?: string;
+  cellClassName?: string;
+  mobileLabel?: string;
 };
 
 type DataTableProps<T> = {
@@ -129,18 +132,26 @@ export const DataTable = <T,>({
           <thead className="sticky top-0 z-10 bg-surface-raised">
             <tr className="border-b border-border">
               {columns.map((column) => (
-                <th className={cn("px-4 py-3 text-left", column.className)} key={column.key} aria-sort={clientSort && column.sortValue && sort?.key === column.key ? (sort.direction === "asc" ? "ascending" : "descending") : undefined}>
+                <th
+                  className={cn("px-4 py-3 text-left align-top", column.className, column.headerClassName)}
+                  key={column.key}
+                  aria-sort={
+                    clientSort && column.sortValue && sort?.key === column.key
+                      ? (sort.direction === "asc" ? "ascending" : "descending")
+                      : undefined
+                  }
+                >
                   {clientSort && column.sortValue ? (
                     <button
                       type="button"
-                      className="inline-flex items-center text-left text-caption font-semibold uppercase text-text-muted transition-colors duration-150 ease-out hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+                      className="inline-flex items-center gap-2 text-left text-caption font-semibold uppercase leading-5 text-text-muted transition-colors duration-150 ease-out hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
                       onClick={() => handleSort(column.key)}
                     >
                       {column.header}
                       <SortIcon active={sort?.key === column.key} direction={sort?.direction ?? "asc"} />
                     </button>
                   ) : (
-                    <span className="text-caption font-semibold uppercase text-text-muted">
+                    <span className="block text-caption font-semibold uppercase leading-6 text-text-muted">
                       {column.header}
                     </span>
                   )}
@@ -174,7 +185,10 @@ export const DataTable = <T,>({
                   tabIndex={onRowClick ? 0 : undefined}
                 >
                   {columns.map((column) => (
-                    <td className={cn("px-4 py-4 align-top text-small", column.className)} key={column.key}>
+                    <td
+                      className={cn("px-4 py-4 align-top text-small", column.className, column.cellClassName)}
+                      key={column.key}
+                    >
                       {column.render(row, rowIndex)}
                     </td>
                   ))}
@@ -198,7 +212,9 @@ export const DataTable = <T,>({
           <article className="min-w-0 space-y-4 p-4" key={getRowKey(row)}>
             {columns.map((column) => (
               <div className="grid min-w-0 grid-cols-1 gap-1 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-3" key={column.key}>
-                <p className="text-caption font-semibold uppercase text-text-muted">{column.header}</p>
+                <p className="text-caption font-semibold uppercase text-text-muted">
+                  {column.mobileLabel ?? (typeof column.header === "string" ? column.header : "")}
+                </p>
                 <div className="min-w-0 overflow-hidden break-words text-small text-text-primary">{column.render(row, rowIndex)}</div>
               </div>
             ))}

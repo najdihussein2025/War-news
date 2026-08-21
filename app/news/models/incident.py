@@ -44,15 +44,15 @@ class Incident(Base):
         ForeignKey("raw_messages.id", ondelete="SET NULL"),
         nullable=True,
     )
-    village_id: Mapped[int] = mapped_column(
+    village_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("villages.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
     )
-    condition_id: Mapped[int] = mapped_column(
+    condition_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("conditions.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
     )
     source_id: Mapped[int | None] = mapped_column(
         BigInteger,
@@ -82,6 +82,8 @@ class Incident(Base):
     injuries_extra: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Meaning unconfirmed, preserve raw value.
     note_extra: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Meaning unconfirmed, preserve raw value.
+    note_extra_2: Mapped[str | None] = mapped_column(Text, nullable=True)
     exact_hash: Mapped[str | None] = mapped_column(CHAR(64), nullable=True)
     incident_key: Mapped[str | None] = mapped_column(String, nullable=True)
     duplicate_flag: Mapped[bool] = mapped_column(
@@ -120,8 +122,8 @@ class Incident(Base):
     )
 
     raw_message: Mapped["RawMessage | None"] = relationship("RawMessage")
-    village: Mapped["Village"] = relationship("Village")
-    condition: Mapped["Condition"] = relationship("Condition")
+    village: Mapped["Village | None"] = relationship("Village")
+    condition: Mapped["Condition | None"] = relationship("Condition")
     source: Mapped["Source | None"] = relationship("Source")
     creator: Mapped["User | None"] = relationship("User", foreign_keys=[created_by])
     details: Mapped["IncidentDetail | None"] = relationship(
