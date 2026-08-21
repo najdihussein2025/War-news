@@ -71,7 +71,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                     (Source.type == SourceType.website, "Website"),
                     else_="Other",
                 ).label("source"),
-                RawMessage.external_message_id.label("source_reference"),
+                self._source_reference_expression().label("source_reference"),
                 case((low_confidence, False), else_=True).label("matched"),
                 case(
                     (Incident.duplicate_flag.is_(True), "possible"),
@@ -144,7 +144,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                     (Source.type == SourceType.website, "Website"),
                     else_="Other",
                 ).label("source"),
-                RawMessage.external_message_id.label("source_reference"),
+                self._source_reference_expression().label("source_reference"),
                 case((low_confidence, False), else_=True).label("matched"),
                 case(
                     (Incident.duplicate_flag.is_(True), "possible"),
@@ -227,11 +227,11 @@ class IncidentRepository(IncidentRepositoryInterface):
         )
         if condition is None:
             raise ValueError("Condition was not found. Enter an existing condition name.")
-        source = self.db.scalar(select(Source).where(Source.type == SourceType.manual).limit(1))
+        source = self._ensure_manual_source()
         incident = Incident(
             village_id=village.id,
             condition_id=condition.id,
-            source_id=source.id if source else None,
+            source_id=source.id,
             event_month=payload.event_date.strftime("%B"),
             event_date=payload.event_date,
             event_time=payload.event_time,
@@ -683,3 +683,29 @@ class IncidentRepository(IncidentRepositoryInterface):
             "total_injuries": incident.total_injuries,
             "note": incident.note,
         }
+
+    @staticmethod
+    def _source_reference_expression() -> object:
+        return func.coalesce(
+            func.nullif(RawMessage.origin_account, ""),
+            func.nullif(RawMessage.source_name, ""),
+            RawMessage.external_message_id,
+        )
+
+    def _ensure_manual_source(self) -> Source:
+        source = self.db.scalar(
+            select(Source).where(Source.type == SourceType.manual).limit(1)
+        )
+        if source is not None:
+            return source
+
+        source = Source(
+            type=SourceType.manual,
+            name="Manual Entry",
+            external_id="manual_incidents",
+            config={},
+            is_active=True,
+        )
+        self.db.add(source)
+        self.db.flush()
+        return source
