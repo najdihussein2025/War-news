@@ -34,6 +34,26 @@ const RollupHint = ({ def, details }: { def: FieldDef; details: IncidentDetails 
   );
 };
 
+const LockIcon = ({ className = "h-4 w-4" }: { className?: string }) => (
+  <svg
+    aria-hidden="true"
+    viewBox="0 0 20 20"
+    fill="none"
+    className={className}
+  >
+    <path
+      d="M6.667 8.333V6.667a3.333 3.333 0 1 1 6.666 0v1.666m-8.333 0h10a.833.833 0 0 1 .833.834V15a.833.833 0 0 1-.833.833H5a.833.833 0 0 1-.833-.833V9.167A.833.833 0 0 1 5 8.333Z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const lockedFieldClasses =
+  "disabled:border-dashed disabled:border-border-strong disabled:bg-[repeating-linear-gradient(-45deg,var(--gray-100)_0px,var(--gray-100)_8px,var(--gray-50)_8px,var(--gray-50)_16px)] disabled:text-text-muted";
+
 const FieldInput = ({
   def,
   details,
@@ -51,7 +71,7 @@ const FieldInput = ({
     return (
       <select
         id={`edit-${def.name}`}
-        className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 text-body"
+        className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 text-body disabled:border-border disabled:bg-surface-muted disabled:text-text-muted"
         disabled={disabled}
         value={Number(value) > 0 ? "1" : "0"}
         onChange={(event) => onChange(def.name, Number(event.target.value))}
@@ -64,17 +84,24 @@ const FieldInput = ({
 
   if (def.kind === "did") {
     return (
-      <select
-        id={`edit-${def.name}`}
-        className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 text-body"
-        disabled={disabled}
-        value={String(value)}
-        onChange={(event) => onChange(def.name, event.target.value)}
-      >
-        <option value="">Select…</option>
-        <option value="D">Direct</option>
-        <option value="ID">Indirect</option>
-      </select>
+      <div className="relative mt-1">
+        <select
+          id={`edit-${def.name}`}
+          className={`w-full rounded-md border border-border bg-surface px-3 py-2 text-body ${lockedFieldClasses} ${disabled ? "pr-10" : ""}`}
+          disabled={disabled}
+          value={String(value)}
+          onChange={(event) => onChange(def.name, event.target.value)}
+        >
+          <option value="">Select...</option>
+          <option value="D">Direct</option>
+          <option value="ID">Indirect</option>
+        </select>
+        {disabled ? (
+          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-text-muted">
+            <LockIcon className="h-4 w-4" />
+          </span>
+        ) : null}
+      </div>
     );
   }
 
@@ -85,6 +112,8 @@ const FieldInput = ({
         type="number"
         min={0}
         disabled={disabled}
+        className={disabled ? lockedFieldClasses : undefined}
+        trailingElement={disabled ? <LockIcon className="h-4 w-4 text-text-muted" /> : undefined}
         value={value === "" ? "" : String(value)}
         onChange={(event) => {
           const raw = event.target.value;
@@ -98,6 +127,8 @@ const FieldInput = ({
     <Input
       id={`edit-${def.name}`}
       disabled={disabled}
+      className={disabled ? lockedFieldClasses : undefined}
+      trailingElement={disabled ? <LockIcon className="h-4 w-4 text-text-muted" /> : undefined}
       value={String(value)}
       onChange={(event) => onChange(def.name, event.target.value)}
     />
@@ -179,16 +210,26 @@ export const IncidentCategorySectionEditForm = ({
         {editableFields.map((def) => {
           const disabled = !isFieldEditable(group, formDetails, def);
           return (
-            <div key={def.name} className="rounded-md border border-border bg-surface p-4">
-              <Label htmlFor={`edit-${def.name}`}>{labelFor(def.name)}</Label>
+            <div
+              key={def.name}
+              className={`rounded-md border p-4 ${disabled ? "border-border-strong bg-[linear-gradient(180deg,rgba(237,243,248,0.86)_0%,rgba(246,249,252,0.96)_100%)]" : "border-border bg-surface"}`}
+            >
+              <Label
+                htmlFor={`edit-${def.name}`}
+                className={disabled ? "flex items-center gap-2 text-text-muted" : undefined}
+              >
+                {disabled ? <LockIcon className="h-4 w-4 text-text-muted" /> : null}
+                <span>{labelFor(def.name)}</span>
+              </Label>
               <FieldInput
                 def={def}
                 details={formDetails}
                 disabled={disabled}
                 onChange={handleChange}
               />
-              {disabled && def.kind === "did" ? (
-                <p className="mt-1 text-caption text-text-muted">
+              {disabled ? (
+                <p className="mt-1 inline-flex items-center gap-1.5 text-caption text-text-muted">
+                  <LockIcon className="h-3.5 w-3.5" />
                   Locked until the controlling flag is set.
                 </p>
               ) : null}
