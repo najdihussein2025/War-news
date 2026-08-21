@@ -70,7 +70,7 @@ export const AirViolationsPage = () => {
     [cazaEn, conditionId, eventDateFrom, eventDateTo, offset],
   );
 
-  const { data, isLoading, isError, refetch, isFetching } =
+  const { data, isLoading, isError, refetch, isFetching, dataUpdatedAt } =
     useAirViolationsQuery(filters);
   const totalFilters = {
     limit: 1,
@@ -91,20 +91,10 @@ export const AirViolationsPage = () => {
     ...totalFilters,
     conditionId: "38",
   });
-  // The API orders rows by event date/time, which is not necessarily the order
-  // they were received. Use the newest creation timestamp on the current page
-  // so the live indicator reflects newly collected Telegram records.
-  const latestViolationAt = useMemo(
-    () =>
-      data?.items.reduce<string | null>((latest, item) => {
-        if (!latest || new Date(item.created_at).getTime() > new Date(latest).getTime()) {
-          return item.created_at;
-        }
-        return latest;
-      }, null) ?? null,
-    [data?.items],
-  );
-  useLiveQueryTitleAddon(latestViolationAt, isFetching);
+  // Show when the page data was successfully refreshed, not the age of the
+  // newest incident. A quiet news period must not look like polling stopped.
+  const lastRefreshAt = dataUpdatedAt ? new Date(dataUpdatedAt).toISOString() : null;
+  useLiveQueryTitleAddon(lastRefreshAt, isFetching);
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const rows = data?.items ?? [];

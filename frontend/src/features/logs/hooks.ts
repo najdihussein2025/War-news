@@ -20,7 +20,10 @@ export const useIngestionLogsQuery = (filters: IngestionLogFilters) =>
   useQuery({
     queryKey: ["logs", "ingestion", filters],
     queryFn: () => getIngestionLogs(filters),
-    refetchInterval: (query) => query.state.data?.items.some((row) => row.status === "running") ? 3000 : false,
+    refetchInterval: (query) =>
+      query.state.data?.items.some((row) => row.status === "running") ? 3000 : 10_000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
   });
 
 export const useIngestionLogQuery = (logId: number | null) =>

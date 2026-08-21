@@ -37,8 +37,22 @@ export const SuperAdminDashboardPage = () => {
   const auditLogs = useAuditLogsQuery({ page: 1, pageSize: 5 });
   const ingestionRows = ingestion.data?.items ?? [];
   const newsToday = ingestionRows.reduce((total, row) => total + row.messages_parsed, 0);
-  const failedIngestion = ingestionRows.filter((row) => row.status === "failed").length;
+  const latestCompletedBySource = ingestionRows.reduce<Map<number, number>>((latest, row) => {
+    if (row.status === "completed") {
+      const timestamp = new Date(row.run_timestamp).getTime();
+      latest.set(row.source_id, Math.max(latest.get(row.source_id) ?? 0, timestamp));
+    }
+    return latest;
+  }, new Map());
+  const failedIngestion = ingestionRows.filter((row) =>
+    row.status === "failed"
+    && new Date(row.run_timestamp).getTime() > (latestCompletedBySource.get(row.source_id) ?? 0)
+  ).length;
   const runningIngestion = ingestionRows.filter((row) => row.status === "running").length;
+  const reportingSources = (contentSources.data ?? []).filter(
+    (source) => Date.now() - new Date(source.last_seen).getTime() <= 24 * 60 * 60 * 1000,
+  ).length;
+  const staleSources = Math.max(0, (contentSources.data?.length ?? 0) - reportingSources);
 
   return (
     <div className="space-y-6">
@@ -51,7 +65,7 @@ export const SuperAdminDashboardPage = () => {
         <Metric label="News received today" value={newsToday} detail="Parsed through ingestion today" to="/superadmin/logs/ingestion" loading={ingestion.isLoading} />
         <Metric label="Incidents" value={incidents.data?.total ?? 0} detail={`+${incidentsToday.data?.total ?? 0} recorded today`} to="/superadmin/incidents" loading={incidents.isLoading || incidentsToday.isLoading} />
         <Metric label="Air violations" value={airViolations.data?.total ?? 0} detail={`+${airViolationsToday.data?.total ?? 0} recorded today`} to="/superadmin/air-violations" loading={airViolations.isLoading || airViolationsToday.isLoading} />
-        <Metric label="Failed ingestions today" value={failedIngestion} detail={`${runningIngestion} currently running`} to="/superadmin/logs/ingestion" alert={failedIngestion > 0} loading={ingestion.isLoading} />
+        <Metric label="Sources not reporting (24h)" value={staleSources} detail={`${reportingSources} reporting now · ${failedIngestion} unresolved failure${failedIngestion === 1 ? "" : "s"}${runningIngestion > 0 ? ` · ${runningIngestion} running` : ""}`} to="/superadmin/sources" alert={staleSources > 0 || failedIngestion > 0} loading={contentSources.isLoading || ingestion.isLoading} />
         <Metric label="Failed logins (24h)" value={failedLogins.data?.total ?? 0} detail="Open filtered security log" to={`/superadmin/logs/login?result=failure&date_from=${yesterday()}`} alert={(failedLogins.data?.total ?? 0) >= 5} loading={failedLogins.isLoading} />
       </section>
 

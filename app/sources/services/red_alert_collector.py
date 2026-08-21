@@ -25,6 +25,18 @@ logger = logging.getLogger(__name__)
 SOURCE_EXTERNAL_ID = "red_alert_telegram"
 SOURCE_NAME = "Red Alert Lebanon"
 UNCLASSIFIED_AIR_CONDITION_ID = 45
+OCR_VERSION = 3
+RED_ZONE_OCR_MARKER = "__RED_ZONE_TEXT__"
+# Exact labels used by the Red Alert map, mapped to canonical Villages.json
+# ACS codes. These are spelling aliases only; they never select a nearby place.
+RED_ALERT_VILLAGE_ALIASES: dict[str, int] = {
+    "عين بعال": 62243,
+    "وادي حيلو": 62218,
+    "دى حيلو": 62218,
+    "shahim": 23211,
+    "al bazuriya": 62246,
+    "al bazuriye": 62246,
+}
 AIR_KEYWORDS: tuple[tuple[int, tuple[str, ...]], ...] = (
     (35, ("طيران حربي", "مقاتلات حربية", "مقاتله حربيه", "مقاتلات حربيه")),
     (
@@ -164,10 +176,15 @@ def classify_condition(text: str) -> int | None:
             return condition_id
     if (
         "redalert com lb" in normalized
-        and normalize_arabic("حيطة") in normalized
+        and (
+            normalize_arabic("حيطة") in normalized
+            or normalize_arabic("خبطة") in normalized
+        )
         and normalize_arabic("حذر") in normalized
     ):
-        return UNCLASSIFIED_AIR_CONDITION_ID
+        # Red Alert's map card is a drone/surveillance alert. Explicit
+        # warplane/helicopter keywords have already been checked above.
+        return 36
     return None
 
 
@@ -188,16 +205,31 @@ def match_village(text: str, villages: list[Village]) -> tuple[Village, str] | N
     doing that previously selected an arbitrary/nearest village from the same
     caza even when that village was not named by the alert.
     """
-    normalized_text = normalize_arabic(text)
-    hashtags = [normalize_arabic(value) for value in HASHTAG_RE.findall(text)]
+    # When focused red-zone OCR is available, ignore labels elsewhere on the
+    # map. Those labels are nearby places, not affected villages.
+    location_text = text.rsplit(RED_ZONE_OCR_MARKER, 1)[-1] if RED_ZONE_OCR_MARKER in text else text
+    normalized_text = normalize_arabic(location_text)
+    normalized_latin_text = normalize_latin_location_token(location_text)
+    for alias, acs_code in RED_ALERT_VILLAGE_ALIASES.items():
+        normalized_alias = normalize_arabic(alias)
+        alias_found = (
+            normalized_alias in normalized_text
+            if re.search(r"[\u0600-\u06ff]", alias)
+            else normalize_latin_location_token(alias) in normalized_latin_text
+        )
+        if alias_found:
+            village = next((item for item in villages if item.acs_code == acs_code), None)
+            if village is not None:
+                return village, alias
+    hashtags = [normalize_arabic(value) for value in HASHTAG_RE.findall(location_text)]
     non_location_terms = {normalize_arabic(value) for value in _NON_LOCATION_TERMS}
     candidates = [value for value in hashtags if value and value not in non_location_terms]
     indexed: list[tuple[str, Village]] = []
     for village in villages:
         for name in (
-            village.ref_name_ar,
-            village.acs_name,
-            village.cad_name,
+            getattr(village, "ref_name_ar", None),
+            getattr(village, "acs_name", None),
+            getattr(village, "cad_name", None),
         ):
             normalized_name = normalize_arabic(name or "")
             if normalized_name:
@@ -212,10 +244,14 @@ def match_village(text: str, villages: list[Village]) -> tuple[Village, str] | N
         if len(name) >= 3 and re.search(rf"(?<!\w){re.escape(name)}(?!\w)", normalized_text)
     ]
     if not matches:
-        latin_text = normalize_latin_location_token(text)
+        latin_text = normalize_latin_location_token(location_text)
         latin_matches: list[tuple[int, str, Village]] = []
         for village in villages:
-            for canonical_name in (village.ref_name_en, village.acs_name, village.cad_name):
+            for canonical_name in (
+                getattr(village, "ref_name_en", None),
+                getattr(village, "acs_name", None),
+                getattr(village, "cad_name", None),
+            ):
                 normalized_name = normalize_latin_location_token(canonical_name or "")
                 if len(normalized_name) >= 4 and normalized_name in latin_text:
                     latin_matches.append((len(normalized_name), canonical_name or "", village))
@@ -295,6 +331,7 @@ class RedAlertCollector:
             if text != post.text:
                 payload["preview_text"] = post.text
                 payload["ocr_text"] = text
+                payload["ocr_version"] = OCR_VERSION
                 payload["raw_text"] = text
             message = RawMessage(
                 source_id=source.id,
@@ -348,13 +385,18 @@ class RedAlertCollector:
         villages: list[Village],
     ) -> bool:
         payload = dict(message.raw_payload or {})
-        if payload.get("ocr_text") or not post.image_urls or not is_preview_boilerplate(post.text):
+        if (
+            int(payload.get("ocr_version") or 0) >= OCR_VERSION
+            or not post.image_urls
+            or not is_preview_boilerplate(post.text)
+        ):
             return False
         text = self._ocr_images(post.image_urls)
         if not text:
             return False
         payload["preview_text"] = post.text
         payload["ocr_text"] = text
+        payload["ocr_version"] = OCR_VERSION
         payload["raw_text"] = text
         message.raw_payload = payload
         message.raw_text = text
@@ -402,7 +444,45 @@ class RedAlertCollector:
                     lang="ara+eng",
                     config="--psm 6",
                 )
-                combined = "\n".join(part.strip() for part in (text, header_text) if part.strip())
+
+                # Read only inside the red alert circle. Whole-image OCR often
+                # captures nearby map labels instead of the affected village.
+                rgb_image = image.convert("RGB")
+                pixels = rgb_image.load()
+                red_points = [
+                    (x, y)
+                    for y in range(int(image.height * 0.14), int(image.height * 0.90))
+                    for x in range(image.width)
+                    if pixels[x, y][0] > 150
+                    and pixels[x, y][0] > pixels[x, y][1] * 1.35
+                    and pixels[x, y][0] > pixels[x, y][2] * 1.25
+                ]
+                red_zone_text = ""
+                if red_points:
+                    xs = [point[0] for point in red_points]
+                    ys = [point[1] for point in red_points]
+                    margin = 10
+                    if max(xs) - min(xs) > margin * 2 and max(ys) - min(ys) > margin * 2:
+                        red_zone = rgb_image.crop(
+                            (
+                                min(xs) + margin,
+                                min(ys) + margin,
+                                max(xs) - margin,
+                                max(ys) - margin,
+                            )
+                        )
+                        red_zone = ImageOps.autocontrast(ImageOps.grayscale(red_zone))
+                        red_zone = red_zone.resize((red_zone.width * 8, red_zone.height * 8))
+                        red_zone_text = pytesseract.image_to_string(
+                            red_zone,
+                            lang="ara+eng",
+                            config="--psm 11",
+                        )
+
+                combined_parts = [part.strip() for part in (text, header_text) if part.strip()]
+                if red_zone_text.strip():
+                    combined_parts.extend((RED_ZONE_OCR_MARKER, red_zone_text.strip()))
+                combined = "\n".join(combined_parts)
                 if combined:
                     output.append(combined)
             except Exception:

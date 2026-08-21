@@ -133,7 +133,7 @@ const LoginTable = () => {
   );
 };
 
-type PlatformIngestionRow = IngestionLog & { row_key: string; platform: string };
+type PlatformIngestionRow = IngestionLog & { row_key: string; platform: string; resolved: boolean };
 
 const IngestionTable = () => {
   const [sourceId, setSourceId] = useState(0);
@@ -143,34 +143,55 @@ const IngestionTable = () => {
   const [page, setPage] = useState(1);
   const [detailId, setDetailId] = useState<number | null>(null);
   const [detailPlatform, setDetailPlatform] = useState<string | null>(null);
+  const [detailResolved, setDetailResolved] = useState(false);
   const pageSize = 25;
   const { data, isLoading, isError } = useIngestionLogsQuery({ sourceId: sourceId || undefined, status, dateFrom, dateTo, page, pageSize });
   const { data: sources = [] } = useSourcesQuery();
   const { data: detail } = useIngestionLogQuery(detailId);
   const retryMutation = useRetryIngestionMutation();
-  const rows: PlatformIngestionRow[] = (data?.items ?? []).flatMap((run) => {
+  const runs = data?.items ?? [];
+  const latestCompletedBySource = runs.reduce<Map<number, number>>((latest, run) => {
+    if (run.status === "completed") {
+      const timestamp = new Date(run.run_timestamp).getTime();
+      latest.set(run.source_id, Math.max(latest.get(run.source_id) ?? 0, timestamp));
+    }
+    return latest;
+  }, new Map());
+  const rows: PlatformIngestionRow[] = runs.flatMap((run) => {
+    const resolved = run.status === "failed"
+      && (latestCompletedBySource.get(run.source_id) ?? 0) > new Date(run.run_timestamp).getTime();
     const platforms = Object.entries(run.platform_breakdown);
-    if (!platforms.length) return [{ ...run, row_key: `${run.id}-unrecorded`, platform: "Not recorded" }];
-    return platforms.map(([platform, counts]) => ({ ...run, row_key: `${run.id}-${platform}`, platform: platform.charAt(0).toUpperCase() + platform.slice(1), messages_fetched: counts.fetched, messages_parsed: counts.parsed, messages_flagged: counts.flagged, messages_failed: counts.failed, messages_blocked: counts.blocked }));
+    if (!platforms.length) {
+      const platform = run.source_name === "CNRS Webhook" ? "CNRS API" : "Not recorded";
+      return [{ ...run, row_key: `${run.id}-${platform}`, platform, resolved }];
+    }
+    return platforms.map(([platform, counts]) => ({ ...run, row_key: `${run.id}-${platform}`, platform: platform.charAt(0).toUpperCase() + platform.slice(1), messages_fetched: counts.fetched, messages_parsed: counts.parsed, messages_flagged: counts.flagged, messages_failed: counts.failed, messages_blocked: counts.blocked, resolved }));
   });
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / pageSize));
   const resetPage = () => setPage(1);
-  const duration = (seconds: number | null) => seconds === null ? "In progress" : seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
-  const detailCounts = detail && detailPlatform && detailPlatform !== "Not recorded"
+  const duration = (seconds: number | null) => seconds === null ? "In progress" : seconds < 1 ? "<1s" : seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+  const detailCounts = detail && detailPlatform && detail.platform_breakdown[detailPlatform.toLowerCase()]
     ? detail.platform_breakdown[detailPlatform.toLowerCase()]
     : detail
       ? { fetched: detail.messages_fetched, parsed: detail.messages_parsed, flagged: detail.messages_flagged, failed: detail.messages_failed, blocked: detail.messages_blocked }
       : null;
+  const ingestionResult = (row: PlatformIngestionRow) => {
+    if (row.resolved) return "Recovered by a later run";
+    if (row.status === "running") return "Checking for news";
+    if (row.status === "failed") return "Run failed";
+    if (row.status === "interrupted") return "Stopped by restart";
+    if (row.messages_parsed > 0) return `${row.messages_parsed} new saved`;
+    if (row.messages_fetched > 0) return "No new recent news";
+    return "No records returned";
+  };
   const columns: Array<DataTableColumn<PlatformIngestionRow>> = [
     { key: "platform", header: "Platform", render: (row) => <span className="font-semibold text-brand-navy">{row.platform}</span>, sortValue: (row) => row.platform },
     { key: "time", header: "Run date & time", render: (row) => formatDateTime(row.run_timestamp), sortValue: (row) => new Date(row.run_timestamp).getTime() },
     { key: "fetched", header: "Fetched", render: (row) => row.messages_fetched, sortValue: (row) => row.messages_fetched },
-    { key: "parsed", header: "Parsed", render: (row) => row.messages_parsed, sortValue: (row) => row.messages_parsed },
-    { key: "flagged", header: "Flagged", render: (row) => row.messages_flagged, sortValue: (row) => row.messages_flagged },
-    { key: "failed", header: "Failed", render: (row) => row.messages_failed, sortValue: (row) => row.messages_failed },
-    { key: "blocked", header: "Blocked", render: (row) => row.messages_blocked, sortValue: (row) => row.messages_blocked },
+    { key: "saved", header: "Saved", render: (row) => row.messages_parsed, sortValue: (row) => row.messages_parsed },
+    { key: "result", header: "Result", render: (row) => ingestionResult(row), sortValue: (row) => ingestionResult(row) },
     { key: "duration", header: "Duration", render: (row) => duration(row.duration_seconds), sortValue: (row) => row.duration_seconds },
-    { key: "status", header: "Status", render: (row) => <StatusBadge label={row.status} variant={row.status === "completed" ? "success" : row.status === "failed" ? "danger" : "warning"} />, sortValue: (row) => row.status },
+    { key: "status", header: "Status", render: (row) => <StatusBadge label={row.resolved ? "resolved" : row.status} variant={row.status === "completed" || row.resolved ? "success" : row.status === "failed" ? "danger" : "warning"} />, sortValue: (row) => row.resolved ? "resolved" : row.status },
   ];
   return (
     <div className="space-y-4">
@@ -180,14 +201,32 @@ const IngestionTable = () => {
           {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
         </select></div>
         <div className="space-y-2"><Label htmlFor="ingestion-status">Status</Label><select id="ingestion-status" className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3" value={status} onChange={(event) => { setStatus(event.target.value as IngestionStatus | "all"); resetPage(); }}>
-          <option value="all">All statuses</option><option value="running">Running</option><option value="completed">Completed</option><option value="failed">Failed</option>
+          <option value="all">All statuses</option><option value="running">Running</option><option value="completed">Completed</option><option value="failed">Failed</option><option value="interrupted">Interrupted</option>
         </select></div>
         <div className="space-y-2"><Label htmlFor="ingestion-from">From</Label><Input id="ingestion-from" type="date" value={dateFrom} max={dateTo || undefined} onChange={(event) => { setDateFrom(event.target.value); resetPage(); }} /></div>
         <div className="space-y-2"><Label htmlFor="ingestion-to">To</Label><Input id="ingestion-to" type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => { setDateTo(event.target.value); resetPage(); }} /></div>
       </div>
-      <DataTable columns={columns} rows={rows} initialSort={{ key: "time", direction: "desc" }} clientSort={false} getRowKey={(row) => row.row_key} loading={isLoading} error={isError} minWidth="1120px" emptyState={<EmptyState title="No ingestion logs" description="No ingestion runs match these filters." />} errorState={<EmptyState title="Could not load ingestion logs" description="Check the API connection and try again." />} actions={(row) => <div className="flex justify-end gap-2"><Button type="button" variant="secondary" onClick={() => { setDetailId(row.id); setDetailPlatform(row.platform); }}>Details</Button>{row.status === "failed" ? <Button type="button" isLoading={retryMutation.isPending && retryMutation.variables === row.id} onClick={() => retryMutation.mutate(row.id)}>Retry</Button> : null}</div>} />
+      <DataTable columns={columns} rows={rows} initialSort={{ key: "time", direction: "desc" }} clientSort={false} getRowKey={(row) => row.row_key} loading={isLoading} error={isError} minWidth="1120px" emptyState={<EmptyState title="No ingestion logs" description="No ingestion runs match these filters." />} errorState={<EmptyState title="Could not load ingestion logs" description="Check the API connection and try again." />} actions={(row) => <div className="flex justify-end gap-2"><Button type="button" variant="secondary" onClick={() => { setDetailId(row.id); setDetailPlatform(row.platform); setDetailResolved(row.resolved); }}>Details</Button>{row.status === "failed" && !row.resolved ? <Button type="button" isLoading={retryMutation.isPending && retryMutation.variables === row.id} onClick={() => retryMutation.mutate(row.id)}>Retry</Button> : null}</div>} />
       <div className="flex items-center justify-between text-small text-text-muted"><span>{data?.total ?? 0} results</span><div className="flex items-center gap-2"><Button type="button" variant="secondary" className="h-9" disabled={page <= 1 || isLoading} onClick={() => setPage((value) => value - 1)}>Previous</Button><span>Page {page} of {totalPages}</span><Button type="button" variant="secondary" className="h-9" disabled={page >= totalPages || isLoading} onClick={() => setPage((value) => value + 1)}>Next</Button></div></div>
-      {detailId !== null && detail ? <Dialog title={`${detailPlatform ?? "Unrecorded platform"} ingestion details`} onClose={() => { setDetailId(null); setDetailPlatform(null); }}><p className="mb-5 text-small text-text-muted">Run ID: {detail.id}</p><dl className="grid gap-4 sm:grid-cols-2"><div><dt className="text-caption font-semibold uppercase text-text-muted">Source</dt><dd>{detail.source_name}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Platform</dt><dd>{detailPlatform ?? "Not recorded"}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Status</dt><dd>{detail.status}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Started</dt><dd>{detail.started_at ? formatDateTime(detail.started_at) : "Unknown"}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Finished</dt><dd>{detail.finished_at ? formatDateTime(detail.finished_at) : "Running"}</dd></div><div><dt className="text-caption font-semibold uppercase text-text-muted">Duration</dt><dd>{duration(detail.duration_seconds)}</dd></div>{detail.retry_of_id ? <div><dt className="text-caption font-semibold uppercase text-text-muted">Retry of run</dt><dd>{detail.retry_of_id}</dd></div> : null}</dl>{detailCounts ? <div className="mt-5 grid grid-cols-2 gap-3 rounded-md border border-border bg-surface p-4 sm:grid-cols-5"><div><p className="text-caption font-semibold uppercase text-text-muted">Fetched</p><p className="mt-1 text-lg font-semibold">{detailCounts.fetched}</p></div><div><p className="text-caption font-semibold uppercase text-text-muted">Parsed</p><p className="mt-1 text-lg font-semibold">{detailCounts.parsed}</p></div><div><p className="text-caption font-semibold uppercase text-text-muted">Flagged</p><p className="mt-1 text-lg font-semibold">{detailCounts.flagged}</p></div><div><p className="text-caption font-semibold uppercase text-text-muted">Failed</p><p className="mt-1 text-lg font-semibold">{detailCounts.failed}</p></div><div><p className="text-caption font-semibold uppercase text-text-muted">Blocked</p><p className="mt-1 text-lg font-semibold">{detailCounts.blocked}</p></div></div> : null}{detail.status === "failed" ? <div className="mt-5 rounded-md border border-border bg-surface p-4"><p className="text-caption font-semibold uppercase text-text-muted">Failure reason</p><p className="mt-2 whitespace-pre-wrap text-small">{detail.error_message || "No failure reason was provided."}</p></div> : null}</Dialog> : null}
+      {detailId !== null && detail ? (
+        <Dialog
+          title={`${detailPlatform ?? "Unrecorded platform"} ingestion details`}
+          onClose={() => { setDetailId(null); setDetailPlatform(null); setDetailResolved(false); }}
+        >
+          <p className="mb-5 text-small text-text-muted">Run ID: {detail.id}</p>
+          <dl className="grid gap-4 sm:grid-cols-2">
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Source</dt><dd>{detailPlatform === "CNRS API" ? "CNRS API" : detail.source_name}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Platform</dt><dd>{detailPlatform ?? "Not recorded"}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Status</dt><dd>{detailResolved ? "Resolved" : detail.status}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Started</dt><dd>{detail.started_at ? formatDateTime(detail.started_at) : "Unknown"}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Finished</dt><dd>{detail.finished_at ? formatDateTime(detail.finished_at) : "Running"}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Duration</dt><dd>{duration(detail.duration_seconds)}</dd></div>
+            {detail.retry_of_id ? <div><dt className="text-caption font-semibold uppercase text-text-muted">Retry of run</dt><dd>{detail.retry_of_id}</dd></div> : null}
+          </dl>
+          {detailCounts ? <div className="mt-5 grid grid-cols-2 gap-3 rounded-md border border-border bg-surface p-4 sm:grid-cols-5"><div><p className="text-caption font-semibold uppercase text-text-muted">Fetched</p><p className="mt-1 text-lg font-semibold">{detailCounts.fetched}</p></div><div><p className="text-caption font-semibold uppercase text-text-muted">Saved</p><p className="mt-1 text-lg font-semibold">{detailCounts.parsed}</p></div><div><p className="text-caption font-semibold uppercase text-text-muted">Flagged</p><p className="mt-1 text-lg font-semibold">{detailCounts.flagged}</p></div><div><p className="text-caption font-semibold uppercase text-text-muted">Failed</p><p className="mt-1 text-lg font-semibold">{detailCounts.failed}</p></div><div><p className="text-caption font-semibold uppercase text-text-muted">Blocked</p><p className="mt-1 text-lg font-semibold">{detailCounts.blocked}</p></div></div> : null}
+          {detailResolved ? <div className="mt-5 rounded-md border border-border bg-surface p-4"><p className="text-caption font-semibold uppercase text-text-muted">Resolution</p><p className="mt-2 text-small">A later CNRS API run completed successfully. No retry is required.</p></div> : detail.status === "failed" ? <div className="mt-5 rounded-md border border-border bg-surface p-4"><p className="text-caption font-semibold uppercase text-text-muted">Failure reason</p><p className="mt-2 whitespace-pre-wrap text-small">{detail.error_message || "No failure reason was provided."}</p></div> : null}
+        </Dialog>
+      ) : null}
     </div>
   );
 };

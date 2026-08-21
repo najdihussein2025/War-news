@@ -34,7 +34,9 @@ class ContentSourceRepository(ContentSourceRepositoryInterface):
                 RawMessage.source_name,
                 origin_account.label("origin_account"),
                 func.count(RawMessage.id).label("message_count"),
-                func.max(RawMessage.received_at).label("last_seen"),
+                func.max(
+                    func.coalesce(RawMessage.message_datetime, RawMessage.received_at)
+                ).label("last_seen"),
                 func.min(RawMessage.received_at).label("first_seen"),
                 func.coalesce(ContentSourceBlock.is_blocked, False).label("is_blocked"),
             )
@@ -74,7 +76,9 @@ class ContentSourceRepository(ContentSourceRepositoryInterface):
                 func.max(RawMessage.source_name).label("source_name"),
                 account.label("origin_account"),
                 func.count(RawMessage.id).label("message_count"),
-                func.max(RawMessage.received_at).label("last_seen"),
+                func.max(
+                    func.coalesce(RawMessage.message_datetime, RawMessage.received_at)
+                ).label("last_seen"),
                 func.min(RawMessage.received_at).label("first_seen"),
                 func.coalesce(ContentSourceBlock.is_blocked, False).label("is_blocked"),
             )

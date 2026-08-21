@@ -12,6 +12,8 @@ export const useAirViolationsQuery = (filters: AirViolationFilters, live = true)
     queryKey: airViolationKeys.list(filters),
     queryFn: () => getAirViolations(filters),
     ...(live ? liveListQueryOptions : {}),
-    refetchInterval: live ? 2_000 : false,
-    refetchOnWindowFocus: !live,
+    refetchInterval: live ? 60_000 : false,
+    refetchIntervalInBackground: live,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });

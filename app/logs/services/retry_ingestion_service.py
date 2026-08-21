@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -50,7 +50,11 @@ def run_ingestion_retry(source_id: int, log_id: int) -> None:
     db = SessionLocal()
     try:
         IngestSourceAction(RetryTrackingSourceRepository(db, log_id)).execute(
-            IngestSourceData(source_id=source_id)
+            IngestSourceData(
+                source_id=source_id,
+                max_batches=10,
+                min_message_datetime=datetime.now(timezone.utc) - timedelta(hours=24),
+            )
         )
     except Exception as exc:
         db.rollback()

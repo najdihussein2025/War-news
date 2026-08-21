@@ -8,6 +8,7 @@ class IngestSourceData(BaseModel):
 
     source_id: int
     page_limit: int = Field(default=500, ge=1)
+    max_batches: int | None = Field(default=None, ge=1)
     min_message_datetime: datetime | None = None
 
 

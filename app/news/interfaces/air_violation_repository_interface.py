@@ -34,3 +34,7 @@ class AirViolationRepositoryInterface(ABC):
     @abstractmethod
     def route_from_match(self, message: RawMessage, result: MatchResultDTO) -> None:
         pass
+
+    @abstractmethod
+    def discard_for_message(self, message: RawMessage) -> None:
+        pass

@@ -28,11 +28,13 @@ class RedAlertAirViolationService:
         text = message.raw_text or ""
         condition_id = self.classify_condition(text)
         if condition_id is None:
+            self.air_violations.discard_for_message(message)
             self._reject(message, "No supported air-violation keyword")
             return False
 
         village_match = self.match_village(text, villages)
         if village_match is None:
+            self.air_violations.discard_for_message(message)
             self._reject(
                 message,
                 "No canonical village from Data/Villages.json was found",

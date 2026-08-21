@@ -44,8 +44,9 @@ def air_violation_news_text(
 
     if village is None:
         return f"{condition.action_ar} - الموقع بحاجة إلى التحقق"
-    location = village.caza_ar or village.caza_en
-    summary = f"{condition.action_ar} في قضاء {location}"
+    village_name = village.ref_name_ar or village.ref_name_en or village.acs_name or village.cad_name
+    caza_name = village.caza_ar or village.caza_en
+    summary = f"{condition.action_ar} فوق {village_name} في قضاء {caza_name}"
     raw_text = message.raw_text or ""
     if "حيطة" in raw_text and "حذر" in raw_text:
         summary += " - حيطة وحذر"
@@ -300,8 +301,9 @@ class AirViolationRepository(AirViolationRepositoryInterface):
             ),
             None,
         )
-        if self.db.scalar(select(AirViolation.id).where(AirViolation.raw_message_id == message.id)) is not None:
-            return
+        existing = self.db.scalar(
+            select(AirViolation).where(AirViolation.raw_message_id == message.id)
+        )
         village = self.db.get(Village, matched_village_id) if matched_village_id is not None else None
         if matched_village_id is not None and village is None:
             return
@@ -318,20 +320,24 @@ class AirViolationRepository(AirViolationRepositoryInterface):
             village.caza_ar if village else None,
             known_cazas,
         )
-        self.db.add(AirViolation(
-            raw_message_id=message.id,
-            condition_id=result.matched_condition_id,
-            source_id=message.source_id,
-            caza_en=caza_en,
-            caza_ar=caza_ar,
-            event_month=occurred_at.strftime("%B"),
-            event_date=occurred_at.date(),
-            event_time=occurred_at.time().replace(tzinfo=None),
-            khabar=air_violation_news_text(message, village, condition),
-            note_1=payload.get("note_1") or payload.get("note"),
-            note_2=payload.get("note_2"),
-            source_link=str(link) if link else None,
-        ))
+        values = {
+            "condition_id": result.matched_condition_id,
+            "source_id": message.source_id,
+            "caza_en": caza_en,
+            "caza_ar": caza_ar,
+            "event_month": occurred_at.strftime("%B"),
+            "event_date": occurred_at.date(),
+            "event_time": occurred_at.time().replace(tzinfo=None),
+            "khabar": air_violation_news_text(message, village, condition),
+            "note_1": payload.get("note_1") or payload.get("note"),
+            "note_2": payload.get("note_2"),
+            "source_link": str(link) if link else None,
+        }
+        if existing is None:
+            self.db.add(AirViolation(raw_message_id=message.id, **values))
+        else:
+            for field, value in values.items():
+                setattr(existing, field, value)
         self.db.commit()
 
     @staticmethod
@@ -346,3 +352,10 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         if params.caza_en:
             filters.append(AirViolation.caza_en.ilike(f"%{params.caza_en}%"))
         return filters
+    def discard_for_message(self, message: RawMessage) -> None:
+        existing = self.db.scalar(
+            select(AirViolation).where(AirViolation.raw_message_id == message.id)
+        )
+        if existing is not None:
+            self.db.delete(existing)
+            self.db.flush()

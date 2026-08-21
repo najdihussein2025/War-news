@@ -6,6 +6,7 @@ from typing import Any
 
 from sqlalchemy.exc import IntegrityError
 
+from app.core.config import settings
 from app.sources.dtos import (
     IngestSourceData,
     IngestionSummary,
@@ -42,7 +43,12 @@ class IngestSourceAction:
         self.sources = sources
         self.provider_factory = provider_factory or self._build_cnrs_provider
 
-    def execute(self, data: IngestSourceData) -> IngestionSummary:
+    def execute(
+        self,
+        data: IngestSourceData,
+        *,
+        write_log: bool = True,
+    ) -> IngestionSummary:
         source = self.sources.get_by_id(data.source_id)
         if source is None:
             raise SourceIngestionError(f"Source id={data.source_id} was not found.")
@@ -58,6 +64,7 @@ class IngestSourceAction:
         total_skipped_before_cutoff = 0
         total_skipped_blocked = 0
         total_failed = 0
+        batches_fetched = 0
         source_platforms: set[str] = set()
         source_db_id = source.id
 
@@ -67,6 +74,7 @@ class IngestSourceAction:
                     cursor=source.last_cursor,
                     limit=data.page_limit,
                 )
+                batches_fetched += 1
                 total_fetched += len(items)
 
                 if not items:
@@ -129,7 +137,10 @@ class IngestSourceAction:
 
                 self.sources.update_last_cursor(source, next_cursor)
 
-                if not has_more:
+                if not has_more or (
+                    data.max_batches is not None
+                    and batches_fetched >= data.max_batches
+                ):
                     break
         except Exception:
             logger.exception(
@@ -143,6 +154,19 @@ class IngestSourceAction:
                 total_skipped_blocked,
                 total_failed,
             )
+            if write_log:
+                self.sources.write_ingestion_log(
+                    source_id=source_db_id,
+                    messages_fetched=total_fetched,
+                    messages_parsed=total_inserted,
+                    messages_failed=total_failed,
+                    started_at=started_at,
+                    messages_blocked=total_skipped_blocked,
+                    source_platforms=sorted(source_platforms),
+                )
+            raise
+
+        if write_log:
             self.sources.write_ingestion_log(
                 source_id=source_db_id,
                 messages_fetched=total_fetched,
@@ -152,17 +176,6 @@ class IngestSourceAction:
                 messages_blocked=total_skipped_blocked,
                 source_platforms=sorted(source_platforms),
             )
-            raise
-
-        self.sources.write_ingestion_log(
-            source_id=source_db_id,
-            messages_fetched=total_fetched,
-            messages_parsed=total_inserted,
-            messages_failed=total_failed,
-            started_at=started_at,
-            messages_blocked=total_skipped_blocked,
-            source_platforms=sorted(source_platforms),
-        )
 
         return IngestionSummary(
             fetched=total_fetched,
@@ -176,6 +189,17 @@ class IngestSourceAction:
 
     @staticmethod
     def _build_cnrs_provider(source: Source) -> SourceProvider:
+        # The CNRS source receives webhooks and also supports API polling. Its
+        # auth_secret_ref therefore points at the inbound webhook secret, which
+        # must never be sent to the CNRS API as a bearer token.
+        if source.external_id == "cnrs_webhook":
+            if not settings.cnrs_api_key:
+                raise SourceIngestionError("CNRS_API_KEY is not configured.")
+            return CNRSSourceProvider(
+                config=source.config,
+                api_key=settings.cnrs_api_key,
+            )
+
         if not source.auth_secret_ref:
             raise SourceIngestionError(
                 f"Source id={source.id} does not define auth_secret_ref."

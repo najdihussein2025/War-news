@@ -28,7 +28,7 @@ export type LoginLogPage = {
   page_size: number;
 };
 
-export type IngestionStatus = "running" | "completed" | "failed";
+export type IngestionStatus = "running" | "completed" | "failed" | "interrupted";
 
 export type IngestionLog = {
   id: number;
