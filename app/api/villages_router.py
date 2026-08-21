@@ -39,6 +39,8 @@ def list_villages(
                 label=label,
                 ref_name_en=village.ref_name_en,
                 ref_name_ar=village.ref_name_ar,
+                caza_en=village.caza_en,
+                caza_ar=village.caza_ar,
             )
         )
     return items

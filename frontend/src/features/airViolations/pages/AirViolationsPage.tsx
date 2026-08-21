@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Button, ConfirmDialog, DataTable, Dialog, EmptyState, Input, Label, type DataTableColumn } from "../../../components/ui";
+import { Button, ConfirmDialog, DataTable, Dialog, EmptyState, Input, Label, Select, type DataTableColumn } from "../../../components/ui";
 import { useLiveQueryTitleAddon } from "../../../hooks/useLiveQueryTitleAddon";
 import { formatDate } from "../../../lib/formatters";
 import { getBeirutDate } from "../../../lib/localDate";
 import { useAirViolationsQuery } from "../hooks";
+import { useVillagesQuery } from "../../news/hooks";
 import { createAirViolation, deleteAirViolation, exportAirViolations, updateAirViolation } from "../api";
 import type { AirViolation } from "../types";
 
@@ -72,6 +73,22 @@ export const AirViolationsPage = () => {
 
   const { data, isLoading, isError, refetch, isFetching, dataUpdatedAt } =
     useAirViolationsQuery(filters);
+  const { data: villages = [], isLoading: areCazasLoading } = useVillagesQuery();
+  const cazaOptions = useMemo(() => {
+    const options = new Map<string, { label: string; arabic: string | null }>();
+    for (const village of villages) {
+      const english = village.caza_en?.trim();
+      if (!english) continue;
+      const arabic = village.caza_ar?.trim() || null;
+      options.set(english, {
+        label: arabic ? `${english} - ${arabic}` : english,
+        arabic,
+      });
+    }
+    return [...options.entries()]
+      .map(([value, option]) => ({ value, ...option }))
+      .sort((left, right) => left.label.localeCompare(right.label));
+  }, [villages]);
   const totalFilters = {
     limit: 1,
     offset: 0,
@@ -204,11 +221,16 @@ export const AirViolationsPage = () => {
         <div className="grid gap-4 lg:grid-cols-4">
           <div className="space-y-2">
             <Label htmlFor="air-caza-filter">Caza</Label>
-            <Input
+            <Select
               id="air-caza-filter"
               value={cazaEn}
-              onChange={(event) => updateParam("caza_en", event.target.value)}
-              placeholder="Search caza"
+              onChange={(value) => updateParam("caza_en", value)}
+              disabled={areCazasLoading}
+              placeholder={areCazasLoading ? "Loading cazas..." : "All cazas"}
+              options={cazaOptions}
+              searchable
+              searchPlaceholder="Search caza in English or Arabic"
+              panelClassName="min-w-[22rem]"
             />
           </div>
           <div className="space-y-2">
@@ -409,13 +431,15 @@ export const AirViolationsPage = () => {
             onSubmit={async (event) => {
               event.preventDefault();
               const form = new FormData(event.currentTarget);
+              const selectedCaza = String(form.get("caza_en") ?? "").trim();
+              const selectedCazaOption = cazaOptions.find((option) => option.value === selectedCaza);
               setIsCreating(true);
               setCreateError("");
               try {
                 const payload = {
                   condition_id: Number(form.get("condition_id")),
-                  caza_en: String(form.get("caza_en") ?? "").trim(),
-                  caza_ar: String(form.get("caza_ar") ?? "").trim() || null,
+                  caza_en: selectedCaza,
+                  caza_ar: selectedCazaOption?.arabic ?? editingViolation?.caza_ar ?? null,
                   event_date: String(form.get("event_date") ?? ""),
                   event_time: String(form.get("event_time") ?? "") || null,
                   khabar: String(form.get("khabar") ?? "").trim(),
@@ -437,8 +461,7 @@ export const AirViolationsPage = () => {
             }}
           >
             <div className="grid gap-4 sm:grid-cols-2">
-              <div><Label htmlFor="create-caza">District (Caza) *</Label><Input id="create-caza" name="caza_en" required placeholder="e.g. Sour" className="mt-2" defaultValue={editingViolation?.caza_en ?? ""} /></div>
-              <div><Label htmlFor="create-caza-ar">District in Arabic (optional)</Label><Input id="create-caza-ar" name="caza_ar" dir="rtl" placeholder="مثال: صور" className="mt-2" defaultValue={editingViolation?.caza_ar ?? ""} /></div>
+              <div className="sm:col-span-2"><Label htmlFor="create-caza">District (Caza) *</Label><Select id="create-caza" name="caza_en" required defaultValue={editingViolation?.caza_en ?? ""} placeholder={areCazasLoading ? "Loading cazas..." : "Select a caza"} options={cazaOptions} disabled={areCazasLoading} searchable searchPlaceholder="Search caza in English or Arabic" className="mt-2" /></div>
               <div className="sm:col-span-2"><Label htmlFor="create-condition">Action *</Label><select id="create-condition" name="condition_id" required defaultValue={editingViolation?.condition_id ?? 35} className="mt-2 h-11 w-full rounded-md border border-input-border bg-input-bg px-3"><option value="35">Warplane — طيران حربي</option><option value="36">Surveillance aircraft — طيران استطلاعي</option><option value="38">Helicopter hovering — طيران مروحي</option></select></div>
               <div><Label htmlFor="create-date">Date *</Label><Input id="create-date" name="event_date" type="date" required className="mt-2" defaultValue={editingViolation?.event_date ?? getBeirutDate()} /></div>
               <div><Label htmlFor="create-time">Time (optional)</Label><Input id="create-time" name="event_time" type="time" className="mt-2" defaultValue={editingViolation?.event_time?.slice(0, 5) ?? ""} /></div>

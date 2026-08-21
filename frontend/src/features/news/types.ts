@@ -56,6 +56,8 @@ export type VillageOption = {
   label: string;
   ref_name_en: string | null;
   ref_name_ar: string | null;
+  caza_en: string | null;
+  caza_ar: string | null;
 };
 
 export type CasualtyDemographics = {

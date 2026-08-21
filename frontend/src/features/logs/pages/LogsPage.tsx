@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, NavLink, useParams, useSearchParams } from "react-router-dom";
+import { Navigate, NavLink, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { Button, DataTable, Dialog, EmptyState, Input, Label, type DataTableColumn } from "../../../components/ui";
 import { cn } from "../../../lib/cn";
@@ -20,9 +20,6 @@ const auditTextValue = (values: Record<string, unknown> | null, key: string) => 
   return typeof value === "string" && value.trim() ? value.trim() : null;
 };
 
-const shortAuditTargetId = (target: string) =>
-  target.length > 16 ? `${target.slice(0, 8)}…${target.slice(-4)}` : target;
-
 const AuditTarget = ({ row }: { row: AuditLog }) => {
   if (row.target_type !== "account") {
     return <div><span className="break-all">{row.target}</span><p className="text-caption text-text-muted">{row.target_type}</p></div>;
@@ -33,7 +30,7 @@ const AuditTarget = ({ row }: { row: AuditLog }) => {
   const username = auditTextValue(currentValues, "username");
   const label = fullName ?? username ?? "Account";
 
-  return <div><p className="font-semibold text-text-primary">{label}</p>{username && username !== label ? <p className="text-caption text-text-muted">@{username}</p> : null}<p className="mt-1 font-mono text-caption text-text-muted" title={row.target}>ID {shortAuditTargetId(row.target)}</p></div>;
+  return <div><p className="font-semibold text-text-primary">{label}</p>{username && username !== label ? <p className="text-caption text-text-muted">@{username}</p> : null}</div>;
 };
 
 const AuditTable = () => {
@@ -233,10 +230,14 @@ const IngestionTable = () => {
 
 export const LogsPage = () => {
   const { logType = "audit" } = useParams();
+  const location = useLocation();
+  const logsBasePath = location.pathname.startsWith("/superadmin/")
+    ? "/superadmin/logs"
+    : "/admin/logs";
   const activeTab = logTabs.find((tab) => tab.value === logType);
 
   if (!activeTab) {
-    return <Navigate to="/superadmin/logs/audit" replace />;
+    return <Navigate to={`${logsBasePath}/audit`} replace />;
   }
 
   return (
@@ -246,7 +247,7 @@ export const LogsPage = () => {
           {logTabs.map((tab) => (
             <NavLink
               key={tab.value}
-              to={`/superadmin/logs/${tab.value}`}
+              to={`${logsBasePath}/${tab.value}`}
               className={({ isActive }) =>
                 cn(
                   "border-b-2 px-3 py-2 text-small font-semibold transition-colors duration-150 ease-out",

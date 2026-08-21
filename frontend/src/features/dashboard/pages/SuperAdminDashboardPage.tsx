@@ -79,7 +79,7 @@ export const SuperAdminDashboardPage = () => {
           <Card><EmptyState title="No audit activity yet" description="Privileged account and configuration changes will appear here." /></Card>
         ) : (
           <Card className="divide-y divide-border overflow-hidden p-0">
-            {(auditLogs.data?.items ?? []).map((entry) => <div className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between" key={entry.id}><div><p className="font-semibold text-text-primary">{friendlyAuditAction(entry.action)}</p><p className="mt-1 text-small text-text-muted">{entry.performed_by} · {entry.target_type.replace(/_/g, " ")}: {entry.target}</p></div><time className="whitespace-nowrap text-caption text-text-muted" dateTime={entry.timestamp}>{formatDateTime(entry.timestamp)}</time></div>)}
+            {(auditLogs.data?.items ?? []).map((entry) => <div className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between" key={entry.id}><div><p className="font-semibold text-text-primary">{friendlyAuditAction(entry.action)}</p><p className="mt-1 text-small text-text-muted">{entry.performed_by}</p></div><time className="whitespace-nowrap text-caption text-text-muted" dateTime={entry.timestamp}>{formatDateTime(entry.timestamp)}</time></div>)}
             {auditLogs.isLoading ? <p className="px-5 py-6 text-center text-small text-text-muted">Loading audit activity…</p> : null}
           </Card>
         )}

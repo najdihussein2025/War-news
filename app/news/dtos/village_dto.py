@@ -9,3 +9,5 @@ class VillageOptionDTO(BaseModel):
     label: str
     ref_name_en: str | None = None
     ref_name_ar: str | None = None
+    caza_en: str | None = None
+    caza_ar: str | None = None
