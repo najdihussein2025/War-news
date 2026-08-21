@@ -12,14 +12,14 @@ const Metric = ({ label, value, detail, alert = false, loading = false }: { labe
 );
 
 export const AdminDashboardPage = () => {
-  const incidents = useIncidentsQuery({ limit: 5, offset: 0 });
-  const incidentsToday = useIncidentsQuery({ limit: 1, offset: 0, eventDateFrom: getBeirutDate() });
-  const needsVerification = useIncidentsQuery({ limit: 1, offset: 0, verificationStatus: "needs_verification" });
-  const possibleDuplicates = useIncidentsQuery({ limit: 1, offset: 0, duplicateOnly: true });
+  const incidents = useIncidentsQuery({ limit: 5, offset: 0 }, false);
+  const incidentsToday = useIncidentsQuery({ limit: 1, offset: 0, eventDateFrom: getBeirutDate() }, false);
+  const needsVerification = useIncidentsQuery({ limit: 1, offset: 0, verificationStatus: "needs_verification" }, false);
+  const possibleDuplicates = useIncidentsQuery({ limit: 1, offset: 0, duplicateOnly: true }, false);
   const hasError = incidents.isError || incidentsToday.isError || needsVerification.isError || possibleDuplicates.isError;
 
   return <div className="space-y-6">
-    <section className="rounded-lg border border-border bg-surface-raised p-5 sm:p-6"><p className="text-caption font-semibold uppercase tracking-wide text-accent">Operations overview</p><h2 className="mt-2 text-h3 font-semibold text-text-primary">Incident operations</h2><p className="mt-2 max-w-2xl text-small text-text-muted">Live verified totals from the incident database. Data refreshes automatically.</p></section>
+    <section className="rounded-lg border border-border bg-surface-raised p-5 sm:p-6"><p className="text-caption font-semibold uppercase tracking-wide text-accent">Operations overview</p><h2 className="mt-2 text-h3 font-semibold text-text-primary">Incident operations</h2></section>
     {hasError ? <Card><EmptyState title="Could not load incident metrics" description="Check the API connection, then refresh the dashboard." /></Card> : <section aria-label="Incident metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <Metric label="Total incidents" value={incidents.data?.total ?? 0} detail="All recorded incidents" loading={incidents.isLoading} />
       <Metric label="Recorded today" value={incidentsToday.data?.total ?? 0} detail="Based on Beirut date" loading={incidentsToday.isLoading} />

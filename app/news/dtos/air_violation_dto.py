@@ -12,6 +12,8 @@ class AirViolationDTO(BaseModel):
     source_id: int
     caza_en: str | None
     caza_ar: str | None
+    village_en: str | None = None
+    village_ar: str | None = None
     event_month: str | None
     event_date: date
     event_time: time | None

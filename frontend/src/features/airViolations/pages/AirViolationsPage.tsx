@@ -72,6 +72,25 @@ export const AirViolationsPage = () => {
 
   const { data, isLoading, isError, refetch, isFetching } =
     useAirViolationsQuery(filters);
+  const totalFilters = {
+    limit: 1,
+    offset: 0,
+    eventDateFrom,
+    eventDateTo,
+    cazaEn,
+  };
+  const warplaneTotal = useAirViolationsQuery({
+    ...totalFilters,
+    conditionId: "35",
+  });
+  const surveillanceTotal = useAirViolationsQuery({
+    ...totalFilters,
+    conditionId: "36",
+  });
+  const helicopterTotal = useAirViolationsQuery({
+    ...totalFilters,
+    conditionId: "38",
+  });
   // The API orders rows by event date/time, which is not necessarily the order
   // they were received. Use the newest creation timestamp on the current page
   // so the live indicator reflects newly collected Telegram records.
@@ -157,6 +176,21 @@ export const AirViolationsPage = () => {
       sortValue: (row) => row.khabar,
     },
     {
+      key: "village",
+      header: "Village",
+      render: (row) => (
+        <div>
+          <TextCell value={row.village_en || row.village_ar} />
+          {row.village_ar && row.village_en ? (
+            <span className="mt-1 block text-right text-text-muted" dir="rtl" lang="ar">
+              {row.village_ar}
+            </span>
+          ) : null}
+        </div>
+      ),
+      sortValue: (row) => row.village_en ?? row.village_ar ?? "",
+    },
+    {
       key: "date",
       header: "Date / Time",
       render: (row) => `${formatDate(row.event_date)} · ${formatTime(row.event_time)}`,
@@ -194,7 +228,7 @@ export const AirViolationsPage = () => {
               className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3 text-body text-text-primary"
               value={conditionId}
               onChange={(event) => updateParam("condition_id", event.target.value)}
-            ><option value="">All actions</option><option value="35">Warplane — طيران حربي</option><option value="36">Surveillance aircraft — طيران استطلاعي</option><option value="38">Helicopter hovering — طيران مروحي</option></select>
+            ><option value="">All actions</option><option value="35">Warplane — طيران حربي</option><option value="36">Surveillance aircraft — طيران استطلاعي</option><option value="38">Helicopter hovering — طيران مروحي</option><option value="45">Air activity — Needs verification</option></select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="air-from-filter">From</Label>
@@ -215,7 +249,30 @@ export const AirViolationsPage = () => {
             />
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3" aria-label="Air violation totals">
+          <div className="rounded-lg border border-border bg-surface-raised px-5 py-4">
+            <p className="text-caption font-semibold uppercase text-text-muted">Total warplanes</p>
+            <p className="mt-2 text-h3 font-semibold tabular-nums text-text-primary" aria-live="polite">
+              {warplaneTotal.isLoading ? "Loading…" : warplaneTotal.data?.total ?? 0}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-surface-raised px-5 py-4">
+            <p className="text-caption font-semibold uppercase text-text-muted">Total surveillance aircraft</p>
+            <p className="mt-2 text-h3 font-semibold tabular-nums text-text-primary" aria-live="polite">
+              {surveillanceTotal.isLoading ? "Loading…" : surveillanceTotal.data?.total ?? 0}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-surface-raised px-5 py-4">
+            <p className="text-caption font-semibold uppercase text-text-muted">Total helicopter hovering</p>
+            <p className="mt-2 text-h3 font-semibold tabular-nums text-text-primary" aria-live="polite">
+              {helicopterTotal.isLoading ? "Loading…" : helicopterTotal.data?.total ?? 0}
+            </p>
+          </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-end gap-2 rounded-lg border border-border bg-surface-raised p-4">
           <Button type="button" variant="secondary" isLoading={isExporting} loadingText="Exporting" onClick={async () => { setIsExporting(true); setImportMessage(""); try { await exportAirViolations(); } catch { setImportMessage("Export failed. Check the API connection and try again."); } finally { setIsExporting(false); } }}>
             Export Excel
           </Button>
@@ -228,7 +285,6 @@ export const AirViolationsPage = () => {
             </Button>
           ) : null}
           {importMessage ? <p className="text-small text-text-muted">{importMessage}</p> : null}
-        </div>
       </div>
 
       <DataTable
@@ -265,6 +321,7 @@ export const AirViolationsPage = () => {
         >
           <dl className="grid gap-5 sm:grid-cols-2">
             <div><dt className="text-caption font-semibold uppercase text-text-muted">Caza</dt><dd className="mt-1">{selectedViolation.caza_en || selectedViolation.caza_ar || emptyText}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Village</dt><dd className="mt-1">{selectedViolation.village_en || selectedViolation.village_ar || emptyText}{selectedViolation.village_ar && selectedViolation.village_en ? <span className="mt-1 block text-right text-text-muted" dir="rtl" lang="ar">{selectedViolation.village_ar}</span> : null}</dd></div>
             <div><dt className="text-caption font-semibold uppercase text-text-muted">Month</dt><dd className="mt-1">{selectedViolation.event_month || emptyText}</dd></div>
             <div><dt className="text-caption font-semibold uppercase text-text-muted">Action (English)</dt><dd className="mt-1">{selectedViolation.action_en}</dd></div>
             <div><dt className="text-caption font-semibold uppercase text-text-muted">Action (Arabic)</dt><dd className="mt-1 text-right" dir="rtl" lang="ar">{selectedViolation.action_ar}</dd></div>

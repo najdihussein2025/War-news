@@ -8,11 +8,12 @@ export const incidentKeys = {
   detail: (incidentId: string) => ["incidents", "detail", incidentId] as const,
 };
 
-export const useIncidentsQuery = (filters: IncidentFilters) =>
+export const useIncidentsQuery = (filters: IncidentFilters, live = true) =>
   useQuery({
     queryKey: incidentKeys.list(filters),
     queryFn: () => getIncidents(filters),
-    ...liveListQueryOptions,
+    ...(live ? liveListQueryOptions : {}),
+    refetchOnWindowFocus: !live,
   });
 
 export const useIncidentQuery = (incidentId: string | undefined) =>

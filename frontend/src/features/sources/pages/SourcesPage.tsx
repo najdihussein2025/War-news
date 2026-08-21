@@ -18,7 +18,7 @@ import {
 import type { ContentSource, ContentSourceDetail } from "../types";
 
 const numberFormatter = new Intl.NumberFormat();
-const CONTENT_SOURCE_PAGE_SIZE = 25;
+const CONTENT_SOURCE_PAGE_SIZE = 50;
 const GENERIC_SOURCE_NAME = "CNRS Webhook";
 type SourceFilter = "all" | "active" | "paused";
 
@@ -231,7 +231,9 @@ export const SourcesPage = () => {
         if (selectedStatus === "active") return !contentSource.is_blocked;
         if (selectedStatus === "paused") return contentSource.is_blocked;
         return true;
-      }).sort((a, b) => a.source_name.localeCompare(b.source_name)),
+      }).sort(
+        (a, b) => new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime(),
+      ),
     [contentSourcesQuery.data, selectedStatus],
   );
   const totalContentPages = Math.max(
@@ -321,12 +323,11 @@ export const SourcesPage = () => {
           </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {[
             ["Total sources", summary.total],
             ["Active", summary.active],
             ["Paused", summary.paused],
-            ["Reporting in 24h", summary.reporting],
           ].map(([label, value]) => (
             <div className="rounded-lg border border-border bg-surface-raised px-4 py-3" key={label}>
               <p className="text-caption font-semibold uppercase text-text-muted">{label}</p>
@@ -388,6 +389,7 @@ export const SourcesPage = () => {
         <DataTable
           columns={contentColumns}
           rows={paginatedContentSources}
+          initialSort={{ key: "last-news", direction: "desc" }}
           getRowKey={(contentSource) =>
             `${contentSource.source_platform}:${contentSource.origin_account}`
           }

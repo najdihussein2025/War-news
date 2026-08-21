@@ -7,10 +7,11 @@ export const airViolationKeys = {
   list: (filters: AirViolationFilters) => ["air-violations", filters] as const,
 };
 
-export const useAirViolationsQuery = (filters: AirViolationFilters) =>
+export const useAirViolationsQuery = (filters: AirViolationFilters, live = true) =>
   useQuery({
     queryKey: airViolationKeys.list(filters),
     queryFn: () => getAirViolations(filters),
-    ...liveListQueryOptions,
-    refetchInterval: 10_000,
+    ...(live ? liveListQueryOptions : {}),
+    refetchInterval: live ? 2_000 : false,
+    refetchOnWindowFocus: !live,
   });

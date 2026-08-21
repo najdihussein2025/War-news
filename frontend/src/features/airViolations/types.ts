@@ -5,6 +5,8 @@ export type AirViolation = {
   source_id: number;
   caza_en: string | null;
   caza_ar: string | null;
+  village_en: string | null;
+  village_ar: string | null;
   event_month: string | null;
   event_date: string;
   event_time: string | null;

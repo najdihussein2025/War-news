@@ -34,7 +34,7 @@ def as_beirut_datetime(value):
 
 def air_violation_news_text(
     message: RawMessage,
-    village: Village,
+    village: Village | None,
     condition: Condition | None,
 ) -> str:
     """Return readable news text while keeping raw OCR in the source record."""
@@ -42,6 +42,8 @@ def air_violation_news_text(
     if not payload.get("ocr_text") or condition is None:
         return clean_air_violation_news(message.raw_text or "")
 
+    if village is None:
+        return f"{condition.action_ar} - الموقع بحاجة إلى التحقق"
     location = village.caza_ar or village.caza_en
     summary = f"{condition.action_ar} في قضاء {location}"
     raw_text = message.raw_text or ""
@@ -81,12 +83,41 @@ def air_violation_caza_labels(
             mentioned.add((caza_en, caza_ar))
     if len(mentioned) > 1:
         return "Multiple regions", "مناطق متعددة"
+    if len(mentioned) == 1:
+        return next(iter(mentioned))
     return default_caza_en, default_caza_ar
 
 
 class AirViolationRepository(AirViolationRepositoryInterface):
     def __init__(self, db: Session) -> None:
         self.db = db
+
+    def _with_village_labels(self, rows: list[object]) -> list[dict[str, object]]:
+        data = [dict(row._mapping) for row in rows]
+        village_ids: set[int] = set()
+        for item in data:
+            result = item.pop("raw_match_result", None) or {}
+            matches = result.get("village_matches") or []
+            if matches and matches[0].get("matched_village_id") is not None:
+                village_id = int(matches[0]["matched_village_id"])
+                item["matched_village_id"] = village_id
+                village_ids.add(village_id)
+
+        villages = {
+            village.id: village
+            for village in self.db.scalars(
+                select(Village).where(Village.id.in_(village_ids))
+            )
+        } if village_ids else {}
+        for item in data:
+            village = villages.get(item.pop("matched_village_id", None))
+            item["village_en"] = (
+                village.ref_name_en or village.acs_name or village.cad_name
+                if village
+                else None
+            )
+            item["village_ar"] = village.ref_name_ar if village else None
+        return data
 
     def create(self, payload: AirViolationCreateDTO) -> AirViolationDTO:
         source = self.db.scalar(
@@ -170,6 +201,7 @@ class AirViolationRepository(AirViolationRepositoryInterface):
                 AirViolation.note_2,
                 AirViolation.source_link,
                 AirViolation.created_at,
+                RawMessage.match_result.label("raw_match_result"),
                 Condition.action_en,
                 Condition.action_ar,
                 case(
@@ -207,7 +239,10 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         )
 
         return AirViolationListResponse(
-            items=[AirViolationDTO.model_validate(row._mapping) for row in rows],
+            items=[
+                AirViolationDTO.model_validate(item)
+                for item in self._with_village_labels(rows)
+            ],
             total=int(total or 0),
             limit=params.limit,
             offset=params.offset,
@@ -230,6 +265,7 @@ class AirViolationRepository(AirViolationRepositoryInterface):
                 AirViolation.note_2,
                 AirViolation.source_link,
                 AirViolation.created_at,
+                RawMessage.match_result.label("raw_match_result"),
                 Condition.action_en,
                 Condition.action_ar,
                 case(
@@ -251,10 +287,10 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         ).one_or_none()
         if row is None:
             return None
-        return AirViolationDTO.model_validate(row._mapping)
+        return AirViolationDTO.model_validate(self._with_village_labels([row])[0])
 
     def route_from_match(self, message: RawMessage, result: MatchResultDTO) -> None:
-        if result.matched_condition_id not in {35, 36, 38}:
+        if result.matched_condition_id not in {35, 36, 38, 45}:
             return
         matched_village_id: int | None = next(
             (
@@ -264,12 +300,10 @@ class AirViolationRepository(AirViolationRepositoryInterface):
             ),
             None,
         )
-        if matched_village_id is None:
-            return
         if self.db.scalar(select(AirViolation.id).where(AirViolation.raw_message_id == message.id)) is not None:
             return
-        village = self.db.get(Village, matched_village_id)
-        if village is None:
+        village = self.db.get(Village, matched_village_id) if matched_village_id is not None else None
+        if matched_village_id is not None and village is None:
             return
         condition = self.db.get(Condition, result.matched_condition_id)
         occurred_at = as_beirut_datetime(message.message_datetime or message.received_at)
@@ -280,8 +314,8 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         )
         caza_en, caza_ar = air_violation_caza_labels(
             message.raw_text or "",
-            village.caza_en,
-            village.caza_ar,
+            village.caza_en if village else None,
+            village.caza_ar if village else None,
             known_cazas,
         )
         self.db.add(AirViolation(

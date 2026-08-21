@@ -90,25 +90,32 @@ def test_matches_village_from_plain_text() -> None:
     assert matched[0].id == 11
 
 
-def test_matches_caza_from_english_map_label() -> None:
+def test_does_not_turn_caza_label_into_an_arbitrary_village() -> None:
     nabatieh = _village(12, "النبطية", caza_en="Nabatieh")
 
     matched = match_village("مسيّرة Nabatieh", [nabatieh])
 
-    assert matched is not None
-    assert matched[0].id == 12
-    assert matched[1] == "nabatieh"
+    assert matched is None
 
 
 def test_detects_preview_boilerplate_with_changing_marker() -> None:
     assert is_preview_boilerplate("🗺️ الخريطة 🤍 تبرّع الآن • 🚀 عزّز القناة <JM>")
 
 
-def test_matches_english_village_transliteration_variant() -> None:
+def test_does_not_fuzzy_match_unlisted_transliteration_variant() -> None:
     village = _village(13, "برج الشمالي", caza_en="Sour")
     village.acs_name = "Borj Ech-Chemali"
 
     matched = match_village("Al Shamali Hosh مسيرة", [village])
 
+    assert matched is None
+
+
+def test_matches_exact_english_village_name_from_whitelist() -> None:
+    village = _village(14, "جرجوع", caza_en="Nabatiye")
+    village.ref_name_en = "Jarjouaa"
+
+    matched = match_village("Drone over Jarjouaa", [village])
+
     assert matched is not None
-    assert matched[0].id == 13
+    assert matched[0].id == 14

@@ -35,29 +35,16 @@ class RedAlertAirViolationService:
         if village_match is None:
             self._reject(
                 message,
-                "Air violation detected but locality was not matched",
-                verdict="relevant",
-                error="red_alert: air violation locality unmatched",
+                "No canonical village from Data/Villages.json was found",
             )
             return False
 
         village, raw_location = village_match
-        result = MatchResultDTO(
-            village_matches=[
-                VillageMatchResult(
-                    matched_village_id=village.id,
-                    village_confidence=1.0,
-                    village_match_status=MatchResultStatus.matched,
-                    village_review_required=False,
-                    raw_village_text=raw_location,
-                )
-            ],
-            any_village_low_confidence=False,
-            matched_condition_id=condition_id,
-            condition_confidence=1.0,
-            condition_match_status=MatchResultStatus.matched,
-            condition_review_required=False,
-            raw_condition_text=text,
+        result = self._match_result(
+            text=text,
+            condition_id=condition_id,
+            village=village,
+            raw_location=raw_location,
         )
         message.filter_result = self._result(
             message,
@@ -70,6 +57,37 @@ class RedAlertAirViolationService:
         message.status = MessageStatus.error
         message.error_message = "red_alert: routed to air_violations; not an incident"
         return True
+
+    @staticmethod
+    def _match_result(
+        *,
+        text: str,
+        condition_id: int,
+        village: Village | None,
+        raw_location: str | None,
+    ) -> MatchResultDTO:
+        village_matches = (
+            [
+                VillageMatchResult(
+                    matched_village_id=village.id,
+                    village_confidence=1.0,
+                    village_match_status=MatchResultStatus.matched,
+                    village_review_required=False,
+                    raw_village_text=raw_location,
+                )
+            ]
+            if village is not None
+            else []
+        )
+        return MatchResultDTO(
+            village_matches=village_matches,
+            any_village_low_confidence=False,
+            matched_condition_id=condition_id,
+            condition_confidence=1.0,
+            condition_match_status=MatchResultStatus.matched,
+            condition_review_required=False,
+            raw_condition_text=text,
+        )
 
     @staticmethod
     def _result(

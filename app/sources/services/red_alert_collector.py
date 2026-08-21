@@ -6,7 +6,6 @@ import re
 import unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from difflib import SequenceMatcher
 from typing import Callable
 
 import httpx
@@ -16,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.news.models import MessageStatus, RawMessage, Village
+from app.news.models import Condition, MessageStatus, RawMessage, Village
 from app.news.repositories.air_violation_repository import AirViolationRepository
 from app.news.services.red_alert_air_violation_service import RedAlertAirViolationService
 from app.sources.models import Source, SourceType
@@ -25,10 +24,33 @@ logger = logging.getLogger(__name__)
 
 SOURCE_EXTERNAL_ID = "red_alert_telegram"
 SOURCE_NAME = "Red Alert Lebanon"
+UNCLASSIFIED_AIR_CONDITION_ID = 45
 AIR_KEYWORDS: tuple[tuple[int, tuple[str, ...]], ...] = (
     (35, ("طيران حربي", "مقاتلات حربية", "مقاتله حربيه", "مقاتلات حربيه")),
-    (36, ("طيران استطلاعي", "طائره استطلاع", "مسيره", "مسير")),
-    (38, ("طيران مروحي", "مروحيه", "هليكوبتر", "apache", "ah-64")),
+    (
+        36,
+        (
+            "طيران استطلاعي",
+            "طائره استطلاع",
+            "مسيره",
+            "مسير",
+            # Common Tesseract output from Red Alert drone-map headers.
+            "معم سر",
+            "معمر سر",
+        ),
+    ),
+    (
+        38,
+        (
+            "طيران مروحي",
+            "مروحيه",
+            "هليكوبتر",
+            "apache",
+            "ah-64",
+            # Common Tesseract substitution in Red Alert helicopter headers.
+            "كوترية",
+        ),
+    ),
 )
 _NON_LOCATION_TERMS = frozenset(
     {
@@ -51,6 +73,12 @@ PREVIEW_BOILERPLATE_PARTS = (
     "عزز القناة",
     "am",
     "o",
+)
+NON_EVENT_NOTICE_PARTS = (
+    "نرجو منكم ابلاغنا فورا",
+    "عبر البوت الجديد",
+    "tawasulra bot",
+    "redalertlb twasol bot",
 )
 
 
@@ -129,9 +157,17 @@ def parse_public_preview(html: str, channel_username: str) -> list[RedAlertPost]
 
 def classify_condition(text: str) -> int | None:
     normalized = normalize_arabic(text)
+    if any(normalize_arabic(part) in normalized for part in NON_EVENT_NOTICE_PARTS):
+        return None
     for condition_id, keywords in AIR_KEYWORDS:
         if any(normalize_arabic(keyword) in normalized for keyword in keywords):
             return condition_id
+    if (
+        "redalert com lb" in normalized
+        and normalize_arabic("حيطة") in normalized
+        and normalize_arabic("حذر") in normalized
+    ):
+        return UNCLASSIFIED_AIR_CONDITION_ID
     return None
 
 
@@ -146,21 +182,22 @@ def is_preview_boilerplate(text: str) -> bool:
 
 
 def match_village(text: str, villages: list[Village]) -> tuple[Village, str] | None:
+    """Match only canonical village names loaded from Data/Villages.json.
+
+    Caza labels and approximate spellings must not be converted into a village:
+    doing that previously selected an arbitrary/nearest village from the same
+    caza even when that village was not named by the alert.
+    """
     normalized_text = normalize_arabic(text)
     hashtags = [normalize_arabic(value) for value in HASHTAG_RE.findall(text)]
     non_location_terms = {normalize_arabic(value) for value in _NON_LOCATION_TERMS}
     candidates = [value for value in hashtags if value and value not in non_location_terms]
     indexed: list[tuple[str, Village]] = []
     for village in villages:
-        # Alert maps often label only the caza (for example "Nabatieh")
-        # rather than an individual village. Air Violations are grouped by
-        # caza, so both village and caza names are valid locality evidence.
         for name in (
             village.ref_name_ar,
             village.acs_name,
             village.cad_name,
-            village.caza_en,
-            village.caza_ar,
         ):
             normalized_name = normalize_arabic(name or "")
             if normalized_name:
@@ -175,54 +212,17 @@ def match_village(text: str, villages: list[Village]) -> tuple[Village, str] | N
         if len(name) >= 3 and re.search(rf"(?<!\w){re.escape(name)}(?!\w)", normalized_text)
     ]
     if not matches:
-        latin_words = {
-            normalize_latin_location_token(token)
-            for token in re.findall(r"[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ]{3,}", text)
-        }
-        # The Red Alert Tyre map labels Burj Al Shamali together with Hosh.
-        # "Shamali" alone is ambiguous with other Lebanese village names.
-        if {"shamali", "hosh"}.issubset(latin_words):
-            target = normalize_arabic("برج الشمالي")
-            for village in villages:
-                if normalize_arabic(village.ref_name_ar or "") == target:
-                    return village, "shamali hosh"
-
-        # OCR/map labels frequently use a different Lebanese transliteration
-        # than the reference data (Shamali vs Chemali). Match distinctive
-        # English village-name tokens before falling back to caza names.
-        latin_tokens = [
-            normalize_latin_location_token(token)
-            for token in re.findall(r"[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ]{3,}", text)
-        ]
-        for token in latin_tokens:
-            if len(token) < 5:
-                continue
-            for village in villages:
-                reference_tokens = re.findall(
-                    r"[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ]{3,}",
-                    " ".join(part or "" for part in (village.acs_name, village.cad_name)),
-                )
-                if any(
-                    SequenceMatcher(
-                        None,
-                        token,
-                        normalize_latin_location_token(reference),
-                    ).ratio()
-                    >= 0.84
-                    for reference in reference_tokens
-                ):
-                    return village, token
-
-        # English Lebanese place names have several common transliterations
-        # (for example Nabatieh/Nabatiye). Allow a close caza-name match after
-        # exact Arabic/village matching has failed.
-        latin_tokens = re.findall(r"[a-z][a-z\-]{3,}", normalized_text)
-        for token in latin_tokens:
-            for village in villages:
-                caza_name = normalize_arabic(village.caza_en or "")
-                if caza_name and SequenceMatcher(None, token, caza_name).ratio() >= 0.85:
-                    return village, token
-        return None
+        latin_text = normalize_latin_location_token(text)
+        latin_matches: list[tuple[int, str, Village]] = []
+        for village in villages:
+            for canonical_name in (village.ref_name_en, village.acs_name, village.cad_name):
+                normalized_name = normalize_latin_location_token(canonical_name or "")
+                if len(normalized_name) >= 4 and normalized_name in latin_text:
+                    latin_matches.append((len(normalized_name), canonical_name or "", village))
+        if not latin_matches:
+            return None
+        _length, canonical_name, village = max(latin_matches, key=lambda item: item[0])
+        return village, canonical_name
     _length, name, village = max(matches, key=lambda item: item[0])
     return village, name
 
@@ -249,6 +249,7 @@ class RedAlertCollector:
 
     def collect_once(self) -> dict[str, int]:
         source = self._ensure_source()
+        self._ensure_unclassified_air_condition()
         started_at = datetime.now(timezone.utc)
         response = self.http_get(
             f"https://t.me/s/{self.channel_username}",
@@ -271,7 +272,17 @@ class RedAlertCollector:
             if existing is not None:
                 duplicates += 1
                 try:
-                    if self._enrich_existing_with_ocr(existing, post, villages):
+                    routed = self._enrich_existing_with_ocr(existing, post, villages)
+                    # Re-evaluate OCR messages rejected by an older classifier
+                    # when a newly supported OCR spelling now identifies them.
+                    if (
+                        not routed
+                        and existing.status == MessageStatus.rejected
+                        and (existing.raw_payload or {}).get("ocr_text")
+                        and classify_condition(existing.raw_text or "") is not None
+                    ):
+                        routed = self.air_violation_service.process(existing, villages)
+                    if routed:
                         air_violations += 1
                     self.db.commit()
                 except Exception:
@@ -311,7 +322,12 @@ class RedAlertCollector:
                 self.db.rollback()
                 failed += 1
                 logger.exception("Red Alert post ingestion failed message_id=%s", post.message_id)
-        self._write_log(source.id, len(posts), saved, failed, started_at)
+        # Polling the public preview is frequent and usually returns the same
+        # posts. Record an ingestion run only when a new air-violation row was
+        # actually created; duplicate-only and unrelated polls are operational
+        # noise and would otherwise produce thousands of empty log entries.
+        if air_violations > 0:
+            self._write_log(source.id, air_violations, started_at)
         return {
             "fetched": len(posts),
             "saved": saved,
@@ -415,12 +431,24 @@ class RedAlertCollector:
         self.db.commit()
         return source
 
+    def _ensure_unclassified_air_condition(self) -> None:
+        if self.db.get(Condition, UNCLASSIFIED_AIR_CONDITION_ID) is not None:
+            return
+        self.db.add(
+            Condition(
+                id=UNCLASSIFIED_AIR_CONDITION_ID,
+                action_en="Air Activity - Needs Verification",
+                action_ar="نشاط جوي بحاجة إلى التحقق",
+                note="Fallback for Red Alert maps with unreadable aircraft type.",
+                is_active=True,
+            )
+        )
+        self.db.commit()
+
     def _write_log(
         self,
         source_id: int,
-        fetched: int,
-        parsed: int,
-        failed: int,
+        routed: int,
         started_at: datetime,
     ) -> None:
         from app.logs.models import IngestionLog
@@ -428,20 +456,20 @@ class RedAlertCollector:
         self.db.add(
             IngestionLog(
                 source_id=source_id,
-                messages_fetched=fetched,
-                messages_parsed=parsed,
-                messages_failed=failed,
+                messages_fetched=routed,
+                messages_parsed=routed,
+                messages_failed=0,
                 source_platforms=["telegram"],
                 platform_breakdown={
                     "telegram": {
-                        "fetched": fetched,
-                        "parsed": parsed,
+                        "fetched": routed,
+                        "parsed": routed,
                         "flagged": 0,
-                        "failed": failed,
+                        "failed": 0,
                         "blocked": 0,
                     }
                 },
-                status="completed" if failed == 0 else "failed",
+                status="completed",
                 started_at=started_at,
                 finished_at=datetime.now(timezone.utc),
             )

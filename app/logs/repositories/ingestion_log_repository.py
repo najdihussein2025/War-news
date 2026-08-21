@@ -1,11 +1,12 @@
 from datetime import datetime, time, timedelta, timezone
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.logs.dtos import IngestionLogFilterData, IngestionLogItemDTO, IngestionLogPageDTO
 from app.logs.interfaces import IngestionLogRepositoryInterface
 from app.logs.models import IngestionLog
+from app.sources.models import Source
 
 
 class IngestionLogRepository(IngestionLogRepositoryInterface):
@@ -38,7 +39,13 @@ class IngestionLogRepository(IngestionLogRepositoryInterface):
         )
 
     def list_page(self, filters: IngestionLogFilterData) -> IngestionLogPageDTO:
-        conditions = []
+        conditions = [
+            or_(
+                Source.external_id.is_(None),
+                Source.external_id != "red_alert_telegram",
+                IngestionLog.messages_parsed > 0,
+            )
+        ]
         if filters.source_id is not None:
             conditions.append(IngestionLog.source_id == filters.source_id)
         if filters.status:
@@ -47,9 +54,15 @@ class IngestionLogRepository(IngestionLogRepositoryInterface):
             conditions.append(IngestionLog.created_at >= datetime.combine(filters.date_from, time.min, tzinfo=timezone.utc))
         if filters.date_to:
             conditions.append(IngestionLog.created_at < datetime.combine(filters.date_to + timedelta(days=1), time.min, tzinfo=timezone.utc))
-        total = self.db.scalar(select(func.count()).select_from(IngestionLog).where(*conditions)) or 0
+        total = self.db.scalar(
+            select(func.count())
+            .select_from(IngestionLog)
+            .join(Source, Source.id == IngestionLog.source_id)
+            .where(*conditions)
+        ) or 0
         rows = self.db.scalars(
             select(IngestionLog)
+            .join(Source, Source.id == IngestionLog.source_id)
             .options(joinedload(IngestionLog.source))
             .where(*conditions)
             .order_by(IngestionLog.created_at.desc())

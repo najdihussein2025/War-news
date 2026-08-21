@@ -1,13 +1,11 @@
-import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, EmptyState } from "../../../components/ui";
-import { formatClockTime, formatDateTime } from "../../../lib/formatters";
+import { formatDateTime } from "../../../lib/formatters";
 import { getBeirutDate } from "../../../lib/localDate";
 import { useAirViolationsQuery } from "../../airViolations/hooks";
 import { useAuditLogsQuery, useIngestionLogsQuery, useLoginLogsQuery } from "../../logs/hooks";
 import { useIncidentsQuery } from "../../news/hooks";
 import { useContentSourcesQuery } from "../../sources/hooks";
-import { refreshDashboardQueries } from "../refreshQueries";
 
 const Metric = ({ label, value, detail, to, alert = false, loading = false }: { label: string; value: number; detail: string; to: string; alert?: boolean; loading?: boolean }) => (
   <Link to={to} className="block rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"><Card className="h-full p-5 transition-colors hover:border-brand-navy hover:bg-brand-sky/20"><div className="flex items-start justify-between gap-4"><div><p className="text-caption font-semibold uppercase tracking-wide text-brand-navy">{label}</p>{loading ? <div className="mt-3 h-10 w-20 animate-pulse rounded bg-surface-muted" /> : <p className="mt-2 text-h2 font-semibold tabular-nums text-brand-navy">{value}</p>}</div><span className={`mt-1 h-2.5 w-2.5 rounded-full ${alert ? "bg-danger" : "bg-success"}`} aria-hidden="true" /></div><p className="mt-3 text-small text-text-muted">{detail}</p></Card></Link>
@@ -29,14 +27,11 @@ const friendlyAuditAction = (action: string) => ({
 }[action] ?? action.replace(/[._]/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()));
 
 export const SuperAdminDashboardPage = () => {
-  const [lastUpdated, setLastUpdated] = useState(new Date());
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [refreshStatus, setRefreshStatus] = useState<"idle" | "success" | "error">("idle");
   const contentSources = useContentSourcesQuery();
-  const incidents = useIncidentsQuery({ limit: 1, offset: 0 });
-  const incidentsToday = useIncidentsQuery({ limit: 1, offset: 0, eventDateFrom: today() });
-  const airViolations = useAirViolationsQuery({ limit: 1, offset: 0 });
-  const airViolationsToday = useAirViolationsQuery({ limit: 1, offset: 0, eventDateFrom: today() });
+  const incidents = useIncidentsQuery({ limit: 1, offset: 0 }, false);
+  const incidentsToday = useIncidentsQuery({ limit: 1, offset: 0, eventDateFrom: today() }, false);
+  const airViolations = useAirViolationsQuery({ limit: 1, offset: 0 }, false);
+  const airViolationsToday = useAirViolationsQuery({ limit: 1, offset: 0, eventDateFrom: today() }, false);
   const failedLogins = useLoginLogsQuery({ result: "failure", dateFrom: yesterday(), page: 1, pageSize: 1 });
   const ingestion = useIngestionLogsQuery({ status: "all", dateFrom: today(), page: 1, pageSize: 100 });
   const auditLogs = useAuditLogsQuery({ page: 1, pageSize: 5 });
@@ -45,46 +40,10 @@ export const SuperAdminDashboardPage = () => {
   const failedIngestion = ingestionRows.filter((row) => row.status === "failed").length;
   const runningIngestion = ingestionRows.filter((row) => row.status === "running").length;
 
-  const refresh = async () => {
-    if (isRefreshing) return;
-    setIsRefreshing(true);
-    setRefreshStatus("idle");
-    try {
-      const hasError = await refreshDashboardQueries([
-        contentSources.refetch,
-        incidents.refetch,
-        incidentsToday.refetch,
-        airViolations.refetch,
-        airViolationsToday.refetch,
-        failedLogins.refetch,
-        ingestion.refetch,
-        auditLogs.refetch,
-      ]);
-      if (hasError) {
-        setRefreshStatus("error");
-      } else {
-        setLastUpdated(new Date());
-        setRefreshStatus("success");
-      }
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  const refreshRef = useRef(refresh);
-  refreshRef.current = refresh;
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      void refreshRef.current();
-    }, 30_000);
-    return () => window.clearInterval(intervalId);
-  }, []);
-
   return (
     <div className="space-y-6">
       <section className="rounded-lg border border-border border-l-4 border-l-brand-gold bg-gradient-to-r from-brand-gold-soft/60 to-white p-5 sm:p-6">
-        <div><p className="text-caption font-semibold uppercase tracking-wide text-accent">System administration</p><h2 className="mt-2 text-h3 font-semibold text-text-primary">System overview</h2><p className="mt-2 max-w-2xl text-small text-text-muted">Live operational and security information from the backend. Updates automatically every 30 seconds.</p><p className={`mt-2 text-caption ${refreshStatus === "error" ? "text-danger" : refreshStatus === "success" ? "text-success" : "text-text-muted"}`} role="status" aria-live="polite">{refreshStatus === "error" ? "Some dashboard data could not be refreshed. The system will try again automatically." : refreshStatus === "success" ? `Automatically updated at ${formatClockTime(lastUpdated)}` : `Last updated ${formatClockTime(lastUpdated)}`}</p></div>
+        <div><p className="text-caption font-semibold uppercase tracking-wide text-accent">System administration</p><h2 className="mt-2 text-h3 font-semibold text-text-primary">System overview</h2></div>
       </section>
 
       <section aria-label="System metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
