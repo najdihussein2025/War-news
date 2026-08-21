@@ -11,11 +11,11 @@ export type Incident = {
   id: string;
   raw_message_id: number | null;
   village: string | null;
-  condition: string;
+  condition: string | null;
   event_date: string;
   event_time: string | null;
   khabar: string;
-  source: IncidentSource;
+  source: IncidentSource | null;
   source_reference: string | null;
   matched: boolean;
   duplicate_flag: "none" | "possible";
@@ -69,9 +69,25 @@ export type CasualtyDemographics = {
   children_i: number | null;
 };
 
+export type IncidentVillageDetails = {
+  id: number;
+  acs_code: number;
+  acs_name: string | null;
+  cad_name: string | null;
+  ref_name_en: string | null;
+  ref_name_ar: string | null;
+  caza_en: string | null;
+  caza_ar: string | null;
+  mohafaza_en: string | null;
+  mohafaza_ar: string | null;
+  coord_x: number | null;
+  coord_y: number | null;
+};
+
 export type IncidentCategorySection = Record<string, number | string>;
 
 export type IncidentDetail = Incident & {
+  village_details: IncidentVillageDetails | null;
   note: string | null;
   moh: string | null;
   martyrs: string | null;

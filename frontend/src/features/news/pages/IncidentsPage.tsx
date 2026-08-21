@@ -202,7 +202,7 @@ export const IncidentsPage = () => {
       cellClassName: "w-[12rem]",
       render: (row) => (
         <p className={`${twoLineClampClass} text-small leading-6 text-text-primary`}>
-          {row.condition}
+          {row.condition || "No data"}
         </p>
       ),
     },

@@ -50,6 +50,25 @@ export const IncidentDetailPage = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [isVillageDetailsOpen, setIsVillageDetailsOpen] = useState(false);
+  const villageDetails = incident?.village_details;
+  const villageInfoRows = [
+    {
+      label: "Reference name",
+      english: villageDetails?.ref_name_en ?? incident?.village ?? null,
+      arabic: villageDetails?.ref_name_ar ?? null,
+    },
+    {
+      label: "Caza",
+      english: villageDetails?.caza_en ?? null,
+      arabic: villageDetails?.caza_ar ?? null,
+    },
+    {
+      label: "Mohafaza",
+      english: villageDetails?.mohafaza_en ?? null,
+      arabic: villageDetails?.mohafaza_ar ?? null,
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -84,8 +103,16 @@ export const IncidentDetailPage = () => {
 
   return (
     <div className="space-y-5">
-      <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <BackLink to={incidentsPath} />
+        <div className="flex gap-2 sm:justify-end">
+          <Button type="button" variant="secondary" onClick={() => { setActionError(""); setIsEditing(true); }}>
+            Update
+          </Button>
+          <Button type="button" variant="destructive" onClick={() => { setActionError(""); setIsDeleting(true); }}>
+            Delete
+          </Button>
+        </div>
       </div>
 
       <section className="rounded-lg border border-border bg-surface-raised p-5 sm:p-6">
@@ -98,14 +125,16 @@ export const IncidentDetailPage = () => {
               {incident.village || "Unknown village"}
             </h1>
             <p className="mt-1 text-body text-text-muted">
-              {incident.condition}
+              {incident.condition || "No data"}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <StatusBadge
-              label={incident.source}
-              variant={sourceVariant(incident.source)}
-            />
+            {incident.source ? (
+              <StatusBadge
+                label={incident.source}
+                variant={sourceVariant(incident.source)}
+              />
+            ) : null}
             {!incident.matched ? (
               <StatusBadge label="Needs verification" variant="warning" />
             ) : null}
@@ -152,14 +181,98 @@ export const IncidentDetailPage = () => {
         </dl>
       </section>
 
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="secondary" onClick={() => { setActionError(""); setIsEditing(true); }}>
-          Update
-        </Button>
-        <Button type="button" variant="destructive" onClick={() => { setActionError(""); setIsDeleting(true); }}>
-          Delete
-        </Button>
-      </div>
+      <section className="rounded-lg border border-border bg-surface-raised p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-h4 font-semibold text-text-primary">
+            Village details
+          </h2>
+          <Button
+            type="button"
+            variant="secondary"
+            className="sm:w-auto"
+            onClick={() => setIsVillageDetailsOpen((current) => !current)}
+          >
+            {isVillageDetailsOpen ? "Hide box" : "Open box"}
+          </Button>
+        </div>
+        {isVillageDetailsOpen ? (
+        <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <dt className="text-caption font-semibold uppercase text-text-muted">
+              Display name
+            </dt>
+            <dd className="mt-1 text-small text-text-primary">
+              {incident.village || "No data"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-caption font-semibold uppercase text-text-muted">
+              ACS code
+            </dt>
+            <dd className="mt-1 text-small text-text-primary">
+              {villageDetails?.acs_code ?? "No data"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-caption font-semibold uppercase text-text-muted">
+              ACS name
+            </dt>
+            <dd className="mt-1 text-small text-text-primary">
+              {villageDetails?.acs_name || "No data"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-caption font-semibold uppercase text-text-muted">
+              CAD name
+            </dt>
+            <dd className="mt-1 text-small text-text-primary">
+              {villageDetails?.cad_name || "No data"}
+            </dd>
+          </div>
+          {villageInfoRows.map((row) => (
+            <div key={row.label} className="rounded-md border border-border bg-surface p-4 sm:col-span-2 lg:col-span-3">
+              <dt className="text-caption font-semibold uppercase text-text-muted">
+                {row.label}
+              </dt>
+              <dd className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="min-w-0">
+                  <p className="text-caption font-semibold uppercase text-text-muted">
+                    English
+                  </p>
+                  <p className="mt-1 text-small text-text-primary">
+                    {row.english || "No data"}
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-caption font-semibold uppercase text-text-muted">
+                    Arabic
+                  </p>
+                  <p className="mt-1 text-small text-text-primary text-right" dir="rtl" lang="ar">
+                    {row.arabic || "No data"}
+                  </p>
+                </div>
+              </dd>
+            </div>
+          ))}
+          <div>
+            <dt className="text-caption font-semibold uppercase text-text-muted">
+              Coordinate X
+            </dt>
+            <dd className="mt-1 text-small text-text-primary">
+              {villageDetails?.coord_x ?? "No data"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-caption font-semibold uppercase text-text-muted">
+              Coordinate Y
+            </dt>
+            <dd className="mt-1 text-small text-text-primary">
+              {villageDetails?.coord_y ?? "No data"}
+            </dd>
+          </div>
+        </dl>
+        ) : null}
+      </section>
 
       <section className="rounded-lg border border-border bg-surface-raised p-5">
         <h2 className="text-h4 font-semibold text-text-primary">Report</h2>

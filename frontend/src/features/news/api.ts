@@ -9,6 +9,16 @@ import type {
   VillageOption,
 } from "./types";
 
+export type WorkbookImportSummary = {
+  processed: number;
+  succeeded: number;
+  failed: number;
+  row_errors: Array<{
+    row: number;
+    error: string;
+  }>;
+};
+
 export const getIncidents = async (
   filters: IncidentFilters,
 ): Promise<IncidentListResponse> => {
@@ -89,4 +99,11 @@ export const updateIncidentDetails = async (
 
 export const deleteIncident = async (incidentId: string): Promise<void> => {
   await apiClient.delete(`/api/incidents/${incidentId}`);
+};
+
+export const importIncidents = async (file: File): Promise<WorkbookImportSummary> => {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await apiClient.post<WorkbookImportSummary>("/api/incidents/import", form);
+  return response.data;
 };

@@ -1,5 +1,6 @@
 import { apiClient } from "../../lib/apiClient";
 import type { AirViolation, AirViolationCreateInput, AirViolationFilters, AirViolationListResponse } from "./types";
+import type { WorkbookImportSummary } from "../news/api";
 
 export const createAirViolation = async (payload: AirViolationCreateInput): Promise<AirViolation> => {
   const response = await apiClient.post<AirViolation>("/api/air-violations", payload);
@@ -41,10 +42,10 @@ export const getAirViolations = async (
   return response.data;
 };
 
-export const importAirViolations = async (file: File): Promise<{ imported: number; skipped: number; failed: number }> => {
+export const importAirViolations = async (file: File): Promise<WorkbookImportSummary> => {
   const form = new FormData();
   form.append("file", file);
-  const response = await apiClient.post("/api/air-violations/import", form);
+  const response = await apiClient.post<WorkbookImportSummary>("/api/air-violations/import", form);
   return response.data;
 };
 
