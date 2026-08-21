@@ -41,6 +41,14 @@ class SourceRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    def get_or_create_source_platform_id(
+        self,
+        platform: str | None,
+        name: str | None,
+    ) -> int | None:
+        pass
+
+    @abstractmethod
     def is_content_source_blocked(
         self,
         source_platform: str | None,

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -11,7 +12,7 @@ from app.sources.dtos import (
 from app.sources.interfaces import SourceRepositoryInterface
 from app.logs.models import IngestionLog
 from app.news.models import RawMessage
-from app.sources.models import ContentSourceBlock, Source
+from app.sources.models import ContentSourceBlock, Source, SourcePlatform
 
 
 class SourceRepository(SourceRepositoryInterface):
@@ -91,6 +92,44 @@ class SourceRepository(SourceRepositoryInterface):
         with self.db.begin_nested():
             self.db.add(raw_message)
             self.db.flush()
+
+    def get_or_create_source_platform_id(
+        self,
+        platform: str | None,
+        name: str | None,
+    ) -> int | None:
+        if not platform or not name:
+            return None
+
+        existing_id = self.db.scalar(
+            select(SourcePlatform.id).where(
+                SourcePlatform.platform == platform,
+                SourcePlatform.name == name,
+            )
+        )
+        if existing_id is not None:
+            return int(existing_id)
+
+        with self.db.begin_nested():
+            self.db.execute(
+                insert(SourcePlatform)
+                .values(platform=platform, name=name)
+                .on_conflict_do_nothing(
+                    index_elements=["platform", "name"],
+                )
+            )
+
+        resolved_id = self.db.scalar(
+            select(SourcePlatform.id).where(
+                SourcePlatform.platform == platform,
+                SourcePlatform.name == name,
+            )
+        )
+        if resolved_id is None:
+            raise RuntimeError(
+                f"SourcePlatform ({platform!r}, {name!r}) could not be resolved."
+            )
+        return int(resolved_id)
 
     def is_content_source_blocked(
         self,

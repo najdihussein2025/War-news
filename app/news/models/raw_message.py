@@ -57,6 +57,11 @@ class RawMessage(Base):
         index=True,
         nullable=True,
     )
+    source_platform_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("source_platform.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     origin_platform: Mapped[str | None] = mapped_column(Text, nullable=True)
     origin_account: Mapped[str | None] = mapped_column(Text, nullable=True)
     raw_text: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -117,6 +122,7 @@ class RawMessage(Base):
     )
 
     source = relationship("Source", back_populates="raw_messages")
+    source_platform_ref = relationship("SourcePlatform", back_populates="raw_messages")
     duplicate_of: Mapped["RawMessage | None"] = relationship(
         "RawMessage",
         remote_side=[id],

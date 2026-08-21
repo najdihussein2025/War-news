@@ -57,6 +57,15 @@ class _WebhookSourceRepository:
         self.seen.add(key)
         self.messages.append(raw_message)
 
+    def get_or_create_source_platform_id(
+        self,
+        platform: str | None,
+        name: str | None,
+    ) -> int | None:
+        if not platform or not name:
+            return None
+        return abs(hash((platform, name))) % 100000 + 1
+
     def is_content_source_blocked(
         self,
         source_platform: str | None,

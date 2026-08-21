@@ -69,6 +69,10 @@ class ReceiveCnrsWebhookAction:
                     source_name = raw_payload.get("source_name") or (
                         source.name if source is not None else None
                     )
+                    source_platform_id = self.sources.get_or_create_source_platform_id(
+                        source_platform,
+                        source_name,
+                    )
                     origin_account = raw_payload.get("origin_account") or source_name
                     if self.sources.is_content_source_blocked(
                         source_platform,
@@ -84,6 +88,7 @@ class ReceiveCnrsWebhookAction:
                             external_message_id=post.external_message_id,
                             source_platform=source_platform,
                             source_name=source_name,
+                            source_platform_id=source_platform_id,
                             origin_platform=source_platform,
                             origin_account=origin_account,
                             cnrs_classification=classification or None,

@@ -100,6 +100,10 @@ class IngestSourceAction:
                         if source_platform:
                             source_platforms.add(source_platform.lower())
                         source_name = item.get("source_name") or source.name
+                        source_platform_id = self.sources.get_or_create_source_platform_id(
+                            source_platform,
+                            source_name,
+                        )
                         origin_account = item.get("origin_account") or source_name
                         if self.sources.is_content_source_blocked(
                             source_platform,
@@ -114,6 +118,7 @@ class IngestSourceAction:
                                 external_message_id=external_message_id,
                                 source_platform=source_platform,
                                 source_name=source_name,
+                                source_platform_id=source_platform_id,
                                 origin_platform=item.get("origin_platform")
                                 or source_platform,
                                 origin_account=origin_account,
