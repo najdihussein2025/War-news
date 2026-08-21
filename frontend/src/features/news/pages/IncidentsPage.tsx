@@ -14,18 +14,17 @@ import {
   type SelectOption,
 } from "../../../components/ui";
 import { useLiveQueryTitleAddon } from "../../../hooks/useLiveQueryTitleAddon";
-import { formatDate, formatDateTime } from "../../../lib/formatters";
+import { formatDate } from "../../../lib/formatters";
 import { getBeirutDate } from "../../../lib/localDate";
 import { roleBaseFromPath } from "../../../lib/rolePath";
 import { ConditionSelect } from "../components/ConditionSelect";
 import { useConditionsQuery, useIncidentsQuery, useVillagesQuery } from "../hooks";
 import { createIncident } from "../api";
-import type { Incident, IncidentSource } from "../types";
+import type { Incident } from "../types";
 
 const PAGE_SIZE = 25;
-
-const sourceVariant = (source: IncidentSource) =>
-  source === "Telegram" ? "accent" : source === "API" ? "neutral" : "warning";
+const twoLineClampClass =
+  "overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]";
 
 const PlusIcon = () => (
   <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none">
@@ -104,7 +103,7 @@ export const IncidentsPage = () => {
   const total = data?.total ?? 0;
 
   // Collect raw_message_ids that appear on more than one incident in the current
-  // page — these share the same source bulletin (multi-village extraction).
+  // page - these share the same source bulletin (multi-village extraction).
   const sharedBulletinIds = useMemo(() => {
     const counts = new Map<number, number>();
     for (const row of rows) {
@@ -158,12 +157,16 @@ export const IncidentsPage = () => {
     {
       key: "number",
       header: "#",
-      className: "w-14 tabular-nums text-text-muted",
+      headerClassName: "w-14 whitespace-nowrap",
+      cellClassName: "w-14 tabular-nums text-text-muted",
+      mobileLabel: "Record",
       render: (row) => offset + rows.indexOf(row) + 1,
     },
     {
       key: "village",
       header: "Village",
+      headerClassName: "w-[34%] min-w-[18rem]",
+      cellClassName: "w-[34%] min-w-[18rem]",
       render: (row) => (
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -177,9 +180,14 @@ export const IncidentsPage = () => {
               <StatusBadge label="Details pending" variant="neutral" />
             ) : null}
           </div>
-          <p className="max-w-xl break-words text-caption text-text-muted" dir="auto">{row.khabar.length > 180 ? `${row.khabar.slice(0, 180)}…` : row.khabar}</p>
+          <p
+            className={`${twoLineClampClass} break-words text-caption leading-6 text-text-muted`}
+            dir="auto"
+          >
+            {row.khabar}
+          </p>
           {row.raw_message_id != null &&
-            sharedBulletinIds.has(row.raw_message_id) ? (
+          sharedBulletinIds.has(row.raw_message_id) ? (
             <p className="text-caption text-text-muted">
               Source: same bulletin as another village on this page
             </p>
@@ -188,36 +196,42 @@ export const IncidentsPage = () => {
       ),
     },
     {
-      key: "verification",
-      header: "Verification",
-      render: (row) => <StatusBadge label={row.matched ? "Matched" : "Needs verification"} variant={row.matched ? "success" : "warning"} />,
-    },
-    {
       key: "condition",
       header: "Condition",
-      render: (row) => row.condition,
-    },
-    {
-      key: "date",
-      header: "Event date / time",
-      render: (row) => <div><p>{formatDate(row.event_date)}</p><p className="mt-1 text-caption text-text-muted">{row.event_time ? row.event_time.slice(0, 5) : "Time not recorded"}</p></div>,
-    },
-    {
-      key: "source",
-      header: "Source",
+      headerClassName: "w-[12rem]",
+      cellClassName: "w-[12rem]",
       render: (row) => (
-        <div className="space-y-1">
-          <StatusBadge label={row.source} variant={sourceVariant(row.source)} />
-          {row.source_reference ? (
-            <p className="break-all text-caption text-text-muted">{row.source_reference}</p>
-          ) : null}
-        </div>
+        <p className={`${twoLineClampClass} text-small leading-6 text-text-primary`}>
+          {row.condition}
+        </p>
       ),
     },
     {
-      key: "created",
-      header: "Received",
-      render: (row) => formatDateTime(row.created_at),
+      key: "verification",
+      header: "Verification",
+      headerClassName: "w-[9.5rem] whitespace-nowrap",
+      cellClassName: "w-[9.5rem]",
+      render: (row) => (
+        <StatusBadge
+          label={row.matched ? "Matched" : "Needs verification"}
+          variant={row.matched ? "success" : "warning"}
+        />
+      ),
+    },
+    {
+      key: "date",
+      header: "Event",
+      headerClassName: "w-[10rem] whitespace-nowrap",
+      cellClassName: "w-[10rem]",
+      mobileLabel: "Event date / time",
+      render: (row) => (
+        <div className="space-y-1 whitespace-nowrap">
+          <p>{formatDate(row.event_date)}</p>
+          <p className="text-caption text-text-muted">
+            {row.event_time ? row.event_time.slice(0, 5) : "Time not recorded"}
+          </p>
+        </div>
+      ),
     },
   ];
 
@@ -242,28 +256,28 @@ export const IncidentsPage = () => {
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl border border-border bg-surface-raised p-4 shadow-[0_1px_2px_rgba(11,34,54,0.04)]">
-          <p className="text-caption font-semibold uppercase text-text-muted">
-            {hasFilters ? "Matching incidents" : "Total incidents"}
-          </p>
-          <p className="mt-2 text-h3 font-semibold text-text-primary">
-            {total}
-          </p>
+            <p className="text-caption font-semibold uppercase text-text-muted">
+              {hasFilters ? "Matching incidents" : "Total incidents"}
+            </p>
+            <p className="mt-2 text-h3 font-semibold text-text-primary">
+              {total}
+            </p>
           </div>
           <div className="rounded-xl border border-border bg-surface-raised p-4 shadow-[0_1px_2px_rgba(11,34,54,0.04)]">
-          <p className="text-caption font-semibold uppercase text-text-muted">
-            Needs verification
-          </p>
-          <p className="mt-2 text-h3 font-semibold text-text-primary">
-            {flaggedCount}
-          </p>
+            <p className="text-caption font-semibold uppercase text-text-muted">
+              Needs verification
+            </p>
+            <p className="mt-2 text-h3 font-semibold text-text-primary">
+              {flaggedCount}
+            </p>
           </div>
           <div className="rounded-xl border border-border bg-surface-raised p-4 shadow-[0_1px_2px_rgba(11,34,54,0.04)]">
-          <p className="text-caption font-semibold uppercase text-text-muted">
-            Possible duplicates
-          </p>
-          <p className="mt-2 text-h3 font-semibold text-text-primary">
-            {duplicateCount}
-          </p>
+            <p className="text-caption font-semibold uppercase text-text-muted">
+              Possible duplicates
+            </p>
+            <p className="mt-2 text-h3 font-semibold text-text-primary">
+              {duplicateCount}
+            </p>
           </div>
         </div>
       </section>
@@ -293,97 +307,97 @@ export const IncidentsPage = () => {
 
         <div className="px-4 py-4 sm:px-5 sm:py-5 lg:px-6">
           <div className="grid gap-x-6 gap-y-5 md:grid-cols-2 xl:grid-cols-4 xl:gap-x-8 xl:gap-y-6">
-          <div className="space-y-2 xl:col-span-1">
-            <Label htmlFor="incident-village-filter">Village</Label>
-            <Select
-              id="incident-village-filter"
-              value={village}
-              options={villages}
-              searchable
-              searchPlaceholder="Search village in English or Arabic"
-              placeholder={isVillagesLoading && villages.length === 0 ? "Loading villages..." : "All villages"}
-              className="w-full min-w-0"
-              disabled={isVillagesLoading && villages.length === 0}
-              onChange={(value) => updateParam("village", value)}
-            />
-          </div>
-          <div className="space-y-2 xl:col-span-1">
-            <Label htmlFor="incident-condition-filter">Condition</Label>
-            <ConditionSelect
-              id="incident-condition-filter"
-              value={condition}
-              conditions={conditions}
-              isLoading={isConditionsLoading}
-              disabled={isConditionsLoading && conditions.length === 0}
-              placeholder="All conditions"
-              className="w-full min-w-0"
-              onChange={(value) => updateParam("condition", value)}
-            />
-            {isConditionsError ? (
-              <p className="text-caption text-text-muted">
-                Could not load condition options.
-              </p>
-            ) : null}
-          </div>
-          <div className="space-y-2 xl:col-span-1">
-            <Label htmlFor="incident-verification-filter">Verification</Label>
-            <Select
-              id="incident-verification-filter"
-              value={verificationStatus}
-              placeholder="All verification states"
-              options={verificationOptions}
-              className="w-full"
-              onChange={(value) => updateParam("verification_status", value)}
-            />
-          </div>
-          <div className="space-y-2 xl:col-span-1">
-            <Label htmlFor="incident-source-filter">Source</Label>
-            <Select
-              id="incident-source-filter"
-              value={sourceType}
-              placeholder="All sources"
-              options={sourceOptions}
-              className="w-full"
-              onChange={(value) => updateParam("source_type", value)}
-            />
-          </div>
-          <div className="space-y-2 xl:col-span-1">
-            <Label htmlFor="incident-from-filter">From</Label>
-            <Input
-              id="incident-from-filter"
-              type="date"
-              value={eventDateFrom}
-              onChange={(event) =>
-                updateParam("event_date_from", event.target.value)
-              }
-            />
-          </div>
-          <div className="space-y-2 xl:col-span-1">
-            <Label htmlFor="incident-to-filter">To</Label>
-            <Input
-              id="incident-to-filter"
-              type="date"
-              value={eventDateTo}
-              onChange={(event) =>
-                updateParam("event_date_to", event.target.value)
-              }
-            />
-          </div>
+            <div className="space-y-2 xl:col-span-1">
+              <Label htmlFor="incident-village-filter">Village</Label>
+              <Select
+                id="incident-village-filter"
+                value={village}
+                options={villages}
+                searchable
+                searchPlaceholder="Search village in English or Arabic"
+                placeholder={isVillagesLoading && villages.length === 0 ? "Loading villages..." : "All villages"}
+                className="w-full min-w-0"
+                disabled={isVillagesLoading && villages.length === 0}
+                onChange={(value) => updateParam("village", value)}
+              />
+            </div>
+            <div className="space-y-2 xl:col-span-1">
+              <Label htmlFor="incident-condition-filter">Condition</Label>
+              <ConditionSelect
+                id="incident-condition-filter"
+                value={condition}
+                conditions={conditions}
+                isLoading={isConditionsLoading}
+                disabled={isConditionsLoading && conditions.length === 0}
+                placeholder="All conditions"
+                className="w-full min-w-0"
+                onChange={(value) => updateParam("condition", value)}
+              />
+              {isConditionsError ? (
+                <p className="text-caption text-text-muted">
+                  Could not load condition options.
+                </p>
+              ) : null}
+            </div>
+            <div className="space-y-2 xl:col-span-1">
+              <Label htmlFor="incident-verification-filter">Verification</Label>
+              <Select
+                id="incident-verification-filter"
+                value={verificationStatus}
+                placeholder="All verification states"
+                options={verificationOptions}
+                className="w-full"
+                onChange={(value) => updateParam("verification_status", value)}
+              />
+            </div>
+            <div className="space-y-2 xl:col-span-1">
+              <Label htmlFor="incident-source-filter">Source</Label>
+              <Select
+                id="incident-source-filter"
+                value={sourceType}
+                placeholder="All sources"
+                options={sourceOptions}
+                className="w-full"
+                onChange={(value) => updateParam("source_type", value)}
+              />
+            </div>
+            <div className="space-y-2 xl:col-span-1">
+              <Label htmlFor="incident-from-filter">From</Label>
+              <Input
+                id="incident-from-filter"
+                type="date"
+                value={eventDateFrom}
+                onChange={(event) =>
+                  updateParam("event_date_from", event.target.value)
+                }
+              />
+            </div>
+            <div className="space-y-2 xl:col-span-1">
+              <Label htmlFor="incident-to-filter">To</Label>
+              <Input
+                id="incident-to-filter"
+                type="date"
+                value={eventDateTo}
+                onChange={(event) =>
+                  updateParam("event_date_to", event.target.value)
+                }
+              />
+            </div>
           </div>
           <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-border bg-surface p-3 sm:p-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <label className="flex min-h-[3rem] w-full items-center gap-3 rounded-xl border border-border bg-surface-raised px-3.5 py-2.5 text-small font-semibold text-text-primary shadow-[0_1px_2px_rgba(11,34,54,0.04)] transition-colors hover:border-input-border-hover hover:bg-surface sm:w-auto">
-              <input
-                type="checkbox"
-                checked={flaggedOnly}
-                onChange={(event) =>
-                  updateParam(
-                    "flagged_only",
-                    event.target.checked ? "true" : "",
-                  )
-                }
-                className="h-4 w-4 rounded border-border text-accent focus:ring-focus-ring"
-              />
+                <input
+                  type="checkbox"
+                  checked={flaggedOnly}
+                  onChange={(event) =>
+                    updateParam(
+                      "flagged_only",
+                      event.target.checked ? "true" : "",
+                    )
+                  }
+                  className="h-4 w-4 rounded border-border text-accent focus:ring-focus-ring"
+                />
                 <span className="leading-5">Show items needing attention</span>
               </label>
               {hasFilters ? (
@@ -422,7 +436,6 @@ export const IncidentsPage = () => {
           getRowKey={(row) => row.id}
           loading={isLoading}
           error={isError}
-          minWidth="1100px"
           clientSort={false}
           emptyState={
             <EmptyState
@@ -456,7 +469,7 @@ export const IncidentsPage = () => {
       {total > PAGE_SIZE ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-small text-text-muted">
-            Showing {offset + 1}–{Math.min(offset + PAGE_SIZE, total)} of {total} incidents · Page {page} of {totalPages}
+            Showing {offset + 1}-{Math.min(offset + PAGE_SIZE, total)} of {total} incidents | Page {page} of {totalPages}
           </p>
           <div className="flex gap-2">
             <Button
