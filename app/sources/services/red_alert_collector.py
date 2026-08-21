@@ -16,10 +16,9 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.news.dtos import MatchResultDTO, MatchResultStatus
-from app.news.dtos.match_result_dto import VillageMatchResult
 from app.news.models import MessageStatus, RawMessage, Village
 from app.news.repositories.air_violation_repository import AirViolationRepository
+from app.news.services.red_alert_air_violation_service import RedAlertAirViolationService
 from app.sources.models import Source, SourceType
 
 logger = logging.getLogger(__name__)
@@ -237,12 +236,16 @@ class RedAlertCollector:
         request_timeout: int = 30,
         ocr_enabled: bool = True,
         http_get: Callable[..., httpx.Response] = httpx.get,
+        air_violation_service: RedAlertAirViolationService | None = None,
     ) -> None:
         self.db = db
         self.channel_username = channel_username.removeprefix("@")
         self.request_timeout = request_timeout
         self.ocr_enabled = ocr_enabled
         self.http_get = http_get
+        self.air_violation_service = air_violation_service or RedAlertAirViolationService(
+            AirViolationRepository(db), classify_condition, match_village
+        )
 
     def collect_once(self) -> dict[str, int]:
         source = self._ensure_source()
@@ -298,7 +301,7 @@ class RedAlertCollector:
                 self.db.add(message)
                 self.db.flush()
                 saved += 1
-                if self._classify_and_route(message, villages):
+                if self.air_violation_service.process(message, villages):
                     air_violations += 1
                 self.db.commit()
             except IntegrityError:
@@ -341,65 +344,7 @@ class RedAlertCollector:
         message.raw_text = text
         message.status = MessageStatus.pending
         message.error_message = None
-        return self._classify_and_route(message, villages)
-
-    def _classify_and_route(self, message: RawMessage, villages: list[Village]) -> bool:
-        text = message.raw_text or ""
-        condition_id = classify_condition(text)
-        if condition_id is None:
-            message.filter_result = {
-                "backend": "red_alert_rules",
-                "verdict": "not_relevant",
-                "reasoning": "No supported air-violation keyword",
-                "confidence": 1.0,
-                "raw_message_id": message.id,
-            }
-            message.status = MessageStatus.rejected
-            return False
-        village_match = match_village(text, villages)
-        if village_match is None:
-            message.filter_result = {
-                "backend": "red_alert_rules",
-                "verdict": "relevant",
-                "reasoning": "Air violation detected but locality was not matched",
-                "confidence": 1.0,
-                "raw_message_id": message.id,
-            }
-            message.status = MessageStatus.rejected
-            message.error_message = "red_alert: air violation locality unmatched"
-            return False
-        village, raw_location = village_match
-        result = MatchResultDTO(
-            village_matches=[
-                VillageMatchResult(
-                    matched_village_id=village.id,
-                    village_confidence=1.0,
-                    village_match_status=MatchResultStatus.matched,
-                    village_review_required=False,
-                    raw_village_text=raw_location,
-                )
-            ],
-            any_village_low_confidence=False,
-            matched_condition_id=condition_id,
-            condition_confidence=1.0,
-            condition_match_status=MatchResultStatus.matched,
-            condition_review_required=False,
-            raw_condition_text=text,
-        )
-        message.filter_result = {
-            "backend": "red_alert_rules",
-            "verdict": "relevant",
-            "reasoning": "Supported air-violation keyword and locality matched",
-            "confidence": 1.0,
-            "raw_message_id": message.id,
-        }
-        message.match_result = result.model_dump(mode="json")
-        message.status = MessageStatus.parsed
-        self.db.flush()
-        AirViolationRepository(self.db).route_from_match(message, result)
-        message.status = MessageStatus.error
-        message.error_message = "red_alert: routed to air_violations; not an incident"
-        return True
+        return self.air_violation_service.process(message, villages)
 
     def _ocr_images(self, image_urls: tuple[str, ...]) -> str:
         if not self.ocr_enabled or not image_urls:
