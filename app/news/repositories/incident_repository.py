@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy import and_, case, desc, func, or_, select
 from sqlalchemy.orm import Session
 
+from app.core.text_sanitizer import strip_emoji_and_pictographs
 from app.llm.dtos import ExtractedCandidate
 from app.news.dtos import (
     CasualtyDemographicsDTO,
@@ -204,6 +205,9 @@ class IncidentRepository(IncidentRepositoryInterface):
     def create_manual(self, payload: IncidentCreateDTO, created_by: UUID) -> IncidentDetailDTO:
         village_name = payload.village.strip()
         condition_name = payload.condition.strip()
+        sanitized_khabar = strip_emoji_and_pictographs(payload.khabar).strip()
+        sanitized_note = self._sanitize_optional_text(payload.note)
+        sanitized_source_link = self._sanitize_optional_text(payload.source_link)
         village = self.db.scalar(
             select(Village).where(
                 Village.is_active.is_(True),
@@ -235,9 +239,9 @@ class IncidentRepository(IncidentRepositoryInterface):
             event_month=payload.event_date.strftime("%B"),
             event_date=payload.event_date,
             event_time=payload.event_time,
-            khabar=payload.khabar.strip(),
-            note=payload.note,
-            source_link=payload.source_link,
+            khabar=sanitized_khabar,
+            note=sanitized_note,
+            source_link=sanitized_source_link,
             created_by=created_by,
         )
         self.db.add(incident)
@@ -253,7 +257,18 @@ class IncidentRepository(IncidentRepositoryInterface):
         )
         if incident is None:
             return None
+        text_fields = {
+            "khabar",
+            "note",
+            "worker_name",
+            "source_link",
+            "source_link_2",
+        }
         for field, value in payload.model_dump().items():
+            if field in text_fields:
+                value = self._sanitize_optional_text(value)
+                if field == "khabar" and value is None:
+                    value = ""
             setattr(incident, field, value)
         incident.event_month = payload.event_date.strftime("%B")
         self.db.commit()
@@ -691,6 +706,13 @@ class IncidentRepository(IncidentRepositoryInterface):
             func.nullif(RawMessage.source_name, ""),
             RawMessage.external_message_id,
         )
+
+    @staticmethod
+    def _sanitize_optional_text(value: str | None) -> str | None:
+        if value is None:
+            return None
+        sanitized = strip_emoji_and_pictographs(value).strip()
+        return sanitized or None
 
     def _ensure_manual_source(self) -> Source:
         source = self.db.scalar(

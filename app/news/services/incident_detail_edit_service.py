@@ -3,6 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any
 
+from app.core.text_sanitizer import strip_emoji_and_pictographs
 from app.llm.dtos.extraction_dto import ExtractionCasualties
 from app.news.models.incident import Incident
 from app.news.models.incident_detail import DidValue, IncidentDetail
@@ -120,7 +121,7 @@ def _coerce_did(value: object, field_name: str) -> DidValue | None:
 def _coerce_text(value: object) -> str | None:
     if value is None:
         return None
-    text = str(value).strip()
+    text = strip_emoji_and_pictographs(str(value)).strip()
     return text or None
 
 
