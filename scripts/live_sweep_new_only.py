@@ -7,7 +7,7 @@ from contextlib import ExitStack
 from typing import Any
 from unittest.mock import patch
 
-from sqlalchemy import or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import settings
@@ -17,6 +17,7 @@ from app.news.dtos.pipeline_dto import StageSweepResult
 from app.news.models import Incident, MessageStatus, RawMessage
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
 from app.news.repositories.raw_message_repository import RawMessageRepository
+from app.news.repositories.sweep_cursor_repository import SweepCursorRepository
 from app.news.services.fast_path_eligibility import (
     fast_path_materializable_clause,
     permanent_ineligibility_reason,
@@ -37,8 +38,13 @@ from app.news.services.pipeline_sweep_stages import (
 
 logger = logging.getLogger(__name__)
 
-CUTOFF_RAW_MESSAGE_ID = 695974
+SWEEP_NAME = "live_sweep_new_only"
+EXTRACTION_RETRY_CAP_PREFIX = "extraction: exceeded max retries"
 MAX_ROWS: int | None = None
+
+# Process-local watermark loaded at the start of each run. Claim/batch patches
+# read this instead of a hardcoded raw_messages.id cutoff.
+_cutoff_raw_message_id = 0
 
 
 class FilteredSession:
@@ -62,6 +68,130 @@ class FilteredSession:
         return getattr(self._session, name)
 
 
+def _id_above_cutoff():
+    return RawMessage.id > _cutoff_raw_message_id
+
+
+def _retryable_extraction_error_clause():
+    return and_(
+        RawMessage.status == MessageStatus.error,
+        RawMessage.extraction_result.is_(None),
+        RawMessage.error_message.is_not(None),
+        or_(
+            RawMessage.error_message.ilike("%ReadTimeout%"),
+            RawMessage.error_message.ilike("%ConnectTimeout%"),
+            RawMessage.error_message.ilike("%TimeoutException%"),
+            RawMessage.error_message.ilike("%timed out%"),
+        ),
+    )
+
+
+def _still_open_clause():
+    """Rows that still need live-sweep work and must not be skipped by the watermark."""
+    has_active_incident = (
+        select(Incident.id)
+        .where(
+            Incident.raw_message_id == RawMessage.id,
+            Incident.is_deleted.is_(False),
+        )
+        .exists()
+    )
+    has_details_pending = (
+        select(Incident.id)
+        .where(
+            Incident.raw_message_id == RawMessage.id,
+            Incident.is_deleted.is_(False),
+            Incident.details_pending.is_(True),
+        )
+        .exists()
+    )
+    return or_(
+        and_(
+            RawMessage.status == MessageStatus.pending,
+            RawMessage.filter_result.is_(None),
+        ),
+        and_(
+            RawMessage.status == MessageStatus.parsed,
+            RawMessage.extraction_result.is_(None),
+            RawMessage.duplicate_of_id.is_(None),
+        ),
+        and_(
+            _retryable_extraction_error_clause(),
+            ~RawMessage.error_message.startswith(EXTRACTION_RETRY_CAP_PREFIX),
+        ),
+        and_(
+            RawMessage.status == MessageStatus.parsed,
+            RawMessage.extraction_result.is_not(None),
+            RawMessage.match_result.is_(None),
+            RawMessage.duplicate_of_id.is_(None),
+        ),
+        and_(
+            RawMessage.status == MessageStatus.parsed,
+            RawMessage.duplicate_of_id.is_(None),
+            RawMessage.match_result.is_not(None),
+            RawMessage.extraction_result.is_not(None),
+            ~has_active_incident,
+        ),
+        and_(
+            RawMessage.status == MessageStatus.parsed,
+            RawMessage.duplicate_of_id.is_(None),
+            RawMessage.content_embedding.is_(None),
+        ),
+        has_details_pending,
+    )
+
+
+def next_cursor_value(
+    *,
+    previous_id: int,
+    min_open_id: int | None,
+    max_id_above: int | None,
+) -> int:
+    """Advance to the highest safe id, never moving backwards or past retryable work."""
+    if min_open_id is not None:
+        candidate = min_open_id - 1
+    elif max_id_above is not None:
+        candidate = max_id_above
+    else:
+        candidate = previous_id
+    return max(previous_id, candidate)
+
+
+def compute_next_cursor(db: Session, previous_id: int) -> int:
+    min_open_id = db.scalar(
+        select(func.min(RawMessage.id)).where(
+            RawMessage.id > previous_id,
+            _still_open_clause(),
+        )
+    )
+    max_id_above = db.scalar(
+        select(func.max(RawMessage.id)).where(RawMessage.id > previous_id)
+    )
+    return next_cursor_value(
+        previous_id=previous_id,
+        min_open_id=min_open_id,
+        max_id_above=max_id_above,
+    )
+
+
+def _load_cursor() -> int:
+    with SessionLocal() as db:
+        return SweepCursorRepository(db).get_or_create(SWEEP_NAME)
+
+
+def _persist_cursor(last_processed_id: int) -> None:
+    with SessionLocal() as db:
+        SweepCursorRepository(db).save(SWEEP_NAME, last_processed_id)
+
+
+def _advance_and_persist_cursor(previous_id: int) -> int:
+    with SessionLocal() as db:
+        advanced_to = compute_next_cursor(db, previous_id)
+    if advanced_to != previous_id:
+        _persist_cursor(advanced_to)
+    return advanced_to
+
+
 def _get_pending_unfiltered_batch_filtered(
     self: RawMessageRepository,
     limit: int,
@@ -69,9 +199,9 @@ def _get_pending_unfiltered_batch_filtered(
     return list(
         self.db.scalars(
             select(RawMessage)
-            .options(joinedload(RawMessage.source))
+            .options(joinedload(RawMessage.source, innerjoin=True))
             .where(
-                RawMessage.id > CUTOFF_RAW_MESSAGE_ID,
+                _id_above_cutoff(),
                 RawMessage.status == MessageStatus.pending,
                 RawMessage.filter_result.is_(None),
             )
@@ -90,7 +220,7 @@ def _get_pending_extraction_batch_filtered(
         self.db.scalars(
             select(RawMessage)
             .where(
-                RawMessage.id > CUTOFF_RAW_MESSAGE_ID,
+                _id_above_cutoff(),
                 RawMessage.status == MessageStatus.parsed,
                 RawMessage.extraction_result.is_(None),
                 RawMessage.duplicate_of_id.is_(None),
@@ -118,16 +248,8 @@ def _reset_retryable_extraction_errors_filtered(
         self.db.scalars(
             select(RawMessage)
             .where(
-                RawMessage.id > CUTOFF_RAW_MESSAGE_ID,
-                RawMessage.status == MessageStatus.error,
-                RawMessage.extraction_result.is_(None),
-                RawMessage.error_message.is_not(None),
-                or_(
-                    RawMessage.error_message.ilike("%ReadTimeout%"),
-                    RawMessage.error_message.ilike("%ConnectTimeout%"),
-                    RawMessage.error_message.ilike("%TimeoutException%"),
-                    RawMessage.error_message.ilike("%timed out%"),
-                ),
+                _id_above_cutoff(),
+                _retryable_extraction_error_clause(),
             )
             .order_by(RawMessage.id.asc())
             .limit(limit)
@@ -141,7 +263,7 @@ def _reset_retryable_extraction_errors_filtered(
     for message in messages:
         if message.extraction_retry_count >= retry_limit:
             if not (message.error_message or "").startswith(
-                "extraction: exceeded max retries"
+                EXTRACTION_RETRY_CAP_PREFIX
             ):
                 from app.llm.services.transient_llm_errors import (
                     extraction_retry_cap_message,
@@ -171,7 +293,7 @@ def _claim_pending_pre_dedup_filtered(
     return self.db.scalar(
         select(RawMessage)
         .where(
-            RawMessage.id > CUTOFF_RAW_MESSAGE_ID,
+            _id_above_cutoff(),
             RawMessage.status == MessageStatus.parsed,
             RawMessage.extraction_result.is_(None),
             RawMessage.duplicate_of_id.is_(None),
@@ -188,7 +310,7 @@ def _claim_pending_extraction_filtered(
     return self.db.scalar(
         select(RawMessage)
         .where(
-            RawMessage.id > CUTOFF_RAW_MESSAGE_ID,
+            _id_above_cutoff(),
             RawMessage.status == MessageStatus.parsed,
             RawMessage.extraction_result.is_(None),
             RawMessage.duplicate_of_id.is_(None),
@@ -205,7 +327,7 @@ def _claim_pending_match_filtered(
     return self.db.scalar(
         select(RawMessage)
         .where(
-            RawMessage.id > CUTOFF_RAW_MESSAGE_ID,
+            _id_above_cutoff(),
             RawMessage.status == MessageStatus.parsed,
             RawMessage.extraction_result.is_not(None),
             RawMessage.match_result.is_(None),
@@ -231,7 +353,7 @@ def _claim_pending_fast_path_filtered(
     return self.db.scalar(
         select(RawMessage)
         .where(
-            RawMessage.id > CUTOFF_RAW_MESSAGE_ID,
+            _id_above_cutoff(),
             RawMessage.status == MessageStatus.parsed,
             RawMessage.duplicate_of_id.is_(None),
             RawMessage.match_result.is_not(None),
@@ -254,7 +376,7 @@ def _claim_pending_tier2_detail_fill_filtered(
         .where(
             Incident.details_pending.is_(True),
             Incident.is_deleted.is_(False),
-            RawMessage.id > CUTOFF_RAW_MESSAGE_ID,
+            _id_above_cutoff(),
         )
         .order_by(Incident.created_at.asc())
         .limit(1)
@@ -277,7 +399,7 @@ def _terminalize_ineligible_fast_path_filtered(
         self.db.scalars(
             select(RawMessage)
             .where(
-                RawMessage.id > CUTOFF_RAW_MESSAGE_ID,
+                _id_above_cutoff(),
                 RawMessage.status == MessageStatus.parsed,
                 RawMessage.duplicate_of_id.is_(None),
                 RawMessage.match_result.is_not(None),
@@ -381,7 +503,7 @@ def _emit_stage_result(result: StageSweepResult) -> None:
         f"succeeded={result.succeeded} failed={result.failed} "
         f"elapsed_seconds={result.elapsed_seconds:.2f}"
     )
-    logger.info("%s cutoff_raw_message_id=%s", line, CUTOFF_RAW_MESSAGE_ID)
+    logger.info("%s cutoff_raw_message_id=%s", line, _cutoff_raw_message_id)
     print(line, flush=True)
 
 
@@ -393,7 +515,7 @@ async def _run_async_stage(stage_name: str, sweep_fn) -> StageSweepResult:
         logger.exception(
             "Pipeline stage=%s failed cutoff_raw_message_id=%s",
             stage_name,
-            CUTOFF_RAW_MESSAGE_ID,
+            _cutoff_raw_message_id,
         )
         return StageSweepResult(
             stage=stage_name,
@@ -407,14 +529,14 @@ async def _run_async_stage(stage_name: str, sweep_fn) -> StageSweepResult:
 async def _run_async_stage_with_db(stage_name: str, sweep_fn) -> StageSweepResult:
     started_at = time.monotonic()
     with SessionLocal() as db:
-        filtered_db = FilteredSession(db, CUTOFF_RAW_MESSAGE_ID)
+        filtered_db = FilteredSession(db, _cutoff_raw_message_id)
         try:
             return await sweep_fn(filtered_db, max_rows=MAX_ROWS)
         except Exception:
             logger.exception(
                 "Pipeline stage=%s failed cutoff_raw_message_id=%s",
                 stage_name,
-                CUTOFF_RAW_MESSAGE_ID,
+                _cutoff_raw_message_id,
             )
             return StageSweepResult(
                 stage=stage_name,
@@ -428,14 +550,14 @@ async def _run_async_stage_with_db(stage_name: str, sweep_fn) -> StageSweepResul
 def _run_sync_stage(stage_name: str, sweep_fn) -> StageSweepResult:
     started_at = time.monotonic()
     with SessionLocal() as db:
-        filtered_db = FilteredSession(db, CUTOFF_RAW_MESSAGE_ID)
+        filtered_db = FilteredSession(db, _cutoff_raw_message_id)
         try:
             return sweep_fn(filtered_db, max_rows=MAX_ROWS)
         except Exception:
             logger.exception(
                 "Pipeline stage=%s failed cutoff_raw_message_id=%s",
                 stage_name,
-                CUTOFF_RAW_MESSAGE_ID,
+                _cutoff_raw_message_id,
             )
             return StageSweepResult(
                 stage=stage_name,
@@ -446,13 +568,7 @@ def _run_sync_stage(stage_name: str, sweep_fn) -> StageSweepResult:
             )
 
 
-async def main() -> int:
-    configure_logging()
-    logger.info(
-        "Starting one-pass new-only live sweep cutoff_raw_message_id=%s",
-        CUTOFF_RAW_MESSAGE_ID,
-    )
-
+async def _run_stages() -> list[StageSweepResult]:
     stages: list[StageSweepResult] = []
     with _apply_process_local_filter_patches():
         stages.append(
@@ -475,13 +591,48 @@ async def main() -> int:
         stages.append(_run_sync_stage("embedding", sweep_embedding_generation))
         stages.append(_run_sync_stage("clustering", sweep_clustering))
         stages.append(_run_sync_stage("materialization", sweep_materialization))
+    return stages
 
+
+async def main() -> int:
+    global _cutoff_raw_message_id
+    configure_logging()
+    try:
+        cutoff = _load_cursor()
+    except Exception:
+        logger.exception(
+            "Failed to read live-sweep cursor sweep_name=%s; skipping run",
+            SWEEP_NAME,
+        )
+        return 0
+
+    _cutoff_raw_message_id = cutoff
+    logger.info(
+        "Starting one-pass new-only live sweep cutoff_raw_message_id=%s sweep_name=%s",
+        cutoff,
+        SWEEP_NAME,
+    )
+
+    stages = await _run_stages()
     for result in stages:
         _emit_stage_result(result)
 
+    try:
+        advanced_to = _advance_and_persist_cursor(cutoff)
+    except Exception:
+        logger.exception(
+            "Failed to persist live-sweep cursor sweep_name=%s "
+            "cutoff_raw_message_id=%s; skipping cursor advance",
+            SWEEP_NAME,
+            cutoff,
+        )
+        return 0
+
     logger.info(
-        "Completed one-pass new-only live sweep cutoff_raw_message_id=%s",
-        CUTOFF_RAW_MESSAGE_ID,
+        "Completed one-pass new-only live sweep cutoff_raw_message_id=%s "
+        "advanced_to=%s",
+        cutoff,
+        advanced_to,
     )
     return 0
 
