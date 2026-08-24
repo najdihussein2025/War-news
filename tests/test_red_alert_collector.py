@@ -1,13 +1,16 @@
-from datetime import timezone
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 from app.sources.services.red_alert_collector import (
+    HOURS_FETCH_LIMIT_CAP,
     RedAlertPost,
     RedAlertCollector,
     classify_condition,
+    fetch_limit_for_hours,
     is_preview_boilerplate,
     match_village,
     parse_public_preview,
+    posts_within_window,
 )
 from app.news.models import MessageStatus
 from app.news.services.red_alert_air_violation_service import RedAlertAirViolationService
@@ -186,3 +189,29 @@ def test_matches_exact_english_village_name_from_whitelist() -> None:
 
     assert matched is not None
     assert matched[0].id == 14
+
+
+def _post(message_id: int, when: datetime) -> RedAlertPost:
+    return RedAlertPost(
+        message_id=message_id,
+        message_datetime=when,
+        text="تحليق",
+        link=f"https://t.me/redlinkleb/{message_id}",
+    )
+
+
+def test_fetch_limit_for_hours_is_capped() -> None:
+    assert fetch_limit_for_hours(1, 20) == 40
+    assert fetch_limit_for_hours(1, 50) == 50
+    assert fetch_limit_for_hours(6, 20) == HOURS_FETCH_LIMIT_CAP
+    assert fetch_limit_for_hours(100, 20) == HOURS_FETCH_LIMIT_CAP
+
+
+def test_posts_within_window_excludes_older_posts() -> None:
+    cutoff = datetime(2026, 8, 24, 6, 0, tzinfo=timezone.utc)
+    inside = _post(1, datetime(2026, 8, 24, 7, 0, tzinfo=timezone.utc))
+    boundary = _post(2, cutoff)
+    outside = _post(3, datetime(2026, 8, 24, 5, 59, tzinfo=timezone.utc))
+
+    assert posts_within_window([inside, boundary, outside], cutoff) == [inside, boundary]
+    assert posts_within_window([inside, outside], None) == [inside, outside]

@@ -1,7 +1,7 @@
 import argparse
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import BigInteger, cast, func, select
 from sqlalchemy.exc import IntegrityError
@@ -9,7 +9,10 @@ from sqlalchemy.exc import IntegrityError
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.news.models import MessageStatus, RawMessage
-from app.sources.actions.ingest_source_action import _derive_platform_from_external_id
+from app.sources.actions.ingest_source_action import (
+    IngestSourceAction,
+    _derive_platform_from_external_id,
+)
 from app.sources.actions.receive_cnrs_webhook_action import _platform_counts
 from app.sources.repositories.source_repository import SourceRepository
 from app.sources.services.cnrs_source import CNRSSourceProvider
@@ -74,6 +77,29 @@ def _parse_after_id_arg(value: str) -> str:
     return normalized
 
 
+def _parse_hours_arg(value: str) -> int:
+    try:
+        hours = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("--hours must be an integer >= 1.") from exc
+    if hours < 1:
+        raise argparse.ArgumentTypeError("--hours must be an integer >= 1.")
+    return hours
+
+
+def min_datetime_from_hours(
+    hours: int | None,
+    *,
+    now: datetime | None = None,
+) -> datetime | None:
+    if hours is None:
+        return None
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=timezone.utc)
+    return current - timedelta(hours=hours)
+
+
 def _resolve_resume_cursor(
     repo: SourceRepository,
     source_id: int,
@@ -122,6 +148,7 @@ def run_poll_pass(
     source_id: int = SOURCE_ID,
     page_limit: int = PAGE_LIMIT,
     after_id: str | None = None,
+    hours: int | None = None,
 ) -> dict[str, int | str | None]:
     db = SessionLocal()
     try:
@@ -138,12 +165,14 @@ def run_poll_pass(
         )
         started_at = datetime.now(timezone.utc)
         current_cursor = _resolve_resume_cursor(repo, source_id, after_id)
+        min_message_datetime = min_datetime_from_hours(hours, now=started_at)
         fetched = 0
         inserted = 0
         duplicates = 0
         blocked = 0
         failed = 0
         flagged = 0
+        skipped_before_cutoff = 0
         source_platforms: set[str] = set()
         platform_breakdown: dict[str, dict[str, int]] = {}
 
@@ -173,6 +202,16 @@ def run_poll_pass(
                         if classification.get("include") is False:
                             counts["flagged"] += 1
 
+                        message_datetime = _parse_message_datetime(
+                            item.get("message_datetime")
+                        )
+                        if IngestSourceAction._is_before_cutoff(
+                            message_datetime,
+                            min_message_datetime,
+                        ):
+                            skipped_before_cutoff += 1
+                            continue
+
                         source_name = item.get("source_name") or source.name
                         origin_account = item.get("origin_account") or source_name
                         if repo.is_content_source_blocked(
@@ -195,9 +234,7 @@ def run_poll_pass(
                                 cnrs_classification=classification or None,
                                 raw_text=item.get("raw_text"),
                                 raw_payload=item.get("raw_payload") or item,
-                                message_datetime=_parse_message_datetime(
-                                    item.get("message_datetime")
-                                ),
+                                message_datetime=message_datetime,
                                 status=MessageStatus.pending,
                             )
                         )
@@ -250,6 +287,7 @@ def run_poll_pass(
             "duplicates": duplicates,
             "blocked": blocked,
             "failed": failed,
+            "skipped_before_cutoff": skipped_before_cutoff,
         }
         logger.info("CNRS poll pass complete: %s", summary)
         return summary
@@ -257,29 +295,49 @@ def run_poll_pass(
         db.close()
 
 
-def main() -> None:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Poll CNRS for new posts and ingest them into raw_messages."
     )
     parser.add_argument(
         "--after-id",
         type=_parse_after_id_arg,
-        help="Override the resume cursor for this run only with a numeric CNRS post id.",
+        help=(
+            "Resume cursor for this run (numeric CNRS post id). Required with "
+            "--hours after a pipeline reset; scheduled loops may omit it."
+        ),
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "--hours",
+        type=_parse_hours_arg,
+        help=(
+            "Only insert posts with message_datetime within the last N hours. "
+            "Requires --after-id. Uses IngestSourceAction min_message_datetime cutoff."
+        ),
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if args.hours is not None and args.after_id is None:
+        parser.error("--hours requires --after-id")
 
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
-    summary = run_poll_pass(after_id=args.after_id)
+    summary = run_poll_pass(after_id=args.after_id, hours=args.hours)
     logger.info(
-        "CNRS poll worker exiting fetched=%s inserted=%s duplicates=%s blocked=%s failed=%s cursor=%s",
+        "CNRS poll worker exiting fetched=%s inserted=%s duplicates=%s blocked=%s "
+        "failed=%s skipped_before_cutoff=%s cursor=%s",
         summary["fetched"],
         summary["inserted"],
         summary["duplicates"],
         summary["blocked"],
         summary["failed"],
+        summary["skipped_before_cutoff"],
         summary["resume_cursor"],
     )
 

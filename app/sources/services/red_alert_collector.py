@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from app.news.models import Condition, MessageStatus, RawMessage, Village
 from app.news.repositories.air_violation_repository import AirViolationRepository
 from app.news.services.red_alert_air_violation_service import RedAlertAirViolationService
+from app.sources.actions.ingest_source_action import IngestSourceAction
 from app.sources.models import Source, SourceType
 
 logger = logging.getLogger(__name__)
@@ -106,6 +107,29 @@ NON_EVENT_NOTICE_PARTS = (
 )
 
 SUPPORTED_DELIVERY_METHODS = frozenset({"public_preview", "telegram_api"})
+HOURS_FETCH_LIMIT_PER_HOUR = 40
+HOURS_FETCH_LIMIT_CAP = 200
+
+
+def fetch_limit_for_hours(hours: int, base_limit: int) -> int:
+    requested = max(base_limit, hours * HOURS_FETCH_LIMIT_PER_HOUR)
+    return min(requested, HOURS_FETCH_LIMIT_CAP)
+
+
+def posts_within_window(
+    posts: list[RedAlertPost],
+    min_message_datetime: datetime | None,
+) -> list[RedAlertPost]:
+    if min_message_datetime is None:
+        return list(posts)
+    return [
+        post
+        for post in posts
+        if not IngestSourceAction._is_before_cutoff(
+            post.message_datetime,
+            min_message_datetime,
+        )
+    ]
 
 
 def normalize_arabic(value: str) -> str:
@@ -291,6 +315,7 @@ class RedAlertCollector:
         ocr_enabled: bool = True,
         http_get: Callable[..., httpx.Response] = httpx.get,
         air_violation_service: RedAlertAirViolationService | None = None,
+        min_message_datetime: datetime | None = None,
     ) -> None:
         self.db = db
         self.delivery_method = self._normalize_delivery_method(delivery_method)
@@ -299,6 +324,7 @@ class RedAlertCollector:
         self.request_timeout = request_timeout
         self.ocr_enabled = ocr_enabled
         self.http_get = http_get
+        self.min_message_datetime = min_message_datetime
         self.air_violation_service = air_violation_service or RedAlertAirViolationService(
             AirViolationRepository(db), classify_condition, match_village
         )
@@ -307,7 +333,9 @@ class RedAlertCollector:
         source = self._ensure_source()
         self._ensure_unclassified_air_condition()
         started_at = datetime.now(timezone.utc)
-        posts = self._fetch_posts()
+        fetched_posts = self._fetch_posts()
+        posts = posts_within_window(fetched_posts, self.min_message_datetime)
+        skipped_before_cutoff = len(fetched_posts) - len(posts)
         villages = list(self.db.scalars(select(Village).where(Village.is_active.is_(True))))
         saved = duplicates = failed = air_violations = 0
         for post in posts:
@@ -379,11 +407,12 @@ class RedAlertCollector:
         if air_violations > 0:
             self._write_log(source.id, air_violations, started_at)
         return {
-            "fetched": len(posts),
+            "fetched": len(fetched_posts),
             "saved": saved,
             "duplicates": duplicates,
             "failed": failed,
             "air_violations": air_violations,
+            "skipped_before_cutoff": skipped_before_cutoff,
         }
 
     def _text_with_optional_ocr(self, post: RedAlertPost) -> str:
