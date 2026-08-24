@@ -32,7 +32,7 @@ class AirViolationRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    def route_from_match(self, message: RawMessage, result: MatchResultDTO) -> None:
+    def route_from_match(self, message: RawMessage, result: MatchResultDTO) -> bool:
         pass
 
     @abstractmethod

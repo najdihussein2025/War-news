@@ -52,10 +52,10 @@ class RedAlertAirViolationService:
         )
         message.match_result = result.model_dump(mode="json")
         message.status = MessageStatus.parsed
-        self.air_violations.route_from_match(message, result)
+        wrote_air_violation = self.air_violations.route_from_match(message, result)
         message.status = MessageStatus.routed_air_violation
         message.error_message = "red_alert: routed to air_violations; not an incident"
-        return True
+        return wrote_air_violation
 
     @staticmethod
     def _match_result(

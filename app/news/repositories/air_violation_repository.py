@@ -290,9 +290,9 @@ class AirViolationRepository(AirViolationRepositoryInterface):
             return None
         return AirViolationDTO.model_validate(self._with_village_labels([row])[0])
 
-    def route_from_match(self, message: RawMessage, result: MatchResultDTO) -> None:
+    def route_from_match(self, message: RawMessage, result: MatchResultDTO) -> bool:
         if result.matched_condition_id not in {35, 36, 38, 45}:
-            return
+            return False
         matched_village_id: int | None = next(
             (
                 vm.matched_village_id
@@ -306,7 +306,7 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         )
         village = self.db.get(Village, matched_village_id) if matched_village_id is not None else None
         if matched_village_id is not None and village is None:
-            return
+            return False
         condition = self.db.get(Condition, result.matched_condition_id)
         occurred_at = as_beirut_datetime(message.message_datetime or message.received_at)
         payload = message.raw_payload or {}
@@ -339,6 +339,7 @@ class AirViolationRepository(AirViolationRepositoryInterface):
             for field, value in values.items():
                 setattr(existing, field, value)
         self.db.commit()
+        return True
 
     @staticmethod
     def _filters(params: AirViolationListParams) -> list[object]:
