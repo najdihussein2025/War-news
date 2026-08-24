@@ -5,6 +5,7 @@ from app.news.repositories.channel_trust_tier_repository import (
 from app.news.repositories.condition_repository import ConditionRepository
 from app.news.repositories.incident_repository import IncidentRepository
 from app.news.repositories.raw_message_repository import RawMessageRepository
+from app.news.repositories.sweep_cursor_repository import SweepCursorRepository
 from app.news.repositories.village_repository import VillageRepository
 
 __all__ = [
@@ -13,5 +14,6 @@ __all__ = [
     "ConditionRepository",
     "IncidentRepository",
     "RawMessageRepository",
+    "SweepCursorRepository",
     "VillageRepository",
 ]

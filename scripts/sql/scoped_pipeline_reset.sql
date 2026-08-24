@@ -2,14 +2,15 @@
 --
 -- CLEARED (TRUNCATE, FK-safe order, RESTART IDENTITY for serial tables):
 --   incident_updates, duplicate_matches, pipeline_sweep_jobs,
---   incident_details, incidents, raw_messages, ingestion_logs
+--   incident_details, incidents, raw_messages, ingestion_logs,
+--   sweep_cursors
 --
 -- NOT TOUCHED:
 --   villages, conditions, users, roles, sources,
 --   audit_logs, login_logs, air_violations
 --
 -- Intentionally omitted because they do not exist in this database:
---   incident_media, sweep_cursors, field_definitions
+--   incident_media, field_definitions
 --   (do not create them)
 --
 -- sources.last_cursor is untouched and remains stale (e.g. 731292 on CNRS
@@ -34,7 +35,8 @@ TRUNCATE TABLE
     incident_details,
     incidents,
     raw_messages,
-    ingestion_logs
+    ingestion_logs,
+    sweep_cursors
     RESTART IDENTITY;
 
 ALTER TABLE air_violations

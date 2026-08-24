@@ -7,6 +7,7 @@ from app.news.models.incident import Incident
 from app.news.models.incident_detail import DidValue, IncidentDetail
 from app.news.models.incident_update import IncidentUpdate, UpdateAction
 from app.news.models.raw_message import MessageStatus, RawMessage
+from app.news.models.sweep_cursor import SweepCursor
 from app.news.models.village import Village
 
 __all__ = [
@@ -22,6 +23,7 @@ __all__ = [
     "MatchType",
     "MessageStatus",
     "RawMessage",
+    "SweepCursor",
     "TrustTier",
     "UpdateAction",
     "User",
