@@ -111,6 +111,46 @@ def test_compute_next_cursor_uses_open_row_prefix() -> None:
     assert live_sweep.compute_next_cursor(db, 50) == 59
 
 
+def test_compute_next_cursor_advances_from_zero_past_leading_terminal_rows() -> None:
+    """Regression: ids 1-201 terminal, first open parsed at 202 -> cursor 201."""
+    db = MagicMock()
+    db.scalar.side_effect = [202, 290]
+    assert live_sweep.compute_next_cursor(db, 0) == 201
+
+
+def test_compute_next_cursor_unchanged_when_immediate_next_row_still_open() -> None:
+    db = MagicMock()
+    db.scalar.side_effect = [51, 100]
+    assert live_sweep.compute_next_cursor(db, 50) == 50
+
+
+def test_refresh_persisted_cursor_advances_in_process_cutoff(monkeypatch, caplog) -> None:
+    live_sweep._cutoff_raw_message_id = 0
+    monkeypatch.setattr(live_sweep, "_advance_and_persist_cursor", lambda previous: 201)
+
+    with caplog.at_level(logging.INFO):
+        assert live_sweep._refresh_persisted_cursor() == 201
+
+    assert live_sweep._cutoff_raw_message_id == 201
+    assert any(
+        "Live-sweep cursor advanced from=0 to=201" in record.getMessage()
+        for record in caplog.records
+    )
+
+
+def test_finish_stage_keeps_processed_succeeded_failed_shape(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(live_sweep, "_refresh_persisted_cursor", lambda **kwargs: 0)
+    result = live_sweep._finish_stage(_stage("pre_extraction_dedup", processed=103))
+    assert result.processed == 103
+    assert result.succeeded == 103
+    assert result.failed == 0
+    captured = capsys.readouterr()
+    assert (
+        "Pipeline stage=pre_extraction_dedup processed=103 succeeded=103 failed=0"
+        in captured.out
+    )
+
+
 @pytest.mark.asyncio
 async def test_main_processes_above_persisted_cursor_and_advances(
     monkeypatch, caplog
@@ -119,7 +159,7 @@ async def test_main_processes_above_persisted_cursor_and_advances(
     monkeypatch.setattr(live_sweep, "_advance_and_persist_cursor", lambda previous: 80)
 
     async def fake_stages() -> list[StageSweepResult]:
-        assert live_sweep._cutoff_raw_message_id == 50
+        assert live_sweep._cutoff_raw_message_id == 80
         return [_stage("relevance_filter", processed=3)]
 
     monkeypatch.setattr(live_sweep, "_run_stages", fake_stages)
@@ -132,13 +172,11 @@ async def test_main_processes_above_persisted_cursor_and_advances(
         "Starting one-pass new-only live sweep cutoff_raw_message_id=50" in message
         for message in messages
     )
+    assert any("Live-sweep cursor advanced from=50 to=80" in message for message in messages)
     assert any(
         "Completed one-pass new-only live sweep cutoff_raw_message_id=50 advanced_to=80"
         in message
         for message in messages
-    )
-    assert any(
-        "processed=3 succeeded=3 failed=0" in message for message in messages
     )
 
 
@@ -163,15 +201,12 @@ async def test_cursor_read_failure_skips_run(monkeypatch, caplog) -> None:
 
 
 @pytest.mark.asyncio
-async def test_cursor_write_failure_skips_advance_without_crashing(
+async def test_cursor_write_failure_skips_run_without_crashing(
     monkeypatch, caplog
 ) -> None:
     monkeypatch.setattr(live_sweep, "_load_cursor", lambda: 12)
-
-    async def fake_stages() -> list[StageSweepResult]:
-        return [_stage("matching")]
-
-    monkeypatch.setattr(live_sweep, "_run_stages", fake_stages)
+    run_stages = MagicMock()
+    monkeypatch.setattr(live_sweep, "_run_stages", run_stages)
     monkeypatch.setattr(
         live_sweep,
         "_advance_and_persist_cursor",
@@ -181,6 +216,7 @@ async def test_cursor_write_failure_skips_advance_without_crashing(
     with caplog.at_level(logging.ERROR):
         assert await live_sweep.main() == 0
 
+    run_stages.assert_not_called()
     assert any(
         "Failed to persist live-sweep cursor" in record.getMessage()
         for record in caplog.records

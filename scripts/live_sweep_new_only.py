@@ -192,6 +192,51 @@ def _advance_and_persist_cursor(previous_id: int) -> int:
     return advanced_to
 
 
+def _refresh_persisted_cursor(*, fatal: bool = False) -> int:
+    """Recompute the watermark from current row states and persist if it moved.
+
+    Terminal statuses (rejected, duplicate, error, routed_air_violation) do not
+    keep the cursor at 0; only still-open/retryable rows do. Called before the
+    first stage and after each stage so a later LLM-stage kill cannot lose
+    progress already made on done rows.
+    """
+    global _cutoff_raw_message_id
+    previous = _cutoff_raw_message_id
+    try:
+        advanced_to = _advance_and_persist_cursor(previous)
+    except Exception:
+        logger.exception(
+            "Failed to persist live-sweep cursor sweep_name=%s "
+            "cutoff_raw_message_id=%s; skipping cursor advance",
+            SWEEP_NAME,
+            previous,
+        )
+        if fatal:
+            raise
+        return previous
+    if advanced_to != previous:
+        logger.info(
+            "Live-sweep cursor advanced from=%s to=%s sweep_name=%s",
+            previous,
+            advanced_to,
+            SWEEP_NAME,
+        )
+        _cutoff_raw_message_id = advanced_to
+    else:
+        logger.info(
+            "Live-sweep cursor unchanged cutoff_raw_message_id=%s sweep_name=%s",
+            previous,
+            SWEEP_NAME,
+        )
+    return advanced_to
+
+
+def _finish_stage(result: StageSweepResult) -> StageSweepResult:
+    _emit_stage_result(result)
+    _refresh_persisted_cursor(fatal=False)
+    return result
+
+
 def _get_pending_unfiltered_batch_filtered(
     self: RawMessageRepository,
     limit: int,
@@ -572,25 +617,45 @@ async def _run_stages() -> list[StageSweepResult]:
     stages: list[StageSweepResult] = []
     with _apply_process_local_filter_patches():
         stages.append(
-            await _run_async_stage_with_db("relevance_filter", sweep_relevance_filter)
-        )
-        stages.append(
-            await _run_async_stage("pre_extraction_dedup", sweep_pre_dedup_concurrent)
-        )
-        stages.append(
-            await _run_async_stage("tier1_extraction", sweep_extraction_concurrent)
-        )
-        stages.append(await _run_async_stage("matching", sweep_matching_concurrent))
-        stages.append(await _run_async_stage("fast_path", sweep_fast_path_concurrent))
-        stages.append(
-            await _run_async_stage(
-                "tier2_detail_fill",
-                sweep_tier2_detail_fill_concurrent,
+            _finish_stage(
+                await _run_async_stage_with_db(
+                    "relevance_filter", sweep_relevance_filter
+                )
             )
         )
-        stages.append(_run_sync_stage("embedding", sweep_embedding_generation))
-        stages.append(_run_sync_stage("clustering", sweep_clustering))
-        stages.append(_run_sync_stage("materialization", sweep_materialization))
+        stages.append(
+            _finish_stage(
+                await _run_async_stage(
+                    "pre_extraction_dedup", sweep_pre_dedup_concurrent
+                )
+            )
+        )
+        stages.append(
+            _finish_stage(
+                await _run_async_stage("tier1_extraction", sweep_extraction_concurrent)
+            )
+        )
+        stages.append(
+            _finish_stage(await _run_async_stage("matching", sweep_matching_concurrent))
+        )
+        stages.append(
+            _finish_stage(await _run_async_stage("fast_path", sweep_fast_path_concurrent))
+        )
+        stages.append(
+            _finish_stage(
+                await _run_async_stage(
+                    "tier2_detail_fill",
+                    sweep_tier2_detail_fill_concurrent,
+                )
+            )
+        )
+        stages.append(
+            _finish_stage(_run_sync_stage("embedding", sweep_embedding_generation))
+        )
+        stages.append(_finish_stage(_run_sync_stage("clustering", sweep_clustering)))
+        stages.append(
+            _finish_stage(_run_sync_stage("materialization", sweep_materialization))
+        )
     return stages
 
 
@@ -613,19 +678,16 @@ async def main() -> int:
         SWEEP_NAME,
     )
 
+    try:
+        _refresh_persisted_cursor(fatal=True)
+    except Exception:
+        return 0
+
     stages = await _run_stages()
-    for result in stages:
-        _emit_stage_result(result)
 
     try:
-        advanced_to = _advance_and_persist_cursor(cutoff)
+        advanced_to = _refresh_persisted_cursor(fatal=True)
     except Exception:
-        logger.exception(
-            "Failed to persist live-sweep cursor sweep_name=%s "
-            "cutoff_raw_message_id=%s; skipping cursor advance",
-            SWEEP_NAME,
-            cutoff,
-        )
         return 0
 
     logger.info(
