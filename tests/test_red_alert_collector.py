@@ -1,5 +1,14 @@
 from datetime import datetime, timezone
 from types import SimpleNamespace
+from unittest.mock import MagicMock
+from uuid import uuid4
+
+import os
+
+import pytest
+from sqlalchemy import create_engine, func, select, text
+from sqlalchemy.exc import OperationalError, ProgrammingError
+from sqlalchemy.orm import Session
 
 from app.sources.services.red_alert_collector import (
     HOURS_FETCH_LIMIT_CAP,
@@ -12,16 +21,20 @@ from app.sources.services.red_alert_collector import (
     parse_public_preview,
     posts_within_window,
 )
-from app.news.models import MessageStatus
+from app.news.models import MessageStatus, RawMessage
+from app.news.models.air_violation import AirViolation
+from app.news.repositories.air_violation_repository import AirViolationRepository
 from app.news.services.red_alert_air_violation_service import RedAlertAirViolationService
+from app.sources.models import Source, SourceType
 
 
 def test_rejects_air_violation_without_a_canonical_village() -> None:
     class _AirViolationRepository:
         routed = None
 
-        def route_from_match(self, message, result) -> None:
+        def route_from_match(self, message, result) -> bool:
             self.routed = (message, result)
+            return True
 
         discarded = False
 
@@ -216,3 +229,139 @@ def test_posts_within_window_excludes_older_posts() -> None:
 
     assert posts_within_window([inside, boundary, outside], cutoff) == [inside, boundary]
     assert posts_within_window([inside, outside], None) == [inside, outside]
+
+
+def _collector_post(message_id: int = 501) -> RedAlertPost:
+    when = datetime(2026, 8, 24, 8, 0, tzinfo=timezone.utc)
+    return RedAlertPost(
+        message_id=message_id,
+        message_datetime=when,
+        text="تحليق طيران حربي فوق #الجنوب",
+        link=f"https://t.me/redlinkleb/{message_id}",
+    )
+
+
+def test_collect_once_counts_air_violation_only_when_route_writes() -> None:
+    db = MagicMock()
+    db.scalar.return_value = None
+
+    air_service = MagicMock()
+    air_service.process.return_value = True
+
+    collector = RedAlertCollector(db, air_violation_service=air_service)
+    collector._ensure_source = MagicMock(return_value=SimpleNamespace(id=78))
+    collector._ensure_unclassified_air_condition = MagicMock()
+    collector._fetch_posts = MagicMock(return_value=[_collector_post()])
+    collector._text_with_optional_ocr = MagicMock(side_effect=lambda post: post.text)
+
+    result = collector.collect_once()
+
+    assert result["air_violations"] == 1
+    assert result["saved"] == 1
+    air_service.process.assert_called_once()
+
+
+def test_collect_once_reports_zero_air_violations_for_duplicate_only_run() -> None:
+    existing = SimpleNamespace(
+        id=1,
+        status=MessageStatus.routed_air_violation,
+        raw_payload={},
+        raw_text="تحليق طيران حربي فوق #الجنوب",
+    )
+    db = MagicMock()
+    db.scalar.return_value = existing
+
+    air_service = MagicMock()
+    collector = RedAlertCollector(db, air_violation_service=air_service)
+    collector._ensure_source = MagicMock(return_value=SimpleNamespace(id=78))
+    collector._ensure_unclassified_air_condition = MagicMock()
+    collector._fetch_posts = MagicMock(return_value=[_collector_post()])
+    collector._enrich_existing_with_ocr = MagicMock(return_value=False)
+
+    result = collector.collect_once()
+
+    assert result["air_violations"] == 0
+    assert result["duplicates"] == 1
+    air_service.process.assert_not_called()
+
+
+def test_process_persists_air_violation_row_and_routed_status() -> None:
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        pytest.skip("DATABASE_URL is required for air-violation routing coverage.")
+
+    engine = create_engine(database_url)
+    try:
+        connection = engine.connect()
+    except OperationalError as exc:
+        pytest.skip(f"Database is unavailable: {exc}")
+
+    transaction = connection.begin()
+    db = Session(bind=connection, join_transaction_mode="create_savepoint")
+    marker = uuid4().hex
+    try:
+        has_routed_status = db.scalar(
+            text(
+                """
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM pg_enum e
+                    JOIN pg_type t ON e.enumtypid = t.oid
+                    WHERE t.typname = 'message_status'
+                      AND e.enumlabel = 'routed_air_violation'
+                )
+                """
+            )
+        )
+        if not has_routed_status:
+            pytest.skip(
+                "Migration 20260824_0033 must be applied before air-violation "
+                "routing integration coverage."
+            )
+
+        source = Source(
+            type=SourceType.telegram,
+            name="Red Alert Lebanon",
+            external_id=f"red-alert-test-{marker}",
+            config={},
+        )
+        db.add(source)
+        db.flush()
+
+        message = RawMessage(
+            source_id=source.id,
+            external_message_id=f"telegram:redlinkleb:{marker}",
+            source_platform="telegram",
+            source_name="Red Alert Lebanon",
+            origin_account="@redlinkleb",
+            raw_text="تحليق طيران حربي فوق #الجنوب",
+            raw_payload={"source_link": f"https://t.me/redlinkleb/{marker}"},
+            message_datetime=datetime(2026, 8, 24, 8, 0, tzinfo=timezone.utc),
+            status=MessageStatus.pending,
+        )
+        db.add(message)
+        db.flush()
+        message_id = message.id
+
+        service = RedAlertAirViolationService(
+            AirViolationRepository(db),
+            classify_condition,
+            match_village,
+        )
+        wrote = service.process(message, [])
+
+        assert wrote is True
+        assert message.status == MessageStatus.routed_air_violation
+        assert message.status != MessageStatus.error
+        row_count = db.scalar(
+            select(func.count())
+            .select_from(AirViolation)
+            .where(AirViolation.raw_message_id == message_id)
+        )
+        assert row_count == 1
+    except (OperationalError, ProgrammingError) as exc:
+        pytest.skip(f"Air-violation routing schema is unavailable: {exc}")
+    finally:
+        db.close()
+        transaction.rollback()
+        connection.close()

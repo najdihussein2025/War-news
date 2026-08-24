@@ -165,7 +165,7 @@ def test_process_fast_path_terminalizes_air_violation_route() -> None:
     created = service.process_fast_path(message, FastPathDedupService(MagicMock()))
 
     assert created == []
-    assert message.status == MessageStatus.error
+    assert message.status == MessageStatus.routed_air_violation
     assert "air_violations" in (message.error_message or "")
     assert service.fast_stats.skipped_air_violation_routed == 1
     db.commit.assert_called()

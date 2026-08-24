@@ -287,7 +287,7 @@ def test_air_violation_condition_is_skipped(condition_id: int, caplog) -> None:
     assert result == []
     assert db.added == []
     assert db.commit_calls == 1
-    assert representative.status == MessageStatus.error
+    assert representative.status == MessageStatus.routed_air_violation
     assert representative.error_message == ERROR_AIR_VIOLATION
     assert service.stats.skipped_air_violation_routed == 1
     assert service.stats.skipped_ineligible == 0
