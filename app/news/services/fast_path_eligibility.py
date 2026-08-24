@@ -109,7 +109,13 @@ def ineligible_fast_path_update_sql() -> TextClause:
         f"""
         UPDATE raw_messages
         SET
-            status = CAST(:error_status AS message_status),
+            status = CASE
+                WHEN (raw_messages.match_result->>'matched_condition_id') ~ '^[0-9]+$'
+                     AND (raw_messages.match_result->>'matched_condition_id')::int
+                         IN (35, 36, 38, 45)
+                    THEN CAST(:routed_air_violation_status AS message_status)
+                ELSE CAST(:error_status AS message_status)
+            END,
             error_message = CASE
                 WHEN (raw_messages.match_result->>'matched_condition_id') ~ '^[0-9]+$'
                      AND (raw_messages.match_result->>'matched_condition_id')::int
@@ -139,6 +145,7 @@ def ineligible_fast_path_update_sql() -> TextClause:
         """
     ).bindparams(
         error_status=MessageStatus.error.value,
+        routed_air_violation_status=MessageStatus.routed_air_violation.value,
         parsed_status=MessageStatus.parsed.value,
         air_violation=ERROR_AIR_VIOLATION,
         unmatched_condition=ERROR_UNMATCHED_CONDITION,

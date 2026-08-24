@@ -221,7 +221,10 @@ class IncidentMaterializationService:
         concurrent fast-path worker wraps the rest of the unit of work in
         ``except Exception: db.rollback()``.
         """
-        representative.status = MessageStatus.error
+        if reason == ERROR_AIR_VIOLATION:
+            representative.status = MessageStatus.routed_air_violation
+        else:
+            representative.status = MessageStatus.error
         representative.error_message = reason
         self.fast_stats.marked_unmaterializable += 1
         self.db.commit()

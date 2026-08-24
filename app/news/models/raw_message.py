@@ -28,6 +28,7 @@ class MessageStatus(str, Enum):
     duplicate = "duplicate"
     rejected = "rejected"
     error = "error"
+    routed_air_violation = "routed_air_violation"
 
 
 class RawMessage(Base):
