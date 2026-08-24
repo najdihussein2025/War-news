@@ -6,6 +6,6 @@ class SourceProvider(ABC):
     def fetch_batch(
         self,
         cursor: str | None,
-        limit: int = 500,
+        limit: int = 2000,
     ) -> tuple[list[dict], str | None, bool]:
         """Fetch one page of normalized raw source items."""

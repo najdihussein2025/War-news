@@ -20,7 +20,7 @@ from app.sources.services.cnrs_source import CNRSSourceProvider
 logger = logging.getLogger(__name__)
 
 SOURCE_ID = 3
-PAGE_LIMIT = 500
+PAGE_LIMIT = 2000
 
 
 def _resolve_cnrs_api_key(auth_secret_ref: str | None) -> str:

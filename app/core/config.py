@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     red_alert_request_timeout_seconds: int = 30
     red_alert_ocr_enabled: bool = True
     cnrs_api_key: str | None = None
-    cnrs_api_base_url: str = "https://lebanon.cnrs.edu.lb/api/v1/inspected-posts"
+    cnrs_api_base_url: str = "https://lebanon.cnrs.edu.lb/api/v1/llm-filtered-posts"
     cnrs_webhook_secret: str
     air_violation_webhook_enabled: bool = False
     air_violation_webhook_url: str | None = None

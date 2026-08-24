@@ -5,6 +5,7 @@ import httpx
 from app.core.config import settings
 from app.sources.interfaces.source_provider import SourceProvider
 
+CNRS_MAX_PAGE_SIZE = 2000
 CNRS_CLASSIFICATION_FIELDS = (
     "include",
     "confidence",
@@ -27,15 +28,12 @@ class CNRSSourceProvider(SourceProvider):
     def fetch_batch(
         self,
         cursor: str | None,
-        limit: int = 500,
+        limit: int = CNRS_MAX_PAGE_SIZE,
     ) -> tuple[list[dict], str | None, bool]:
         params: dict[str, Any] = {
             "after_id": cursor or 0,
-            "limit": limit,
+            "limit": max(1, min(limit, CNRS_MAX_PAGE_SIZE)),
         }
-
-        if self.config.get("model_backend") == "local_llm":
-            params["model_backend"] = "local_llm"
 
         response = httpx.get(
             settings.cnrs_api_base_url,

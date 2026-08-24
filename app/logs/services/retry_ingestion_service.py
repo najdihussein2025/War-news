@@ -52,6 +52,7 @@ def run_ingestion_retry(source_id: int, log_id: int) -> None:
         IngestSourceAction(RetryTrackingSourceRepository(db, log_id)).execute(
             IngestSourceData(
                 source_id=source_id,
+                page_limit=2000,
                 max_batches=10,
                 min_message_datetime=datetime.now(timezone.utc) - timedelta(hours=24),
             )

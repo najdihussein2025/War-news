@@ -7,7 +7,7 @@ class IngestSourceData(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     source_id: int
-    page_limit: int = Field(default=500, ge=1)
+    page_limit: int = Field(default=2000, ge=1, le=2000)
     max_batches: int | None = Field(default=None, ge=1)
     min_message_datetime: datetime | None = None
 

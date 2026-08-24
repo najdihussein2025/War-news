@@ -42,6 +42,7 @@ def _poll_cnrs() -> None:
         ).execute(
             IngestSourceData(
                 source_id=source.id,
+                page_limit=2000,
                 max_batches=10,
                 min_message_datetime=datetime.now(timezone.utc) - timedelta(hours=24),
             ),
