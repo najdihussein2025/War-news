@@ -33,7 +33,12 @@ class RedAlertAirViolationService:
             return False
 
         village_match = self.match_village(text, villages)
-        village, raw_location = village_match if village_match is not None else (None, None)
+        if village_match is None:
+            self.air_violations.discard_for_message(message)
+            self._reject(message, "No canonical village matched")
+            return False
+
+        village, raw_location = village_match
         result = self._match_result(
             text=text,
             condition_id=condition_id,

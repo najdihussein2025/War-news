@@ -16,7 +16,7 @@ from app.news.models import MessageStatus
 from app.news.services.red_alert_air_violation_service import RedAlertAirViolationService
 
 
-def test_routes_air_violation_without_a_canonical_village() -> None:
+def test_rejects_air_violation_without_a_canonical_village() -> None:
     class _AirViolationRepository:
         routed = None
 
@@ -43,10 +43,11 @@ def test_routes_air_violation_without_a_canonical_village() -> None:
         error_message=None,
     )
 
-    assert service.process(message, []) is True
-    assert repository.routed is not None
-    assert repository.routed[1].matched_condition_id == 35
-    assert message.status == MessageStatus.error
+    assert service.process(message, []) is False
+    assert repository.routed is None
+    assert repository.discarded is True
+    assert message.status == MessageStatus.rejected
+    assert message.filter_result["reasoning"] == "No canonical village matched"
 
 
 def _village(village_id: int, arabic: str, caza_en: str = "Sour") -> SimpleNamespace:

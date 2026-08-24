@@ -45,19 +45,29 @@ export const SuperAdminDashboardPage = () => {
     }
     return latest;
   }, new Map());
-  const failedIngestion = ingestionRows.filter((row) =>
+  const failedSourceIds = new Set(ingestionRows.filter((row) =>
     row.status === "failed"
     && new Date(row.run_timestamp).getTime() > (latestCompletedBySource.get(row.source_id) ?? 0)
-  ).length;
+  ).map((row) => row.source_id));
+  const failedIngestion = failedSourceIds.size;
   const runningIngestion = ingestionRows.filter((row) => row.status === "running").length;
   const monitoredSources = (sources.data ?? []).filter(
     (source) => source.is_active && source.type !== "manual",
   );
-  const reportingSources = monitoredSources.filter(
+  const reportingSourceRows = monitoredSources.filter(
     (source) => source.last_message_at !== null
       && Date.now() - new Date(source.last_message_at).getTime() <= 24 * 60 * 60 * 1000,
-  ).length;
-  const staleSources = Math.max(0, monitoredSources.length - reportingSources);
+  );
+  const staleSourceRows = monitoredSources.filter(
+    (source) => !reportingSourceRows.some((reportingSource) => reportingSource.id === source.id),
+  );
+  const staleSources = staleSourceRows.length;
+  const sourceHealthDetail = [
+    staleSourceRows.length > 0 ? `Not reporting: ${staleSourceRows.map((source) => source.name).join(", ")}` : null,
+    reportingSourceRows.length > 0 ? `Reporting: ${reportingSourceRows.map((source) => source.name).join(", ")}` : null,
+    `${failedIngestion} unresolved failure${failedIngestion === 1 ? "" : "s"}`,
+    runningIngestion > 0 ? `${runningIngestion} running` : null,
+  ].filter(Boolean).join(" · ");
 
   return (
     <div className="space-y-6">
@@ -70,7 +80,7 @@ export const SuperAdminDashboardPage = () => {
         <Metric label="News received today" value={newsToday} detail="Parsed through ingestion today" to="/superadmin/logs/ingestion" loading={ingestion.isLoading} />
         <Metric label="Incidents" value={incidents.data?.total ?? 0} detail={`+${incidentsToday.data?.total ?? 0} recorded today`} to="/superadmin/incidents" loading={incidents.isLoading || incidentsToday.isLoading} />
         <Metric label="Air violations" value={airViolations.data?.total ?? 0} detail={`+${airViolationsToday.data?.total ?? 0} recorded today`} to="/superadmin/air-violations" loading={airViolations.isLoading || airViolationsToday.isLoading} />
-        <Metric label="Sources not reporting (24h)" value={staleSources} detail={`${reportingSources} reporting now · ${failedIngestion} unresolved failure${failedIngestion === 1 ? "" : "s"}${runningIngestion > 0 ? ` · ${runningIngestion} running` : ""}`} to="/superadmin/sources" alert={staleSources > 0 || failedIngestion > 0} loading={sources.isLoading || ingestion.isLoading} />
+        <Metric label="Sources not reporting (24h)" value={staleSources} detail={sourceHealthDetail} to="/superadmin/sources" alert={staleSources > 0 || failedIngestion > 0} loading={sources.isLoading || ingestion.isLoading} />
         <Metric label="Failed logins (24h)" value={failedLogins.data?.total ?? 0} detail="Open filtered security log" to={`/superadmin/logs/login?result=failure&date_from=${yesterday()}`} alert={(failedLogins.data?.total ?? 0) >= 5} loading={failedLogins.isLoading} />
       </section>
 

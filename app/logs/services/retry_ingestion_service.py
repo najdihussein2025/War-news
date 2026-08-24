@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import SessionLocal
 from app.logs.models import IngestionLog
 from app.sources.actions import IngestSourceAction
@@ -54,7 +55,9 @@ def run_ingestion_retry(source_id: int, log_id: int) -> None:
                 source_id=source_id,
                 page_limit=2000,
                 max_batches=10,
-                min_message_datetime=datetime.now(timezone.utc) - timedelta(hours=24),
+                min_message_datetime=datetime.now(timezone.utc) - timedelta(
+                    hours=settings.cnrs_lookback_hours
+                ),
             )
         )
     except Exception as exc:

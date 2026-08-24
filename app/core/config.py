@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     red_alert_ocr_enabled: bool = True
     cnrs_api_key: str | None = None
     cnrs_api_base_url: str = "https://lebanon.cnrs.edu.lb/api/v1/llm-filtered-posts"
+    cnrs_lookback_hours: int = 48
     cnrs_webhook_secret: str
     air_violation_webhook_enabled: bool = False
     air_violation_webhook_url: str | None = None

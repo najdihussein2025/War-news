@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import logging
 
 from sqlalchemy.exc import IntegrityError
@@ -12,6 +12,7 @@ from app.news.models import (
     MessageStatus,
     RawMessage,
 )
+from app.core.config import settings
 from app.sources.services.cnrs_source import CNRS_CLASSIFICATION_FIELDS
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,7 @@ class ReceiveCnrsWebhookAction:
         saved = 0
         duplicates = 0
         blocked = 0
+        skipped_before_cutoff = 0
         failed = 0
         flagged = 0
         source_platforms: set[str] = set()
@@ -49,6 +51,16 @@ class ReceiveCnrsWebhookAction:
             for post in posts:
                 counts: dict[str, int] | None = None
                 try:
+                    cutoff = started_at - timedelta(hours=settings.cnrs_lookback_hours)
+                    message_datetime = post.message_datetime
+                    if message_datetime is None:
+                        skipped_before_cutoff += 1
+                        continue
+                    if message_datetime.tzinfo is None:
+                        message_datetime = message_datetime.replace(tzinfo=timezone.utc)
+                    if message_datetime < cutoff:
+                        skipped_before_cutoff += 1
+                        continue
                     raw_payload = post.model_dump(mode="json")
                     classification = {
                         key: raw_payload[key]
@@ -123,6 +135,7 @@ class ReceiveCnrsWebhookAction:
                 "saved": saved,
                 "duplicates": duplicates,
                 "blocked": blocked,
+                "skipped_before_cutoff": skipped_before_cutoff,
             }
         finally:
             if saved > 0 or failed > 0:
