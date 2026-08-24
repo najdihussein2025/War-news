@@ -31,6 +31,11 @@ RED_ZONE_OCR_MARKER = "__RED_ZONE_TEXT__"
 # Exact labels used by the Red Alert map, mapped to canonical Villages.json
 # ACS codes. These are spelling aliases only; they never select a nearby place.
 RED_ALERT_VILLAGE_ALIASES: dict[str, int] = {
+    "beirut": 10999,
+    "burj el brajne": 21177,
+    "علي الطاهر": 71115,
+    "برج الشمالي": 62128,
+    "لمنصوريى": 62296,
     "عين بعال": 62243,
     "وادي حيلو": 62218,
     "دى حيلو": 62218,
@@ -88,6 +93,12 @@ PREVIEW_BOILERPLATE_PARTS = (
     "o",
 )
 NON_EVENT_NOTICE_PARTS = (
+    "احصاءات نهاية اليوم",
+    "إحصاءات نهاية اليوم",
+    "اجمالي التنبيهات",
+    "إجمالي التنبيهات",
+    "اكثر القرى رصدا",
+    "أكثر القرى رصداً",
     "نرجو منكم ابلاغنا فورا",
     "عبر البوت الجديد",
     "tawasulra bot",

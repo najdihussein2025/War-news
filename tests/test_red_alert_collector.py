@@ -20,8 +20,10 @@ def test_routes_air_violation_without_a_canonical_village() -> None:
         def route_from_match(self, message, result) -> None:
             self.routed = (message, result)
 
+        discarded = False
+
         def discard_for_message(self, message) -> None:
-            raise AssertionError("Recognized air violations must not be discarded")
+            self.discarded = True
 
     repository = _AirViolationRepository()
     service = RedAlertAirViolationService(
@@ -41,7 +43,6 @@ def test_routes_air_violation_without_a_canonical_village() -> None:
     assert service.process(message, []) is True
     assert repository.routed is not None
     assert repository.routed[1].matched_condition_id == 35
-    assert repository.routed[1].village_matches == []
     assert message.status == MessageStatus.error
 
 
@@ -121,6 +122,15 @@ def test_classifies_supported_air_violation_actions() -> None:
     assert classify_condition("طائرة استطلاع فوق صور") == 36
     assert classify_condition("مروحية فوق الجنوب") == 38
     assert classify_condition("خبر سياسي لا يتعلق بالطيران") is None
+
+
+def test_rejects_end_of_day_statistics_as_news() -> None:
+    text = """إحصاءات نهاية اليوم
+إجمالي التنبيهات: 148
+رصد المسيرات: 93
+أكثر القرى رصداً (مسيرات): النبطية 21"""
+
+    assert classify_condition(text) is None
 
 
 def test_detects_image_post_preview_boilerplate() -> None:

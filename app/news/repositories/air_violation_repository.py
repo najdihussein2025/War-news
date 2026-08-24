@@ -94,8 +94,13 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         for item in data:
             result = item.pop("raw_match_result", None) or {}
             matches = result.get("village_matches") or []
-            if matches and matches[0].get("matched_village_id") is not None:
-                village_id = int(matches[0]["matched_village_id"])
+            matched_village_id = (
+                matches[0].get("matched_village_id")
+                if matches
+                else result.get("matched_village_id")
+            )
+            if matched_village_id is not None:
+                village_id = int(matched_village_id)
                 item["matched_village_id"] = village_id
                 village_ids.add(village_id)
 
@@ -110,9 +115,9 @@ class AirViolationRepository(AirViolationRepositoryInterface):
             item["village_en"] = (
                 village.ref_name_en or village.acs_name or village.cad_name
                 if village
-                else None
+                else item.get("caza_en")
             )
-            item["village_ar"] = village.ref_name_ar if village else None
+            item["village_ar"] = village.ref_name_ar if village else item.get("caza_ar")
         return data
 
     def create(self, payload: AirViolationCreateDTO) -> AirViolationDTO:
