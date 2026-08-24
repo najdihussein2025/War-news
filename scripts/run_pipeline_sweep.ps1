@@ -1,3 +1,4 @@
+# Break-glass manual pipeline drain (live-sweep-worker handles routine sweeps).
 # Run a foreground drain in the dedicated pipeline-worker container.
 # Do not use `docker compose exec backend` — that process is killed by uvicorn --reload.
 param(

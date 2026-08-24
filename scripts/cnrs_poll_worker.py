@@ -1,6 +1,5 @@
 import argparse
 import logging
-import os
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import BigInteger, cast, func, select
@@ -23,18 +22,18 @@ SOURCE_ID = 3
 PAGE_LIMIT = 2000
 
 
-def _resolve_cnrs_api_key(auth_secret_ref: str | None) -> str:
-    if auth_secret_ref:
-        secret = os.environ.get(auth_secret_ref)
-        if secret:
-            return secret
+class CnrsPollBootstrapRequired(RuntimeError):
+    """Raised when no numeric CNRS resume cursor exists and --after-id was omitted."""
 
+
+def _resolve_cnrs_api_key() -> str:
+    # The CNRS webhook source stores CNRS_WEBHOOK_SECRET in auth_secret_ref.
+    # That inbound secret must never be sent to the CNRS API as a bearer token.
     if settings.cnrs_api_key:
         return settings.cnrs_api_key
 
     raise RuntimeError(
-        "CNRS API key is not configured. Set the source auth_secret_ref env var "
-        "or CNRS_API_KEY."
+        "CNRS API key is not configured. Set CNRS_API_KEY."
     )
 
 
@@ -122,7 +121,7 @@ def _resolve_resume_cursor(
         "the first poll-worker run.",
         source_id,
     )
-    raise RuntimeError(
+    raise CnrsPollBootstrapRequired(
         "CNRS poll worker requires --after-id <numeric_cnrs_post_id> on the "
         "first run when no numeric resume cursor exists."
     )
@@ -161,7 +160,7 @@ def run_poll_pass(
 
         provider = CNRSSourceProvider(
             config=source.config,
-            api_key=_resolve_cnrs_api_key(source.auth_secret_ref),
+            api_key=_resolve_cnrs_api_key(),
         )
         started_at = datetime.now(timezone.utc)
         current_cursor = _resolve_resume_cursor(repo, source_id, after_id)
@@ -303,8 +302,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--after-id",
         type=_parse_after_id_arg,
         help=(
-            "Resume cursor for this run (numeric CNRS post id). Required with "
-            "--hours after a pipeline reset; scheduled loops may omit it."
+            "Optional resume cursor override (numeric CNRS post id). Omit on "
+            "scheduled runs to auto-resume from max numeric external_message_id "
+            "in raw_messages; pass once after a reset when the table is empty."
         ),
     )
     parser.add_argument(
@@ -312,7 +312,7 @@ def build_parser() -> argparse.ArgumentParser:
         type=_parse_hours_arg,
         help=(
             "Only insert posts with message_datetime within the last N hours. "
-            "Requires --after-id. Uses IngestSourceAction min_message_datetime cutoff."
+            "Uses IngestSourceAction min_message_datetime cutoff."
         ),
     )
     return parser
@@ -321,14 +321,15 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
-    if args.hours is not None and args.after_id is None:
-        parser.error("--hours requires --after-id")
 
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
-    summary = run_poll_pass(after_id=args.after_id, hours=args.hours)
+    try:
+        summary = run_poll_pass(after_id=args.after_id, hours=args.hours)
+    except CnrsPollBootstrapRequired:
+        return
     logger.info(
         "CNRS poll worker exiting fetched=%s inserted=%s duplicates=%s blocked=%s "
         "failed=%s skipped_before_cutoff=%s cursor=%s",
