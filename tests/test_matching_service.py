@@ -263,3 +263,36 @@ def test_action_rejects_message_without_extraction_result() -> None:
 
     with pytest.raises(ValueError, match="has no extraction_result"):
         MatchIncidentAction(repository, service).execute(42)
+
+
+def test_action_does_not_persist_match_when_air_violation_routing_fails() -> None:
+    expected = MatchResultDTO(
+        village_matches=[],
+        any_village_low_confidence=False,
+        matched_condition_id=36,
+        condition_confidence=1.0,
+        condition_match_status=MatchResultStatus.matched,
+        condition_review_required=False,
+        raw_condition_text="surveillance aircraft",
+    )
+    message = SimpleNamespace(
+        id=42,
+        extraction_result=_extraction(
+            village=None,
+            action="surveillance aircraft",
+        ).model_dump(mode="json"),
+    )
+    repository = _RawMessageRepositoryStub(message)
+
+    class _FailingAirViolationRepository:
+        def route_from_match(self, routed_message, result) -> None:
+            raise RuntimeError("routing failed")
+
+    with pytest.raises(RuntimeError, match="routing failed"):
+        MatchIncidentAction(
+            repository,
+            _MatchingServiceStub(expected),
+            _FailingAirViolationRepository(),  # type: ignore[arg-type]
+        ).execute(42)
+
+    assert repository.saved is None

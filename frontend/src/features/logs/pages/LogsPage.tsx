@@ -163,7 +163,11 @@ const IngestionTable = () => {
       return [{ ...run, row_key: `${run.id}-${platform}`, platform, resolved }];
     }
     return platforms.map(([platform, counts]) => ({ ...run, row_key: `${run.id}-${platform}`, platform: platform.charAt(0).toUpperCase() + platform.slice(1), messages_fetched: counts.fetched, messages_parsed: counts.parsed, messages_flagged: counts.flagged, messages_failed: counts.failed, messages_blocked: counts.blocked, resolved }));
-  });
+  }).filter((row) => !(
+    row.status === "completed"
+    && row.messages_fetched > 0
+    && row.messages_parsed === 0
+  ));
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / pageSize));
   const resetPage = () => setPage(1);
   const duration = (seconds: number | null) => seconds === null ? "In progress" : seconds < 1 ? "<1s" : seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;

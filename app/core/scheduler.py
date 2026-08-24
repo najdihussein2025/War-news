@@ -115,7 +115,7 @@ def _run_red_alert_loop() -> None:
             return
 
 
-def start_scheduler() -> None:
+def start_scheduler(*, start_red_alert: bool = True) -> None:
     global _cnrs_scheduler, _scheduler_stop_event, _scheduler_thread
 
     if _cnrs_scheduler is None:
@@ -134,6 +134,9 @@ def start_scheduler() -> None:
         _cnrs_scheduler.start()
         logger.info("CNRS polling scheduler started interval_seconds=%s", settings.ingestion_poll_interval_seconds)
 
+    if not start_red_alert:
+        logger.info("Red Alert API scheduler disabled; dedicated collector owns polling")
+        return
     if not settings.red_alert_enabled:
         logger.info("Red Alert scheduler disabled; Telegram air-violation polling is off")
         return

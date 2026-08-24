@@ -33,6 +33,16 @@ def test_start_scheduler_skips_when_red_alert_disabled(monkeypatch) -> None:
     assert scheduler._scheduler_stop_event is None
 
 
+def test_start_scheduler_can_leave_red_alert_to_dedicated_collector(monkeypatch) -> None:
+    scheduler.stop_scheduler()
+    monkeypatch.setattr(scheduler.settings, "red_alert_enabled", True)
+
+    scheduler.start_scheduler(start_red_alert=False)
+
+    assert scheduler._scheduler_thread is None
+    assert scheduler._scheduler_stop_event is None
+
+
 def test_start_scheduler_starts_background_thread(monkeypatch) -> None:
     scheduler.stop_scheduler()
     monkeypatch.setattr(settings, "red_alert_enabled", True)

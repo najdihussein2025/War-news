@@ -20,6 +20,8 @@ from app.news.models import AirViolation, RawMessage
 from app.news.repositories.air_violation_repository import AirViolationRepository
 
 RAW_MESSAGE_IDS = (
+    691366,
+    691429,
     691438,
     691439,
     691442,
@@ -65,7 +67,24 @@ def main() -> None:
                 )
 
             try:
-                result = MatchResultDTO.model_validate(message.match_result)
+                match_result = message.match_result
+                if "village_matches" not in match_result:
+                    match_result = {
+                        **match_result,
+                        "village_matches": [
+                            {
+                                "matched_village_id": match_result.get("matched_village_id"),
+                                "village_confidence": match_result.get("village_confidence"),
+                                "village_match_status": match_result.get("village_match_status", "unmatched"),
+                                "village_review_required": match_result.get("village_review_required", True),
+                                "raw_village_text": match_result.get("raw_village_text"),
+                            }
+                        ],
+                        "any_village_low_confidence": bool(
+                            match_result.get("village_review_required", True)
+                        ),
+                    }
+                result = MatchResultDTO.model_validate(match_result)
             except ValidationError as exc:
                 raise ValueError(
                     f"raw_message id={raw_message_id} has invalid match_result"

@@ -41,6 +41,11 @@ class IngestionLogRepository(IngestionLogRepositoryInterface):
     def list_page(self, filters: IngestionLogFilterData) -> IngestionLogPageDTO:
         conditions = [
             or_(
+                IngestionLog.status != "completed",
+                IngestionLog.messages_fetched <= 0,
+                IngestionLog.messages_parsed > 0,
+            ),
+            or_(
                 Source.external_id.is_(None),
                 Source.external_id != "red_alert_telegram",
                 IngestionLog.messages_parsed > 0,

@@ -66,7 +66,10 @@ def startup() -> None:
             )
     finally:
         db.close()
-    start_scheduler()
+    # Docker runs a dedicated red-alert-collector service. Starting another
+    # collector inside the API duplicates ingestion runs and makes one batch
+    # appear as multiple log rows.
+    start_scheduler(start_red_alert=False)
 
 
 @app.on_event("shutdown")

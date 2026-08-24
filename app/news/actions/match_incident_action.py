@@ -39,7 +39,10 @@ class MatchIncidentAction:
             ) from exc
 
         result = self.matching_service.match(extraction_result)
-        self.raw_messages.save_match_result(message, result)
+        # Route air violations before marking matching complete. If routing
+        # fails, match_result remains unset and the pipeline can safely retry
+        # this message instead of terminalizing it without an AirViolation row.
         if self.air_violations is not None:
             self.air_violations.route_from_match(message, result)
+        self.raw_messages.save_match_result(message, result)
         return result

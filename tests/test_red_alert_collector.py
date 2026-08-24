@@ -9,6 +9,40 @@ from app.sources.services.red_alert_collector import (
     match_village,
     parse_public_preview,
 )
+from app.news.models import MessageStatus
+from app.news.services.red_alert_air_violation_service import RedAlertAirViolationService
+
+
+def test_routes_air_violation_without_a_canonical_village() -> None:
+    class _AirViolationRepository:
+        routed = None
+
+        def route_from_match(self, message, result) -> None:
+            self.routed = (message, result)
+
+        def discard_for_message(self, message) -> None:
+            raise AssertionError("Recognized air violations must not be discarded")
+
+    repository = _AirViolationRepository()
+    service = RedAlertAirViolationService(
+        repository,  # type: ignore[arg-type]
+        lambda text: 35,
+        lambda text, villages: None,
+    )
+    message = SimpleNamespace(
+        id=99,
+        raw_text="warplanes over the south",
+        filter_result=None,
+        match_result=None,
+        status=MessageStatus.pending,
+        error_message=None,
+    )
+
+    assert service.process(message, []) is True
+    assert repository.routed is not None
+    assert repository.routed[1].matched_condition_id == 35
+    assert repository.routed[1].village_matches == []
+    assert message.status == MessageStatus.error
 
 
 def _village(village_id: int, arabic: str, caza_en: str = "Sour") -> SimpleNamespace:
