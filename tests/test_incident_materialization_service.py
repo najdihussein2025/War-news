@@ -69,6 +69,9 @@ class _SessionStub:
         self.scalar_calls += 1
         return self.scalar_result
 
+    def execute(self, _statement, _params=None):
+        return None
+
 
 # ---------------------------------------------------------------------------
 # Helpers: build match_results in the new village_matches shape

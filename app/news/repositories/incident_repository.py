@@ -453,6 +453,25 @@ class IncidentRepository(IncidentRepositoryInterface):
         )
         self.db.flush()
 
+    def create_fast_path_duplicate_match(
+        self,
+        *,
+        canonical_incident: Incident,
+        raw_message_id: int,
+    ) -> None:
+        """Record a window-match skip that never created a second incident row."""
+        self.db.add(
+            DuplicateMatch(
+                incident_id=canonical_incident.id,
+                matched_incident_id=None,
+                raw_message_id=raw_message_id,
+                match_type=MatchType.exact,
+                similarity_score=None,
+                status=MatchStatus.pending,
+            )
+        )
+        self.db.flush()
+
     def merge_existing(
         self,
         existing: Incident,

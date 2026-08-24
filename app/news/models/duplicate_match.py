@@ -33,10 +33,15 @@ class DuplicateMatch(Base):
         ForeignKey("incidents.id", ondelete="CASCADE"),
         nullable=False,
     )
-    matched_incident_id: Mapped[str] = mapped_column(
+    matched_incident_id: Mapped[str | None] = mapped_column(
         PgUUID(as_uuid=True),
         ForeignKey("incidents.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
+    )
+    raw_message_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("raw_messages.id", ondelete="SET NULL"),
+        nullable=True,
     )
     match_type: Mapped[MatchType] = mapped_column(
         SqlEnum(MatchType, name="match_type"),

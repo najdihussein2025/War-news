@@ -99,6 +99,7 @@ def test_process_fast_path_marks_message_duplicate_when_all_villages_duplicate()
             outcome=FastPathDedupOutcome.confident_duplicate,
             canonical_incident_id="canonical",
             representative_raw_message_id=999,
+            canonical_incident=SimpleNamespace(id="canonical", raw_message_id=999),
         )
     )
 
@@ -121,6 +122,7 @@ def test_process_fast_path_marks_message_duplicate_when_all_villages_duplicate()
     assert message.status == MessageStatus.duplicate
     assert message.duplicate_of_id == 999
     assert service.fast_stats.marked_message_duplicate == 1
+    dedup.incidents.create_fast_path_duplicate_match.assert_called_once()
     db.commit.assert_called()
 
 

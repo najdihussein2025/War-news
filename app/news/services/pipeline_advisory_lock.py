@@ -12,6 +12,23 @@ PIPELINE_SWEEP_ADVISORY_LOCK_KEY = 84729103
 PIPELINE_WORKER_APPLICATION_NAME = "war-news-pipeline"
 
 
+def acquire_fast_path_village_lock(
+    db: Session,
+    village_id: int,
+    condition_id: int,
+) -> None:
+    """Hold a transaction-scoped advisory lock for one village+condition pair.
+
+    The incident row being protected may not exist yet, so a row lock cannot
+    cover the check-then-insert. ``pg_advisory_xact_lock`` is released on
+    commit or rollback.
+    """
+    db.execute(
+        text("SELECT pg_advisory_xact_lock(:village_id, :condition_id)"),
+        {"village_id": village_id, "condition_id": condition_id},
+    )
+
+
 @dataclass(frozen=True)
 class AdvisoryLockHolder:
     pid: int

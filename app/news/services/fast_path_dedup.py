@@ -3,10 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from app.core.config import settings
 from app.news.repositories.incident_repository import IncidentRepository
+
+if TYPE_CHECKING:
+    from app.news.models import Incident
 
 
 class FastPathDedupOutcome(str, Enum):
@@ -20,6 +24,7 @@ class FastPathDedupDecision:
     outcome: FastPathDedupOutcome
     canonical_incident_id: UUID | None = None
     representative_raw_message_id: int | None = None
+    canonical_incident: Incident | None = None
 
 
 CONFIDENT_MATCH_STATUSES = frozenset({"matched"})
@@ -64,6 +69,7 @@ class FastPathDedupService:
                     outcome=FastPathDedupOutcome.confident_duplicate,
                     canonical_incident_id=existing.id,
                     representative_raw_message_id=existing.raw_message_id,
+                    canonical_incident=existing,
                 )
 
         return FastPathDedupDecision(outcome=FastPathDedupOutcome.materialize)

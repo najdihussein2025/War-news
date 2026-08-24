@@ -17,9 +17,11 @@ from app.news.interfaces import DedupMatchingInterface
 from app.news.models import Incident, IncidentDetail, MessageStatus, RawMessage
 from app.news.services.category_mapper import compute_rollups, map_categories
 from app.news.services.fast_path_dedup import (
+    MATERIALIZE_MATCH_STATUSES,
     FastPathDedupOutcome,
     FastPathDedupService,
 )
+from app.news.services.pipeline_advisory_lock import acquire_fast_path_village_lock
 from app.news.services.fast_path_eligibility import (
     ELIGIBLE_MATCH_STATUSES,
     ERROR_AIR_VIOLATION,
@@ -112,6 +114,13 @@ class IncidentMaterializationService:
         for village_match in village_matches:
             village_status = village_match.get("village_match_status")
             village_id = self._optional_int(village_match.get("matched_village_id"))
+            holds_village_lock = (
+                village_id is not None
+                and village_status in MATERIALIZE_MATCH_STATUSES
+            )
+            if holds_village_lock:
+                assert village_id is not None
+                acquire_fast_path_village_lock(self.db, village_id, condition_id)
 
             decision = fast_dedup.decide_for_village(
                 village_match_status=village_status,
@@ -124,6 +133,8 @@ class IncidentMaterializationService:
 
             if decision.outcome == FastPathDedupOutcome.skip_ineligible:
                 self.fast_stats.skipped_ineligible += 1
+                if holds_village_lock:
+                    self.db.commit()
                 logger.info(
                     "raw_message_id=%s village skipped fast_path: village_match_status=%r",
                     representative.id,
@@ -138,13 +149,25 @@ class IncidentMaterializationService:
                 self.fast_stats.skipped_confident_duplicate += 1
                 if decision.representative_raw_message_id is not None:
                     representative_raw_message_id = decision.representative_raw_message_id
+                try:
+                    if decision.canonical_incident is not None:
+                        fast_dedup.incidents.create_fast_path_duplicate_match(
+                            canonical_incident=decision.canonical_incident,
+                            raw_message_id=representative.id,
+                        )
+                    self.db.commit()
+                except Exception:
+                    self.db.rollback()
+                    raise
                 logger.info(
                     "raw_message_id=%s village_id=%s fast_path confident_duplicate "
-                    "canonical_incident_id=%s representative_raw_message_id=%s",
+                    "canonical_incident_id=%s representative_raw_message_id=%s "
+                    "duplicate_match_written=%s",
                     representative.id,
                     village_id,
                     decision.canonical_incident_id,
                     decision.representative_raw_message_id,
+                    decision.canonical_incident is not None,
                 )
                 continue
 
