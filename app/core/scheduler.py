@@ -19,6 +19,10 @@ _scheduler_thread: threading.Thread | None = None
 _scheduler_stop_event: threading.Event | None = None
 
 
+def _uses_cnrs_polling(source) -> bool:
+    return (source.config or {}).get("delivery_method") != "webhook"
+
+
 def _poll_cnrs() -> None:
     if not settings.cnrs_api_key:
         logger.error("CNRS polling skipped: CNRS_API_KEY is not configured")
@@ -30,6 +34,9 @@ def _poll_cnrs() -> None:
         source = repository.get_active_by_external_id("cnrs_webhook")
         if source is None:
             logger.error("CNRS polling skipped: active cnrs_webhook source was not found")
+            return
+        if not _uses_cnrs_polling(source):
+            logger.info("CNRS polling skipped: source uses webhook delivery")
             return
         started_at = datetime.now(timezone.utc)
 

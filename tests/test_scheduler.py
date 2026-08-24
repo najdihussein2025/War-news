@@ -1,5 +1,6 @@
 from app.core import scheduler
 from app.core.config import settings
+from types import SimpleNamespace
 
 
 class _FakeThread:
@@ -21,6 +22,15 @@ class _FakeThread:
     def join(self, timeout=None) -> None:
         self.joined = True
         self._alive = False
+
+
+def test_cnrs_webhook_source_is_not_polled() -> None:
+    assert scheduler._uses_cnrs_polling(
+        SimpleNamespace(config={"delivery_method": "webhook"})
+    ) is False
+    assert scheduler._uses_cnrs_polling(
+        SimpleNamespace(config={"delivery_method": "polling"})
+    ) is True
 
 
 def test_start_scheduler_skips_when_red_alert_disabled(monkeypatch) -> None:

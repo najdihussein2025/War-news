@@ -337,7 +337,7 @@ class RedAlertCollector:
         posts = posts_within_window(fetched_posts, self.min_message_datetime)
         skipped_before_cutoff = len(fetched_posts) - len(posts)
         villages = list(self.db.scalars(select(Village).where(Village.is_active.is_(True))))
-        saved = duplicates = failed = air_violations = 0
+        saved = duplicates = failed = air_violations = new_air_violations = 0
         for post in posts:
             external_id = f"telegram:{self.channel_username}:{post.message_id}"
             existing = self.db.scalar(
@@ -368,6 +368,11 @@ class RedAlertCollector:
                     logger.exception("Red Alert OCR enrichment failed message_id=%s", post.message_id)
                 continue
             text = self._text_with_optional_ocr(post)
+            # The Red Alert feed also contains donations, advertisements,
+            # artillery reports, and other operational notices. Inspect them
+            # in memory, but persist only recognized air-violation news.
+            if classify_condition(text) is None:
+                continue
             payload = post.raw_payload(self.channel_username)
             if text != post.text:
                 payload["preview_text"] = post.text
@@ -392,6 +397,7 @@ class RedAlertCollector:
                 saved += 1
                 if self.air_violation_service.process(message, villages):
                     air_violations += 1
+                    new_air_violations += 1
                 self.db.commit()
             except IntegrityError:
                 self.db.rollback()
@@ -404,8 +410,8 @@ class RedAlertCollector:
         # posts. Record an ingestion run only when a new air-violation row was
         # actually created; duplicate-only and unrelated polls are operational
         # noise and would otherwise produce thousands of empty log entries.
-        if air_violations > 0:
-            self._write_log(source.id, air_violations, started_at)
+        if new_air_violations > 0:
+            self._write_log(source.id, new_air_violations, started_at)
         return {
             "fetched": len(fetched_posts),
             "saved": saved,

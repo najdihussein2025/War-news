@@ -41,6 +41,13 @@ class IngestionLogRepository(IngestionLogRepositoryInterface):
     def list_page(self, filters: IngestionLogFilterData) -> IngestionLogPageDTO:
         conditions = [
             or_(
+                Source.external_id != "cnrs_webhook",
+                Source.config["delivery_method"].astext != "webhook",
+                IngestionLog.status != "failed",
+                IngestionLog.error_message.is_(None),
+                ~IngestionLog.error_message.ilike("%Invalid bearer token%"),
+            ),
+            or_(
                 IngestionLog.status != "completed",
                 IngestionLog.messages_fetched <= 0,
                 IngestionLog.messages_parsed > 0,
