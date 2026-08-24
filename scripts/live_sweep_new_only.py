@@ -8,7 +8,7 @@ from typing import Any
 from unittest.mock import patch
 
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import settings
 from app.core.database import SessionLocal
@@ -69,6 +69,7 @@ def _get_pending_unfiltered_batch_filtered(
     return list(
         self.db.scalars(
             select(RawMessage)
+            .options(joinedload(RawMessage.source))
             .where(
                 RawMessage.id > CUTOFF_RAW_MESSAGE_ID,
                 RawMessage.status == MessageStatus.pending,

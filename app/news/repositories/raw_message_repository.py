@@ -1,7 +1,7 @@
 from typing import Any
 
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import settings
 from app.llm.dtos import (
@@ -28,6 +28,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         return list(
             self.db.scalars(
                 select(RawMessage)
+                .options(joinedload(RawMessage.source))
                 .where(
                     RawMessage.status == MessageStatus.pending,
                     RawMessage.filter_result.is_(None),

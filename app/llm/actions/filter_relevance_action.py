@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 RELEVANCE_BATCH_SIZE = 15
 KEYWORD_PREFILTER_REASONING = "no keyword match (village/action)"
 KEYWORD_PREFILTER_MODEL = "keyword_prefilter"
+TRUSTED_SOURCE_REASONING = "skipped relevance check: trusted source"
+TRUSTED_SOURCE_BACKEND = "trusted_source"
 
 
 def _format_exception(exc: Exception) -> str:
@@ -71,6 +73,42 @@ class FilterRelevanceAction:
 
         candidates: list[RawMessage] = []
         for message in messages:
+            source = getattr(message, "source", None)
+            source_config = getattr(source, "config", None) or {}
+            if source_config.get("trusted") is True:
+                try:
+                    result = ClassificationResultDTO(
+                        raw_message_id=message.id,
+                        verdict=ClassificationVerdict.relevant,
+                        confidence=1.0,
+                        reasoning=TRUSTED_SOURCE_REASONING,
+                        backend=TRUSTED_SOURCE_BACKEND,
+                    )
+                    policy = policy_for_result(result)
+                    self.raw_messages.save_filter_result(
+                        message=message,
+                        result=result,
+                        new_status=status_for_result(result),
+                        needs_review=policy.needs_review,
+                    )
+                    relevant += 1
+                    logger.info(
+                        "skipped relevance check: trusted source "
+                        "raw_message_id=%s source_id=%s source_name=%s",
+                        message.id,
+                        getattr(source, "id", None),
+                        getattr(source, "name", None),
+                    )
+                except Exception as exc:
+                    self.raw_messages.rollback()
+                    errored += 1
+                    logger.error(
+                        "raw_message_id=%s trusted-source skip save failed: %s",
+                        message.id,
+                        _format_exception(exc),
+                    )
+                continue
+
             cnrs_result = classification_from_cnrs(message)
             if cnrs_result is not None:
                 try:

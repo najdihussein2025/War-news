@@ -5,6 +5,10 @@ import json
 import httpx
 import pytest
 
+import app.accounts.models  # noqa: F401
+import app.logs.models  # noqa: F401
+import app.sources.models  # noqa: F401
+
 from app.core.ollama_client import OllamaChatClient
 from app.llm.dtos import (
     ClassificationResultDTO,
