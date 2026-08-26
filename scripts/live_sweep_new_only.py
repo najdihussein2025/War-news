@@ -7,7 +7,7 @@ from contextlib import ExitStack
 from typing import Any
 from unittest.mock import patch
 
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import settings
@@ -42,11 +42,6 @@ SWEEP_NAME = "live_sweep_new_only"
 EXTRACTION_RETRY_CAP_PREFIX = "extraction: exceeded max retries"
 MAX_ROWS: int | None = None
 
-# Process-local watermark loaded at the start of each run. Claim/batch patches
-# read this instead of a hardcoded raw_messages.id cutoff.
-_cutoff_raw_message_id = 0
-
-
 class FilteredSession:
     """Process-local session wrapper for sync stage eligibility queries."""
 
@@ -68,8 +63,8 @@ class FilteredSession:
         return getattr(self._session, name)
 
 
-def _id_above_cutoff():
-    return RawMessage.id > _cutoff_raw_message_id
+def _id_above_cutoff(cutoff_raw_message_id: int):
+    return RawMessage.id > cutoff_raw_message_id
 
 
 def _retryable_extraction_error_clause():
@@ -86,97 +81,9 @@ def _retryable_extraction_error_clause():
     )
 
 
-def _still_open_clause():
-    """Rows that still need live-sweep work and must not be skipped by the watermark."""
-    has_active_incident = (
-        select(Incident.id)
-        .where(
-            Incident.raw_message_id == RawMessage.id,
-            Incident.is_deleted.is_(False),
-        )
-        .exists()
-    )
-    has_details_pending = (
-        select(Incident.id)
-        .where(
-            Incident.raw_message_id == RawMessage.id,
-            Incident.is_deleted.is_(False),
-            Incident.details_pending.is_(True),
-        )
-        .exists()
-    )
-    return or_(
-        and_(
-            RawMessage.status == MessageStatus.pending,
-            RawMessage.filter_result.is_(None),
-        ),
-        and_(
-            RawMessage.status == MessageStatus.parsed,
-            RawMessage.extraction_result.is_(None),
-            RawMessage.duplicate_of_id.is_(None),
-        ),
-        and_(
-            _retryable_extraction_error_clause(),
-            ~RawMessage.error_message.startswith(EXTRACTION_RETRY_CAP_PREFIX),
-        ),
-        and_(
-            RawMessage.status == MessageStatus.parsed,
-            RawMessage.extraction_result.is_not(None),
-            RawMessage.match_result.is_(None),
-            RawMessage.duplicate_of_id.is_(None),
-        ),
-        and_(
-            RawMessage.status == MessageStatus.parsed,
-            RawMessage.duplicate_of_id.is_(None),
-            RawMessage.match_result.is_not(None),
-            RawMessage.extraction_result.is_not(None),
-            ~has_active_incident,
-        ),
-        and_(
-            RawMessage.status == MessageStatus.parsed,
-            RawMessage.duplicate_of_id.is_(None),
-            RawMessage.content_embedding.is_(None),
-        ),
-        has_details_pending,
-    )
-
-
-def next_cursor_value(
-    *,
-    previous_id: int,
-    min_open_id: int | None,
-    max_id_above: int | None,
-) -> int:
-    """Advance to the highest safe id, never moving backwards or past retryable work."""
-    if min_open_id is not None:
-        candidate = min_open_id - 1
-    elif max_id_above is not None:
-        candidate = max_id_above
-    else:
-        candidate = previous_id
-    return max(previous_id, candidate)
-
-
-def compute_next_cursor(db: Session, previous_id: int) -> int:
-    min_open_id = db.scalar(
-        select(func.min(RawMessage.id)).where(
-            RawMessage.id > previous_id,
-            _still_open_clause(),
-        )
-    )
-    max_id_above = db.scalar(
-        select(func.max(RawMessage.id)).where(RawMessage.id > previous_id)
-    )
-    return next_cursor_value(
-        previous_id=previous_id,
-        min_open_id=min_open_id,
-        max_id_above=max_id_above,
-    )
-
-
 def _load_cursor() -> int:
     with SessionLocal() as db:
-        return SweepCursorRepository(db).get_or_create(SWEEP_NAME)
+        return SweepCursorRepository(db).get(SWEEP_NAME)
 
 
 def _persist_cursor(last_processed_id: int) -> None:
@@ -184,69 +91,75 @@ def _persist_cursor(last_processed_id: int) -> None:
         SweepCursorRepository(db).save(SWEEP_NAME, last_processed_id)
 
 
-def _advance_and_persist_cursor(previous_id: int) -> int:
-    with SessionLocal() as db:
-        advanced_to = compute_next_cursor(db, previous_id)
-    if advanced_to != previous_id:
-        _persist_cursor(advanced_to)
-    return advanced_to
+def _advance_cursor_after_relevance(
+    *,
+    previous_id: int,
+    max_processed_id: int | None,
+) -> int:
+    if max_processed_id is None:
+        logger.info(
+            "Live-sweep cursor unchanged cutoff_raw_message_id=%s sweep_name=%s",
+            previous_id,
+            SWEEP_NAME,
+        )
+        return previous_id
 
+    advanced_to = max(previous_id, max_processed_id)
+    if advanced_to == previous_id:
+        logger.info(
+            "Live-sweep cursor unchanged cutoff_raw_message_id=%s sweep_name=%s "
+            "max_processed_id=%s",
+            previous_id,
+            SWEEP_NAME,
+            max_processed_id,
+        )
+        return previous_id
 
-def _refresh_persisted_cursor(*, fatal: bool = False) -> int:
-    """Recompute the watermark from current row states and persist if it moved.
-
-    Terminal statuses (rejected, duplicate, error, routed_air_violation) do not
-    keep the cursor at 0; only still-open/retryable rows do. Called before the
-    first stage and after each stage so a later LLM-stage kill cannot lose
-    progress already made on done rows.
-    """
-    global _cutoff_raw_message_id
-    previous = _cutoff_raw_message_id
     try:
-        advanced_to = _advance_and_persist_cursor(previous)
+        _persist_cursor(advanced_to)
     except Exception:
         logger.exception(
             "Failed to persist live-sweep cursor sweep_name=%s "
-            "cutoff_raw_message_id=%s; skipping cursor advance",
+            "from=%s to=%s max_processed_id=%s",
             SWEEP_NAME,
-            previous,
-        )
-        if fatal:
-            raise
-        return previous
-    if advanced_to != previous:
-        logger.info(
-            "Live-sweep cursor advanced from=%s to=%s sweep_name=%s",
-            previous,
+            previous_id,
             advanced_to,
-            SWEEP_NAME,
+            max_processed_id,
         )
-        _cutoff_raw_message_id = advanced_to
-    else:
-        logger.info(
-            "Live-sweep cursor unchanged cutoff_raw_message_id=%s sweep_name=%s",
-            previous,
-            SWEEP_NAME,
-        )
+        raise
+
+    logger.info(
+        "Live-sweep cursor advanced from=%s to=%s sweep_name=%s max_processed_id=%s",
+        previous_id,
+        advanced_to,
+        SWEEP_NAME,
+        max_processed_id,
+    )
     return advanced_to
 
 
-def _finish_stage(result: StageSweepResult) -> StageSweepResult:
-    _emit_stage_result(result)
-    _refresh_persisted_cursor(fatal=False)
+def _finish_stage(
+    result: StageSweepResult,
+    *,
+    cutoff_raw_message_id: int,
+) -> StageSweepResult:
+    _emit_stage_result(result, cutoff_raw_message_id=cutoff_raw_message_id)
     return result
 
 
 def _get_pending_unfiltered_batch_filtered(
     self: RawMessageRepository,
     limit: int,
+    *,
+    cutoff_raw_message_id: int,
+    processed_ids: list[int] | None = None,
 ) -> list[RawMessage]:
-    return list(
+    messages = list(
         self.db.scalars(
             select(RawMessage)
             .options(joinedload(RawMessage.source, innerjoin=True))
             .where(
-                _id_above_cutoff(),
+                _id_above_cutoff(cutoff_raw_message_id),
                 RawMessage.status == MessageStatus.pending,
                 RawMessage.filter_result.is_(None),
             )
@@ -255,17 +168,22 @@ def _get_pending_unfiltered_batch_filtered(
             .with_for_update(skip_locked=True)
         ).all()
     )
+    if processed_ids is not None:
+        processed_ids.extend(message.id for message in messages)
+    return messages
 
 
 def _get_pending_extraction_batch_filtered(
     self: RawMessageRepository,
     limit: int,
+    *,
+    cutoff_raw_message_id: int,
 ) -> list[RawMessage]:
     return list(
         self.db.scalars(
             select(RawMessage)
             .where(
-                _id_above_cutoff(),
+                _id_above_cutoff(cutoff_raw_message_id),
                 RawMessage.status == MessageStatus.parsed,
                 RawMessage.extraction_result.is_(None),
                 RawMessage.duplicate_of_id.is_(None),
@@ -281,6 +199,7 @@ def _reset_retryable_extraction_errors_filtered(
     self: RawMessageRepository,
     limit: int = 200,
     *,
+    cutoff_raw_message_id: int,
     max_retries: int | None = None,
 ) -> tuple[int, int]:
     retry_limit = (
@@ -293,7 +212,7 @@ def _reset_retryable_extraction_errors_filtered(
         self.db.scalars(
             select(RawMessage)
             .where(
-                _id_above_cutoff(),
+                _id_above_cutoff(cutoff_raw_message_id),
                 _retryable_extraction_error_clause(),
             )
             .order_by(RawMessage.id.asc())
@@ -334,11 +253,13 @@ def _reset_retryable_extraction_errors_filtered(
 
 def _claim_pending_pre_dedup_filtered(
     self: PipelineClaimRepository,
+    *,
+    cutoff_raw_message_id: int,
 ) -> RawMessage | None:
     return self.db.scalar(
         select(RawMessage)
         .where(
-            _id_above_cutoff(),
+            _id_above_cutoff(cutoff_raw_message_id),
             RawMessage.status == MessageStatus.parsed,
             RawMessage.extraction_result.is_(None),
             RawMessage.duplicate_of_id.is_(None),
@@ -351,11 +272,13 @@ def _claim_pending_pre_dedup_filtered(
 
 def _claim_pending_extraction_filtered(
     self: PipelineClaimRepository,
+    *,
+    cutoff_raw_message_id: int,
 ) -> RawMessage | None:
     return self.db.scalar(
         select(RawMessage)
         .where(
-            _id_above_cutoff(),
+            _id_above_cutoff(cutoff_raw_message_id),
             RawMessage.status == MessageStatus.parsed,
             RawMessage.extraction_result.is_(None),
             RawMessage.duplicate_of_id.is_(None),
@@ -368,11 +291,13 @@ def _claim_pending_extraction_filtered(
 
 def _claim_pending_match_filtered(
     self: PipelineClaimRepository,
+    *,
+    cutoff_raw_message_id: int,
 ) -> RawMessage | None:
     return self.db.scalar(
         select(RawMessage)
         .where(
-            _id_above_cutoff(),
+            _id_above_cutoff(cutoff_raw_message_id),
             RawMessage.status == MessageStatus.parsed,
             RawMessage.extraction_result.is_not(None),
             RawMessage.match_result.is_(None),
@@ -386,6 +311,8 @@ def _claim_pending_match_filtered(
 
 def _claim_pending_fast_path_filtered(
     self: PipelineClaimRepository,
+    *,
+    cutoff_raw_message_id: int,
 ) -> RawMessage | None:
     has_active_incident = (
         select(Incident.id)
@@ -398,7 +325,7 @@ def _claim_pending_fast_path_filtered(
     return self.db.scalar(
         select(RawMessage)
         .where(
-            _id_above_cutoff(),
+            _id_above_cutoff(cutoff_raw_message_id),
             RawMessage.status == MessageStatus.parsed,
             RawMessage.duplicate_of_id.is_(None),
             RawMessage.match_result.is_not(None),
@@ -414,6 +341,8 @@ def _claim_pending_fast_path_filtered(
 
 def _claim_pending_tier2_detail_fill_filtered(
     self: PipelineClaimRepository,
+    *,
+    cutoff_raw_message_id: int,
 ) -> Incident | None:
     return self.db.scalar(
         select(Incident)
@@ -421,7 +350,7 @@ def _claim_pending_tier2_detail_fill_filtered(
         .where(
             Incident.details_pending.is_(True),
             Incident.is_deleted.is_(False),
-            _id_above_cutoff(),
+            _id_above_cutoff(cutoff_raw_message_id),
         )
         .order_by(Incident.created_at.asc())
         .limit(1)
@@ -431,6 +360,8 @@ def _claim_pending_tier2_detail_fill_filtered(
 
 def _terminalize_ineligible_fast_path_filtered(
     self: PipelineClaimRepository,
+    *,
+    cutoff_raw_message_id: int,
 ) -> int:
     has_active_incident = (
         select(Incident.id)
@@ -444,7 +375,7 @@ def _terminalize_ineligible_fast_path_filtered(
         self.db.scalars(
             select(RawMessage)
             .where(
-                _id_above_cutoff(),
+                _id_above_cutoff(cutoff_raw_message_id),
                 RawMessage.status == MessageStatus.parsed,
                 RawMessage.duplicate_of_id.is_(None),
                 RawMessage.match_result.is_not(None),
@@ -474,85 +405,179 @@ def _terminalize_ineligible_fast_path_filtered(
     return updated
 
 
-def _apply_process_local_filter_patches() -> ExitStack:
+def _apply_process_local_filter_patches(
+    *,
+    cutoff_raw_message_id: int,
+    relevance_processed_ids: list[int] | None = None,
+) -> ExitStack:
     stack = ExitStack()
+
+    def get_pending_unfiltered_batch(
+        self: RawMessageRepository,
+        limit: int,
+    ) -> list[RawMessage]:
+        return _get_pending_unfiltered_batch_filtered(
+            self,
+            limit,
+            cutoff_raw_message_id=cutoff_raw_message_id,
+            processed_ids=relevance_processed_ids,
+        )
+
+    def get_pending_extraction_batch(
+        self: RawMessageRepository,
+        limit: int,
+    ) -> list[RawMessage]:
+        return _get_pending_extraction_batch_filtered(
+            self,
+            limit,
+            cutoff_raw_message_id=cutoff_raw_message_id,
+        )
+
+    def reset_retryable_extraction_errors(
+        self: RawMessageRepository,
+        limit: int = 200,
+        *,
+        max_retries: int | None = None,
+    ) -> tuple[int, int]:
+        return _reset_retryable_extraction_errors_filtered(
+            self,
+            limit,
+            cutoff_raw_message_id=cutoff_raw_message_id,
+            max_retries=max_retries,
+        )
+
+    def claim_pending_pre_dedup(
+        self: PipelineClaimRepository,
+    ) -> RawMessage | None:
+        return _claim_pending_pre_dedup_filtered(
+            self,
+            cutoff_raw_message_id=cutoff_raw_message_id,
+        )
+
+    def claim_pending_extraction(
+        self: PipelineClaimRepository,
+    ) -> RawMessage | None:
+        return _claim_pending_extraction_filtered(
+            self,
+            cutoff_raw_message_id=cutoff_raw_message_id,
+        )
+
+    def claim_pending_match(
+        self: PipelineClaimRepository,
+    ) -> RawMessage | None:
+        return _claim_pending_match_filtered(
+            self,
+            cutoff_raw_message_id=cutoff_raw_message_id,
+        )
+
+    def claim_pending_fast_path(
+        self: PipelineClaimRepository,
+    ) -> RawMessage | None:
+        return _claim_pending_fast_path_filtered(
+            self,
+            cutoff_raw_message_id=cutoff_raw_message_id,
+        )
+
+    def claim_pending_tier2_detail_fill(
+        self: PipelineClaimRepository,
+    ) -> Incident | None:
+        return _claim_pending_tier2_detail_fill_filtered(
+            self,
+            cutoff_raw_message_id=cutoff_raw_message_id,
+        )
+
+    def terminalize_ineligible_fast_path(self: PipelineClaimRepository) -> int:
+        return _terminalize_ineligible_fast_path_filtered(
+            self,
+            cutoff_raw_message_id=cutoff_raw_message_id,
+        )
+
     stack.enter_context(
         patch.object(
             RawMessageRepository,
             "get_pending_unfiltered_batch",
-            _get_pending_unfiltered_batch_filtered,
+            get_pending_unfiltered_batch,
         )
     )
     stack.enter_context(
         patch.object(
             RawMessageRepository,
             "get_pending_extraction_batch",
-            _get_pending_extraction_batch_filtered,
+            get_pending_extraction_batch,
         )
     )
     stack.enter_context(
         patch.object(
             RawMessageRepository,
             "reset_retryable_extraction_errors",
-            _reset_retryable_extraction_errors_filtered,
+            reset_retryable_extraction_errors,
         )
     )
     stack.enter_context(
         patch.object(
             PipelineClaimRepository,
             "claim_pending_pre_dedup",
-            _claim_pending_pre_dedup_filtered,
+            claim_pending_pre_dedup,
         )
     )
     stack.enter_context(
         patch.object(
             PipelineClaimRepository,
             "claim_pending_extraction",
-            _claim_pending_extraction_filtered,
+            claim_pending_extraction,
         )
     )
     stack.enter_context(
         patch.object(
             PipelineClaimRepository,
             "claim_pending_match",
-            _claim_pending_match_filtered,
+            claim_pending_match,
         )
     )
     stack.enter_context(
         patch.object(
             PipelineClaimRepository,
             "claim_pending_fast_path",
-            _claim_pending_fast_path_filtered,
+            claim_pending_fast_path,
         )
     )
     stack.enter_context(
         patch.object(
             PipelineClaimRepository,
             "claim_pending_tier2_detail_fill",
-            _claim_pending_tier2_detail_fill_filtered,
+            claim_pending_tier2_detail_fill,
         )
     )
     stack.enter_context(
         patch.object(
             PipelineClaimRepository,
             "terminalize_ineligible_fast_path",
-            _terminalize_ineligible_fast_path_filtered,
+            terminalize_ineligible_fast_path,
         )
     )
     return stack
 
 
-def _emit_stage_result(result: StageSweepResult) -> None:
+def _emit_stage_result(
+    result: StageSweepResult,
+    *,
+    cutoff_raw_message_id: int,
+) -> None:
     line = (
         f"Pipeline stage={result.stage} processed={result.processed} "
         f"succeeded={result.succeeded} failed={result.failed} "
         f"elapsed_seconds={result.elapsed_seconds:.2f}"
     )
-    logger.info("%s cutoff_raw_message_id=%s", line, _cutoff_raw_message_id)
+    logger.info("%s cutoff_raw_message_id=%s", line, cutoff_raw_message_id)
     print(line, flush=True)
 
 
-async def _run_async_stage(stage_name: str, sweep_fn) -> StageSweepResult:
+async def _run_async_stage(
+    stage_name: str,
+    sweep_fn,
+    *,
+    cutoff_raw_message_id: int,
+) -> StageSweepResult:
     started_at = time.monotonic()
     try:
         return await sweep_fn(max_rows=MAX_ROWS)
@@ -560,7 +585,7 @@ async def _run_async_stage(stage_name: str, sweep_fn) -> StageSweepResult:
         logger.exception(
             "Pipeline stage=%s failed cutoff_raw_message_id=%s",
             stage_name,
-            _cutoff_raw_message_id,
+            cutoff_raw_message_id,
         )
         return StageSweepResult(
             stage=stage_name,
@@ -571,17 +596,22 @@ async def _run_async_stage(stage_name: str, sweep_fn) -> StageSweepResult:
         )
 
 
-async def _run_async_stage_with_db(stage_name: str, sweep_fn) -> StageSweepResult:
+async def _run_async_stage_with_db(
+    stage_name: str,
+    sweep_fn,
+    *,
+    cutoff_raw_message_id: int,
+) -> StageSweepResult:
     started_at = time.monotonic()
     with SessionLocal() as db:
-        filtered_db = FilteredSession(db, _cutoff_raw_message_id)
+        filtered_db = FilteredSession(db, cutoff_raw_message_id)
         try:
             return await sweep_fn(filtered_db, max_rows=MAX_ROWS)
         except Exception:
             logger.exception(
                 "Pipeline stage=%s failed cutoff_raw_message_id=%s",
                 stage_name,
-                _cutoff_raw_message_id,
+                cutoff_raw_message_id,
             )
             return StageSweepResult(
                 stage=stage_name,
@@ -592,17 +622,22 @@ async def _run_async_stage_with_db(stage_name: str, sweep_fn) -> StageSweepResul
             )
 
 
-def _run_sync_stage(stage_name: str, sweep_fn) -> StageSweepResult:
+def _run_sync_stage(
+    stage_name: str,
+    sweep_fn,
+    *,
+    cutoff_raw_message_id: int,
+) -> StageSweepResult:
     started_at = time.monotonic()
     with SessionLocal() as db:
-        filtered_db = FilteredSession(db, _cutoff_raw_message_id)
+        filtered_db = FilteredSession(db, cutoff_raw_message_id)
         try:
             return sweep_fn(filtered_db, max_rows=MAX_ROWS)
         except Exception:
             logger.exception(
                 "Pipeline stage=%s failed cutoff_raw_message_id=%s",
                 stage_name,
-                _cutoff_raw_message_id,
+                cutoff_raw_message_id,
             )
             return StageSweepResult(
                 stage=stage_name,
@@ -613,54 +648,126 @@ def _run_sync_stage(stage_name: str, sweep_fn) -> StageSweepResult:
             )
 
 
-async def _run_stages() -> list[StageSweepResult]:
+async def _run_relevance_stage(
+    *,
+    cutoff_raw_message_id: int,
+) -> tuple[StageSweepResult, int | None]:
+    processed_ids: list[int] = []
+    with _apply_process_local_filter_patches(
+        cutoff_raw_message_id=cutoff_raw_message_id,
+        relevance_processed_ids=processed_ids,
+    ):
+        result = await _run_async_stage_with_db(
+            "relevance_filter",
+            sweep_relevance_filter,
+            cutoff_raw_message_id=cutoff_raw_message_id,
+        )
+    return result, max(processed_ids) if processed_ids else None
+
+
+async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
     stages: list[StageSweepResult] = []
-    with _apply_process_local_filter_patches():
+    relevance_result, max_relevance_id = await _run_relevance_stage(
+        cutoff_raw_message_id=cutoff_raw_message_id,
+    )
+    stages.append(
+        _finish_stage(
+            relevance_result,
+            cutoff_raw_message_id=cutoff_raw_message_id,
+        )
+    )
+    _advance_cursor_after_relevance(
+        previous_id=cutoff_raw_message_id,
+        max_processed_id=max_relevance_id,
+    )
+
+    with _apply_process_local_filter_patches(
+        cutoff_raw_message_id=cutoff_raw_message_id
+    ):
         stages.append(
             _finish_stage(
-                await _run_async_stage_with_db(
-                    "relevance_filter", sweep_relevance_filter
-                )
+                await _run_async_stage(
+                    "pre_extraction_dedup",
+                    sweep_pre_dedup_concurrent,
+                    cutoff_raw_message_id=cutoff_raw_message_id,
+                ),
+                cutoff_raw_message_id=cutoff_raw_message_id,
             )
         )
         stages.append(
             _finish_stage(
                 await _run_async_stage(
-                    "pre_extraction_dedup", sweep_pre_dedup_concurrent
-                )
+                    "tier1_extraction",
+                    sweep_extraction_concurrent,
+                    cutoff_raw_message_id=cutoff_raw_message_id,
+                ),
+                cutoff_raw_message_id=cutoff_raw_message_id,
             )
         )
         stages.append(
             _finish_stage(
-                await _run_async_stage("tier1_extraction", sweep_extraction_concurrent)
+                await _run_async_stage(
+                    "matching",
+                    sweep_matching_concurrent,
+                    cutoff_raw_message_id=cutoff_raw_message_id,
+                ),
+                cutoff_raw_message_id=cutoff_raw_message_id,
             )
         )
         stages.append(
-            _finish_stage(await _run_async_stage("matching", sweep_matching_concurrent))
-        )
-        stages.append(
-            _finish_stage(await _run_async_stage("fast_path", sweep_fast_path_concurrent))
+            _finish_stage(
+                await _run_async_stage(
+                    "fast_path",
+                    sweep_fast_path_concurrent,
+                    cutoff_raw_message_id=cutoff_raw_message_id,
+                ),
+                cutoff_raw_message_id=cutoff_raw_message_id,
+            )
         )
         stages.append(
             _finish_stage(
                 await _run_async_stage(
                     "tier2_detail_fill",
                     sweep_tier2_detail_fill_concurrent,
-                )
+                    cutoff_raw_message_id=cutoff_raw_message_id,
+                ),
+                cutoff_raw_message_id=cutoff_raw_message_id,
             )
         )
         stages.append(
-            _finish_stage(_run_sync_stage("embedding", sweep_embedding_generation))
+            _finish_stage(
+                _run_sync_stage(
+                    "embedding",
+                    sweep_embedding_generation,
+                    cutoff_raw_message_id=cutoff_raw_message_id,
+                ),
+                cutoff_raw_message_id=cutoff_raw_message_id,
+            )
         )
-        stages.append(_finish_stage(_run_sync_stage("clustering", sweep_clustering)))
         stages.append(
-            _finish_stage(_run_sync_stage("materialization", sweep_materialization))
+            _finish_stage(
+                _run_sync_stage(
+                    "clustering",
+                    sweep_clustering,
+                    cutoff_raw_message_id=cutoff_raw_message_id,
+                ),
+                cutoff_raw_message_id=cutoff_raw_message_id,
+            )
+        )
+        stages.append(
+            _finish_stage(
+                _run_sync_stage(
+                    "materialization",
+                    sweep_materialization,
+                    cutoff_raw_message_id=cutoff_raw_message_id,
+                ),
+                cutoff_raw_message_id=cutoff_raw_message_id,
+            )
         )
     return stages
 
 
 async def main() -> int:
-    global _cutoff_raw_message_id
     configure_logging()
     try:
         cutoff = _load_cursor()
@@ -671,7 +778,6 @@ async def main() -> int:
         )
         return 0
 
-    _cutoff_raw_message_id = cutoff
     logger.info(
         "Starting one-pass new-only live sweep cutoff_raw_message_id=%s sweep_name=%s",
         cutoff,
@@ -679,16 +785,16 @@ async def main() -> int:
     )
 
     try:
-        _refresh_persisted_cursor(fatal=True)
+        stages = await _run_stages(cutoff_raw_message_id=cutoff)
     except Exception:
+        logger.exception(
+            "Live-sweep run failed cutoff_raw_message_id=%s sweep_name=%s",
+            cutoff,
+            SWEEP_NAME,
+        )
         return 0
 
-    stages = await _run_stages()
-
-    try:
-        advanced_to = _refresh_persisted_cursor(fatal=True)
-    except Exception:
-        return 0
+    advanced_to = _load_cursor()
 
     logger.info(
         "Completed one-pass new-only live sweep cutoff_raw_message_id=%s "

@@ -9,14 +9,12 @@ class SweepCursorRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def get_or_create(self, sweep_name: str) -> int:
+    def get(self, sweep_name: str) -> int:
         row = self.db.get(SweepCursor, sweep_name)
-        if row is None:
-            row = SweepCursor(sweep_name=sweep_name, last_processed_id=0)
-            self.db.add(row)
-            self.db.commit()
-            self.db.refresh(row)
-        return int(row.last_processed_id)
+        return 0 if row is None else int(row.last_processed_id)
+
+    def get_or_create(self, sweep_name: str) -> int:
+        return self.get(sweep_name)
 
     def save(self, sweep_name: str, last_processed_id: int) -> None:
         row = self.db.get(SweepCursor, sweep_name)
