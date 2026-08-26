@@ -7,7 +7,7 @@ from contextlib import ExitStack
 from typing import Any
 from unittest.mock import patch
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import settings
