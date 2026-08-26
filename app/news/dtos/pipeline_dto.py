@@ -8,6 +8,9 @@ class StageSweepResult(BaseModel):
     processed: int
     succeeded: int
     failed: int
+    aborted: bool = False
+    abort_reason: str | None = None
+    unprocessed: int = 0
     elapsed_seconds: float = Field(ge=0.0)
 
 

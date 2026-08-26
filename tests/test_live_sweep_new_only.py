@@ -22,6 +22,19 @@ def _stage(name: str, *, processed: int = 2, failed: int = 0) -> StageSweepResul
     )
 
 
+def _aborted_stage(name: str, *, processed: int = 1, unprocessed: int = 5) -> StageSweepResult:
+    return StageSweepResult(
+        stage=name,
+        processed=processed,
+        succeeded=processed,
+        failed=0,
+        aborted=True,
+        abort_reason="ollama_auth_failed_401",
+        unprocessed=unprocessed,
+        elapsed_seconds=0.01,
+    )
+
+
 def _bound_ids(statement) -> set[object]:
     compiled = statement.compile()
     return set(compiled.params.values())
@@ -119,6 +132,16 @@ def test_finish_stage_keeps_processed_succeeded_failed_shape(capsys) -> None:
     )
 
 
+def test_finish_stage_prints_aborted_shape(capsys) -> None:
+    live_sweep._finish_stage(
+        _aborted_stage("tier1_extraction", processed=7, unprocessed=12),
+        cutoff_raw_message_id=201,
+    )
+    captured = capsys.readouterr()
+    assert "Pipeline stage=tier1_extraction aborted" in captured.out
+    assert "unprocessed=12" in captured.out
+
+
 @pytest.mark.asyncio
 async def test_main_processes_above_persisted_cursor_and_advances(
     monkeypatch, caplog
@@ -214,3 +237,57 @@ async def test_run_stages_advances_cursor_to_relevance_processed_max(
 
     assert stages[0].stage == "relevance_filter"
     persist.assert_called_once_with(1630)
+
+
+@pytest.mark.asyncio
+async def test_run_stages_stops_after_aborted_relevance(monkeypatch) -> None:
+    async def fake_relevance_stage(
+        *,
+        cutoff_raw_message_id: int,
+    ) -> tuple[StageSweepResult, int | None]:
+        assert cutoff_raw_message_id == 201
+        return _aborted_stage("relevance_filter"), None
+
+    run_async = MagicMock()
+    run_sync = MagicMock()
+    persist = MagicMock()
+    monkeypatch.setattr(live_sweep, "_persist_cursor", persist)
+    monkeypatch.setattr(live_sweep, "_run_relevance_stage", fake_relevance_stage)
+    monkeypatch.setattr(live_sweep, "_run_async_stage", run_async)
+    monkeypatch.setattr(live_sweep, "_run_sync_stage", run_sync)
+
+    stages = await live_sweep._run_stages(cutoff_raw_message_id=201)
+
+    assert [stage.stage for stage in stages] == ["relevance_filter"]
+    persist.assert_not_called()
+    run_async.assert_not_called()
+    run_sync.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_run_stages_stops_after_aborted_tier1(monkeypatch) -> None:
+    async def fake_relevance_stage(
+        *,
+        cutoff_raw_message_id: int,
+    ) -> tuple[StageSweepResult, int | None]:
+        return _stage("relevance_filter"), 1630
+
+    async def fake_async_stage(stage_name: str, *args, **kwargs) -> StageSweepResult:
+        if stage_name == "tier1_extraction":
+            return _aborted_stage("tier1_extraction")
+        return _stage(stage_name)
+
+    run_sync = MagicMock()
+    monkeypatch.setattr(live_sweep, "_run_relevance_stage", fake_relevance_stage)
+    monkeypatch.setattr(live_sweep, "_run_async_stage", fake_async_stage)
+    monkeypatch.setattr(live_sweep, "_run_sync_stage", run_sync)
+    monkeypatch.setattr(live_sweep, "_persist_cursor", MagicMock())
+
+    stages = await live_sweep._run_stages(cutoff_raw_message_id=201)
+
+    assert [stage.stage for stage in stages] == [
+        "relevance_filter",
+        "pre_extraction_dedup",
+        "tier1_extraction",
+    ]
+    run_sync.assert_not_called()

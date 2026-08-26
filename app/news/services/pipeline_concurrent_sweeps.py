@@ -7,14 +7,19 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.factories.action_factory import build_match_incident_action
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.ollama_concurrency import run_with_ollama_limit
+from app.llm.services.ollama_auth_failures import (
+    OllamaAuthFailure,
+    coerce_ollama_auth_failure,
+)
 from app.news.dtos.pipeline_dto import StageSweepResult
-from app.news.models import RawMessage
+from app.news.models import Incident, MessageStatus, RawMessage
 from app.news.repositories.incident_repository import IncidentRepository
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
 from app.news.repositories.raw_message_repository import RawMessageRepository
@@ -77,6 +82,27 @@ class _WorkerStats:
             return self.processed >= max_rows
 
 
+@dataclass
+class _AuthAbortState:
+    stage: str
+    event: asyncio.Event = field(default_factory=asyncio.Event)
+    lock: threading.Lock = field(default_factory=threading.Lock)
+    error: OllamaAuthFailure | None = None
+
+    def triggered(self) -> bool:
+        return self.event.is_set()
+
+    def trigger(self, exc: BaseException) -> OllamaAuthFailure | None:
+        auth_failure = coerce_ollama_auth_failure(exc, stage=self.stage)
+        if auth_failure is None:
+            return None
+        with self.lock:
+            if self.error is None:
+                self.error = auth_failure
+                self.event.set()
+            return self.error
+
+
 def _worker_count() -> int:
     return max(1, settings.ollama_max_concurrent_requests)
 
@@ -118,6 +144,59 @@ def _effective_pre_dedup_max_rows(max_rows: int | None) -> int | None:
     if max_rows is not None:
         return max_rows
     return settings.pre_dedup_sweep_row_cap
+
+
+def _count_pending_extraction_rows() -> int:
+    with SessionLocal() as db:
+        return int(
+            db.scalar(
+                select(func.count(RawMessage.id)).where(
+                    RawMessage.status == MessageStatus.parsed,
+                    RawMessage.extraction_result.is_(None),
+                    RawMessage.duplicate_of_id.is_(None),
+                )
+            )
+            or 0
+        )
+
+
+def _count_pending_tier2_rows() -> int:
+    with SessionLocal() as db:
+        return int(
+            db.scalar(
+                select(func.count(Incident.id)).where(
+                    Incident.details_pending.is_(True),
+                    Incident.is_deleted.is_(False),
+                )
+            )
+            or 0
+        )
+
+
+def _aborted_stage_result(
+    *,
+    stage: str,
+    stats: _WorkerStats,
+    started_at: float,
+    abort_state: _AuthAbortState,
+    remaining_count: int,
+) -> StageSweepResult:
+    logger.error(
+        "Ollama authentication failed (401) during stage=%s; aborting sweep pass "
+        "with %s messages left pending",
+        stage,
+        remaining_count,
+    )
+    return StageSweepResult(
+        stage=stage,
+        processed=stats.processed,
+        succeeded=stats.succeeded,
+        failed=stats.failed,
+        aborted=True,
+        abort_reason=str(abort_state.error) if abort_state.error is not None else None,
+        unprocessed=remaining_count,
+        elapsed_seconds=time.monotonic() - started_at,
+    )
 
 
 async def _pre_dedup_worker(
@@ -190,8 +269,11 @@ async def _tier1_extraction_worker(
     stats: _WorkerStats,
     *,
     max_rows: int | None,
+    abort_state: _AuthAbortState,
 ) -> None:
     while True:
+        if abort_state.triggered():
+            return
         if stats.should_stop(max_rows):
             return
 
@@ -200,6 +282,8 @@ async def _tier1_extraction_worker(
             lambda db: PipelineClaimRepository(db).claim_pending_extraction(),
         )
         if raw_message_id is None:
+            return
+        if abort_state.triggered():
             return
 
         try:
@@ -210,6 +294,8 @@ async def _tier1_extraction_worker(
             )
             stats.record_success()
         except ExtractionRetryCappedError as exc:
+            if abort_state.trigger(exc) is not None:
+                return
             logger.error(
                 "Concurrent tier1 extraction capped raw_message_id=%s error=%s",
                 raw_message_id,
@@ -217,6 +303,8 @@ async def _tier1_extraction_worker(
             )
             stats.record_capped()
         except Exception as exc:
+            if abort_state.trigger(exc) is not None:
+                return
             logger.exception(
                 "Concurrent tier1 extraction failed raw_message_id=%s error=%s",
                 raw_message_id,
@@ -244,14 +332,27 @@ async def sweep_extraction_concurrent(
 
     started_at = time.monotonic()
     stats = _WorkerStats()
+    abort_state = _AuthAbortState(stage="tier1_extraction")
     workers = [
         asyncio.create_task(
-            _tier1_extraction_worker(stats, max_rows=max_rows),
+            _tier1_extraction_worker(
+                stats,
+                max_rows=max_rows,
+                abort_state=abort_state,
+            ),
             name=f"tier1-extraction-worker-{index}",
         )
         for index in range(_extraction_worker_count())
     ]
     await asyncio.gather(*workers)
+    if abort_state.triggered():
+        return _aborted_stage_result(
+            stage="tier1_extraction",
+            stats=stats,
+            started_at=started_at,
+            abort_state=abort_state,
+            remaining_count=await asyncio.to_thread(_count_pending_extraction_rows),
+        )
     elapsed_seconds = time.monotonic() - started_at
     capped_total = reset_capped + stats.capped
     logger.info(
@@ -413,8 +514,11 @@ async def _tier2_detail_fill_worker(
     stats: _WorkerStats,
     *,
     max_rows: int | None,
+    abort_state: _AuthAbortState,
 ) -> None:
     while True:
+        if abort_state.triggered():
+            return
         if stats.should_stop(max_rows):
             return
 
@@ -423,6 +527,8 @@ async def _tier2_detail_fill_worker(
             return
 
         incident_id, raw_message_id = claimed
+        if abort_state.triggered():
+            return
         try:
             await run_with_ollama_limit(
                 run_tier2_detail_fill_for_message,
@@ -431,6 +537,8 @@ async def _tier2_detail_fill_worker(
             )
             stats.record_success()
         except Exception as exc:
+            if abort_state.trigger(exc) is not None:
+                return
             logger.exception(
                 "Concurrent tier2 detail fill failed incident_id=%s "
                 "raw_message_id=%s error=%s",
@@ -447,14 +555,27 @@ async def sweep_tier2_detail_fill_concurrent(
 ) -> StageSweepResult:
     started_at = time.monotonic()
     stats = _WorkerStats()
+    abort_state = _AuthAbortState(stage="tier2_detail_fill")
     workers = [
         asyncio.create_task(
-            _tier2_detail_fill_worker(stats, max_rows=max_rows),
+            _tier2_detail_fill_worker(
+                stats,
+                max_rows=max_rows,
+                abort_state=abort_state,
+            ),
             name=f"tier2-detail-fill-worker-{index}",
         )
         for index in range(_extraction_worker_count())
     ]
     await asyncio.gather(*workers)
+    if abort_state.triggered():
+        return _aborted_stage_result(
+            stage="tier2_detail_fill",
+            stats=stats,
+            started_at=started_at,
+            abort_state=abort_state,
+            remaining_count=await asyncio.to_thread(_count_pending_tier2_rows),
+        )
     elapsed_seconds = time.monotonic() - started_at
     logger.info(
         "Concurrent tier2 detail fill completed processed=%s succeeded=%s failed=%s",

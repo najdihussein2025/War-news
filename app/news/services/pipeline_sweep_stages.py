@@ -12,6 +12,7 @@ from app.api.factories.action_factory import (
     build_match_incident_action,
 )
 from app.core.config import settings
+from app.llm.services.ollama_auth_failures import OllamaAuthFailure
 from app.llm.dtos import ExtractPendingMessagesData, FilterPendingMessagesData
 from app.news.dtos.pipeline_dto import StageSweepResult
 from app.news.models import MessageStatus, RawMessage
@@ -55,6 +56,33 @@ def _format_exception(exc: Exception) -> str:
     return f"{type(exc).__name__} (no message)"
 
 
+def _count_pending_unfiltered_rows(db: Session) -> int:
+    return len(
+        list(
+            db.scalars(
+                select(RawMessage.id).where(
+                    RawMessage.status == MessageStatus.pending,
+                    RawMessage.filter_result.is_(None),
+                )
+            ).all()
+        )
+    )
+
+
+def _count_pending_extraction_rows(db: Session) -> int:
+    return len(
+        list(
+            db.scalars(
+                select(RawMessage.id).where(
+                    RawMessage.status == MessageStatus.parsed,
+                    RawMessage.extraction_result.is_(None),
+                    RawMessage.duplicate_of_id.is_(None),
+                )
+            ).all()
+        )
+    )
+
+
 async def sweep_relevance_filter(
     db: Session,
     *,
@@ -79,9 +107,29 @@ async def sweep_relevance_filter(
         if request_size <= 0:
             break
 
-        summary = await action.execute_async(
-            FilterPendingMessagesData(batch_size=request_size)
-        )
+        try:
+            summary = await action.execute_async(
+                FilterPendingMessagesData(batch_size=request_size)
+            )
+        except OllamaAuthFailure as exc:
+            unprocessed = _count_pending_unfiltered_rows(db)
+            logger.error(
+                "Ollama authentication failed (401) during stage=%s; aborting sweep "
+                "pass with %s messages left pending",
+                "relevance_filter",
+                unprocessed,
+            )
+            elapsed_seconds = time.monotonic() - started_at
+            return StageSweepResult(
+                stage="relevance_filter",
+                processed=processed,
+                succeeded=succeeded,
+                failed=failed,
+                aborted=True,
+                abort_reason=str(exc),
+                unprocessed=unprocessed,
+                elapsed_seconds=elapsed_seconds,
+            )
         if summary.processed == 0:
             break
 
@@ -205,7 +253,27 @@ def sweep_extraction(
         if request_size <= 0:
             break
 
-        summary = action.execute(ExtractPendingMessagesData(batch_size=request_size))
+        try:
+            summary = action.execute(ExtractPendingMessagesData(batch_size=request_size))
+        except OllamaAuthFailure as exc:
+            unprocessed = _count_pending_extraction_rows(db)
+            logger.error(
+                "Ollama authentication failed (401) during stage=%s; aborting sweep "
+                "pass with %s messages left pending",
+                "extraction",
+                unprocessed,
+            )
+            elapsed_seconds = time.monotonic() - started_at
+            return StageSweepResult(
+                stage="extraction",
+                processed=processed,
+                succeeded=succeeded,
+                failed=failed,
+                aborted=True,
+                abort_reason=str(exc),
+                unprocessed=unprocessed,
+                elapsed_seconds=elapsed_seconds,
+            )
         if summary.processed == 0:
             break
 

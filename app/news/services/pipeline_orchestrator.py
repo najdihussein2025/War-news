@@ -64,6 +64,19 @@ def _format_exception(exc: BaseException) -> str:
 
 
 def _log_stage_result(result: StageSweepResult) -> None:
+    if result.aborted:
+        logger.error(
+            "Pipeline stage=%s aborted processed=%s succeeded=%s failed=%s "
+            "unprocessed=%s elapsed_seconds=%.2f reason=%s",
+            result.stage,
+            result.processed,
+            result.succeeded,
+            result.failed,
+            result.unprocessed,
+            result.elapsed_seconds,
+            result.abort_reason,
+        )
+        return
     logger.info(
         "Pipeline stage=%s processed=%s succeeded=%s failed=%s elapsed_seconds=%.2f",
         result.stage,
@@ -74,19 +87,40 @@ def _log_stage_result(result: StageSweepResult) -> None:
     )
 
 
+def _log_sweep_abort(stages: list[StageSweepResult], elapsed_seconds: float) -> None:
+    aborted_stages = [stage.stage for stage in stages if stage.aborted]
+    stage_summary = ", ".join(
+        (
+            f"{stage.stage}(processed={stage.processed},succeeded={stage.succeeded},"
+            f"failed={stage.failed},aborted={stage.aborted},"
+            f"unprocessed={stage.unprocessed},elapsed={stage.elapsed_seconds:.2f}s)"
+        )
+        for stage in stages
+    )
+    logger.error(
+        "Pipeline sweep aborted by Ollama authentication failure "
+        "elapsed_seconds=%.2f aborted_stages=%s stages=%s",
+        elapsed_seconds,
+        ",".join(aborted_stages),
+        stage_summary,
+    )
+
+
 async def _run_isolated_stage(
     *,
     stage_name: str,
     runner: Callable[[], Awaitable[StageSweepResult] | StageSweepResult],
     record: Callable[[StageSweepResult], None],
 ) -> None:
-    """Run one stage; log and record failures without aborting later stages."""
+    """Run one stage; auth aborts stop the sweep, other failures do not."""
     started_at = time.monotonic()
     try:
         result = runner()
         if asyncio.iscoroutine(result):
             result = await result
         record(result)
+        if result.aborted:
+            return
         if result.failed > 0:
             logger.warning(
                 "Pipeline stage=%s completed with item failures processed=%s "
@@ -174,6 +208,15 @@ async def run_full_pipeline_sweep(
                 )
             finally:
                 sweep_db.close()
+            if stages and stages[-1].aborted:
+                elapsed_seconds = time.monotonic() - sweep_started_at
+                _log_sweep_abort(stages, elapsed_seconds)
+                return PipelineSweepResult(
+                    skipped=False,
+                    stages=stages,
+                    elapsed_seconds=elapsed_seconds,
+                    partial_failure=True,
+                )
 
             await _run_isolated_stage(
                 stage_name="pre_extraction_dedup",
@@ -185,6 +228,15 @@ async def run_full_pipeline_sweep(
                 runner=lambda: sweep_extraction_concurrent(max_rows=max_rows),
                 record=_record_stage,
             )
+            if stages and stages[-1].aborted:
+                elapsed_seconds = time.monotonic() - sweep_started_at
+                _log_sweep_abort(stages, elapsed_seconds)
+                return PipelineSweepResult(
+                    skipped=False,
+                    stages=stages,
+                    elapsed_seconds=elapsed_seconds,
+                    partial_failure=True,
+                )
             await _run_isolated_stage(
                 stage_name="matching",
                 runner=lambda: sweep_matching_concurrent(max_rows=max_rows),
@@ -200,6 +252,15 @@ async def run_full_pipeline_sweep(
                 runner=lambda: sweep_tier2_detail_fill_concurrent(max_rows=max_rows),
                 record=_record_stage,
             )
+            if stages and stages[-1].aborted:
+                elapsed_seconds = time.monotonic() - sweep_started_at
+                _log_sweep_abort(stages, elapsed_seconds)
+                return PipelineSweepResult(
+                    skipped=False,
+                    stages=stages,
+                    elapsed_seconds=elapsed_seconds,
+                    partial_failure=True,
+                )
 
             for stage_name, sweep_fn in (
                 ("embedding", sweep_embedding_generation),
@@ -223,12 +284,18 @@ async def run_full_pipeline_sweep(
 
         elapsed_seconds = time.monotonic() - sweep_started_at
         failed_stages = [stage.stage for stage in stages if stage.failed > 0]
+        aborted_stages = [stage.stage for stage in stages if stage.aborted]
         stage_summary = ", ".join(
-            f"{stage.stage}(processed={stage.processed},succeeded={stage.succeeded},"
-            f"failed={stage.failed},elapsed={stage.elapsed_seconds:.2f}s)"
+            (
+                f"{stage.stage}(processed={stage.processed},succeeded={stage.succeeded},"
+                f"failed={stage.failed},aborted={stage.aborted},"
+                f"unprocessed={stage.unprocessed},elapsed={stage.elapsed_seconds:.2f}s)"
+            )
             for stage in stages
         )
-        if failed_stages:
+        if aborted_stages:
+            _log_sweep_abort(stages, elapsed_seconds)
+        elif failed_stages:
             logger.warning(
                 "Pipeline sweep completed with stage failures elapsed_seconds=%.2f "
                 "failed_stages=%s stages=%s",
@@ -246,7 +313,7 @@ async def run_full_pipeline_sweep(
             skipped=False,
             stages=stages,
             elapsed_seconds=elapsed_seconds,
-            partial_failure=bool(failed_stages),
+            partial_failure=bool(failed_stages or aborted_stages),
         )
     except Exception:
         logger.exception(

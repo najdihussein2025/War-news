@@ -9,6 +9,7 @@ from app.llm.services.transient_llm_errors import (
     ExtractionRetryCappedError,
     is_transient_llm_error,
 )
+from app.llm.services.ollama_auth_failures import coerce_ollama_auth_failure
 from app.news.interfaces import RawMessageRepositoryInterface
 from app.news.models import MessageStatus
 
@@ -47,6 +48,12 @@ class ExtractIncidentsAction:
                 extracted += 1
             except Exception as exc:
                 self.raw_messages.rollback()
+                auth_failure = coerce_ollama_auth_failure(
+                    exc,
+                    stage="tier1_extraction",
+                )
+                if auth_failure is not None:
+                    raise auth_failure from exc
                 errored += 1
                 logger.exception("Failed to extract raw_message id=%s", message.id)
                 if is_transient_llm_error(exc):
@@ -95,6 +102,12 @@ class ExtractIncidentsAction:
             )
         except Exception as exc:
             self.raw_messages.rollback()
+            auth_failure = coerce_ollama_auth_failure(
+                exc,
+                stage="tier1_extraction",
+            )
+            if auth_failure is not None:
+                raise auth_failure from exc
             if is_transient_llm_error(exc):
                 capped = self.raw_messages.record_transient_extraction_failure(
                     message,

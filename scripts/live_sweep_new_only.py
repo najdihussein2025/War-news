@@ -18,6 +18,7 @@ from app.news.models import Incident, MessageStatus, RawMessage
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
 from app.news.repositories.raw_message_repository import RawMessageRepository
 from app.news.repositories.sweep_cursor_repository import SweepCursorRepository
+from app.news.services import pipeline_concurrent_sweeps as concurrent_sweeps
 from app.news.services.fast_path_eligibility import (
     fast_path_materializable_clause,
     permanent_ineligibility_reason,
@@ -405,6 +406,37 @@ def _terminalize_ineligible_fast_path_filtered(
     return updated
 
 
+def _count_pending_extraction_rows_filtered(*, cutoff_raw_message_id: int) -> int:
+    with SessionLocal() as db:
+        return int(
+            db.scalar(
+                select(func.count(RawMessage.id)).where(
+                    _id_above_cutoff(cutoff_raw_message_id),
+                    RawMessage.status == MessageStatus.parsed,
+                    RawMessage.extraction_result.is_(None),
+                    RawMessage.duplicate_of_id.is_(None),
+                )
+            )
+            or 0
+        )
+
+
+def _count_pending_tier2_rows_filtered(*, cutoff_raw_message_id: int) -> int:
+    with SessionLocal() as db:
+        return int(
+            db.scalar(
+                select(func.count(Incident.id))
+                .join(RawMessage, RawMessage.id == Incident.raw_message_id)
+                .where(
+                    Incident.details_pending.is_(True),
+                    Incident.is_deleted.is_(False),
+                    _id_above_cutoff(cutoff_raw_message_id),
+                )
+            )
+            or 0
+        )
+
+
 def _apply_process_local_filter_patches(
     *,
     cutoff_raw_message_id: int,
@@ -555,6 +587,24 @@ def _apply_process_local_filter_patches(
             terminalize_ineligible_fast_path,
         )
     )
+    stack.enter_context(
+        patch.object(
+            concurrent_sweeps,
+            "_count_pending_extraction_rows",
+            lambda: _count_pending_extraction_rows_filtered(
+                cutoff_raw_message_id=cutoff_raw_message_id
+            ),
+        )
+    )
+    stack.enter_context(
+        patch.object(
+            concurrent_sweeps,
+            "_count_pending_tier2_rows",
+            lambda: _count_pending_tier2_rows_filtered(
+                cutoff_raw_message_id=cutoff_raw_message_id
+            ),
+        )
+    )
     return stack
 
 
@@ -563,11 +613,19 @@ def _emit_stage_result(
     *,
     cutoff_raw_message_id: int,
 ) -> None:
-    line = (
-        f"Pipeline stage={result.stage} processed={result.processed} "
-        f"succeeded={result.succeeded} failed={result.failed} "
-        f"elapsed_seconds={result.elapsed_seconds:.2f}"
-    )
+    if result.aborted:
+        line = (
+            f"Pipeline stage={result.stage} aborted processed={result.processed} "
+            f"succeeded={result.succeeded} failed={result.failed} "
+            f"unprocessed={result.unprocessed} "
+            f"elapsed_seconds={result.elapsed_seconds:.2f}"
+        )
+    else:
+        line = (
+            f"Pipeline stage={result.stage} processed={result.processed} "
+            f"succeeded={result.succeeded} failed={result.failed} "
+            f"elapsed_seconds={result.elapsed_seconds:.2f}"
+        )
     logger.info("%s cutoff_raw_message_id=%s", line, cutoff_raw_message_id)
     print(line, flush=True)
 
@@ -676,6 +734,8 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
             cutoff_raw_message_id=cutoff_raw_message_id,
         )
     )
+    if relevance_result.aborted:
+        return stages
     _advance_cursor_after_relevance(
         previous_id=cutoff_raw_message_id,
         max_processed_id=max_relevance_id,
@@ -704,6 +764,8 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                 cutoff_raw_message_id=cutoff_raw_message_id,
             )
         )
+        if stages[-1].aborted:
+            return stages
         stages.append(
             _finish_stage(
                 await _run_async_stage(
@@ -734,6 +796,8 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                 cutoff_raw_message_id=cutoff_raw_message_id,
             )
         )
+        if stages[-1].aborted:
+            return stages
         stages.append(
             _finish_stage(
                 _run_sync_stage(
