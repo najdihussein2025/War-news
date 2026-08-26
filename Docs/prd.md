@@ -1,194 +1,268 @@
-# prd.md — Lebanon War News App
+# PRD - Lebanon War News App
 
 ## 1. Summary
 
-An internal, login-only web application that automates collection of
-Lebanese war-news events from multiple sources (Telegram channels, the CNRS
-inspected-posts API, and future sources), standardizes them against
-controlled reference data, prevents duplicate records, and routes new
-records through a human review step before they become official,
-exportable data.
+An internal, login-only web application for collecting, filtering, extracting,
+deduplicating, reviewing, editing, importing, and exporting Lebanon war-news
+records.
 
-No public pages exist. Every route requires authentication.
+The current production flow centers on CNRS webhook/poll ingestion and a
+background pipeline. Messages are stored first as immutable raw messages, then
+classified for relevance, deduplicated before extraction, extracted by the
+local LLM, matched against controlled village/action reference data, and
+materialized into incident rows when the match is usable. Air-activity-only
+items are routed into a separate air-violations workflow instead of becoming
+standard incidents.
 
-## 2. Users & roles
+No public application pages exist. The login page is the only unauthenticated
+UI route.
 
-No self-signup. Every account is created by a Super Admin.
+## 2. Users and Roles
+
+No self-signup exists. Super Admin users create and manage accounts.
 
 | Capability | Super Admin | Admin |
 |---|---|---|
-| Log in to panel | ✅ | ✅ |
-| View/CRUD news records | ✅ | ✅ |
-| Review pending/automated news for mistakes | ✅ | ✅ |
-| Export database | ✅ | ✅ |
-| View logs (audit, login, ingestion) | ✅ | ✅ |
-| Create/manage user accounts | ✅ | ❌ |
-| Manage sources (add/pause a Telegram channel or API feed) | ✅ | to confirm |
+| Log in to panel | Yes | Yes |
+| View incidents and air violations | Yes | Yes |
+| Create/edit/delete incidents | Yes | Yes |
+| Edit incident detail fields | Yes | Yes |
+| Import incident workbook | Yes | No |
+| Import air-violation workbook | Yes | No |
+| Export air-violation workbook | Yes | Yes |
+| View logs | Yes | Yes |
+| Trigger manual pipeline sweep | Yes | No |
+| Create/manage user accounts | Yes | No |
+| View/pause/resume configured sources | Yes | Yes |
 
-**Open question:** should `admin` be able to manage sources, or is that
-Super-Admin-only like account management? Not yet decided.
+Authentication uses server-side session records with hashed bearer tokens.
+Login attempts are written to `login_logs`; account and operational changes are
+written to `audit_logs` where implemented.
 
-## 3. Data sources
+## 3. Data Sources
 
-Sources are modeled generically (`sources` table, `type` enum) so adding a
-new one is a new row, not a new table or a new code path per source.
+Sources are modeled generically in `sources`, with normalized content-origin
+metadata in `source_platform` and optional source/account blocking in
+`content_source_blocks`.
 
-- **Telegram** — access method (Bot API vs. MTProto/Telethon) not yet
-  decided; depends on whether monitored channels are owned by us or
-  external public channels. MTProto is likely required for monitoring
-  channels we don't administer.
-- **CNRS inspected-posts API** — `https://lebanon.cnrs.edu.lb/api/v1/inspected-posts`,
-  cursor-paginated (`after_id`), Bearer-token authenticated. Has a
-  `model_backend=local_llm` variant that returns posts already processed by
-  CNRS's own LLM — likely higher-trust, possibly pre-extracted fields.
-  Registered as two `sources` rows sharing one base URL with different
-  `config`.
-- **Additional sources** — to be added once identified. No architectural
-  change needed, per the `sources` design.
+Implemented source paths:
 
-## 4. Reference data (controlled vocabularies)
+- CNRS webhook: `POST /webhooks/cnrs-posts`; stores incoming CNRS inspected
+  posts, then enqueues the pipeline sweep without a manual lock.
+- CNRS poll worker: periodically fetches recent inspected posts and stores new
+  rows.
+- Red Alert collector: long-running worker path for red-alert ingestion.
+- Air-violation webhook: `POST /webhooks/air-violations`; validates a shared
+  secret and creates an `air_violations` row directly.
+- Workbook import: Super Admin-only imports for incidents and air violations.
+- Manual API entry: authenticated create/update/delete endpoints for incidents
+  and air violations.
 
-Loaded from Excel templates provided by the user, imported once into
-Postgres (see `db.md` for exact schema):
+Telegram and other source types remain supported by the generic `source_type`
+enum, but the active code path is currently CNRS/webhook/poll plus operational
+workers.
 
-- **Villages** (`ACS.xlsx`, 1,560 rows) — location names (EN/AR), district,
-  governorate, map coordinates.
-- **Conditions/actions** (`War_Actions_updated.xlsx`, 44 rows) — the
-  standardized Arabic→English action vocabulary.
+Secrets must stay in environment variables. Database rows may store only a
+secret reference name such as `auth_secret_ref`, not the secret value.
 
-These drive both the manual-entry dropdowns and the automated parser's
-matching logic.
+## 4. Reference Data
 
-## 5. Core workflow
+Reference data is imported into Postgres and is the matching source of truth:
 
+- `villages`: imported from ACS village data via `Data/Villages.json`.
+- `conditions`: imported from war-action data via `Data/Conditions.json`.
+- `channel_trust_tiers`: ranks channels as `official`, `trusted`, or `detail`
+  for clustering and representative-message selection.
+
+Village and condition tables support fuzzy matching through trigram indexes.
+The UI uses the same reference data for filters, dropdowns, and verification.
+
+## 5. Current Pipeline Flow
+
+```text
+CNRS webhook/poll/manual source
+  -> raw_messages
+  -> relevance_filter
+  -> pre_extraction_dedup
+  -> tier1_extraction
+  -> matching
+  -> fast_path
+  -> tier2_detail_fill
+  -> embedding
+  -> clustering
+  -> materialization
+  -> duplicate_match_reconciliation
 ```
-Source (Telegram / API / manual)
-  -> raw_messages (untouched original payload, never mutated)
-  -> parser & matcher (matches village + condition against reference data)
-  -> duplicate check (exact hash + soft incident-key match)
-  -> pending_review (admin confirms or edits)
-  -> incidents (official record; feeds panel, export, logs)
-```
 
-**Duplicate prevention is the top priority requirement.** It is enforced at
-two levels:
-1. Exact duplicates: a unique constraint on a normalized content hash
-   (`incidents.exact_hash`), enforced at the database level, not just in
-   application logic.
-2. Soft/potential duplicates: a looser match on village + condition +
-   normalized date window (`incidents.incident_key`), surfaced to the
-   reviewer rather than auto-merged.
+Important behavior:
 
-Raw text parsing is not expected to be 100% accurate, especially given
-free-text Arabic input — this is why every automated record lands in
-`pending_review` status before becoming an official record, rather than
-being published automatically.
+- Raw messages keep the original text and payload, plus derived JSON fields
+  such as `filter_result`, `cnrs_classification`, `extraction_result`, and
+  `match_result`.
+- Relevance filtering marks irrelevant rows as rejected and lets relevant or
+  uncertain rows proceed.
+- Pre-extraction dedup compares recent parsed messages with pg_trgm similarity
+  and marks clear raw-message duplicates before spending LLM work.
+- Tier-1 extraction records core event/casualty data and presence categories.
+  Transient LLM errors are retried up to the configured cap.
+- Matching resolves extracted villages and conditions to reference IDs. One
+  message can produce multiple matched village entries.
+- Fast path creates minimal incident rows for materializable village/condition
+  matches and sets `details_pending = true`.
+- Fast path checks recent same-village/same-condition incidents. Confident
+  duplicates are linked to the canonical incident instead of inserted again.
+- Condition IDs `35`, `36`, `38`, and `45` are treated as air-violation
+  conditions and are terminalized with `routed_air_violation` instead of
+  materialized as incidents.
+- Tier-2 detail fill completes pending detail categories for fast-path
+  incidents.
+- Embedding and clustering group related raw messages, select a representative
+  using channel trust tiers, and soft-delete subsumed duplicate incidents where
+  needed.
+- Materialization creates one incident per eligible matched village or merges
+  into an existing incident when semantic duplicate matching is above the high
+  threshold.
 
-## 6. Feature list
+Pipeline sweeps are resilient: a failed item or stage is logged and later
+stages still run. Webhook-triggered sweeps rely on row-level claiming with
+`FOR UPDATE SKIP LOCKED`; manual/admin sweeps use an advisory lock.
 
-### Auth & accounts
-- Login page (only public-facing route besides the auth check itself).
-- No signup route. Accounts created by Super Admin only.
-- Session/token-based auth; audit every login attempt (success and failure).
+## 6. Duplicate Strategy
 
-### News management
-- Review queue: list of `pending_review` incidents, with duplicate-match
-  indicators.
-- Full CRUD on incidents (both roles) — primarily used to correct
-  auto-parsed mistakes, per the original requirement.
-- Incident detail/edit view exposing the full `incident_details` field set,
-  grouped by category (matching `db.md` groupings) rather than as one flat
-  form.
-- DID-field logic enforced in the UI: a `*_did` field is locked/cleared
-  when its controlling flag is 0, and required (`D`/`ID` only) when the
-  flag is 1.
+Duplicate prevention happens at several layers:
 
-### Sources
-- View configured sources and their ingestion health (last run, last
-  cursor, error state).
-- Pause/resume a source.
+- Raw-message uniqueness: `UNIQUE (source_id, external_message_id)`.
+- Pre-extraction text similarity: recent raw messages can be marked
+  `duplicate` and linked through `duplicate_of_id`.
+- Fast-path incident window: confident same-village/same-condition matches
+  inside the configured time window become duplicate links.
+- Exact incident hash: active incidents have a partial unique index on
+  `exact_hash`.
+- Semantic incident dedup: embedding similarity can merge a candidate into an
+  existing incident or mark it with `duplicate_flag`.
+- Review records: `duplicate_matches` keeps pending/confirmed/false-positive
+  duplicate relationships, including raw-message-only fast-path matches.
 
-### Logs
-- Audit log (account/source changes).
-- Login log.
-- Ingestion log (per-run fetch/parse/flag/fail counts).
-- Incident-scoped update history on each record's detail page.
+Human review is now a correction and adjudication layer, not a required gate
+for every automated incident before insertion.
 
-### Export
-- Trigger a database export; track status/row count/file path in
-  `export_logs`. Exact target format (workbook vs. other) not yet decided.
+## 7. Main Features
 
-## 7. Non-functional requirements
+### Auth and Accounts
 
-- **PostgreSQL**, not SQLite — supports proper concurrent multi-admin
-  writes and row-level locking, which the shared-login, multi-editor
-  workflow requires.
-- **No baseline+overlay hack.** That pattern existed in the prior
-  SQLite+Excel design only because SQLite couldn't safely co-own data with
-  a live Excel file. With Postgres, historical data is imported once and
-  Postgres is the single source of truth from then on.
-- **Secrets never committed or stored in the database.** API keys (e.g. the
-  CNRS Bearer token) live only in environment variables; the DB stores the
-  env var *name* (`sources.auth_secret_ref`), never the value.
-- **Soft delete only** on incidents — full audit trail must survive any
-  "delete."
-- **Every CRUD action is attributable** to a user (`created_by`,
-  `updated_by`/`performed_by`, `reviewed_by` fields throughout).
+- Login/logout/current-user endpoints.
+- Super Admin account creation and management.
+- User-level and IP-level lockout/throttling.
+- Login logs for success and failure.
 
-## 8. Architecture
+### Incidents
+
+- Authenticated list/detail/create/update/delete.
+- Filters for village, condition, source type, date range, duplicate-only,
+  flagged-only, and verification status.
+- Super Admin workbook import.
+- Detail editing through grouped category sections.
+- DID fields accept only `D`, `ID`, or null and are normalized by application
+  logic against their controlling flags.
+- Incident updates are captured in `incident_updates`.
+
+### Air Violations
+
+- Separate CRUD/list/detail endpoints under `/api/air-violations`.
+- Direct trusted webhook ingestion.
+- Super Admin workbook import.
+- Admin workbook export.
+- Intended for warplane/surveillance/helicopter-style air activity without the
+  full incident-detail schema.
+
+### Sources and Content Origins
+
+- List source rows and content-source origins.
+- Pause/resume configured sources.
+- Block/unblock content source accounts through `content_source_blocks`.
+- Track ingestion health in `ingestion_logs`.
+
+### Logs and Operations
+
+- Login, ingestion, and audit log views.
+- Super Admin manual pipeline sweep endpoint: `POST /api/pipeline/sweep`.
+- Dedicated Docker services for backend, frontend, pipeline worker,
+  live-sweep worker, CNRS poll worker, and red-alert collector.
+
+## 8. Non-Functional Requirements
+
+- PostgreSQL with pgvector is the source of truth.
+- Alembic migrations define schema evolution.
+- LLM work must not hold database sessions while waiting on Ollama responses.
+- Concurrent workers must use row-level claiming and configured Ollama
+  concurrency limits.
+- Incidents use soft delete through `is_deleted`.
+- Real secrets stay out of git and out of database values.
+- Auditability matters: user actions, ingestion runs, duplicate relationships,
+  and incident updates should be attributable where the code path supports it.
+
+## 9. Architecture
 
 ### Backend
-Existing FastAPI project structure (clean architecture):
-```
+
+FastAPI, SQLAlchemy, Alembic, PostgreSQL/pgvector, and a feature-oriented clean
+architecture:
+
+```text
 app/
-├── actions/        # use-case entry points (e.g. ingest_article_action.py, dedup_check_action.py)
-├── api/             # route definitions
-├── core/            # config, security, settings
-├── dtos/            # request/response schemas
-├── interfaces/       # abstract contracts
-├── models/           # SQLAlchemy models
-├── repositories/      # data access
-├── services/          # business logic
-├── sources/           # per-source ingestion adapters (telegram, cnrs api, ...)
-alembic/               # migrations
+  accounts/      identity, roles, sessions, login throttling
+  api/           routers, dependencies, route composition
+  core/          config, DB setup, scheduler, Ollama concurrency, scripts
+  llm/           relevance and extraction classifiers/services
+  logs/          login, ingestion, and audit logs
+  news/          raw messages, incidents, matching, dedup, pipeline, exports
+  sources/       source definitions, CNRS/webhook adapters, content origins
+alembic/         migrations
+scripts/         operational backfills, diagnostics, load/repro tools
 ```
-PostgreSQL via SQLAlchemy + Alembic.
 
 ### Frontend
-Separate `frontend/` folder (sibling to the backend root), feature-based
-structure:
-```
+
+React, TypeScript, Vite, TanStack Query, Zustand, React Router, and Tailwind:
+
+```text
 frontend/src/
-├── app/               # routing, providers, guards
-├── features/          # auth, news, sources, accounts, logs, export
-├── components/         # shared presentational components
-├── stores/              # zustand — auth/session state
-├── lib/                  # apiClient, formatters
-└── types/                 # generated from backend OpenAPI schema
+  app/           routing, providers, shell, error boundary
+  components/    shared UI primitives
+  features/      auth, accounts, dashboard, news, airViolations, sources, logs
+  hooks/         shared hooks
+  lib/           API client, formatters, date helpers
+  stores/        auth/session state
+  types/         API-facing shared types
 ```
-React + TypeScript + Vite, TanStack Query for server state, Zustand for
-client state, React Router with role-based route guards, Tailwind for
-styling. No signup UI; every protected route redirects to `/login` when
-unauthenticated, and role-gated routes (e.g. account management) redirect
-or hide for `admin`.
 
-## 9. Out of scope (for now)
+## 10. Local Development
 
-- Public-facing pages of any kind.
+Use Docker Compose for the normal local stack:
+
+```powershell
+docker compose up --build
+docker compose exec backend alembic upgrade head
+```
+
+Copy `.env.example` to `.env` for local defaults and keep real credentials out
+of git.
+
+## 11. Out of Scope For Now
+
+- Public-facing pages.
 - Self-service signup.
-- GIS/map visualization (villages already carry coordinates, so this is a
-  plausible future addition, not a current requirement).
+- GIS/map visualization.
+- A finalized Telegram collection strategy.
 
-## 10. Open questions
+## 12. Open Questions
 
-Tracked here so they aren't lost; resolve before the relevant feature is
-built, not before the project starts.
-
-1. Telegram ingestion method: Bot API vs. MTProto — depends on channel
-   ownership.
-2. Whether `admin` (not just `super_admin`) can manage sources.
-3. Export target format.
-4. Five `db.md` schema items needing confirmation against the real
-   workbook (`source_link_2`, `mjnoub`, `genocide`, `injuries_extra`,
-   `note_extra`).
-5. Full list of sources beyond Telegram and the CNRS API, once available.
+1. Which Telegram method should be used if Telegram ingestion is activated:
+   Bot API or MTProto/Telethon?
+2. Should admins be allowed to import incident workbooks, or should imports
+   remain Super Admin-only?
+3. Is there a required export workbook for standard incidents, or only the
+   current air-violations export?
+4. Confirm meanings and UI treatment for legacy workbook fields:
+   `source_link_2`, `mjnoub`, `genocide`, `injuries_extra`, `note_extra`,
+   and `note_extra_2`.

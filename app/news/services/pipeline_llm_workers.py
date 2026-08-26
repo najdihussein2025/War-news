@@ -9,6 +9,7 @@ from app.llm.services.transient_llm_errors import (
     ExtractionRetryCappedError,
     is_transient_llm_error,
 )
+from app.llm.services.ollama_auth_failures import coerce_ollama_auth_failure
 from app.news.models import MessageStatus
 from app.news.repositories.raw_message_repository import RawMessageRepository
 
@@ -41,6 +42,12 @@ def run_tier1_extraction_for_message(raw_message_id: int) -> None:
             raw_message_id=raw_message_id,
         )
     except Exception as exc:
+        auth_failure = coerce_ollama_auth_failure(
+            exc,
+            stage="tier1_extraction",
+        )
+        if auth_failure is not None:
+            raise auth_failure from exc
         if is_transient_llm_error(exc):
             with SessionLocal() as db:
                 raw_messages = RawMessageRepository(db)

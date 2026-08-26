@@ -16,6 +16,7 @@ from app.llm.interfaces import (
 )
 from app.news.models import RawMessage
 from app.llm.services.cnrs_relevance_classifier import classification_from_cnrs
+from app.llm.services.ollama_auth_failures import coerce_ollama_auth_failure
 from app.llm.services.relevance_filter_service import (
     policy_for_result,
     status_for_result,
@@ -164,6 +165,12 @@ class FilterRelevanceAction:
             # errored — they haven't been tried yet.
             except Exception as exc:
                 self.raw_messages.rollback()
+                auth_failure = coerce_ollama_auth_failure(
+                    exc,
+                    stage="relevance_filter",
+                )
+                if auth_failure is not None:
+                    raise auth_failure from exc
                 logger.exception(
                     "Failed to classify relevance batch "
                     "(chunk_index=%s, chunk_size=%s)",
@@ -179,6 +186,12 @@ class FilterRelevanceAction:
                         )
                 except Exception as retry_exc:
                     self.raw_messages.rollback()
+                    auth_failure = coerce_ollama_auth_failure(
+                        retry_exc,
+                        stage="relevance_filter",
+                    )
+                    if auth_failure is not None:
+                        raise auth_failure from retry_exc
                     logger.exception(
                         "Failed to classify relevance batch on retry "
                         "(chunk_index=%s, chunk_size=%s)",

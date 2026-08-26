@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://192.168.40.25:11435/ollama"
     ollama_api_key: str | None = Field(
         default=None,
-        validation_alias=AliasChoices("OLLAMA_BEARER_TOKEN", "OLLAMA_API_KEY"),
+        validation_alias=AliasChoices("OLLAMA_API_KEY"),
     )
     ollama_model: str = "gpt-oss:20b"
     ollama_timeout_seconds: int = 90

@@ -20,6 +20,19 @@ def _ok(stage: str, *, failed: int = 0) -> StageSweepResult:
     )
 
 
+def _aborted(stage: str) -> StageSweepResult:
+    return StageSweepResult(
+        stage=stage,
+        processed=1,
+        succeeded=1,
+        failed=0,
+        aborted=True,
+        abort_reason="ollama_auth_failed_401",
+        unprocessed=9,
+        elapsed_seconds=0.01,
+    )
+
+
 def _patch_stages(monkeypatch, *, fail_stage: str | None = None) -> list[str]:
     calls: list[str] = []
 
@@ -152,3 +165,30 @@ async def test_empty_stage_exception_message_is_logged(monkeypatch, caplog) -> N
     )
     assert any(stage.stage == "clustering" for stage in result.stages)
     assert any(stage.stage == "materialization" for stage in result.stages)
+
+
+@pytest.mark.asyncio
+async def test_auth_abort_stops_remaining_stages(monkeypatch, caplog) -> None:
+    calls = _patch_stages(monkeypatch)
+
+    async def aborted_extraction(*, max_rows: int | None = None):
+        calls.append("tier1_extraction")
+        return _aborted("tier1_extraction")
+
+    monkeypatch.setattr(orchestrator, "sweep_extraction_concurrent", aborted_extraction)
+
+    with caplog.at_level(logging.ERROR):
+        result = await orchestrator.run_full_pipeline_sweep(use_advisory_lock=False)
+
+    assert "matching" not in calls
+    assert "tier2_detail_fill" not in calls
+    assert result.partial_failure is True
+    assert [stage.stage for stage in result.stages] == [
+        "relevance_filter",
+        "pre_extraction_dedup",
+        "tier1_extraction",
+    ]
+    assert any(
+        "Pipeline sweep aborted by Ollama authentication failure" in record.message
+        for record in caplog.records
+    )

@@ -15,6 +15,7 @@ from app.llm.dtos import (
 )
 from app.llm.interfaces import ExtractionClassifierInterface
 from app.llm.services.ollama_category_detail_service import OllamaCategoryDetailService
+from app.llm.services.ollama_auth_failures import coerce_ollama_auth_failure
 from app.llm.services.ollama_presence_gate_service import (
     LOW_TEMPERATURE,
     OllamaPresenceGateService,
@@ -179,6 +180,12 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                     raw_message_id=raw_message_id,
                 )
             except Exception as exc:
+                auth_failure = coerce_ollama_auth_failure(
+                    exc,
+                    stage="tier2_detail_fill",
+                )
+                if auth_failure is not None:
+                    raise auth_failure from exc
                 message = str(exc).strip()
                 error = (
                     f"{type(exc).__name__}: {message}"
@@ -245,6 +252,12 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                     raw_message_id=raw_message_id,
                 )
             except Exception as exc:
+                auth_failure = coerce_ollama_auth_failure(
+                    exc,
+                    stage="tier2_detail_fill",
+                )
+                if auth_failure is not None:
+                    raise auth_failure from exc
                 message = str(exc).strip()
                 error = (
                     f"{type(exc).__name__}: {message}"
