@@ -46,26 +46,44 @@ def test_hardcoded_cutoff_constant_is_removed() -> None:
     assert not hasattr(live_sweep, "_cutoff_raw_message_id")
 
 
-def test_claim_queries_use_persisted_cursor_not_hardcoded_cutoff() -> None:
+def test_relevance_query_uses_persisted_cursor_not_hardcoded_cutoff() -> None:
     repo = MagicMock()
     repo.db.scalars.return_value.all.return_value = []
-    repo.db.scalar.return_value = None
 
     live_sweep._get_pending_unfiltered_batch_filtered(
         repo,
         10,
         cutoff_raw_message_id=42,
     )
-    live_sweep._claim_pending_match_filtered(repo, cutoff_raw_message_id=42)
 
-    unfiltered_stmt = repo.db.scalars.call_args.args[0]
-    match_stmt = repo.db.scalar.call_args.args[0]
-    for statement in (unfiltered_stmt, match_stmt):
+    statement = repo.db.scalars.call_args.args[0]
+    params = _bound_ids(statement)
+    sql = str(statement.compile())
+    assert 42 in params
+    assert 695974 not in params
+    assert "695974" not in sql
+
+
+def test_downstream_claim_queries_do_not_use_cutoff() -> None:
+    repo = MagicMock()
+    repo.db.scalars.return_value.all.return_value = []
+    repo.db.scalar.return_value = None
+
+    live_sweep._claim_pending_pre_dedup_filtered(repo)
+    pre_dedup_stmt = repo.db.scalar.call_args.args[0]
+
+    live_sweep._claim_pending_extraction_filtered(repo)
+    extraction_stmt = repo.db.scalar.call_args.args[0]
+
+    live_sweep._claim_pending_match_filtered(repo)
+    matching_stmt = repo.db.scalar.call_args.args[0]
+
+    for statement in (pre_dedup_stmt, extraction_stmt, matching_stmt):
         params = _bound_ids(statement)
         sql = str(statement.compile())
-        assert 42 in params
+        assert 42 not in params
         assert 695974 not in params
-        assert "695974" not in sql
+        assert "raw_messages.id >" not in sql
 
 
 def test_filtered_session_uses_runtime_cursor() -> None:
@@ -291,3 +309,24 @@ async def test_run_stages_stops_after_aborted_tier1(monkeypatch) -> None:
         "tier1_extraction",
     ]
     run_sync.assert_not_called()
+
+
+def test_downstream_stage_patches_leave_parsed_rows_visible_below_new_cutoff() -> None:
+    raw_repo = MagicMock()
+    raw_repo.db.scalars.return_value.all.return_value = []
+    claim_repo = MagicMock()
+    claim_repo.db.scalar.return_value = None
+
+    with live_sweep._apply_downstream_stage_patches():
+        live_sweep.RawMessageRepository.get_pending_extraction_batch(raw_repo, 10)
+        live_sweep.PipelineClaimRepository.claim_pending_extraction(claim_repo)
+
+    batch_stmt = raw_repo.db.scalars.call_args.args[0]
+    claim_stmt = claim_repo.db.scalar.call_args.args[0]
+
+    for statement in (batch_stmt, claim_stmt):
+        params = _bound_ids(statement)
+        sql = str(statement.compile())
+        assert 1630 not in params
+        assert "raw_messages.id >" not in sql
+        assert "status" in sql.lower()
