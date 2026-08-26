@@ -5,6 +5,7 @@ from app.news.dtos import (
     AirViolationDTO,
     AirViolationListParams,
     AirViolationListResponse,
+    AirViolationSummaryDTO,
 )
 from app.news.dtos import MatchResultDTO
 from app.news.models import RawMessage
@@ -25,6 +26,10 @@ class AirViolationRepositoryInterface(ABC):
 
     @abstractmethod
     def list_all(self, params: AirViolationListParams) -> AirViolationListResponse:
+        pass
+
+    @abstractmethod
+    def get_summary(self, params: AirViolationListParams) -> AirViolationSummaryDTO:
         pass
 
     @abstractmethod

@@ -3,6 +3,7 @@ from app.news.dtos.air_violation_dto import (
     AirViolationDTO,
     AirViolationListParams,
     AirViolationListResponse,
+    AirViolationSummaryDTO,
 )
 from app.news.dtos.condition_dto import ConditionOptionDTO
 from app.news.dtos.incident_dto import (
@@ -25,6 +26,7 @@ __all__ = [
     "AirViolationDTO",
     "AirViolationListParams",
     "AirViolationListResponse",
+    "AirViolationSummaryDTO",
     "ConditionOptionDTO",
     "CasualtyDemographicsDTO",
     "IncidentDetailDTO",

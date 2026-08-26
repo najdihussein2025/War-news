@@ -21,3 +21,4 @@ pytest-asyncio>=0.23,<1
 openpyxl==3.1.5
 python-multipart>=0.0.9,<1
 regex>=2025.7,<2027
+redis>=5,<7

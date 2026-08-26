@@ -19,12 +19,28 @@ services:
     networks:
       - appnet
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - appnet
+
   backend:
     build:
       context: .
       dockerfile: app/Dockerfile
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     env_file:
       - .env
@@ -144,6 +160,7 @@ services:
 
 volumes:
   pgdata:
+  redisdata:
 
 networks:
   appnet:

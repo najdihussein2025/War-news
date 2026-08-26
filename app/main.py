@@ -3,9 +3,11 @@ import secrets
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.api.router import router as api_router
 from app.core.cors import CORS_ORIGINS
+from app.core.cache import redis_is_available
 from app.core.database import SessionLocal
 from app.core.exception_handlers import register_exception_handlers
 from app.core.logging_config import configure_logging
@@ -80,3 +82,23 @@ def shutdown() -> None:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/health/ready")
+def readiness() -> dict[str, str]:
+    database_status = "ok"
+    db = SessionLocal()
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception:
+        logger.exception("Database readiness check failed")
+        database_status = "unavailable"
+    finally:
+        db.close()
+
+    redis_status = "ok" if redis_is_available() else "unavailable"
+    return {
+        "status": "ok" if database_status == "ok" and redis_status == "ok" else "degraded",
+        "database": database_status,
+        "redis": redis_status,
+    }

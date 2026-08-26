@@ -34,6 +34,13 @@ export type AirViolationFilters = {
   eventDateFrom?: string;
   eventDateTo?: string;
   cazaEn?: string;
+  lastHours?: string;
+};
+
+export type AirViolationSummary = {
+  warplanes: number;
+  surveillance_aircraft: number;
+  helicopters: number;
 };
 
 export type AirViolationCreateInput = {

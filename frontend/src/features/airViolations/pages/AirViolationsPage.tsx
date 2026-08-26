@@ -4,7 +4,7 @@ import { Button, ConfirmDialog, DataTable, Dialog, EmptyState, Input, Label, Sel
 import { useLiveQueryTitleAddon } from "../../../hooks/useLiveQueryTitleAddon";
 import { formatDate } from "../../../lib/formatters";
 import { getBeirutDate } from "../../../lib/localDate";
-import { useAirViolationsQuery } from "../hooks";
+import { useAirViolationSummaryQuery, useAirViolationsQuery } from "../hooks";
 import { useVillagesQuery } from "../../news/hooks";
 import { createAirViolation, deleteAirViolation, exportAirViolations, updateAirViolation } from "../api";
 import type { AirViolation } from "../types";
@@ -48,7 +48,12 @@ export const AirViolationsPage = () => {
   const eventDateFrom = params.get("event_date_from") ?? "";
   const eventDateTo = params.get("event_date_to") ?? "";
   const cazaEn = params.get("caza_en") ?? "";
-  const hasFilters = Boolean(conditionId || eventDateFrom || eventDateTo || cazaEn);
+  const lastHours = params.get("last_hours") ?? "";
+  const hourPresets = ["1", "6", "12", "24", "48", "72", "168"];
+  const [customHoursMode, setCustomHoursMode] = useState(
+    lastHours !== "" && !hourPresets.includes(lastHours),
+  );
+  const hasFilters = Boolean(conditionId || eventDateFrom || eventDateTo || cazaEn || lastHours);
   const closeEditor = () => {
     if (isFormDirty) {
       setConfirmDiscard(true);
@@ -67,8 +72,9 @@ export const AirViolationsPage = () => {
       eventDateFrom,
       eventDateTo,
       cazaEn,
+      lastHours,
     }),
-    [cazaEn, conditionId, eventDateFrom, eventDateTo, offset],
+    [cazaEn, conditionId, eventDateFrom, eventDateTo, lastHours, offset],
   );
 
   const { data, isLoading, isError, refetch, isFetching, dataUpdatedAt } =
@@ -95,19 +101,9 @@ export const AirViolationsPage = () => {
     eventDateFrom,
     eventDateTo,
     cazaEn,
+    lastHours,
   };
-  const warplaneTotal = useAirViolationsQuery({
-    ...totalFilters,
-    conditionId: "35",
-  });
-  const surveillanceTotal = useAirViolationsQuery({
-    ...totalFilters,
-    conditionId: "36",
-  });
-  const helicopterTotal = useAirViolationsQuery({
-    ...totalFilters,
-    conditionId: "38",
-  });
+  const summary = useAirViolationSummaryQuery(totalFilters);
   // Show when the page data was successfully refreshed, not the age of the
   // newest incident. A quiet news period must not look like polling stopped.
   const lastRefreshAt = dataUpdatedAt ? new Date(dataUpdatedAt).toISOString() : null;
@@ -134,6 +130,28 @@ export const AirViolationsPage = () => {
       next.set(key, value);
     } else {
       next.delete(key);
+    }
+    next.delete("page");
+    setParams(next);
+  };
+
+  const updateTimeWindow = (value: string) => {
+    const next = new URLSearchParams(params);
+    if (value) next.set("last_hours", value);
+    else next.delete("last_hours");
+    next.delete("event_date_from");
+    next.delete("event_date_to");
+    next.delete("page");
+    setParams(next);
+  };
+
+  const updateDateParam = (key: "event_date_from" | "event_date_to", value: string) => {
+    const next = new URLSearchParams(params);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    if (value) {
+      next.delete("last_hours");
+      setCustomHoursMode(false);
     }
     next.delete("page");
     setParams(next);
@@ -218,7 +236,7 @@ export const AirViolationsPage = () => {
   return (
     <div className="space-y-5">
       <div className="rounded-lg border border-border bg-surface-raised p-4">
-        <div className="grid gap-4 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <div className="space-y-2">
             <Label htmlFor="air-caza-filter">Caza</Label>
             <Select
@@ -240,7 +258,41 @@ export const AirViolationsPage = () => {
               className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3 text-body text-text-primary"
               value={conditionId}
               onChange={(event) => updateParam("condition_id", event.target.value)}
-            ><option value="">All actions</option><option value="35">Warplane — طيران حربي</option><option value="36">Surveillance aircraft — طيران استطلاعي</option><option value="38">Helicopter hovering — طيران مروحي</option><option value="45">Air activity — Needs verification</option></select>
+            ><option value="">All actions</option><option value="35">Warplane — طيران حربي</option><option value="36">Surveillance aircraft — طيران استطلاعي</option><option value="38">Helicopter hovering — طيران مروحي</option></select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="air-hours-filter">Time range</Label>
+            <select
+              id="air-hours-filter"
+              className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3 text-body text-text-primary"
+              value={customHoursMode ? "custom" : lastHours}
+              onChange={(event) => {
+                const value = event.target.value;
+                const custom = value === "custom";
+                setCustomHoursMode(custom);
+                updateTimeWindow(custom ? "24" : value);
+              }}
+            >
+              <option value="">Any time</option>
+              <option value="1">Last 1 hour</option>
+              <option value="6">Last 6 hours</option>
+              <option value="12">Last 12 hours</option>
+              <option value="24">Last 24 hours</option>
+              <option value="48">Last 48 hours</option>
+              <option value="72">Last 72 hours</option>
+              <option value="168">Last 7 days</option>
+              <option value="custom">Custom hours</option>
+            </select>
+            {customHoursMode ? (
+              <Input
+                aria-label="Custom number of hours"
+                type="number"
+                min="1"
+                max="8760"
+                value={lastHours}
+                onChange={(event) => updateTimeWindow(event.target.value)}
+              />
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="air-from-filter">From</Label>
@@ -248,7 +300,7 @@ export const AirViolationsPage = () => {
               id="air-from-filter"
               type="date"
               value={eventDateFrom}
-              onChange={(event) => updateParam("event_date_from", event.target.value)}
+              onChange={(event) => updateDateParam("event_date_from", event.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -257,7 +309,7 @@ export const AirViolationsPage = () => {
               id="air-to-filter"
               type="date"
               value={eventDateTo}
-              onChange={(event) => updateParam("event_date_to", event.target.value)}
+              onChange={(event) => updateDateParam("event_date_to", event.target.value)}
             />
           </div>
         </div>
@@ -267,19 +319,19 @@ export const AirViolationsPage = () => {
           <div className="rounded-lg border border-border bg-surface-raised px-5 py-4">
             <p className="text-caption font-semibold uppercase text-text-muted">Total warplanes</p>
             <p className="mt-2 text-h3 font-semibold tabular-nums text-text-primary" aria-live="polite">
-              {warplaneTotal.isLoading ? "Loading…" : warplaneTotal.data?.total ?? 0}
+              {summary.isLoading ? "Loading…" : summary.data?.warplanes ?? 0}
             </p>
           </div>
           <div className="rounded-lg border border-border bg-surface-raised px-5 py-4">
             <p className="text-caption font-semibold uppercase text-text-muted">Total surveillance aircraft</p>
             <p className="mt-2 text-h3 font-semibold tabular-nums text-text-primary" aria-live="polite">
-              {surveillanceTotal.isLoading ? "Loading…" : surveillanceTotal.data?.total ?? 0}
+              {summary.isLoading ? "Loading…" : summary.data?.surveillance_aircraft ?? 0}
             </p>
           </div>
           <div className="rounded-lg border border-border bg-surface-raised px-5 py-4">
             <p className="text-caption font-semibold uppercase text-text-muted">Total helicopter hovering</p>
             <p className="mt-2 text-h3 font-semibold tabular-nums text-text-primary" aria-live="polite">
-              {helicopterTotal.isLoading ? "Loading…" : helicopterTotal.data?.total ?? 0}
+              {summary.isLoading ? "Loading…" : summary.data?.helicopters ?? 0}
             </p>
           </div>
       </div>
@@ -292,7 +344,7 @@ export const AirViolationsPage = () => {
             Create
           </Button>
           {hasFilters ? (
-            <Button type="button" variant="ghost" className="h-9" onClick={() => setParams({})}>
+            <Button type="button" variant="ghost" className="h-9" onClick={() => { setCustomHoursMode(false); setParams({}); }}>
               Clear filters
             </Button>
           ) : null}

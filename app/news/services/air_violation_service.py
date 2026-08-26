@@ -3,6 +3,7 @@ from app.news.dtos import (
     AirViolationDTO,
     AirViolationListParams,
     AirViolationListResponse,
+    AirViolationSummaryDTO,
 )
 from app.news.interfaces import AirViolationRepositoryInterface
 
@@ -17,6 +18,9 @@ class AirViolationService:
 
     def list_all(self, params: AirViolationListParams) -> AirViolationListResponse:
         return self.air_violations.list_all(params)
+
+    def get_summary(self, params: AirViolationListParams) -> AirViolationSummaryDTO:
+        return self.air_violations.get_summary(params)
 
     def create(self, payload: AirViolationCreateDTO) -> AirViolationDTO:
         if payload.condition_id not in {35, 36, 38}:

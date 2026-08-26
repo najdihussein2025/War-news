@@ -48,6 +48,7 @@ class AirViolationListParams(BaseModel):
     event_date_from: date | None = None
     event_date_to: date | None = None
     caza_en: str | None = None
+    last_hours: int | None = Field(default=None, ge=1, le=8760)
 
 
 class AirViolationListResponse(BaseModel):
@@ -57,3 +58,11 @@ class AirViolationListResponse(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+class AirViolationSummaryDTO(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    warplanes: int
+    surveillance_aircraft: int
+    helicopters: int

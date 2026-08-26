@@ -1,5 +1,5 @@
 import { apiClient } from "../../lib/apiClient";
-import type { AirViolation, AirViolationCreateInput, AirViolationFilters, AirViolationListResponse } from "./types";
+import type { AirViolation, AirViolationCreateInput, AirViolationFilters, AirViolationListResponse, AirViolationSummary } from "./types";
 import type { WorkbookImportSummary } from "../news/api";
 
 export const createAirViolation = async (payload: AirViolationCreateInput): Promise<AirViolation> => {
@@ -35,9 +35,26 @@ export const getAirViolations = async (
   if (filters.cazaEn) {
     params.set("caza_en", filters.cazaEn);
   }
+  if (filters.lastHours) {
+    params.set("last_hours", filters.lastHours);
+  }
 
   const response = await apiClient.get<AirViolationListResponse>(
     `/api/air-violations?${params.toString()}`,
+  );
+  return response.data;
+};
+
+export const getAirViolationSummary = async (
+  filters: AirViolationFilters,
+): Promise<AirViolationSummary> => {
+  const params = new URLSearchParams();
+  if (filters.eventDateFrom) params.set("event_date_from", filters.eventDateFrom);
+  if (filters.eventDateTo) params.set("event_date_to", filters.eventDateTo);
+  if (filters.cazaEn) params.set("caza_en", filters.cazaEn);
+  if (filters.lastHours) params.set("last_hours", filters.lastHours);
+  const response = await apiClient.get<AirViolationSummary>(
+    `/api/air-violations/summary?${params.toString()}`,
   );
   return response.data;
 };

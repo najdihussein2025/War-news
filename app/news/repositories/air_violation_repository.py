@@ -1,15 +1,18 @@
 import re
+from datetime import datetime, time, timedelta
 
 from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 from zoneinfo import ZoneInfo
 
 from app.core.text_sanitizer import strip_emoji_and_pictographs
+from app.core.cache import increment
 from app.news.dtos import (
     AirViolationCreateDTO,
     AirViolationDTO,
     AirViolationListParams,
     AirViolationListResponse,
+    AirViolationSummaryDTO,
     MatchResultDTO,
 )
 from app.news.interfaces import AirViolationRepositoryInterface
@@ -23,6 +26,7 @@ from app.sources.models import Source, SourceType
 
 
 BEIRUT_TIMEZONE = ZoneInfo("Asia/Beirut")
+AIR_VIOLATION_CACHE_VERSION_KEY = "air-violations:cache-version"
 
 
 def as_beirut_datetime(value):
@@ -44,9 +48,18 @@ def air_violation_news_text(
 
     if village is None:
         return f"{condition.action_ar} - الموقع بحاجة إلى التحقق"
-    village_name = village.ref_name_ar or village.ref_name_en or village.acs_name or village.cad_name
+    village_name = (
+        getattr(village, "ref_name_ar", None)
+        or getattr(village, "ref_name_en", None)
+        or getattr(village, "acs_name", None)
+        or getattr(village, "cad_name", None)
+    )
     caza_name = village.caza_ar or village.caza_en
-    summary = f"{condition.action_ar} فوق {village_name} في قضاء {caza_name}"
+    summary = (
+        f"{condition.action_ar} فوق {village_name} في قضاء {caza_name}"
+        if village_name
+        else f"{condition.action_ar} في قضاء {caza_name}"
+    )
     raw_text = message.raw_text or ""
     if "حيطة" in raw_text and "حذر" in raw_text:
         summary += " - حيطة وحذر"
@@ -149,6 +162,7 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         )
         self.db.add(record)
         self.db.commit()
+        increment(AIR_VIOLATION_CACHE_VERSION_KEY)
         detail = self.get_detail(record.id)
         if detail is None:
             raise RuntimeError("Created air violation could not be loaded.")
@@ -173,6 +187,7 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         record.note_2 = payload.note_2
         record.source_link = payload.source_link
         self.db.commit()
+        increment(AIR_VIOLATION_CACHE_VERSION_KEY)
         return self.get_detail(record.id)
 
     def delete(self, air_violation_id: int) -> bool:
@@ -181,6 +196,7 @@ class AirViolationRepository(AirViolationRepositoryInterface):
             return False
         self.db.delete(record)
         self.db.commit()
+        increment(AIR_VIOLATION_CACHE_VERSION_KEY)
         return True
 
     def list_all(self, params: AirViolationListParams) -> AirViolationListResponse:
@@ -247,6 +263,19 @@ class AirViolationRepository(AirViolationRepositoryInterface):
             total=int(total or 0),
             limit=params.limit,
             offset=params.offset,
+        )
+
+    def get_summary(self, params: AirViolationListParams) -> AirViolationSummaryDTO:
+        rows = self.db.execute(
+            select(AirViolation.condition_id, func.count(AirViolation.id))
+            .where(*self._filters(params))
+            .group_by(AirViolation.condition_id)
+        ).all()
+        counts = {condition_id: int(count) for condition_id, count in rows}
+        return AirViolationSummaryDTO(
+            warplanes=counts.get(35, 0),
+            surveillance_aircraft=counts.get(36, 0),
+            helicopters=counts.get(38, 0),
         )
 
     def get_detail(self, air_violation_id: int) -> AirViolationDTO | None:
@@ -339,6 +368,7 @@ class AirViolationRepository(AirViolationRepositoryInterface):
             for field, value in values.items():
                 setattr(existing, field, value)
         self.db.commit()
+        increment(AIR_VIOLATION_CACHE_VERSION_KEY)
         return True
 
     @staticmethod
@@ -350,6 +380,16 @@ class AirViolationRepository(AirViolationRepositoryInterface):
             filters.append(AirViolation.event_date >= params.event_date_from)
         if params.event_date_to is not None:
             filters.append(AirViolation.event_date <= params.event_date_to)
+        if params.last_hours is not None:
+            cutoff = datetime.now(BEIRUT_TIMEZONE) - timedelta(hours=params.last_hours)
+            event_time = func.coalesce(AirViolation.event_time, time.min)
+            filters.append(
+                (AirViolation.event_date > cutoff.date())
+                | (
+                    (AirViolation.event_date == cutoff.date())
+                    & (event_time >= cutoff.time().replace(tzinfo=None))
+                )
+            )
         if params.caza_en:
             filters.append(AirViolation.caza_en.ilike(f"%{params.caza_en}%"))
         return filters
@@ -360,3 +400,4 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         if existing is not None:
             self.db.delete(existing)
             self.db.flush()
+            increment(AIR_VIOLATION_CACHE_VERSION_KEY)
