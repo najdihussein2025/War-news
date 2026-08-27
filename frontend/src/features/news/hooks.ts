@@ -29,7 +29,6 @@ export const useIncidentsQuery = (filters: IncidentFilters, live = true) =>
     queryKey: incidentKeys.list(filters),
     queryFn: () => getIncidents(filters),
     ...(live ? liveListQueryOptions : {}),
-    refetchOnWindowFocus: !live,
   });
 
 export const useIncidentQuery = (incidentId: string | undefined) =>
