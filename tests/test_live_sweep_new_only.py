@@ -8,7 +8,8 @@ import pytest
 from sqlalchemy import select
 
 from app.news.dtos.pipeline_dto import StageSweepResult
-from app.news.models import RawMessage
+from app.news.models import MessageStatus, RawMessage
+from app.news.services.fast_path_eligibility import ERROR_AIR_VIOLATION
 from scripts import live_sweep_new_only as live_sweep
 
 
@@ -330,3 +331,18 @@ def test_downstream_stage_patches_leave_parsed_rows_visible_below_new_cutoff() -
         assert 1630 not in params
         assert "raw_messages.id >" not in sql
         assert "status" in sql.lower()
+
+
+def test_terminalize_ineligible_fast_path_filtered_preserves_air_violation_status() -> None:
+    message = MagicMock()
+    message.match_result = {"matched_condition_id": 35}
+    repo = MagicMock()
+    repo.db.scalars.return_value.all.return_value = [message]
+
+    updated = live_sweep._terminalize_ineligible_fast_path_filtered(repo)
+
+    assert updated == 1
+    assert message.status == MessageStatus.routed_air_violation
+    assert message.error_message == ERROR_AIR_VIOLATION
+    repo.db.add.assert_called_once_with(message)
+    repo.db.commit.assert_called_once()

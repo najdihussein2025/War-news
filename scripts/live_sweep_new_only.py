@@ -20,6 +20,7 @@ from app.news.repositories.raw_message_repository import RawMessageRepository
 from app.news.repositories.sweep_cursor_repository import SweepCursorRepository
 from app.news.services import pipeline_concurrent_sweeps as concurrent_sweeps
 from app.news.services.fast_path_eligibility import (
+    ERROR_AIR_VIOLATION,
     fast_path_materializable_clause,
     permanent_ineligibility_reason,
 )
@@ -370,7 +371,10 @@ def _terminalize_ineligible_fast_path_filtered(
         reason = permanent_ineligibility_reason(message.match_result)
         if reason is None:
             continue
-        message.status = MessageStatus.error
+        if reason == ERROR_AIR_VIOLATION:
+            message.status = MessageStatus.routed_air_violation
+        else:
+            message.status = MessageStatus.error
         message.error_message = reason
         self.db.add(message)
         updated += 1
