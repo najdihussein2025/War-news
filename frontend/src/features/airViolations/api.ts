@@ -1,5 +1,5 @@
 import { apiClient } from "../../lib/apiClient";
-import type { AirViolation, AirViolationCreateInput, AirViolationFilters, AirViolationListResponse, AirViolationSummary } from "./types";
+import type { AirViolation, AirViolationCreateInput, AirViolationFilters, AirViolationListResponse, AirViolationSummary, AirViolationUpdateInput } from "./types";
 import type { WorkbookImportSummary } from "../news/api";
 
 export const createAirViolation = async (payload: AirViolationCreateInput): Promise<AirViolation> => {
@@ -7,13 +7,22 @@ export const createAirViolation = async (payload: AirViolationCreateInput): Prom
   return response.data;
 };
 
-export const updateAirViolation = async (id: number, payload: AirViolationCreateInput): Promise<AirViolation> => {
+export const updateAirViolation = async (id: number, payload: AirViolationUpdateInput): Promise<AirViolation> => {
   const response = await apiClient.put<AirViolation>(`/api/air-violations/${id}`, payload);
   return response.data;
 };
 
-export const deleteAirViolation = async (id: number): Promise<void> => {
-  await apiClient.delete(`/api/air-violations/${id}`);
+export const deleteAirViolation = async (id: number, version: number): Promise<void> => {
+  await apiClient.delete(`/api/air-violations/${id}`, { params: { version } });
+};
+
+export const acquireAirViolationEditLock = async (id: number): Promise<AirViolation> => {
+  const response = await apiClient.post<AirViolation>(`/api/air-violations/${id}/edit-lock`);
+  return response.data;
+};
+
+export const releaseAirViolationEditLock = async (id: number): Promise<void> => {
+  await apiClient.delete(`/api/air-violations/${id}/edit-lock`);
 };
 
 export const getAirViolations = async (

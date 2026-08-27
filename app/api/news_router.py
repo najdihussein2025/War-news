@@ -13,11 +13,13 @@ from app.news.dtos import (
     AirViolationListParams,
     AirViolationListResponse,
     AirViolationSummaryDTO,
+    AirViolationUpdateDTO,
     WorkbookImportSummaryDTO,
 )
 from app.accounts.models import User
 from app.news.repositories import AirViolationRepository
 from app.news.services import (
+    AirViolationConflictError,
     AirViolationNotFoundError,
     AirViolationService,
     AirViolationWorkbookService,
@@ -46,32 +48,65 @@ def create_air_violation(
 @router.put("/{air_violation_id}", response_model=AirViolationDTO)
 def update_air_violation(
     air_violation_id: int,
-    payload: AirViolationCreateDTO,
+    payload: AirViolationUpdateDTO,
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ) -> AirViolationDTO:
     try:
         result = AirViolationService(AirViolationRepository(db)).update(
             air_violation_id,
             payload,
+            current_user.id,
         )
         return result
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except AirViolationNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except AirViolationConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
 
 @router.delete("/{air_violation_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_air_violation(
     air_violation_id: int,
+    version: int = Query(ge=1),
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ) -> None:
     try:
-        AirViolationService(AirViolationRepository(db)).delete(air_violation_id)
+        AirViolationService(AirViolationRepository(db)).delete(air_violation_id, version, current_user.id)
     except AirViolationNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except AirViolationConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+
+@router.post("/{air_violation_id}/edit-lock", response_model=AirViolationDTO)
+def acquire_air_violation_edit_lock(
+    air_violation_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> AirViolationDTO:
+    try:
+        return AirViolationService(AirViolationRepository(db)).acquire_edit_lock(
+            air_violation_id, current_user.id
+        )
+    except AirViolationNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except AirViolationConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+
+@router.delete("/{air_violation_id}/edit-lock", status_code=status.HTTP_204_NO_CONTENT)
+def release_air_violation_edit_lock(
+    air_violation_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> None:
+    AirViolationService(AirViolationRepository(db)).release_edit_lock(
+        air_violation_id, current_user.id
+    )
 
 
 @router.get("", response_model=AirViolationListResponse)

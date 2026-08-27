@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import { useSearchParams } from "react-router-dom";
 import { Button, ConfirmDialog, DataTable, Dialog, EmptyState, Input, Label, Select, type DataTableColumn } from "../../../components/ui";
 import { useLiveQueryTitleAddon } from "../../../hooks/useLiveQueryTitleAddon";
 import { formatDate } from "../../../lib/formatters";
 import { getBeirutDate } from "../../../lib/localDate";
+import { useAuthStore } from "../../../stores/authStore";
 import { useAirViolationSummaryQuery, useAirViolationsQuery } from "../hooks";
 import { useVillagesQuery } from "../../news/hooks";
-import { createAirViolation, deleteAirViolation, exportAirViolations, updateAirViolation } from "../api";
+import { acquireAirViolationEditLock, createAirViolation, deleteAirViolation, exportAirViolations, releaseAirViolationEditLock, updateAirViolation } from "../api";
 import type { AirViolation } from "../types";
 
 const PAGE_SIZE = 25;
@@ -41,6 +43,8 @@ export const AirViolationsPage = () => {
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const currentUserId = useAuthStore((state) => state.user?.id ?? null);
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Number(params.get("page") ?? "1") || 1);
   const offset = (page - 1) * PAGE_SIZE;
@@ -54,10 +58,14 @@ export const AirViolationsPage = () => {
     lastHours !== "" && !hourPresets.includes(lastHours),
   );
   const hasFilters = Boolean(conditionId || eventDateFrom || eventDateTo || cazaEn || lastHours);
-  const closeEditor = () => {
+  const closeEditor = async () => {
     if (isFormDirty) {
       setConfirmDiscard(true);
       return;
+    }
+    if (editingViolation) {
+      await releaseAirViolationEditLock(editingViolation.id);
+      await refetch();
     }
     setIsCreateOpen(false);
     setEditingViolation(null);
@@ -111,6 +119,12 @@ export const AirViolationsPage = () => {
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const rows = data?.items ?? [];
+  const isLockedByAnother = Boolean(
+    selectedViolation?.locked_by_user_id
+      && selectedViolation.locked_by_user_id !== currentUserId
+      && selectedViolation.edit_lock_expires_at
+      && new Date(selectedViolation.edit_lock_expires_at).getTime() > Date.now(),
+  );
 
   // Keep an open details dialog synchronized with the live-polled list. Without
   // this, corrected OCR/news text remains stale until the dialog is reopened.
@@ -226,7 +240,7 @@ export const AirViolationsPage = () => {
       header: "Details",
       className: "w-32",
       render: (row) => (
-        <Button type="button" variant="secondary" className="h-9 whitespace-nowrap" onClick={() => setSelectedViolation(row)}>
+        <Button type="button" variant="secondary" className="h-9 whitespace-nowrap" onClick={() => { setActionError(""); setSelectedViolation(row); }}>
           View details
         </Button>
       ),
@@ -405,26 +419,56 @@ export const AirViolationsPage = () => {
               Open original source
             </a>
           ) : null}
+          {actionError ? <p className="mt-5 text-small font-medium text-danger" role="alert">{actionError}</p> : null}
           <div className="mt-6 flex justify-end gap-2 border-t border-border pt-4">
             <Button
               type="button"
               variant="secondary"
-              onClick={() => {
-                setEditingViolation(selectedViolation);
-                setSelectedViolation(null);
-                setCreateError("");
-                setIsFormDirty(false);
-                setIsCreateOpen(true);
+              disabled={isLockedByAnother}
+              onClick={async () => {
+                setActionError("");
+                try {
+                  const locked = await acquireAirViolationEditLock(selectedViolation.id);
+                  setEditingViolation(locked);
+                  setSelectedViolation(null);
+                  setCreateError("");
+                  setIsFormDirty(false);
+                  setIsCreateOpen(true);
+                  await refetch();
+                } catch (error) {
+                  if (axios.isAxiosError(error) && error.response?.status === 409) {
+                    setActionError("This record is currently being edited by another administrator.");
+                    await refetch();
+                  } else {
+                    setActionError("Could not open this record for editing. Please try again.");
+                  }
+                }
               }}
             >
-              Update
+              {isLockedByAnother ? "Being edited" : "Update"}
             </Button>
             <Button
               type="button"
               variant="destructive"
               isLoading={isDeleting}
               loadingText="Deleting"
-              onClick={() => setConfirmDelete(true)}
+              disabled={isLockedByAnother}
+              onClick={async () => {
+                setActionError("");
+                try {
+                  const locked = await acquireAirViolationEditLock(selectedViolation.id);
+                  setSelectedViolation(locked);
+                  setConfirmDelete(true);
+                  await refetch();
+                } catch (error) {
+                  if (axios.isAxiosError(error) && error.response?.status === 409) {
+                    setActionError("This record is currently being edited by another administrator.");
+                    await refetch();
+                  } else {
+                    setActionError("Could not lock this record for deletion. Please try again.");
+                  }
+                }
+              }}
             >
               Delete
             </Button>
@@ -439,7 +483,11 @@ export const AirViolationsPage = () => {
           confirmLabel="Discard changes"
           destructive
           onCancel={() => setConfirmDiscard(false)}
-          onConfirm={() => {
+          onConfirm={async () => {
+            if (editingViolation) {
+              await releaseAirViolationEditLock(editingViolation.id);
+              await refetch();
+            }
             setConfirmDiscard(false);
             setIsCreateOpen(false);
             setEditingViolation(null);
@@ -455,14 +503,27 @@ export const AirViolationsPage = () => {
           confirmLabel="Delete record"
           destructive
           isLoading={isDeleting}
-          onCancel={() => setConfirmDelete(false)}
+          onCancel={async () => {
+            setConfirmDelete(false);
+            await releaseAirViolationEditLock(selectedViolation.id);
+            await refetch();
+          }}
           onConfirm={async () => {
             setIsDeleting(true);
             try {
-              await deleteAirViolation(selectedViolation.id);
+              setActionError("");
+              await deleteAirViolation(selectedViolation.id, selectedViolation.version);
               setConfirmDelete(false);
               setSelectedViolation(null);
               await refetch();
+            } catch (error) {
+              setConfirmDelete(false);
+              if (axios.isAxiosError(error) && error.response?.status === 409) {
+                setActionError("This record was updated by another administrator. Refresh the page before deleting it.");
+                await refetch();
+              } else {
+                setActionError("Could not delete the air violation. Please try again.");
+              }
             } finally {
               setIsDeleting(false);
             }
@@ -499,14 +560,26 @@ export const AirViolationsPage = () => {
                   note_2: String(form.get("note_2") ?? "").trim() || null,
                   source_link: String(form.get("source_link") ?? "").trim() || null,
                 };
-                if (editingViolation) await updateAirViolation(editingViolation.id, payload);
+                if (editingViolation) {
+                  await updateAirViolation(editingViolation.id, {
+                    ...payload,
+                    version: editingViolation.version,
+                  });
+                }
                 else await createAirViolation(payload);
                 setIsCreateOpen(false);
                 setEditingViolation(null);
                 setIsFormDirty(false);
                 await refetch();
-              } catch {
-                setCreateError("Could not create the air violation. Check the required fields and try again.");
+              } catch (error) {
+                if (axios.isAxiosError(error) && error.response?.status === 409) {
+                  setCreateError("This record was updated by another administrator. Close this form, review the latest record, and apply your changes again.");
+                  await refetch();
+                } else {
+                  setCreateError(editingViolation
+                    ? "Could not update the air violation. Check the required fields and try again."
+                    : "Could not create the air violation. Check the required fields and try again.");
+                }
               } finally {
                 setIsCreating(false);
               }

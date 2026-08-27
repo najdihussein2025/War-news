@@ -1,4 +1,5 @@
 from app.news.services.air_violation_service import (
+    AirViolationConflictError,
     AirViolationNotFoundError,
     AirViolationService,
 )
@@ -20,6 +21,7 @@ from app.news.services.village_matching_service import VillageMatchingService
 
 __all__ = [
     "AirViolationNotFoundError",
+    "AirViolationConflictError",
     "AirViolationService",
     "AirViolationWorkbookService",
     "ConditionResolutionService",

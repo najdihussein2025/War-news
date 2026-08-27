@@ -1,4 +1,5 @@
 from datetime import date, datetime, time
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -21,6 +22,9 @@ class AirViolationDTO(BaseModel):
     note_1: str | None
     note_2: str | None
     source_link: str | None
+    version: int
+    locked_by_user_id: UUID | None = None
+    edit_lock_expires_at: datetime | None = None
     created_at: datetime
     action_en: str
     action_ar: str
@@ -37,6 +41,10 @@ class AirViolationCreateDTO(BaseModel):
     note_1: str | None = None
     note_2: str | None = None
     source_link: str | None = None
+
+
+class AirViolationUpdateDTO(AirViolationCreateDTO):
+    version: int = Field(ge=1)
 
 
 class AirViolationListParams(BaseModel):

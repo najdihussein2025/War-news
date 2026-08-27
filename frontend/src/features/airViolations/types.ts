@@ -14,6 +14,9 @@ export type AirViolation = {
   note_1: string | null;
   note_2: string | null;
   source_link: string | null;
+  version: number;
+  locked_by_user_id: string | null;
+  edit_lock_expires_at: string | null;
   created_at: string;
   action_en: string;
   action_ar: string;
@@ -53,4 +56,8 @@ export type AirViolationCreateInput = {
   note_1?: string | null;
   note_2?: string | null;
   source_link?: string | null;
+};
+
+export type AirViolationUpdateInput = AirViolationCreateInput & {
+  version: number;
 };

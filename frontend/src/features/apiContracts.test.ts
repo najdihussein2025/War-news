@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiClient } from "../lib/apiClient";
 import { login } from "./auth/api";
-import { createAirViolation, deleteAirViolation, updateAirViolation } from "./airViolations/api";
+import { acquireAirViolationEditLock, createAirViolation, deleteAirViolation, releaseAirViolationEditLock, updateAirViolation } from "./airViolations/api";
 import { getConditions, getVillages } from "./news/api";
 import { getContentSource, getContentSources } from "./sources/api";
 
@@ -42,13 +42,18 @@ describe("frontend API contracts", () => {
 
   it("uses the expected Air Violations CRUD endpoints", async () => {
     const payload = { condition_id: 35, caza_en: "Sour", event_date: "2026-08-18", khabar: "News" };
+    const updatePayload = { ...payload, version: 3 };
     vi.mocked(client.post).mockResolvedValue({ data: { id: 8 } });
     vi.mocked(client.put).mockResolvedValue({ data: { id: 8 } });
     await createAirViolation(payload);
-    await updateAirViolation(8, payload);
-    await deleteAirViolation(8);
+    await updateAirViolation(8, updatePayload);
+    await deleteAirViolation(8, 4);
+    await acquireAirViolationEditLock(8);
+    await releaseAirViolationEditLock(8);
     expect(client.post).toHaveBeenCalledWith("/api/air-violations", payload);
-    expect(client.put).toHaveBeenCalledWith("/api/air-violations/8", payload);
-    expect(client.delete).toHaveBeenCalledWith("/api/air-violations/8");
+    expect(client.put).toHaveBeenCalledWith("/api/air-violations/8", updatePayload);
+    expect(client.delete).toHaveBeenCalledWith("/api/air-violations/8", { params: { version: 4 } });
+    expect(client.post).toHaveBeenCalledWith("/api/air-violations/8/edit-lock");
+    expect(client.delete).toHaveBeenCalledWith("/api/air-violations/8/edit-lock");
   });
 });

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from uuid import UUID
 
 from app.news.dtos import (
     AirViolationCreateDTO,
@@ -6,6 +7,7 @@ from app.news.dtos import (
     AirViolationListParams,
     AirViolationListResponse,
     AirViolationSummaryDTO,
+    AirViolationUpdateDTO,
 )
 from app.news.dtos import MatchResultDTO
 from app.news.models import RawMessage
@@ -17,11 +19,19 @@ class AirViolationRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    def update(self, air_violation_id: int, payload: AirViolationCreateDTO) -> AirViolationDTO | None:
+    def update(self, air_violation_id: int, payload: AirViolationUpdateDTO, user_id: UUID) -> AirViolationDTO | None:
         pass
 
     @abstractmethod
-    def delete(self, air_violation_id: int) -> bool:
+    def delete(self, air_violation_id: int, version: int, user_id: UUID) -> bool:
+        pass
+
+    @abstractmethod
+    def acquire_edit_lock(self, air_violation_id: int, user_id: UUID) -> AirViolationDTO | None:
+        pass
+
+    @abstractmethod
+    def release_edit_lock(self, air_violation_id: int, user_id: UUID) -> bool:
         pass
 
     @abstractmethod

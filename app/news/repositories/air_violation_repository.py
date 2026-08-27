@@ -1,8 +1,10 @@
 import re
 from datetime import datetime, time, timedelta
+from uuid import UUID
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, delete as sa_delete, func, select, update as sa_update
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import StaleDataError
 from zoneinfo import ZoneInfo
 
 from app.core.text_sanitizer import strip_emoji_and_pictographs
@@ -13,6 +15,7 @@ from app.news.dtos import (
     AirViolationListParams,
     AirViolationListResponse,
     AirViolationSummaryDTO,
+    AirViolationUpdateDTO,
     MatchResultDTO,
 )
 from app.news.interfaces import AirViolationRepositoryInterface
@@ -171,33 +174,94 @@ class AirViolationRepository(AirViolationRepositoryInterface):
     def update(
         self,
         air_violation_id: int,
-        payload: AirViolationCreateDTO,
+        payload: AirViolationUpdateDTO,
+        user_id: UUID,
     ) -> AirViolationDTO | None:
-        record = self.db.get(AirViolation, air_violation_id)
-        if record is None:
-            return None
-        record.condition_id = payload.condition_id
-        record.caza_en = payload.caza_en
-        record.caza_ar = payload.caza_ar
-        record.event_month = payload.event_date.strftime("%B")
-        record.event_date = payload.event_date
-        record.event_time = payload.event_time
-        record.khabar = payload.khabar
-        record.note_1 = payload.note_1
-        record.note_2 = payload.note_2
-        record.source_link = payload.source_link
+        result = self.db.execute(
+            sa_update(AirViolation)
+            .where(
+                AirViolation.id == air_violation_id,
+                AirViolation.version == payload.version,
+                AirViolation.locked_by_user_id == user_id,
+            )
+            .values(
+                condition_id=payload.condition_id,
+                caza_en=payload.caza_en,
+                caza_ar=payload.caza_ar,
+                event_month=payload.event_date.strftime("%B"),
+                event_date=payload.event_date,
+                event_time=payload.event_time,
+                khabar=payload.khabar,
+                note_1=payload.note_1,
+                note_2=payload.note_2,
+                source_link=payload.source_link,
+                version=AirViolation.version + 1,
+                locked_by_user_id=None,
+                edit_lock_expires_at=None,
+            )
+        )
+        if result.rowcount == 0:
+            self.db.rollback()
+            if self.db.get(AirViolation, air_violation_id) is None:
+                return None
+            raise StaleDataError("Air violation version is stale.")
         self.db.commit()
         increment(AIR_VIOLATION_CACHE_VERSION_KEY)
-        return self.get_detail(record.id)
+        return self.get_detail(air_violation_id)
 
-    def delete(self, air_violation_id: int) -> bool:
-        record = self.db.get(AirViolation, air_violation_id)
-        if record is None:
-            return False
-        self.db.delete(record)
+    def delete(self, air_violation_id: int, version: int, user_id: UUID) -> bool:
+        result = self.db.execute(
+            sa_delete(AirViolation).where(
+                AirViolation.id == air_violation_id,
+                AirViolation.version == version,
+                AirViolation.locked_by_user_id == user_id,
+            )
+        )
+        if result.rowcount == 0:
+            self.db.rollback()
+            if self.db.get(AirViolation, air_violation_id) is None:
+                return False
+            raise StaleDataError("Air violation version is stale.")
         self.db.commit()
         increment(AIR_VIOLATION_CACHE_VERSION_KEY)
         return True
+
+    def acquire_edit_lock(self, air_violation_id: int, user_id: UUID) -> AirViolationDTO | None:
+        now = datetime.now(BEIRUT_TIMEZONE)
+        result = self.db.execute(
+            sa_update(AirViolation)
+            .where(
+                AirViolation.id == air_violation_id,
+                (
+                    AirViolation.locked_by_user_id.is_(None)
+                    | (AirViolation.edit_lock_expires_at <= now)
+                    | (AirViolation.locked_by_user_id == user_id)
+                ),
+            )
+            .values(
+                locked_by_user_id=user_id,
+                edit_lock_expires_at=now + timedelta(minutes=5),
+            )
+        )
+        if result.rowcount == 0:
+            self.db.rollback()
+            if self.db.get(AirViolation, air_violation_id) is None:
+                return None
+            raise StaleDataError("Air violation is being edited by another administrator.")
+        self.db.commit()
+        return self.get_detail(air_violation_id)
+
+    def release_edit_lock(self, air_violation_id: int, user_id: UUID) -> bool:
+        result = self.db.execute(
+            sa_update(AirViolation)
+            .where(
+                AirViolation.id == air_violation_id,
+                AirViolation.locked_by_user_id == user_id,
+            )
+            .values(locked_by_user_id=None, edit_lock_expires_at=None)
+        )
+        self.db.commit()
+        return result.rowcount > 0
 
     def list_all(self, params: AirViolationListParams) -> AirViolationListResponse:
         filters = self._filters(params)
@@ -217,6 +281,9 @@ class AirViolationRepository(AirViolationRepositoryInterface):
                 AirViolation.note_1,
                 AirViolation.note_2,
                 AirViolation.source_link,
+                AirViolation.version,
+                AirViolation.locked_by_user_id,
+                AirViolation.edit_lock_expires_at,
                 AirViolation.created_at,
                 RawMessage.match_result.label("raw_match_result"),
                 Condition.action_en,
@@ -294,6 +361,9 @@ class AirViolationRepository(AirViolationRepositoryInterface):
                 AirViolation.note_1,
                 AirViolation.note_2,
                 AirViolation.source_link,
+                AirViolation.version,
+                AirViolation.locked_by_user_id,
+                AirViolation.edit_lock_expires_at,
                 AirViolation.created_at,
                 RawMessage.match_result.label("raw_match_result"),
                 Condition.action_en,
