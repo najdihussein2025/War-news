@@ -1,7 +1,7 @@
 """add account version and edit lock
 
-Revision ID: 20260827_0039
-Revises: 20260827_0038
+Revision ID: 20260827_0043
+Revises: 20260827_0042
 Create Date: 2026-08-27
 
 """
@@ -13,8 +13,8 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 
-revision: str = "20260827_0039"
-down_revision: Union[str, Sequence[str], None] = "20260827_0038"
+revision: str = "20260827_0043"
+down_revision: Union[str, Sequence[str], None] = "20260827_0042"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
