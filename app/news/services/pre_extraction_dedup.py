@@ -64,7 +64,11 @@ def find_pre_dedup_match(
         select(RawMessage.id, score_col)
         .where(
             RawMessage.status.not_in(
-                [MessageStatus.rejected, MessageStatus.duplicate]
+                [
+                    MessageStatus.rejected,
+                    MessageStatus.duplicate,
+                    MessageStatus.materialized,
+                ]
             ),
             RawMessage.received_at >= func.now() - text("INTERVAL '48 hours'"),
             RawMessage.id != raw_message_id,
