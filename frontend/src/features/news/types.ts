@@ -21,6 +21,9 @@ export type Incident = {
   duplicate_flag: "none" | "possible";
   details_pending: boolean;
   created_at: string;
+  version: number;
+  locked_by_user_id: string | null;
+  edit_lock_expires_at: string | null;
 };
 
 export type IncidentListResponse = {
@@ -117,6 +120,7 @@ export type IncidentDetail = Incident & {
 };
 
 export type IncidentUpdatePayload = {
+  version: number;
   event_date: string;
   event_time: string | null;
   khabar: string;

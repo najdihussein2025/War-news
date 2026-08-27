@@ -21,6 +21,9 @@ class IncidentListItemDTO(BaseModel):
     duplicate_flag: Literal["none", "possible"]
     details_pending: bool
     created_at: datetime
+    version: int = 1
+    locked_by_user_id: UUID | None = None
+    edit_lock_expires_at: datetime | None = None
 
 
 class IncidentListParams(BaseModel):
@@ -106,6 +109,9 @@ class IncidentDetailDTO(BaseModel):
     event_date: date
     event_time: time | None
     created_at: datetime
+    version: int = 1
+    locked_by_user_id: UUID | None = None
+    edit_lock_expires_at: datetime | None = None
     matched: bool
     duplicate_flag: Literal["none", "possible"]
     casualty_demographics: CasualtyDemographicsDTO
@@ -126,6 +132,7 @@ class IncidentDetailDTO(BaseModel):
 
 
 class IncidentUpdateDTO(BaseModel):
+    version: int = Field(ge=1)
     event_date: date
     event_time: time | None = None
     khabar: str = Field(min_length=1)
@@ -155,6 +162,7 @@ class IncidentDetailsPatchDTO(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     fields: dict[str, Any] = Field(min_length=1)
+    version: int = Field(ge=1)
 
     @field_validator("fields")
     @classmethod

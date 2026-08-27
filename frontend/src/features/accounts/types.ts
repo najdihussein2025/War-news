@@ -8,6 +8,9 @@ export type Account = {
   is_active: boolean;
   last_login_at: string | null;
   created_at: string;
+  version: number;
+  admin_edit_locked_by_user_id: string | null;
+  admin_edit_lock_expires_at: string | null;
 };
 
 export type AccountCreate = {
@@ -22,6 +25,7 @@ export type AccountUpdate = {
   full_name: string;
   role_id: number;
   password?: string;
+  version: number;
 };
 
 export type AccountPasswordChange = {
@@ -39,4 +43,7 @@ export type AccountRow = {
   is_active: boolean;
   last_login_at: string | null;
   created_at: string;
+  version: number;
+  admin_edit_locked_by_user_id: string | null;
+  admin_edit_lock_expires_at: string | null;
 };

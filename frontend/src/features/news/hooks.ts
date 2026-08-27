@@ -37,4 +37,6 @@ export const useIncidentQuery = (incidentId: string | undefined) =>
     queryKey: incidentKeys.detail(incidentId ?? ""),
     queryFn: () => getIncidentById(incidentId as string),
     enabled: Boolean(incidentId),
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: true,
   });

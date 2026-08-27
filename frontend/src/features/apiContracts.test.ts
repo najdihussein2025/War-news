@@ -3,6 +3,7 @@ import { apiClient } from "../lib/apiClient";
 import { login } from "./auth/api";
 import { acquireAirViolationEditLock, createAirViolation, deleteAirViolation, releaseAirViolationEditLock, updateAirViolation } from "./airViolations/api";
 import { getConditions, getVillages } from "./news/api";
+import { acquireIncidentEditLock, deleteIncident, releaseIncidentEditLock, updateIncidentDetails } from "./news/api";
 import { getContentSource, getContentSources } from "./sources/api";
 
 vi.mock("../lib/apiClient", () => ({
@@ -55,5 +56,18 @@ describe("frontend API contracts", () => {
     expect(client.delete).toHaveBeenCalledWith("/api/air-violations/8", { params: { version: 4 } });
     expect(client.post).toHaveBeenCalledWith("/api/air-violations/8/edit-lock");
     expect(client.delete).toHaveBeenCalledWith("/api/air-violations/8/edit-lock");
+  });
+
+  it("uses versioned Incident mutation and edit-lock endpoints", async () => {
+    vi.mocked(client.post).mockResolvedValue({ data: { id: "incident-1" } });
+    vi.mocked(client.patch).mockResolvedValue({ data: { id: "incident-1" } });
+    await acquireIncidentEditLock("incident-1");
+    await updateIncidentDetails("incident-1", { lam_d: 2 }, 4);
+    await deleteIncident("incident-1", 5);
+    await releaseIncidentEditLock("incident-1");
+    expect(client.post).toHaveBeenCalledWith("/api/incidents/incident-1/edit-lock");
+    expect(client.patch).toHaveBeenCalledWith("/api/incidents/incident-1/details", { fields: { lam_d: 2 }, version: 4 });
+    expect(client.delete).toHaveBeenCalledWith("/api/incidents/incident-1", { params: { version: 5 } });
+    expect(client.delete).toHaveBeenCalledWith("/api/incidents/incident-1/edit-lock");
   });
 });

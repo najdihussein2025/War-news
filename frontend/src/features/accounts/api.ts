@@ -30,15 +30,25 @@ export const updateAccount = async (userId: string, payload: AccountUpdate): Pro
   return response.data;
 };
 
-export const deleteAccount = async (userId: string): Promise<void> => {
-  await apiClient.delete(`/api/accounts/${userId}`);
+export const deleteAccount = async (userId: string, version: number): Promise<void> => {
+  await apiClient.delete(`/api/accounts/${userId}`, { params: { version } });
 };
 
-export const setAccountActive = async (userId: string, isActive: boolean): Promise<Account> => {
+export const setAccountActive = async (userId: string, isActive: boolean, version: number): Promise<Account> => {
   const response = await apiClient.patch<Account>(`/api/accounts/${userId}/active`, {
     is_active: isActive,
+    version,
   });
   return response.data;
+};
+
+export const acquireAccountEditLock = async (userId: string): Promise<Account> => {
+  const response = await apiClient.post<Account>(`/api/accounts/${userId}/edit-lock`);
+  return response.data;
+};
+
+export const releaseAccountEditLock = async (userId: string): Promise<void> => {
+  await apiClient.delete(`/api/accounts/${userId}/edit-lock`);
 };
 
 export const changeAccountPassword = async (

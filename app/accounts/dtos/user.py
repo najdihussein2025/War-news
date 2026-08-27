@@ -15,6 +15,7 @@ class UserCreateDTO(BaseModel):
 
 class UserActiveUpdateDTO(BaseModel):
     is_active: bool
+    version: int = Field(ge=1)
 
 
 class UserUpdateDTO(BaseModel):
@@ -22,6 +23,7 @@ class UserUpdateDTO(BaseModel):
     full_name: str = Field(min_length=1)
     role_id: int
     password: str | None = Field(default=None, min_length=8)
+    version: int = Field(ge=1)
 
 
 class PasswordChangeDTO(BaseModel):
@@ -46,3 +48,6 @@ class UserResponseDTO(BaseModel):
     is_active: bool
     last_login_at: datetime | None
     created_at: datetime
+    version: int
+    admin_edit_locked_by_user_id: UUID | None
+    admin_edit_lock_expires_at: datetime | None

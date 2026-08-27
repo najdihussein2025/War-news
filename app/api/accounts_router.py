@@ -9,6 +9,7 @@ from app.accounts.actions import list_accounts as list_accounts_action
 from app.accounts.actions import delete_account as delete_account_action
 from app.accounts.actions import set_account_active as set_account_active_action
 from app.accounts.actions import update_account as update_account_action
+from app.accounts.actions import acquire_account_edit_lock, release_account_edit_lock
 from app.api.deps import get_current_user, require_super_admin
 from app.core.database import get_db
 from app.accounts.dtos import (
@@ -26,6 +27,7 @@ from app.accounts.services import (
     RoleNotFoundError,
     UserPermissionError,
     UserBootstrapError,
+    UserConflictError,
     UserNotFoundError,
 )
 
@@ -96,18 +98,21 @@ def list_accounts(
 def delete_account(
     user_id: UUID,
     request: Request,
+    version: int = Query(ge=1),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ) -> None:
     try:
         existing = db.get(User, user_id)
         old = _user_values(existing) if existing else None
-        delete_account_action(db, user_id, current_user)
+        delete_account_action(db, user_id, version, current_user)
         _audit(db, request, current_user, "user.deleted", user_id, old, None)
     except UserPermissionError as exc:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
     except UserNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except UserConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
 
 @router.patch("/{user_id}/active", response_model=UserResponseDTO)
@@ -121,13 +126,15 @@ def set_account_active(
     try:
         existing = db.get(User, user_id)
         old = _user_values(existing) if existing else None
-        result = set_account_active_action(db, user_id, dto.is_active, current_user)
+        result = set_account_active_action(db, user_id, dto.is_active, dto.version, current_user)
         _audit(db, request, current_user, "user.activated" if dto.is_active else "user.deactivated", user_id, old, result.model_dump(mode="json"))
         return result
     except UserPermissionError as exc:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
     except UserNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except UserConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
 
 @router.patch("/{user_id}", response_model=UserResponseDTO)
@@ -150,6 +157,34 @@ def update_account(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     except RoleNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except UserNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except UserConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+
+@router.post("/{user_id}/edit-lock", response_model=UserResponseDTO)
+def acquire_edit_lock(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin),
+) -> UserResponseDTO:
+    try:
+        return acquire_account_edit_lock(db, user_id, current_user)
+    except UserNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except UserConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+
+@router.delete("/{user_id}/edit-lock", status_code=status.HTTP_204_NO_CONTENT)
+def release_edit_lock(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin),
+) -> None:
+    try:
+        release_account_edit_lock(db, user_id, current_user)
     except UserNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 

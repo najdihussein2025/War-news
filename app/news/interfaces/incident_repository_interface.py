@@ -32,11 +32,23 @@ class IncidentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    def update(self, incident_id: UUID, payload: IncidentUpdateDTO) -> IncidentDetailDTO | None:
+    def update(self, incident_id: UUID, payload: IncidentUpdateDTO, user_id: UUID) -> IncidentDetailDTO | None:
         pass
 
     @abstractmethod
-    def delete(self, incident_id: UUID) -> bool:
+    def update_details(self, incident_id: UUID, fields: dict[str, Any], performed_by: UUID, version: int) -> IncidentDetailDTO | None:
+        pass
+
+    @abstractmethod
+    def delete(self, incident_id: UUID, version: int, user_id: UUID) -> bool:
+        pass
+
+    @abstractmethod
+    def acquire_edit_lock(self, incident_id: UUID, user_id: UUID) -> IncidentDetailDTO | None:
+        pass
+
+    @abstractmethod
+    def release_edit_lock(self, incident_id: UUID, user_id: UUID) -> bool:
         pass
 
     @abstractmethod

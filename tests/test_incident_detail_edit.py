@@ -139,8 +139,9 @@ def _client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
         def __init__(self, _db=None) -> None:
             pass
 
-        def update_details(self, incident_id, fields, performed_by):
+        def update_details(self, incident_id, fields, performed_by, version):
             assert performed_by == USER_ID
+            assert version == 1
             assert fields == {"lam_d": 4}
             from app.news.dtos import CasualtyDemographicsDTO, IncidentDetailDTO
 
@@ -188,7 +189,7 @@ def test_patch_incident_details_endpoint(monkeypatch: pytest.MonkeyPatch) -> Non
     try:
         response = client.patch(
             f"/api/incidents/{INCIDENT_ID}/details",
-            json={"fields": {"lam_d": 4}},
+            json={"fields": {"lam_d": 4}, "version": 1},
         )
     finally:
         app.dependency_overrides.clear()
@@ -250,10 +251,13 @@ def test_repository_update_details_writes_audit_row() -> None:
         if user is None:
             pytest.skip("No users in database for performed_by FK.")
 
-        result = IncidentRepository(db).update_details(
+        repository = IncidentRepository(db)
+        repository.acquire_edit_lock(incident.id, user.id)
+        result = repository.update_details(
             incident.id,
             {"lam_d": 5},
             user.id,
+            1,
         )
 
         assert result is not None
@@ -288,7 +292,7 @@ def test_repository_update_details_writes_audit_row() -> None:
         db.flush()
 
         assert (
-            IncidentRepository(db).update_details(deleted.id, {"lam_d": 1}, user.id)
+            IncidentRepository(db).update_details(deleted.id, {"lam_d": 1}, user.id, 1)
             is None
         )
     except (OperationalError, ProgrammingError) as exc:

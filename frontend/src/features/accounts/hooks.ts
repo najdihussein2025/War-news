@@ -7,5 +7,5 @@ export const useAccounts = () =>
     queryFn: getAccounts,
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
-    refetchInterval: 30_000,
+    refetchInterval: 5_000,
   });

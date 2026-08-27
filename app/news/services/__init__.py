@@ -11,6 +11,7 @@ from app.news.services.dedup_matching_service import (
     DedupMatchingService,
 )
 from app.news.services.incident_service import (
+    IncidentConflictError,
     IncidentNotFoundError,
     IncidentService,
 )
@@ -29,6 +30,7 @@ __all__ = [
     "DEDUP_LOW_THRESHOLD",
     "DedupMatchingService",
     "IncidentNotFoundError",
+    "IncidentConflictError",
     "IncidentService",
     "IncidentWorkbookService",
     "MatchingService",

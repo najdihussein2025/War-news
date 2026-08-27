@@ -14,7 +14,8 @@ import { StatusBadge } from "../../../components/StatusBadge";
 import { Button, Card, EmptyState, FormField, Input, Label } from "../../../components/ui";
 import { cn } from "../../../lib/cn";
 import { formatDateTime } from "../../../lib/formatters";
-import { createAccount, deleteAccount, setAccountActive, updateAccount } from "../api";
+import { useAuthStore } from "../../../stores/authStore";
+import { acquireAccountEditLock, createAccount, deleteAccount, releaseAccountEditLock, setAccountActive, updateAccount } from "../api";
 import { useAccounts } from "../hooks";
 import type { AccountRole, AccountRow } from "../types";
 
@@ -344,6 +345,7 @@ const AccountForm = ({
 export const AccountsPage = () => {
   const { data: accountData, isLoading, isError } = useAccounts();
   const shell = useContext(ShellContext);
+  const currentUserId = useAuthStore((state) => state.user?.id ?? null);
   const [users, setUsers] = useState<AccountRow[]>([]);
   const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({
     key: "username",
@@ -356,6 +358,7 @@ export const AccountsPage = () => {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [dialogMode, setDialogMode] = useState<DialogMode | null>(null);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [lockedTargetId, setLockedTargetId] = useState<string | null>(null);
   const [formState, setFormState] = useState<UserFormState>(emptyForm);
   const [confirmUser, setConfirmUser] = useState<AccountRow | null>(null);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
@@ -378,6 +381,9 @@ export const AccountsPage = () => {
         is_active: account.is_active,
         last_login_at: account.last_login_at,
         created_at: account.created_at,
+        version: account.version,
+        admin_edit_locked_by_user_id: account.admin_edit_locked_by_user_id,
+        admin_edit_lock_expires_at: account.admin_edit_lock_expires_at,
       })),
     );
   }, [accountData]);
@@ -445,6 +451,14 @@ export const AccountsPage = () => {
     statusFilter !== "all" ||
     lastLoginFilter !== "all";
 
+  const isLockedByAnotherAdmin = (user: AccountRow) =>
+    Boolean(
+      user.admin_edit_locked_by_user_id
+      && user.admin_edit_locked_by_user_id !== currentUserId
+      && user.admin_edit_lock_expires_at
+      && new Date(user.admin_edit_lock_expires_at).getTime() > Date.now(),
+    );
+
   const clearFilters = () => {
     setSearch("");
     setRoleFilter("all");
@@ -453,11 +467,15 @@ export const AccountsPage = () => {
   };
 
   const closeDialog = useCallback(() => {
+    if (lockedTargetId) {
+      void releaseAccountEditLock(lockedTargetId).catch(() => undefined);
+      setLockedTargetId(null);
+    }
     setDialogMode(null);
     setConfirmUser(null);
     setConfirmAction(null);
     window.setTimeout(() => returnFocusRef.current?.focus(), 0);
-  }, []);
+  }, [lockedTargetId]);
 
   const handleSort = (key: SortKey) => {
     setSort((current) => ({
@@ -466,10 +484,25 @@ export const AccountsPage = () => {
     }));
   };
 
-  const openEditDialog = (user: AccountRow) => {
+  const openEditDialog = async (user: AccountRow) => {
     returnFocusRef.current = document.activeElement as HTMLElement | null;
     setOpenMenuId(null);
-    setEditingUserId(user.id);
+    setSubmitError(null);
+    try {
+      const locked = await acquireAccountEditLock(user.id);
+      setLockedTargetId(user.id);
+      setEditingUserId(user.id);
+      setUsers((current) => current.map((item) => item.id === user.id ? {
+        ...item,
+        version: locked.version,
+        admin_edit_locked_by_user_id: locked.admin_edit_locked_by_user_id,
+        admin_edit_lock_expires_at: locked.admin_edit_lock_expires_at,
+      } : item));
+    } catch (error) {
+      const detail = (error as { response?: { data?: { detail?: string } } }).response?.data?.detail;
+      showToast(detail ?? "This account is currently being edited by another super administrator.");
+      return;
+    }
     setFormState({
       username: user.username,
       full_name: user.full_name,
@@ -500,6 +533,9 @@ export const AccountsPage = () => {
             is_active: account.is_active,
             last_login_at: account.last_login_at,
             created_at: account.created_at,
+            version: account.version,
+            admin_edit_locked_by_user_id: account.admin_edit_locked_by_user_id,
+            admin_edit_lock_expires_at: account.admin_edit_lock_expires_at,
           },
           ...current,
         ]);
@@ -516,11 +552,16 @@ export const AccountsPage = () => {
       setIsSubmitting(true);
       setSubmitError(null);
       try {
+        const editingUser = users.find((user) => user.id === editingUserId);
+        if (!editingUser) {
+          throw new Error("The account is no longer available.");
+        }
         const account = await updateAccount(editingUserId, {
           username: formState.username.trim(),
           full_name: formState.full_name.trim(),
           role_id: formState.role === "super_admin" ? 1 : 2,
           ...(formState.password ? { password: formState.password } : {}),
+          version: editingUser.version,
         });
         setUsers((current) => current.map((user) =>
           user.id === account.id
@@ -530,6 +571,9 @@ export const AccountsPage = () => {
                 full_name: account.full_name,
                 role: account.role.name,
                 is_active: account.is_active,
+                version: account.version,
+                admin_edit_locked_by_user_id: account.admin_edit_locked_by_user_id,
+                admin_edit_lock_expires_at: account.admin_edit_lock_expires_at,
               }
             : user,
         ));
@@ -547,18 +591,32 @@ export const AccountsPage = () => {
     closeDialog();
   };
 
-  const requestActiveChange = (user: AccountRow) => {
+  const requestActiveChange = async (user: AccountRow) => {
     returnFocusRef.current = document.activeElement as HTMLElement | null;
     setOpenMenuId(null);
-    setConfirmAction("active");
-    setConfirmUser(user);
+    try {
+      const locked = await acquireAccountEditLock(user.id);
+      setLockedTargetId(user.id);
+      setConfirmAction("active");
+      setConfirmUser({ ...user, version: locked.version, admin_edit_locked_by_user_id: locked.admin_edit_locked_by_user_id, admin_edit_lock_expires_at: locked.admin_edit_lock_expires_at });
+    } catch (error) {
+      const detail = (error as { response?: { data?: { detail?: string } } }).response?.data?.detail;
+      showToast(detail ?? "This account is currently being edited by another super administrator.");
+    }
   };
 
-  const requestDelete = (user: AccountRow) => {
+  const requestDelete = async (user: AccountRow) => {
     returnFocusRef.current = document.activeElement as HTMLElement | null;
     setOpenMenuId(null);
-    setConfirmAction("delete");
-    setConfirmUser(user);
+    try {
+      const locked = await acquireAccountEditLock(user.id);
+      setLockedTargetId(user.id);
+      setConfirmAction("delete");
+      setConfirmUser({ ...user, version: locked.version, admin_edit_locked_by_user_id: locked.admin_edit_locked_by_user_id, admin_edit_lock_expires_at: locked.admin_edit_lock_expires_at });
+    } catch (error) {
+      const detail = (error as { response?: { data?: { detail?: string } } }).response?.data?.detail;
+      showToast(detail ?? "This account is currently being edited by another super administrator.");
+    }
   };
 
   const confirmActiveChange = async () => {
@@ -569,9 +627,9 @@ export const AccountsPage = () => {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      const updated = await setAccountActive(confirmUser.id, !confirmUser.is_active);
+      const updated = await setAccountActive(confirmUser.id, !confirmUser.is_active, confirmUser.version);
       setUsers((current) => current.map((user) =>
-        user.id === updated.id ? { ...user, is_active: updated.is_active } : user,
+        user.id === updated.id ? { ...user, is_active: updated.is_active, version: updated.version, admin_edit_locked_by_user_id: updated.admin_edit_locked_by_user_id, admin_edit_lock_expires_at: updated.admin_edit_lock_expires_at } : user,
       ));
       showToast(`${confirmUser.full_name} was ${updated.is_active ? "reactivated" : "deactivated"}.`);
       closeDialog();
@@ -591,7 +649,7 @@ export const AccountsPage = () => {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      await deleteAccount(confirmUser.id);
+      await deleteAccount(confirmUser.id, confirmUser.version);
       setUsers((current) => current.filter((user) => user.id !== confirmUser.id));
       showToast(`${confirmUser.full_name} was deleted.`);
       closeDialog();
@@ -784,8 +842,10 @@ export const AccountsPage = () => {
                   <td className="relative px-4 py-4 text-right">
                     <button
                       type="button"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface-raised text-text-muted transition-colors duration-150 ease-out hover:bg-surface-muted hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface-raised text-text-muted transition-colors duration-150 ease-out hover:bg-surface-muted hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring disabled:cursor-not-allowed disabled:opacity-50"
                       aria-label={`Open actions for ${user.full_name}`}
+                      title={isLockedByAnotherAdmin(user) ? "Another super administrator is editing this account" : undefined}
+                      disabled={isLockedByAnotherAdmin(user)}
                       aria-expanded={openMenuId === user.id}
                       onClick={() => setOpenMenuId((current) => (current === user.id ? null : user.id))}
                       onKeyDown={(event) => handleMenuKeyDown(event, user.id)}

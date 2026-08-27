@@ -1,7 +1,9 @@
 from uuid import UUID
+from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import delete as sa_delete, select, update as sa_update
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm.exc import StaleDataError
 
 from app.accounts.models import Role, RoleName, User
 
@@ -67,3 +69,76 @@ class UserRepository:
     def delete(self, user: User) -> None:
         self.db.delete(user)
         self.db.commit()
+
+    def update_by_admin(self, user_id: UUID, version: int, user_id_actor: UUID, values: dict) -> User | None:
+        result = self.db.execute(
+            sa_update(User)
+            .where(
+                User.id == user_id,
+                User.version == version,
+                User.admin_edit_locked_by_user_id == user_id_actor,
+            )
+            .values(
+                **values,
+                version=User.version + 1,
+                admin_edit_locked_by_user_id=None,
+                admin_edit_lock_expires_at=None,
+            )
+        )
+        if result.rowcount == 0:
+            self.db.rollback()
+            if self.db.get(User, user_id) is None:
+                return None
+            raise StaleDataError("Account version is stale or its edit lock is not owned by this administrator.")
+        self.db.commit()
+        return self.get_by_id(user_id)
+
+    def delete_by_admin(self, user_id: UUID, version: int, user_id_actor: UUID) -> bool:
+        result = self.db.execute(
+            sa_delete(User).where(
+                User.id == user_id,
+                User.version == version,
+                User.admin_edit_locked_by_user_id == user_id_actor,
+            )
+        )
+        if result.rowcount == 0:
+            self.db.rollback()
+            if self.db.get(User, user_id) is None:
+                return False
+            raise StaleDataError("Account version is stale or its edit lock is not owned by this administrator.")
+        self.db.commit()
+        return True
+
+    def acquire_edit_lock(self, user_id: UUID, actor_id: UUID) -> User | None:
+        now = datetime.now(timezone.utc)
+        result = self.db.execute(
+            sa_update(User)
+            .where(
+                User.id == user_id,
+                (
+                    User.admin_edit_locked_by_user_id.is_(None)
+                    | (User.admin_edit_lock_expires_at <= now)
+                    | (User.admin_edit_locked_by_user_id == actor_id)
+                ),
+            )
+            .values(
+                admin_edit_locked_by_user_id=actor_id,
+                admin_edit_lock_expires_at=now + timedelta(minutes=5),
+            )
+        )
+        if result.rowcount == 0:
+            self.db.rollback()
+            if self.db.get(User, user_id) is None:
+                return None
+            raise StaleDataError("Account is being edited by another super administrator.")
+        self.db.commit()
+        return self.get_by_id(user_id)
+
+    def release_edit_lock(self, user_id: UUID, actor_id: UUID) -> bool:
+        result = self.db.execute(
+            sa_update(User)
+            .where(User.id == user_id, User.admin_edit_locked_by_user_id == actor_id)
+            .values(admin_edit_locked_by_user_id=None, admin_edit_lock_expires_at=None)
+        )
+        self.db.commit()
+        return result.rowcount > 0

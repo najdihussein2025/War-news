@@ -5,6 +5,7 @@ from app.accounts.dtos import (
 )
 from app.accounts.models import RoleName, User
 from app.accounts.repositories import AuthSessionRepository, RoleRepository, UserRepository
+from sqlalchemy.orm.exc import StaleDataError
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -30,6 +31,10 @@ class UserNotFoundError(Exception):
 
 
 class PasswordChangeError(Exception):
+    pass
+
+
+class UserConflictError(Exception):
     pass
 
 
@@ -104,7 +109,7 @@ class UserService:
 
         return self.users.list_all(offset, limit)
 
-    def delete_user(self, user_id, requested_by_user: User) -> None:
+    def delete_user(self, user_id, version: int, requested_by_user: User) -> None:
         if requested_by_user.role.name != RoleName.super_admin:
             raise UserPermissionError("Only super_admin users can delete accounts.")
         if requested_by_user.id == user_id:
@@ -113,9 +118,12 @@ class UserService:
         user = self.users.get_by_id(user_id)
         if user is None:
             raise UserNotFoundError("User does not exist.")
-        self.users.delete(user)
+        try:
+            self.users.delete_by_admin(user.id, version, requested_by_user.id)
+        except StaleDataError as exc:
+            raise UserConflictError("This account is being edited or was updated by another super administrator.") from exc
 
-    def set_user_active(self, user_id, is_active: bool, requested_by_user: User) -> User:
+    def set_user_active(self, user_id, is_active: bool, version: int, requested_by_user: User) -> User:
         if requested_by_user.role.name != RoleName.super_admin:
             raise UserPermissionError("Only super_admin users can change account status.")
         if requested_by_user.id == user_id and not is_active:
@@ -124,7 +132,15 @@ class UserService:
         user = self.users.get_by_id(user_id)
         if user is None:
             raise UserNotFoundError("User does not exist.")
-        return self.users.set_active(user, is_active)
+        try:
+            updated = self.users.update_by_admin(
+                user.id, version, requested_by_user.id, {"is_active": is_active}
+            )
+        except StaleDataError as exc:
+            raise UserConflictError("This account is being edited or was updated by another super administrator.") from exc
+        if updated is None:
+            raise UserNotFoundError("User does not exist.")
+        return updated
 
     def update_user(self, user_id, dto: UserUpdateDTO, requested_by_user: User) -> User:
         if requested_by_user.role.name != RoleName.super_admin:
@@ -139,12 +155,38 @@ class UserService:
         if role is None:
             raise RoleNotFoundError("Role does not exist.")
 
-        user.username = dto.username
-        user.full_name = dto.full_name
-        user.role_id = role.id
+        values = {
+            "username": dto.username,
+            "full_name": dto.full_name,
+            "role_id": role.id,
+        }
         if dto.password:
-            user.password_hash = password_context.hash(dto.password)
-        return self.users.update(user)
+            values["password_hash"] = password_context.hash(dto.password)
+        try:
+            updated = self.users.update_by_admin(user.id, dto.version, requested_by_user.id, values)
+        except StaleDataError as exc:
+            raise UserConflictError("This account is being edited or was updated by another super administrator.") from exc
+        if updated is None:
+            raise UserNotFoundError("User does not exist.")
+        return updated
+
+    def acquire_edit_lock(self, user_id, requested_by_user: User) -> User:
+        if requested_by_user.role.name != RoleName.super_admin:
+            raise UserPermissionError("Only super_admin users can edit accounts.")
+        try:
+            user = self.users.acquire_edit_lock(user_id, requested_by_user.id)
+        except StaleDataError as exc:
+            raise UserConflictError("This account is currently being edited by another super administrator.") from exc
+        if user is None:
+            raise UserNotFoundError("User does not exist.")
+        return user
+
+    def release_edit_lock(self, user_id, requested_by_user: User) -> None:
+        if requested_by_user.role.name != RoleName.super_admin:
+            raise UserPermissionError("Only super_admin users can edit accounts.")
+        if self.users.get_by_id(user_id) is None:
+            raise UserNotFoundError("User does not exist.")
+        self.users.release_edit_lock(user_id, requested_by_user.id)
 
     def change_password(self, user_id, current_password: str, new_password: str, requested_by_user: User) -> User:
         target_user = self.users.get_by_id(user_id)

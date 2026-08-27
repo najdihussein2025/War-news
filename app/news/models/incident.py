@@ -109,6 +109,12 @@ class Incident(Base):
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    locked_by_user_id: Mapped[UUID | None] = mapped_column(
+        PgUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    edit_lock_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    __mapper_args__ = {"version_id_col": version}
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

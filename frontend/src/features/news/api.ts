@@ -92,16 +92,26 @@ export const updateIncident = async (incidentId: string, payload: IncidentUpdate
 export const updateIncidentDetails = async (
   incidentId: string,
   fields: Record<string, number | string>,
+  version: number,
 ): Promise<IncidentDetail> => {
   const response = await apiClient.patch<IncidentDetail>(
     `/api/incidents/${incidentId}/details`,
-    { fields },
+    { fields, version },
   );
   return response.data;
 };
 
-export const deleteIncident = async (incidentId: string): Promise<void> => {
-  await apiClient.delete(`/api/incidents/${incidentId}`);
+export const deleteIncident = async (incidentId: string, version: number): Promise<void> => {
+  await apiClient.delete(`/api/incidents/${incidentId}`, { params: { version } });
+};
+
+export const acquireIncidentEditLock = async (incidentId: string): Promise<IncidentDetail> => {
+  const response = await apiClient.post<IncidentDetail>(`/api/incidents/${incidentId}/edit-lock`);
+  return response.data;
+};
+
+export const releaseIncidentEditLock = async (incidentId: string): Promise<void> => {
+  await apiClient.delete(`/api/incidents/${incidentId}/edit-lock`);
 };
 
 export const importIncidents = async (file: File): Promise<WorkbookImportSummary> => {

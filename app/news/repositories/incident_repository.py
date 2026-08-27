@@ -1,11 +1,12 @@
 import hashlib
 from contextlib import AbstractContextManager
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import and_, case, desc, func, or_, select
+from sqlalchemy import and_, case, desc, func, or_, select, update as sa_update
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import StaleDataError
 
 from app.core.text_sanitizer import strip_emoji_and_pictographs
 from app.llm.dtos import ExtractedCandidate
@@ -81,6 +82,9 @@ class IncidentRepository(IncidentRepositoryInterface):
                 ).label("duplicate_flag"),
                 Incident.details_pending,
                 Incident.created_at,
+                Incident.version,
+                Incident.locked_by_user_id,
+                Incident.edit_lock_expires_at,
             )
             .outerjoin(Village, Village.id == Incident.village_id)
             .outerjoin(Condition, Condition.id == Incident.condition_id)
@@ -207,6 +211,9 @@ class IncidentRepository(IncidentRepositoryInterface):
             "event_date": incident.event_date,
             "event_time": incident.event_time,
             "created_at": incident.created_at,
+            "version": incident.version,
+            "locked_by_user_id": incident.locked_by_user_id,
+            "edit_lock_expires_at": incident.edit_lock_expires_at,
             "matched": row.matched,
             "duplicate_flag": row.duplicate_flag,
             "casualty_demographics": CasualtyDemographicsDTO(
@@ -270,12 +277,20 @@ class IncidentRepository(IncidentRepositoryInterface):
             raise RuntimeError("Created incident could not be loaded.")
         return detail
 
-    def update(self, incident_id: UUID, payload: IncidentUpdateDTO) -> IncidentDetailDTO | None:
+    def update(self, incident_id: UUID, payload: IncidentUpdateDTO, user_id: UUID) -> IncidentDetailDTO | None:
         incident = self.db.scalar(
-            select(Incident).where(Incident.id == incident_id, Incident.is_deleted.is_(False))
+            select(Incident).where(
+                Incident.id == incident_id,
+                Incident.is_deleted.is_(False),
+                Incident.version == payload.version,
+                Incident.locked_by_user_id == user_id,
+            ).with_for_update()
         )
         if incident is None:
-            return None
+            self.db.rollback()
+            if self.db.scalar(select(Incident.id).where(Incident.id == incident_id, Incident.is_deleted.is_(False))) is None:
+                return None
+            raise StaleDataError("Incident version or edit lock is stale.")
         text_fields = {
             "khabar",
             "note",
@@ -283,13 +298,15 @@ class IncidentRepository(IncidentRepositoryInterface):
             "source_link",
             "source_link_2",
         }
-        for field, value in payload.model_dump().items():
+        for field, value in payload.model_dump(exclude={"version"}).items():
             if field in text_fields:
                 value = self._sanitize_optional_text(value)
                 if field == "khabar" and value is None:
                     value = ""
             setattr(incident, field, value)
         incident.event_month = payload.event_date.strftime("%B")
+        incident.locked_by_user_id = None
+        incident.edit_lock_expires_at = None
         self.db.commit()
         return self.get_by_id(incident_id)
 
@@ -298,15 +315,21 @@ class IncidentRepository(IncidentRepositoryInterface):
         incident_id: UUID,
         fields: dict[str, Any],
         performed_by: UUID,
+        version: int,
     ) -> IncidentDetailDTO | None:
         incident = self.db.scalar(
             select(Incident).where(
                 Incident.id == incident_id,
                 Incident.is_deleted.is_(False),
-            )
+                Incident.version == version,
+                Incident.locked_by_user_id == performed_by,
+            ).with_for_update()
         )
         if incident is None:
-            return None
+            self.db.rollback()
+            if self.db.scalar(select(Incident.id).where(Incident.id == incident_id, Incident.is_deleted.is_(False))) is None:
+                return None
+            raise StaleDataError("Incident version or edit lock is stale.")
 
         detail = self.db.scalar(
             select(IncidentDetail).where(IncidentDetail.incident_id == incident_id)
@@ -338,18 +361,60 @@ class IncidentRepository(IncidentRepositoryInterface):
 
         self.db.add(detail)
         self.db.add(incident)
+        incident.locked_by_user_id = None
+        incident.edit_lock_expires_at = None
         self.db.commit()
         return self.get_by_id(incident_id)
 
-    def delete(self, incident_id: UUID) -> bool:
+    def delete(self, incident_id: UUID, version: int, user_id: UUID) -> bool:
         incident = self.db.scalar(
-            select(Incident).where(Incident.id == incident_id, Incident.is_deleted.is_(False))
+            select(Incident).where(
+                Incident.id == incident_id,
+                Incident.is_deleted.is_(False),
+                Incident.version == version,
+                Incident.locked_by_user_id == user_id,
+            ).with_for_update()
         )
         if incident is None:
-            return False
+            self.db.rollback()
+            if self.db.scalar(select(Incident.id).where(Incident.id == incident_id, Incident.is_deleted.is_(False))) is None:
+                return False
+            raise StaleDataError("Incident version or edit lock is stale.")
         incident.is_deleted = True
         self.db.commit()
         return True
+
+    def acquire_edit_lock(self, incident_id: UUID, user_id: UUID) -> IncidentDetailDTO | None:
+        now = datetime.now(timezone.utc)
+        result = self.db.execute(
+            sa_update(Incident)
+            .where(
+                Incident.id == incident_id,
+                Incident.is_deleted.is_(False),
+                (
+                    Incident.locked_by_user_id.is_(None)
+                    | (Incident.edit_lock_expires_at <= now)
+                    | (Incident.locked_by_user_id == user_id)
+                ),
+            )
+            .values(locked_by_user_id=user_id, edit_lock_expires_at=now + timedelta(minutes=5))
+        )
+        if result.rowcount == 0:
+            self.db.rollback()
+            if self.db.scalar(select(Incident.id).where(Incident.id == incident_id, Incident.is_deleted.is_(False))) is None:
+                return None
+            raise StaleDataError("Incident is being edited by another administrator.")
+        self.db.commit()
+        return self.get_by_id(incident_id)
+
+    def release_edit_lock(self, incident_id: UUID, user_id: UUID) -> bool:
+        result = self.db.execute(
+            sa_update(Incident)
+            .where(Incident.id == incident_id, Incident.locked_by_user_id == user_id)
+            .values(locked_by_user_id=None, edit_lock_expires_at=None)
+        )
+        self.db.commit()
+        return result.rowcount > 0
 
     def list_duplicate_candidates(
         self,

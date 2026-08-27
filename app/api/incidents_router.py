@@ -18,7 +18,7 @@ from app.news.dtos import (
     WorkbookImportSummaryDTO,
 )
 from app.news.repositories import IncidentRepository
-from app.news.services import IncidentNotFoundError, IncidentService, IncidentWorkbookService
+from app.news.services import IncidentConflictError, IncidentNotFoundError, IncidentService, IncidentWorkbookService
 from app.sources.models import SourceType
 
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])
@@ -50,7 +50,7 @@ def list_incidents(
     duplicate_only: bool = Query(default=False),
     sort_order: Literal["newest", "oldest"] = Query(default="newest"),
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ) -> IncidentListResponse:
     params = IncidentListParams(
         limit=limit,
@@ -96,7 +96,7 @@ def import_incidents(
 def get_incident(
     incident_id: UUID,
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ) -> IncidentDetailDTO:
     try:
         return IncidentService(IncidentRepository(db)).get_detail(incident_id)
@@ -112,12 +112,14 @@ def update_incident(
     incident_id: UUID,
     payload: IncidentUpdateDTO,
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ) -> IncidentDetailDTO:
     try:
-        return IncidentService(IncidentRepository(db)).update(incident_id, payload)
+        return IncidentService(IncidentRepository(db)).update(incident_id, payload, current_user.id)
     except IncidentNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except IncidentConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
 
 @router.patch("/{incident_id}/details", response_model=IncidentDetailDTO)
@@ -140,15 +142,43 @@ def update_incident_details(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
         ) from exc
+    except IncidentConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
 
 @router.delete("/{incident_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_incident(
     incident_id: UUID,
+    version: int = Query(ge=1),
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ) -> None:
     try:
-        IncidentService(IncidentRepository(db)).delete(incident_id)
+        IncidentService(IncidentRepository(db)).delete(incident_id, version, current_user.id)
     except IncidentNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except IncidentConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+
+@router.post("/{incident_id}/edit-lock", response_model=IncidentDetailDTO)
+def acquire_incident_edit_lock(
+    incident_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> IncidentDetailDTO:
+    try:
+        return IncidentService(IncidentRepository(db)).acquire_edit_lock(incident_id, current_user.id)
+    except IncidentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except IncidentConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+
+@router.delete("/{incident_id}/edit-lock", status_code=status.HTTP_204_NO_CONTENT)
+def release_incident_edit_lock(
+    incident_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> None:
+    IncidentService(IncidentRepository(db)).release_edit_lock(incident_id, current_user.id)

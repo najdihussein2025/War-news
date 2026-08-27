@@ -48,12 +48,12 @@ def list_accounts(
     return [UserResponseDTO.model_validate(user) for user in users]
 
 
-def delete_account(db: Session, user_id: UUID, current_user: User) -> None:
-    _service(db).delete_user(user_id, requested_by_user=current_user)
+def delete_account(db: Session, user_id: UUID, version: int, current_user: User) -> None:
+    _service(db).delete_user(user_id, version, requested_by_user=current_user)
 
 
-def set_account_active(db: Session, user_id: UUID, is_active: bool, current_user: User) -> UserResponseDTO:
-    user = _service(db).set_user_active(user_id, is_active, requested_by_user=current_user)
+def set_account_active(db: Session, user_id: UUID, is_active: bool, version: int, current_user: User) -> UserResponseDTO:
+    user = _service(db).set_user_active(user_id, is_active, version, requested_by_user=current_user)
     return UserResponseDTO.model_validate(user)
 
 
@@ -68,3 +68,11 @@ def change_account_password(
     current_user: User,
 ) -> None:
     _service(db).change_password(user_id, dto.current_password, dto.new_password, current_user)
+
+
+def acquire_account_edit_lock(db: Session, user_id: UUID, current_user: User) -> UserResponseDTO:
+    return UserResponseDTO.model_validate(_service(db).acquire_edit_lock(user_id, current_user))
+
+
+def release_account_edit_lock(db: Session, user_id: UUID, current_user: User) -> None:
+    _service(db).release_edit_lock(user_id, current_user)

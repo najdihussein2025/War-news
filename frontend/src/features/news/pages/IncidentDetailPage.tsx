@@ -5,8 +5,9 @@ import { StatusBadge } from "../../../components/StatusBadge";
 import { Button, ConfirmDialog, Dialog, EmptyState, Input, Label } from "../../../components/ui";
 import { formatDate, formatRelativeTime } from "../../../lib/formatters";
 import { roleBaseFromPath } from "../../../lib/rolePath";
+import { useAuthStore } from "../../../stores/authStore";
 import { useIncidentQuery } from "../hooks";
-import { deleteIncident, updateIncident, updateIncidentDetails } from "../api";
+import { acquireIncidentEditLock, deleteIncident, releaseIncidentEditLock, updateIncident, updateIncidentDetails } from "../api";
 import { IncidentCategorySectionFields } from "../components/IncidentCategorySectionFields";
 import { IncidentCategorySectionEditForm } from "../components/IncidentCategorySectionEditForm";
 import { incidentCategorySections } from "../incidentCategorySections";
@@ -51,7 +52,14 @@ export const IncidentDetailPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [actionError, setActionError] = useState("");
   const [isVillageDetailsOpen, setIsVillageDetailsOpen] = useState(false);
+  const currentUserId = useAuthStore((state) => state.user?.id ?? null);
   const villageDetails = incident?.village_details;
+  const isLockedByAnother = Boolean(
+    incident?.locked_by_user_id
+      && incident.locked_by_user_id !== currentUserId
+      && incident.edit_lock_expires_at
+      && new Date(incident.edit_lock_expires_at).getTime() > Date.now(),
+  );
   const villageInfoRows = [
     {
       label: "Reference name",
@@ -106,14 +114,41 @@ export const IncidentDetailPage = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <BackLink to={incidentsPath} />
         <div className="flex gap-2 sm:justify-end">
-          <Button type="button" variant="secondary" onClick={() => { setActionError(""); setIsEditing(true); }}>
-            Update
+          <Button type="button" variant="secondary" disabled={isLockedByAnother} onClick={async () => {
+            if (!incidentId) return;
+            setActionError("");
+            try {
+              await acquireIncidentEditLock(incidentId);
+              await refetch();
+              setIsEditing(true);
+            } catch (error) {
+              setActionError(isAxiosError(error) && error.response?.status === 409
+                ? "This incident is currently being edited by another administrator."
+                : "Could not open this incident for editing.");
+              await refetch();
+            }
+          }}>
+            {isLockedByAnother ? "Being edited" : "Update"}
           </Button>
-          <Button type="button" variant="destructive" onClick={() => { setActionError(""); setIsDeleting(true); }}>
+          <Button type="button" variant="destructive" disabled={isLockedByAnother} onClick={async () => {
+            if (!incidentId) return;
+            setActionError("");
+            try {
+              await acquireIncidentEditLock(incidentId);
+              await refetch();
+              setIsDeleting(true);
+            } catch (error) {
+              setActionError(isAxiosError(error) && error.response?.status === 409
+                ? "This incident is currently being edited by another administrator."
+                : "Could not lock this incident for deletion.");
+              await refetch();
+            }
+          }}>
             Delete
           </Button>
         </div>
       </div>
+      {actionError && !isEditing ? <p className="text-small font-medium text-danger" role="alert">{actionError}</p> : null}
 
       <section className="rounded-lg border border-border bg-surface-raised p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -386,13 +421,24 @@ export const IncidentDetailPage = () => {
                     type="button"
                     variant="secondary"
                     className="shrink-0"
-                    onClick={(event) => {
+                    disabled={isLockedByAnother}
+                    onClick={async (event) => {
                       event.preventDefault();
+                      if (!incidentId) return;
                       setActionError("");
-                      setEditingSection(key);
+                      try {
+                        await acquireIncidentEditLock(incidentId);
+                        await refetch();
+                        setEditingSection(key);
+                      } catch (error) {
+                        setActionError(isAxiosError(error) && error.response?.status === 409
+                          ? "This incident is currently being edited by another administrator."
+                          : "Could not open this section for editing.");
+                        await refetch();
+                      }
                     }}
                   >
-                    Edit
+                    {isLockedByAnother ? "Being edited" : "Edit"}
                   </Button>
                 ) : null}
               </span>
@@ -401,10 +447,14 @@ export const IncidentDetailPage = () => {
               <IncidentCategorySectionEditForm
                 sectionKey={key}
                 details={incident[key]}
-                onCancel={() => setEditingSection(null)}
+                onCancel={async () => {
+                  if (incidentId) await releaseIncidentEditLock(incidentId);
+                  setEditingSection(null);
+                  await refetch();
+                }}
                 onSave={async (fields) => {
                   if (!incidentId) return;
-                  await updateIncidentDetails(incidentId, fields);
+                  await updateIncidentDetails(incidentId, fields, incident.version);
                   await refetch();
                   setEditingSection(null);
                 }}
@@ -421,7 +471,13 @@ export const IncidentDetailPage = () => {
 
 
       {isEditing ? (
-        <Dialog title="Update incident" eyebrow="Edit record" size="lg" onClose={() => !isSaving && setIsEditing(false)}>
+        <Dialog title="Update incident" eyebrow="Edit record" size="lg" onClose={async () => {
+          if (!isSaving && incidentId) {
+            await releaseIncidentEditLock(incidentId);
+            setIsEditing(false);
+            await refetch();
+          }
+        }}>
           <form
             className="space-y-4"
             onSubmit={async (event) => {
@@ -437,6 +493,7 @@ export const IncidentDetailPage = () => {
               setActionError("");
               try {
                 await updateIncident(incidentId, {
+                  version: incident.version,
                   event_date: String(form.get("event_date")),
                   event_time: nullable("event_time"),
                   khabar: String(form.get("khabar") ?? "").trim(),
@@ -451,8 +508,10 @@ export const IncidentDetailPage = () => {
                 });
                 await refetch();
                 setIsEditing(false);
-              } catch {
-                setActionError("Could not update the incident. Please check the values and try again.");
+              } catch (error) {
+                setActionError(isAxiosError(error) && error.response?.status === 409
+                  ? "This incident was changed or locked by another administrator. Close and reopen the editor."
+                  : "Could not update the incident. Please check the values and try again.");
               } finally {
                 setIsSaving(false);
               }
@@ -474,7 +533,11 @@ export const IncidentDetailPage = () => {
             </div>
             {actionError ? <p className="text-small text-danger">{actionError}</p> : null}
             <div className="flex justify-end gap-2 border-t border-border pt-4">
-              <Button type="button" variant="secondary" disabled={isSaving} onClick={() => setIsEditing(false)}>Cancel</Button>
+              <Button type="button" variant="secondary" disabled={isSaving} onClick={async () => {
+                if (incidentId) await releaseIncidentEditLock(incidentId);
+                setIsEditing(false);
+                await refetch();
+              }}>Cancel</Button>
               <Button type="submit" isLoading={isSaving} loadingText="Updating">Update</Button>
             </div>
           </form>
@@ -488,12 +551,18 @@ export const IncidentDetailPage = () => {
           confirmLabel="Delete incident"
           destructive
           isLoading={isSaving}
-          onCancel={() => !isSaving && setIsDeleting(false)}
+          onCancel={async () => {
+            if (!isSaving && incidentId) {
+              await releaseIncidentEditLock(incidentId);
+              setIsDeleting(false);
+              await refetch();
+            }
+          }}
           onConfirm={async () => {
             if (!incidentId) return;
             setIsSaving(true);
             try {
-              await deleteIncident(incidentId);
+              await deleteIncident(incidentId, incident.version);
               navigate(incidentsPath, { replace: true });
             } catch {
               setActionError("Could not delete the incident. Please try again.");
