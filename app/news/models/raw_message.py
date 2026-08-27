@@ -122,6 +122,12 @@ class RawMessage(Base):
         default=0,
         server_default=text("0"),
     )
+    match_retry_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default=text("0"),
+    )
     processing_claim_stage: Mapped[str | None] = mapped_column(
         String,
         index=True,

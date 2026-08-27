@@ -16,6 +16,16 @@ from app.news.models import (
     RawMessage,
 )
 
+MATCHING_RETRY_CAP_PREFIX = "matching: exceeded max retries"
+
+
+def matching_retry_cap_message(retry_count: int, exc: BaseException) -> str:
+    message = str(exc).strip() or "unknown error"
+    return (
+        f"{MATCHING_RETRY_CAP_PREFIX} ({retry_count}) — "
+        f"last error: {type(exc).__name__}: {message}"
+    )
+
 
 class RawMessageRepository(RawMessageRepositoryInterface):
     def __init__(self, db: Session) -> None:
@@ -112,6 +122,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
     ) -> None:
         message.match_result = result.model_dump(mode="json")
         message.error_message = None
+        message.match_retry_count = 0
         self._clear_processing_claim(message)
         self.db.add(message)
         self.db.commit()
@@ -220,6 +231,88 @@ class RawMessageRepository(RawMessageRepositoryInterface):
                     message.error_message = extraction_retry_cap_message(
                         message.extraction_retry_count,
                         RuntimeError(message.error_message or "timed out"),
+                    )
+                    self.db.add(message)
+                capped_count += 1
+                continue
+
+            message.status = MessageStatus.parsed
+            message.error_message = None
+            self._clear_processing_claim(message)
+            self.db.add(message)
+            reset_count += 1
+
+        if reset_count or capped_count:
+            self.db.commit()
+        return reset_count, capped_count
+
+    def record_transient_matching_failure(
+        self,
+        message: RawMessage,
+        exc: BaseException,
+        *,
+        max_retries: int | None = None,
+    ) -> bool:
+        """Increment retry count for a matching failure and cap if needed."""
+        limit = (
+            max_retries
+            if max_retries is not None
+            else settings.matching_max_retries
+        )
+        message.match_retry_count += 1
+        message.status = MessageStatus.error
+        self._clear_processing_claim(message)
+        if message.match_retry_count >= limit:
+            message.error_message = matching_retry_cap_message(
+                message.match_retry_count,
+                exc,
+            )
+            self.db.add(message)
+            self.db.commit()
+            return True
+
+        message.error_message = f"{type(exc).__name__}: {str(exc).strip() or 'unknown error'}"
+        self.db.add(message)
+        self.db.commit()
+        return False
+
+    def reset_retryable_matching_errors(
+        self,
+        limit: int = 200,
+        *,
+        max_retries: int | None = None,
+    ) -> tuple[int, int]:
+        """Re-queue matching failures parked in status=error until the retry cap."""
+        retry_limit = (
+            max_retries
+            if max_retries is not None
+            else settings.matching_max_retries
+        )
+        messages = list(
+            self.db.scalars(
+                select(RawMessage)
+                .where(
+                    RawMessage.status == MessageStatus.error,
+                    RawMessage.extraction_result.is_not(None),
+                    RawMessage.match_result.is_(None),
+                    RawMessage.duplicate_of_id.is_(None),
+                    RawMessage.match_retry_count > 0,
+                )
+                .order_by(RawMessage.id.asc())
+                .limit(limit)
+            ).all()
+        )
+        if not messages:
+            return 0, 0
+
+        reset_count = 0
+        capped_count = 0
+        for message in messages:
+            if message.match_retry_count >= retry_limit:
+                if not (message.error_message or "").startswith(MATCHING_RETRY_CAP_PREFIX):
+                    message.error_message = matching_retry_cap_message(
+                        message.match_retry_count,
+                        RuntimeError(message.error_message or "unknown error"),
                     )
                     self.db.add(message)
                 capped_count += 1

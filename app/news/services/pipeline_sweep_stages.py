@@ -303,6 +303,14 @@ def sweep_matching(
 ) -> StageSweepResult:
     started_at = time.monotonic()
     action = build_match_incident_action(db)
+    raw_messages = RawMessageRepository(db)
+    reset_count, reset_capped = raw_messages.reset_retryable_matching_errors()
+    if reset_count or reset_capped:
+        logger.info(
+            "Matching retry reset re_queued=%s capped=%s before matching sweep",
+            reset_count,
+            reset_capped,
+        )
 
     processed = 0
     succeeded = 0
@@ -342,6 +350,14 @@ def sweep_matching(
                 succeeded += 1
             except Exception as exc:
                 db.rollback()
+                message = raw_messages.get_by_id(raw_message_id)
+                if (
+                    message is not None
+                    and message.status == MessageStatus.parsed
+                    and message.extraction_result is not None
+                    and message.match_result is None
+                ):
+                    raw_messages.record_transient_matching_failure(message, exc)
                 failed += 1
                 logger.error(
                     "raw_message_id=%s matching failed: %s",

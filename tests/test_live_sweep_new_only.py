@@ -72,19 +72,11 @@ def test_downstream_claim_queries_do_not_use_cutoff() -> None:
 
     live_sweep._claim_pending_pre_dedup_filtered(repo)
     pre_dedup_stmt = repo.db.scalar.call_args.args[0]
-
-    live_sweep._claim_pending_extraction_filtered(repo)
-    extraction_stmt = repo.db.scalar.call_args.args[0]
-
-    live_sweep._claim_pending_match_filtered(repo)
-    matching_stmt = repo.db.scalar.call_args.args[0]
-
-    for statement in (pre_dedup_stmt, extraction_stmt, matching_stmt):
-        params = _bound_ids(statement)
-        sql = str(statement.compile())
-        assert 42 not in params
-        assert 695974 not in params
-        assert "raw_messages.id >" not in sql
+    params = _bound_ids(pre_dedup_stmt)
+    sql = str(pre_dedup_stmt.compile())
+    assert 42 not in params
+    assert 695974 not in params
+    assert "raw_messages.id >" not in sql
 
 
 def test_filtered_session_uses_runtime_cursor() -> None:
@@ -315,22 +307,20 @@ async def test_run_stages_stops_after_aborted_tier1(monkeypatch) -> None:
 def test_downstream_stage_patches_leave_parsed_rows_visible_below_new_cutoff() -> None:
     raw_repo = MagicMock()
     raw_repo.db.scalars.return_value.all.return_value = []
-    claim_repo = MagicMock()
-    claim_repo.db.scalar.return_value = None
+    original_claim_pending_extraction = live_sweep.PipelineClaimRepository.claim_pending_extraction
+    original_claim_pending_match = live_sweep.PipelineClaimRepository.claim_pending_match
 
     with live_sweep._apply_downstream_stage_patches():
         live_sweep.RawMessageRepository.get_pending_extraction_batch(raw_repo, 10)
-        live_sweep.PipelineClaimRepository.claim_pending_extraction(claim_repo)
+        assert live_sweep.PipelineClaimRepository.claim_pending_extraction is original_claim_pending_extraction
+        assert live_sweep.PipelineClaimRepository.claim_pending_match is original_claim_pending_match
 
     batch_stmt = raw_repo.db.scalars.call_args.args[0]
-    claim_stmt = claim_repo.db.scalar.call_args.args[0]
-
-    for statement in (batch_stmt, claim_stmt):
-        params = _bound_ids(statement)
-        sql = str(statement.compile())
-        assert 1630 not in params
-        assert "raw_messages.id >" not in sql
-        assert "status" in sql.lower()
+    params = _bound_ids(batch_stmt)
+    sql = str(batch_stmt.compile())
+    assert 1630 not in params
+    assert "raw_messages.id >" not in sql
+    assert "status" in sql.lower()
 
 
 def test_terminalize_ineligible_fast_path_filtered_preserves_air_violation_status() -> None:

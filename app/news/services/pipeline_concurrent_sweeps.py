@@ -397,12 +397,22 @@ async def _matching_worker(
 
         with SessionLocal() as db:
             action = build_match_incident_action(db)
+            raw_messages = RawMessageRepository(db)
             try:
                 action.execute(raw_message_id)
                 stats.record_success()
-            except Exception:
+            except Exception as exc:
                 db.rollback()
-                PipelineClaimRepository(db).release_claim(raw_message_id)
+                message = raw_messages.get_by_id(raw_message_id)
+                if (
+                    message is not None
+                    and message.status == MessageStatus.parsed
+                    and message.extraction_result is not None
+                    and message.match_result is None
+                ):
+                    raw_messages.record_transient_matching_failure(message, exc)
+                else:
+                    PipelineClaimRepository(db).release_claim(raw_message_id)
                 logger.exception(
                     "Concurrent matching failed raw_message_id=%s",
                     raw_message_id,
@@ -414,6 +424,19 @@ async def sweep_matching_concurrent(
     *,
     max_rows: int | None = None,
 ) -> StageSweepResult:
+    reset_count = 0
+    reset_capped = 0
+    with SessionLocal() as db:
+        reset_count, reset_capped = RawMessageRepository(
+            db
+        ).reset_retryable_matching_errors()
+        if reset_count or reset_capped:
+            logger.info(
+                "Matching retry reset re_queued=%s capped=%s before matching sweep",
+                reset_count,
+                reset_capped,
+            )
+
     started_at = time.monotonic()
     stats = _WorkerStats()
     workers = [

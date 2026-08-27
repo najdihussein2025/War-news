@@ -263,39 +263,6 @@ def _claim_pending_pre_dedup_filtered(
     )
 
 
-def _claim_pending_extraction_filtered(
-    self: PipelineClaimRepository,
-) -> RawMessage | None:
-    return self.db.scalar(
-        select(RawMessage)
-        .where(
-            RawMessage.status == MessageStatus.parsed,
-            RawMessage.extraction_result.is_(None),
-            RawMessage.duplicate_of_id.is_(None),
-        )
-        .order_by(RawMessage.id.asc())
-        .limit(1)
-        .with_for_update(skip_locked=True)
-    )
-
-
-def _claim_pending_match_filtered(
-    self: PipelineClaimRepository,
-) -> RawMessage | None:
-    return self.db.scalar(
-        select(RawMessage)
-        .where(
-            RawMessage.status == MessageStatus.parsed,
-            RawMessage.extraction_result.is_not(None),
-            RawMessage.match_result.is_(None),
-            RawMessage.duplicate_of_id.is_(None),
-        )
-        .order_by(RawMessage.id.asc())
-        .limit(1)
-        .with_for_update(skip_locked=True)
-    )
-
-
 def _claim_pending_fast_path_filtered(
     self: PipelineClaimRepository,
 ) -> RawMessage | None:
@@ -469,16 +436,6 @@ def _apply_downstream_stage_patches() -> ExitStack:
     ) -> RawMessage | None:
         return _claim_pending_pre_dedup_filtered(self)
 
-    def claim_pending_extraction(
-        self: PipelineClaimRepository,
-    ) -> RawMessage | None:
-        return _claim_pending_extraction_filtered(self)
-
-    def claim_pending_match(
-        self: PipelineClaimRepository,
-    ) -> RawMessage | None:
-        return _claim_pending_match_filtered(self)
-
     def claim_pending_fast_path(
         self: PipelineClaimRepository,
     ) -> RawMessage | None:
@@ -511,20 +468,6 @@ def _apply_downstream_stage_patches() -> ExitStack:
             PipelineClaimRepository,
             "claim_pending_pre_dedup",
             claim_pending_pre_dedup,
-        )
-    )
-    stack.enter_context(
-        patch.object(
-            PipelineClaimRepository,
-            "claim_pending_extraction",
-            claim_pending_extraction,
-        )
-    )
-    stack.enter_context(
-        patch.object(
-            PipelineClaimRepository,
-            "claim_pending_match",
-            claim_pending_match,
         )
     )
     stack.enter_context(
