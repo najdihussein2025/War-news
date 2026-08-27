@@ -36,6 +36,9 @@ def _message(*, retry_count: int = 0, status=MessageStatus.parsed) -> SimpleName
         extraction_result=None,
         error_message=None,
         extraction_retry_count=retry_count,
+        processing_claim_stage="tier1_extraction",
+        processing_claimed_at="claimed-now",
+        processing_claimed_by="worker-1",
         raw_text="test",
     )
 
@@ -55,6 +58,9 @@ def test_record_transient_extraction_failure_increments_under_cap() -> None:
     assert message.extraction_retry_count == 1
     assert message.status == MessageStatus.error
     assert message.error_message == "ReadTimeout: timed out"
+    assert message.processing_claim_stage is None
+    assert message.processing_claimed_at is None
+    assert message.processing_claimed_by is None
     assert db.commit_calls == 1
 
 
@@ -74,6 +80,9 @@ def test_record_transient_extraction_failure_caps_at_threshold() -> None:
     assert message.status == MessageStatus.error
     assert message.error_message.startswith("extraction: exceeded max retries (5)")
     assert "ReadTimeout" in (message.error_message or "")
+    assert message.processing_claim_stage is None
+    assert message.processing_claimed_at is None
+    assert message.processing_claimed_by is None
 
 
 def test_reset_retryable_extraction_errors_respects_cap() -> None:
@@ -92,6 +101,9 @@ def test_reset_retryable_extraction_errors_respects_cap() -> None:
     assert capped_count == 1
     assert under_cap.status == MessageStatus.parsed
     assert under_cap.error_message is None
+    assert under_cap.processing_claim_stage is None
+    assert under_cap.processing_claimed_at is None
+    assert under_cap.processing_claimed_by is None
     assert at_cap.status == MessageStatus.error
     assert at_cap.error_message.startswith("extraction: exceeded max retries (5)")
     db.commit.assert_called_once()

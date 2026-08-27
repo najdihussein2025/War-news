@@ -11,6 +11,7 @@ from app.llm.services.transient_llm_errors import (
 )
 from app.llm.services.ollama_auth_failures import coerce_ollama_auth_failure
 from app.news.models import MessageStatus
+from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
 from app.news.repositories.raw_message_repository import RawMessageRepository
 
 logger = logging.getLogger(__name__)
@@ -30,8 +31,10 @@ def run_tier1_extraction_for_message(raw_message_id: int) -> None:
                 f"raw_message id={raw_message_id} was not found."
             )
         if message.extraction_result is not None:
+            PipelineClaimRepository(db).release_claim(raw_message_id)
             return
         if message.status != MessageStatus.parsed:
+            PipelineClaimRepository(db).release_claim(raw_message_id)
             return
         post_text = message.raw_text or ""
 

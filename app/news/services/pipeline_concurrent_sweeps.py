@@ -112,7 +112,7 @@ def _extraction_worker_count() -> int:
 
 
 def _claim_raw_message_id(claim_fn: Callable[[Session], RawMessage | None]) -> int | None:
-    """Claim one row and commit immediately so the FOR UPDATE lock is released."""
+    """Claim one row, persist the claim lease, and release the row lock."""
     with SessionLocal() as db:
         message = claim_fn(db)
         if message is None:
@@ -120,6 +120,11 @@ def _claim_raw_message_id(claim_fn: Callable[[Session], RawMessage | None]) -> i
         raw_message_id = message.id
         db.commit()
         return raw_message_id
+
+
+def _release_raw_message_claim(raw_message_id: int) -> None:
+    with SessionLocal() as db:
+        PipelineClaimRepository(db).release_claim(raw_message_id)
 
 
 def _claim_tier2_work() -> tuple[object, int] | None:
@@ -284,6 +289,7 @@ async def _tier1_extraction_worker(
         if raw_message_id is None:
             return
         if abort_state.triggered():
+            await asyncio.to_thread(_release_raw_message_claim, raw_message_id)
             return
 
         try:
@@ -304,6 +310,7 @@ async def _tier1_extraction_worker(
             stats.record_capped()
         except Exception as exc:
             if abort_state.trigger(exc) is not None:
+                await asyncio.to_thread(_release_raw_message_claim, raw_message_id)
                 return
             logger.exception(
                 "Concurrent tier1 extraction failed raw_message_id=%s error=%s",
@@ -394,6 +401,8 @@ async def _matching_worker(
                 action.execute(raw_message_id)
                 stats.record_success()
             except Exception:
+                db.rollback()
+                PipelineClaimRepository(db).release_claim(raw_message_id)
                 logger.exception(
                     "Concurrent matching failed raw_message_id=%s",
                     raw_message_id,

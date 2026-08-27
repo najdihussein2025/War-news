@@ -21,6 +21,11 @@ class RawMessageRepository(RawMessageRepositoryInterface):
     def __init__(self, db: Session) -> None:
         self.db = db
 
+    def _clear_processing_claim(self, message: RawMessage) -> None:
+        message.processing_claim_stage = None
+        message.processing_claimed_at = None
+        message.processing_claimed_by = None
+
     def get_pending_unfiltered_batch(
         self,
         limit: int,
@@ -70,6 +75,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         message.status = new_status
         message.low_confidence_relevance = needs_review
         message.error_message = None
+        self._clear_processing_claim(message)
         self.db.add(message)
         self.db.commit()
 
@@ -84,6 +90,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
             message.extraction_result["candidates"] = audited_candidates
         message.error_message = None
         message.extraction_retry_count = 0
+        self._clear_processing_claim(message)
         self.db.add(message)
         self.db.commit()
 
@@ -105,6 +112,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
     ) -> None:
         message.match_result = result.model_dump(mode="json")
         message.error_message = None
+        self._clear_processing_claim(message)
         self.db.add(message)
         self.db.commit()
 
@@ -127,6 +135,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
     ) -> None:
         message.status = MessageStatus.error
         message.error_message = error_message
+        self._clear_processing_claim(message)
         self.db.add(message)
         self.db.commit()
 
@@ -153,6 +162,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         )
         message.extraction_retry_count += 1
         message.status = MessageStatus.error
+        self._clear_processing_claim(message)
         if message.extraction_retry_count >= limit:
             message.error_message = extraction_retry_cap_message(
                 message.extraction_retry_count,
@@ -217,6 +227,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
 
             message.status = MessageStatus.parsed
             message.error_message = None
+            self._clear_processing_claim(message)
             self.db.add(message)
             reset_count += 1
 
@@ -234,6 +245,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
             raise ValueError(f"RawMessage id={raw_message_id} not found")
         message.duplicate_of_id = representative_id
         message.status = MessageStatus.duplicate
+        self._clear_processing_claim(message)
         self.db.add(message)
         self.db.commit()
 
@@ -263,6 +275,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
             for message in messages:
                 message.duplicate_of_id = representative_id
                 message.status = MessageStatus.duplicate
+                self._clear_processing_claim(message)
                 self.db.add(message)
             if commit:
                 self.db.commit()
