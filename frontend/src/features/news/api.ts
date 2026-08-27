@@ -55,18 +55,18 @@ export const getIncidents = async (
   }
 
   const response = await apiClient.get<IncidentListResponse>(
-    `/api/incidents?${params.toString()}`,
+    `/incidents?${params.toString()}`,
   );
   return response.data;
 };
 
 export const getConditions = async (): Promise<ConditionOption[]> => {
-  const response = await apiClient.get<ConditionOption[]>("/api/conditions");
+  const response = await apiClient.get<ConditionOption[]>("/conditions");
   return response.data;
 };
 
 export const getVillages = async (): Promise<VillageOption[]> => {
-  const response = await apiClient.get<VillageOption[]>("/api/villages");
+  const response = await apiClient.get<VillageOption[]>("/villages");
   return response.data;
 };
 
@@ -74,18 +74,18 @@ export const getIncidentById = async (
   incidentId: string,
 ): Promise<IncidentDetail> => {
   const response = await apiClient.get<IncidentDetail>(
-    `/api/incidents/${incidentId}`,
+    `/incidents/${incidentId}`,
   );
   return response.data;
 };
 
 export const createIncident = async (payload: IncidentCreatePayload): Promise<IncidentDetail> => {
-  const response = await apiClient.post<IncidentDetail>("/api/incidents", payload);
+  const response = await apiClient.post<IncidentDetail>("/incidents", payload);
   return response.data;
 };
 
 export const updateIncident = async (incidentId: string, payload: IncidentUpdatePayload): Promise<IncidentDetail> => {
-  const response = await apiClient.put<IncidentDetail>(`/api/incidents/${incidentId}`, payload);
+  const response = await apiClient.put<IncidentDetail>(`/incidents/${incidentId}`, payload);
   return response.data;
 };
 
@@ -95,28 +95,28 @@ export const updateIncidentDetails = async (
   version: number,
 ): Promise<IncidentDetail> => {
   const response = await apiClient.patch<IncidentDetail>(
-    `/api/incidents/${incidentId}/details`,
+    `/incidents/${incidentId}/details`,
     { fields, version },
   );
   return response.data;
 };
 
 export const deleteIncident = async (incidentId: string, version: number): Promise<void> => {
-  await apiClient.delete(`/api/incidents/${incidentId}`, { params: { version } });
+  await apiClient.delete(`/incidents/${incidentId}`, { params: { version } });
 };
 
 export const acquireIncidentEditLock = async (incidentId: string): Promise<IncidentDetail> => {
-  const response = await apiClient.post<IncidentDetail>(`/api/incidents/${incidentId}/edit-lock`);
+  const response = await apiClient.post<IncidentDetail>(`/incidents/${incidentId}/edit-lock`);
   return response.data;
 };
 
 export const releaseIncidentEditLock = async (incidentId: string): Promise<void> => {
-  await apiClient.delete(`/api/incidents/${incidentId}/edit-lock`);
+  await apiClient.delete(`/incidents/${incidentId}/edit-lock`);
 };
 
 export const importIncidents = async (file: File): Promise<WorkbookImportSummary> => {
   const form = new FormData();
   form.append("file", file);
-  const response = await apiClient.post<WorkbookImportSummary>("/api/incidents/import", form);
+  const response = await apiClient.post<WorkbookImportSummary>("/incidents/import", form);
   return response.data;
 };
