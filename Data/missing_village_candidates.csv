@@ -1,0 +1,1084 @@
+﻿review_confidence,geonames_id,name,ascii_name,feature_code,population,latitude,longitude,nearest_json_name,nearest_json_acs_code,distance_km,name_similarity,geonames_url
+high,266401,Aayoun Orghoush,Aayoun Orghoush,PPL,0,34.26194,36.12944,Bcharre,36111,6.418,0.3,https://www.geonames.org/266401
+high,6278050,Beït el Haj Hassan,Beit el Haj Hassan,PPL,0,34.44528,36.50944,Qaa Jouar Maqiye,53267,5.953,0.308,https://www.geonames.org/6278050
+high,6277372,Ech Chmaliyé,Ech Chmaliye,PPL,0,34.18278,36.42111,Aain Baalbek,53217,5.608,0.333,https://www.geonames.org/6277372
+high,280414,El Aaïâra,El Aaiara,PPL,0,34.23861,36.11222,Bcharre,36111,5.241,0.308,https://www.geonames.org/280414
+high,280354,El Baraké,El Barake,PPL,0,34.23472,36.10694,Bcharre,36111,5.001,0.615,https://www.geonames.org/280354
+high,434652,El Bâloûaa,El Balouaa,PPL,0,34.25583,36.12583,Bcharre,36111,6.067,0.364,https://www.geonames.org/434652
+high,6394398,El Faqrât,El Faqrat,PPL,0,34.25167,36.12306,Bcharre,36111,5.843,0.308,https://www.geonames.org/6394398
+high,279058,El Qasr,El Qasr,PPL,0,34.48056,36.44028,Hermel,54111,6.556,0.2,https://www.geonames.org/279058
+high,6277373,El Qobliyé,El Qobliye,PPL,0,34.17694,36.4175,Aarsal,53231,5.718,0.308,https://www.geonames.org/6277373
+high,6278020,Ez Zekbi,Ez Zekbi,PPL,0,34.48028,36.39417,Hermel,54111,6.063,0.308,https://www.geonames.org/6278020
+high,6278047,Haouch Beït Ismaïl,Haouch Beit Ismail,PPL,0,34.45583,36.48444,Hermel,54111,7.556,0.364,https://www.geonames.org/6278047
+high,6278048,Haouch Saïd Aali,Haouch Said Aali,PPL,0,34.45972,36.5,Qaa Jouar Maqiye,53267,7.693,0.385,https://www.geonames.org/6278048
+high,6278027,Haoucharîyé,Haouchariye,PPL,0,34.49528,36.39611,Hermel,54111,7.663,0.353,https://www.geonames.org/6278027
+high,6278107,Haret en Namous,Haret en Namous,PPL,0,34.5175,36.3125,Mazareaa Jabal Akroum,35516,5.215,0.421,https://www.geonames.org/6278107
+high,6278024,Mazraat et Tallé,Mazraat et Talle,PPL,0,34.49056,36.38167,Charbine El-Hermel,54127,6.785,0.308,https://www.geonames.org/6278024
+high,271533,Mrâh en Naouâs,Mrah en Naouas,PPL,0,34.33778,36.30417,Ras Baalbek El Gharbi,54135,5.265,0.286,https://www.geonames.org/271533
+high,267985,Saïdet en Najât,Saidet en Najat,PPL,0,34.2475,36.12222,Bcharre,36111,5.835,0.348,https://www.geonames.org/267985
+medium,6278625,Aarîda,Aarida,PPL,0,34.66722,36.30417,Dayret Nahr El-Kabir,35511,2.581,0.19,https://www.geonames.org/6278625
+medium,12239334,Al Qurayţah,Al Quraytah,PPL,0,34.37351,36.24379,Hermel Jbab,54159,4.115,0.222,https://www.geonames.org/12239334
+medium,434642,Aïchâné,Aichane,PPL,0,34.25611,36.02,Bqaa Kafra,36191,3.327,0.353,https://www.geonames.org/434642
+medium,277739,Aïn ed Dobb,Ain ed Dobb,PPL,0,34.14389,35.92611,Aarab El-Lahib,26374,2.689,0.375,https://www.geonames.org/277739
+medium,277701,Aïn el Bâtié,Ain el Batie,PPL,0,34.19139,35.93444,Tannourine El-Faouqa,34386,2.542,0.364,https://www.geonames.org/277701
+medium,6277920,Bayader,Bayader,PPL,0,34.38722,36.39278,Deir Mar Maroun Baalbek,53244,3.884,0.296,https://www.geonames.org/6277920
+medium,12239338,Bayt al Ḩājj Ḩusayn,Bayt al Hajj Husayn,PPL,0,34.36986,36.2074,Hermel Jbab,54159,2.946,0.182,https://www.geonames.org/12239338
+medium,171573,Bayt Ḩayrah,Bayt Hayrah,PPL,0,34.43333,36.46667,Qaa Ouadi El-Khanzir,53254,4.993,0.348,https://www.geonames.org/171573
+medium,6277917,Bdaïta,Bdaita,PPL,0,34.39056,36.37972,Deir Mar Maroun Baalbek,53244,4.537,0.231,https://www.geonames.org/6277917
+medium,433480,Behinna,Behinna,PPL,0,33.90833,35.87778,Qaa Er-Rim,51173,2.054,0.267,https://www.geonames.org/433480
+medium,276731,Beit Habchi,Beit Habchi,PPL,0,34.15361,36.09861,Bechouat,53333,3.305,0.471,https://www.geonames.org/276731
+medium,6277870,Beït Aallaou,Beit Aallaou,PPL,0,34.37778,36.23278,Michaa Mrajhine,54114,3.619,0.333,https://www.geonames.org/6277870
+medium,276755,Beït Aallâm,Beit Aallam,PPL,0,34.38694,36.24167,Michaa Mrajhine,54114,3.347,0.348,https://www.geonames.org/276755
+medium,276736,Beït Bakkour,Beit Bakkour,PPL,0,34.39309,35.96079,Kfar Habou,37365,2.023,0.375,https://www.geonames.org/276736
+medium,276725,Beït Hasna,Beit Hasna,PPL,0,34.38633,35.95872,Deir Nbouh,37377,2.1,0.333,https://www.geonames.org/276725
+medium,276726,Beït Hassan Hsaïn,Beit Hassan Hsain,PPL,0,34.32556,36.30667,Ras Baalbek Ouadi Faara,54143,4.513,0.353,https://www.geonames.org/276726
+medium,6278036,Beït et Tachm,Beit et Tachm,PPL,0,34.42361,36.46083,Qaa Ouadi El-Khanzir,53254,3.945,0.182,https://www.geonames.org/6278036
+medium,276740,Beït et Tfaïlé,Beit et Tfaile,PPL,0,34.05167,36.23528,Maqne,53155,4.235,0.143,https://www.geonames.org/276740
+medium,276008,Bioût el Aïn,Biout el Ain,PPL,0,34.40417,36.24667,Michaa Mrajhine,54114,3.033,0.381,https://www.geonames.org/276008
+medium,276007,Bioût el Kraïm,Biout el Kraim,PPL,0,34.01,35.77056,Mayrouba,25459,2.306,0.333,https://www.geonames.org/276007
+medium,276235,Blaïqa,Blaiqa,PPL,0,34.15,36.1,Bechouat,53333,3.17,0.462,https://www.geonames.org/276235
+medium,276425,Bmaryamîne,Bmaryamine,PPL,0,33.14834,35.30004,Salhani,72135,2.032,0.471,https://www.geonames.org/276425
+medium,276114,Bouryâne,Bouryane,PPL,0,34.17333,35.9025,Chatine,34366,2.358,0.4,https://www.geonames.org/276114
+medium,276389,Braïssé,Braisse,PPL,0,34.44361,36.31611,Charbine El-Hermel,54127,2.287,0.727,https://www.geonames.org/276389
+medium,433479,Bsoûjé,Bsouje,PPL,0,33.9125,35.87222,Qaa Er-Rim,51173,2.718,0.154,https://www.geonames.org/433479
+medium,12239332,Buyūt al Ḩājj Ḩasan,Buyut al Hajj Hasan,PPL,0,34.38011,36.2245,Michaa Mrajhine,54114,3.073,0.4,https://www.geonames.org/12239332
+medium,12239345,Buyūt ar Ruways,Buyut ar Ruways,PPL,0,34.36228,36.23736,Hermel Jbab,54159,2.784,0.2,https://www.geonames.org/12239345
+medium,12239335,Buyūt ‘Awwād,Buyut `Awwad,PPL,0,34.37263,36.23529,Hermel Jbab,54159,3.6,0.2,https://www.geonames.org/12239335
+medium,12239342,Bū Şawāyā,Bu Sawaya,PPL,0,34.35672,36.19337,Hermel Jbab,54159,2.503,0.235,https://www.geonames.org/12239342
+medium,11048906,Cedars,Cedars,PPL,0,34.24438,36.04064,Bcharre,36111,2.271,0.462,https://www.geonames.org/11048906
+medium,6277908,Chahout,Chahout,PPL,0,34.39417,36.39556,Hermel,54111,3.902,0.154,https://www.geonames.org/6277908
+medium,278253,Charbîne,Charbine,PPL,0,34.45861,36.36167,Charbine El-Hermel,54127,4.329,0.727,https://www.geonames.org/278253
+medium,6271145,Chmâlîyé,Chmaliye,PPL,0,33.28505,35.22846,Aabbassiyet Sour,62276,2.36,0.375,https://www.geonames.org/6271145
+medium,275914,Dahr el Baïdar,Dahr el Baidar,PPL,0,33.80944,35.76639,Falougha,21446,2.049,0.333,https://www.geonames.org/275914
+medium,275727,Daouret en Naml,Daouret en Naml,PPL,0,34.25889,36.27083,Maaysra El-Hermel,54167,2.371,0.4,https://www.geonames.org/275727
+medium,275759,Deïr Zenoûn,Deir Zenoun,PPL,0,33.75694,35.91167,Raouda (Istabel),52295,2.14,0.273,https://www.geonames.org/275759
+medium,6277965,Douane,Douane,PPL,0,34.34639,36.48333,Qaa Baalbek,53241,2.666,0.375,https://www.geonames.org/6277965
+medium,278261,Ech Chaara,Ech Chaara,PPL,0,34.01028,35.81028,Faraya,25475,2.155,0.4,https://www.geonames.org/278261
+medium,6277912,Ed Daïaa,Ed Daiaa,PPL,0,34.39722,36.38694,Hermel,54111,3.939,0.0,https://www.geonames.org/6277912
+medium,6277216,Ed Dinnaïbé,Ed Dinnaibe,PPL,0,34.21,36.32722,Bajjaje,53221,2.475,0.286,https://www.geonames.org/6277216
+medium,279883,Ej Jaouz,Ej Jaouz,PPL,0,34.46167,36.27722,Charbine El-Hermel,54127,3.469,0.19,https://www.geonames.org/279883
+medium,279882,Ej Jaouzé,Ej Jaouze,PPL,0,33.85472,35.81694,Mazraat Er-Remtaniye,51185,2.031,0.348,https://www.geonames.org/279882
+medium,279873,Ej Jisr,Ej Jisr,PPL,0,34.24722,36.01889,Bqaa Kafra,36191,2.338,0.286,https://www.geonames.org/279873
+medium,280533,El Aali,El Aali,PPL,0,33.925,35.84028,Mtain,22711,2.22,0.5,https://www.geonames.org/280533
+medium,280413,El Aazâq,El Aazaq,PPL,0,34.12,35.90194,Mghayre Jbeil,26341,2.578,0.182,https://www.geonames.org/280413
+medium,280454,El Arz,El Arz,PPL,0,34.24472,36.03944,Bcharre,36111,2.335,0.4,https://www.geonames.org/280454
+medium,280251,El Baqoûl,El Baqoul,PPL,0,34.4175,36.33333,Zighrine,54119,3.801,0.105,https://www.geonames.org/280251
+medium,6278012,El Breïj,El Breij,PPL,0,34.45639,36.38528,Hermel,54111,3.935,0.364,https://www.geonames.org/6278012
+medium,280212,El Fâaoûr,El Faaour,PPL,0,33.78083,35.97,Kfarzabad,51389,2.166,0.462,https://www.geonames.org/280212
+medium,6253951,El Fâqaâ,El Faqaa,PPL,0,33.45722,35.81833,Tannoura,55131,2.286,0.308,https://www.geonames.org/6253951
+medium,280181,El Ghâbé,El Ghabe,PPL,0,33.94583,35.79194,Baskinta,22797,2.169,0.286,https://www.geonames.org/280181
+medium,280130,El Hefâïr,El Hefair,PPL,0,34.07889,36.07111,Bouday,53459,2.414,0.167,https://www.geonames.org/280130
+medium,6278320,El Hichi,El Hichi,PPL,0,34.63667,36.3675,Aamayer,35512,2.166,0.125,https://www.geonames.org/6278320
+medium,280085,El Hâra,El Hara,PPL,0,34.21,36.32139,Bajjaje,53221,2.81,0.364,https://www.geonames.org/280085
+medium,280089,El Hâra,El Hara,PPL,0,34.01167,35.78417,Mayrouba,25459,2.137,0.5,https://www.geonames.org/280089
+medium,6277916,El Jaouzâl,El Jaouzal,PPL,0,34.39528,36.38056,Hermel,54111,4.448,0.154,https://www.geonames.org/6277916
+medium,6278018,El Khouâkh,El Khouakh,PPL,0,34.46639,36.39083,Hermel,54111,4.68,0.154,https://www.geonames.org/6278018
+medium,279665,El Ktaïfé,El Ktaife,PPL,0,33.33787,35.61576,Ibl Es-Saqi,73127,2.133,0.286,https://www.geonames.org/279665
+medium,6278568,El Majdal,El Majdal,PPL,0,34.62917,36.39556,Aamayer,35512,2.074,0.471,https://www.geonames.org/6278568
+medium,279530,El Manzlé,El Manzle,PPL,0,34.19528,35.94111,Tannourine El-Faouqa,34386,2.383,0.364,https://www.geonames.org/279530
+medium,279488,El Markaz,El Markaz,PPL,0,34.20083,35.95861,Tannourine El-Faouqa,34386,2.48,0.4,https://www.geonames.org/279488
+medium,279625,El Mdâouich,El Mdaouich,PPL,0,34.39417,36.24861,Michaa Mrajhine,54114,3.473,0.381,https://www.geonames.org/279625
+medium,279377,El Mounsé,El Mounse,PPL,0,34.59722,36.38722,Aamayer,35512,2.577,0.476,https://www.geonames.org/279377
+medium,6277911,El Ouaqf,El Ouaqf,PPL,0,34.39111,36.38722,Deir Mar Maroun Baalbek,53244,4.396,0.316,https://www.geonames.org/6277911
+medium,279172,El Qacha,El Qacha,PPL,0,34.01389,35.79056,Mayrouba,25459,2.174,0.308,https://www.geonames.org/279172
+medium,279177,El Qerrâmi,El Qerrami,PPL,0,34.14194,36.10222,Deir El-Ahmar,53311,2.746,0.5,https://www.geonames.org/279177
+medium,279062,El Qossaïfîyé,El Qossaifiye,PPL,0,33.88889,35.77639,Aintoura El-Matn,22751,2.212,0.273,https://www.geonames.org/279062
+medium,279225,El Qâmoûaa,El Qamouaa,PPL,0,34.10889,35.90361,Yanouh Jbayl,26347,2.222,0.462,https://www.geonames.org/279225
+medium,6280714,En Nqaïri,En Nqairi,PPL,0,34.00194,35.83694,Faraya,25475,2.173,0.286,https://www.geonames.org/6280714
+medium,278404,Er Rouaïmé,Er Rouaime,PPL,0,34.51944,36.31639,Mazareaa Jabal Akroum,35516,4.84,0.533,https://www.geonames.org/278404
+medium,278112,Es Saadîyât,Es Saadiyat,PPL,0,33.68894,35.42528,Dahr Ech-Chouf,23279,2.304,0.316,https://www.geonames.org/278112
+medium,278088,Es Sahlé,Es Sahle,PPL,0,34.60417,36.34111,Aamayer,35512,3.643,0.444,https://www.geonames.org/278088
+medium,6278356,Es Smaïtat,Es Smaitat,PPL,0,34.65389,36.34944,Machta Hammoud,35437,2.733,0.364,https://www.geonames.org/6278356
+medium,277944,Es Souaïdîyé,Es Souaidiye,PPL,0,34.40583,36.24194,Michaa Mrajhine,54114,2.59,0.25,https://www.geonames.org/277944
+medium,8604579,Faqra,Faqra,PPL,0,33.99746,35.82024,Kfar Tay El-Matn,22799,2.709,0.667,https://www.geonames.org/8604579
+medium,275210,Fehta,Fehta,PPL,0,34.18722,35.92222,Ouata Houb,34381,2.053,0.308,https://www.geonames.org/275210
+medium,275196,Flâoué,Flaoue,PPL,0,34.0825,36.05694,Bouday,53459,2.4,0.333,https://www.geonames.org/275196
+medium,275201,Fîssâne,Fissane,PPL,0,34.47611,36.34639,Charbine El-Hermel,54127,3.175,0.286,https://www.geonames.org/275201
+medium,275215,Fîyâdîyé,Fiyadiye,PPL,0,34.17389,35.90306,Ouata Houb,34381,2.36,0.4,https://www.geonames.org/275215
+medium,6276067,Gend,Gend,PPL,0,34.18111,36.22333,Qarha Baalbek,53277,2.172,0.125,https://www.geonames.org/6276067
+medium,274514,Haql Hammâna,Haql Hammana,PPL,0,33.87417,35.83833,Touaite Zahle,51145,2.004,0.182,https://www.geonames.org/274514
+medium,274559,Haql el Jâmeaa,Haql el Jameaa,PPL,0,34.20194,36.31222,Sbouba,53261,3.287,0.143,https://www.geonames.org/274559
+medium,6273896,Haret Chbîb,Haret Chbib,PPL,0,33.77472,35.47,Choueifat El-Quoubbe,24133,2.166,0.417,https://www.geonames.org/6273896
+medium,6253882,Haret el Kaouasbé,Haret el Kaouasbe,PPL,0,33.49833,35.84472,Rachaiya,55111,2.919,0.545,https://www.geonames.org/6253882
+medium,268307,Haret esh Sharqiyé,Haret esh Sharqiye,PPL,0,34.57889,36.28083,Mazraat En-Nahriye,35486,2.38,0.562,https://www.geonames.org/268307
+medium,274124,Haï el Mathané,Hai el Mathane,PPL,0,34.2075,36.3225,Bajjaje,53221,2.956,0.353,https://www.geonames.org/274124
+medium,274707,Hilta el Faouqa,Hilta el Faouqa,PPL,0,33.30889,35.66665,Meri,74158,2.145,0.143,https://www.geonames.org/274707
+medium,273814,Hoûrâta,Hourata,PPL,0,34.1875,35.93056,Tannourine El-Faouqa,34386,2.654,0.435,https://www.geonames.org/273814
+medium,12239358,Huwwat as Sawḩ,Huwwat as Sawh,PPL,0,34.34176,36.24027,Hermel Jbab,54159,2.232,0.222,https://www.geonames.org/12239358
+medium,6277921,Iranîyé,Iraniye,PPL,0,34.38806,36.39583,Deir Mar Maroun Baalbek,53244,3.956,0.37,https://www.geonames.org/6277921
+medium,273531,Jall el Bahr,Jall el Bahr,PPL,0,33.28075,35.21938,Borj Ech-Chemali,62128,2.621,0.296,https://www.geonames.org/273531
+medium,273173,Judaydat Yabūs,Judaydat Yabus,PPL,0,33.66667,35.93333,Aayta El-Foukhar,55194,2.866,0.32,https://www.geonames.org/273173
+medium,273488,Jâmeaa Ouâdi Zighrîne,Jameaa Ouadi Zighrine,PPL,0,34.42278,36.34722,Zighrine,54119,4.864,0.609,https://www.geonames.org/273488
+medium,6271514,Karakol,Karakol,PPL,0,33.68778,35.41889,Jiye,23267,2.416,0.2,https://www.geonames.org/6271514
+medium,272710,Karm Aaqaïl,Karm Aaqail,PPL,0,34.1425,36.22361,Riha,53355,2.341,0.154,https://www.geonames.org/272710
+medium,11205005,Kfardebian,Kfardebian,PPL,0,33.99173,35.8377,Mchaa Kfar Dibiane,25482,3.25,0.741,https://www.geonames.org/11205005
+medium,279786,Khaloué,Khaloue,PPL,0,33.41889,35.73861,Khalouet Hasbaiya,74168,2.126,0.8,https://www.geonames.org/279786
+medium,6276032,Khirbet Younine,Khirbet Younine,PPL,0,34.15722,36.49306,Aarsal,53231,2.35,0.2,https://www.geonames.org/6276032
+medium,6277525,Khirbet et Tiné,Khirbet et Tine,PPL,0,34.23306,36.53528,Ras Baalbek Ech-Charqi,53227,3.197,0.333,https://www.geonames.org/6277525
+medium,269073,Korraïti,Korraiti,PPL,0,34.29389,36.31917,Ras Baalbek Ouadi Faara,54143,2.764,0.286,https://www.geonames.org/269073
+medium,272275,Ksâr el Aabed,Ksar el Aabed,PPL,0,33.79708,35.96383,Dalhamiyet Zahle,51383,2.283,0.333,https://www.geonames.org/272275
+medium,279663,Labbūna,Labbuna,PPL,0,33.09771,35.14952,Borj En-Naqoura,62312,2.168,0.4,https://www.geonames.org/279663
+medium,271722,Manzoûl el Farâyes,Manzoul el Farayes,PPL,0,33.89361,35.84361,Majdel tarchich,22774,2.398,0.462,https://www.geonames.org/271722
+medium,270441,Maqial el Qalaa,Maqial el Qalaa,PPL,0,34.2175,36.09167,Aaynata Baalbek,53377,3.626,0.471,https://www.geonames.org/270441
+medium,271656,Maqsoûs,Maqsous,PPL,0,33.98889,36.23139,Aain Bourday,53115,2.494,0.353,https://www.geonames.org/271656
+medium,271259,Marj Hîne,Marj Hine,PPL,0,34.40917,36.25444,Michaa Mrajhine,54114,3.751,0.727,https://www.geonames.org/271259
+medium,271101,Martmoura,Martmoura,PPL,0,34.57917,36.27639,Mazraat En-Nahriye,35486,2.377,0.364,https://www.geonames.org/271101
+medium,271456,Marāḩ Qirrayţah,Marah Qirraytah,PPL,0,34.36667,36.3,Zighrine,54119,2.773,0.214,https://www.geonames.org/271456
+medium,270901,Masnaa ez Zohr,Masnaa ez Zohr,PPL,0,34.01972,35.99528,Jebaa,53171,2.686,0.25,https://www.geonames.org/270901
+medium,270625,Mazraat Beït Mechaïk,Mazraat Beit Mechaik,PPL,0,34.04472,36.03028,Jebaa,53171,2.837,0.273,https://www.geonames.org/270625
+medium,270628,Mazraat Beït el Fqîh,Mazraat Beit el Fqih,PPL,0,34.34833,36.34194,Zighrine,54119,4.527,0.276,https://www.geonames.org/270628
+medium,270570,Mazraat Oumm Aali,Mazraat Oumm Aali,PPL,0,34.045,36.04028,Bouday,53459,2.311,0.286,https://www.geonames.org/270570
+medium,270585,Mazraat Remâssé,Mazraat Remasse,PPL,0,34.04361,36.0225,Jebaa,53171,2.668,0.211,https://www.geonames.org/270585
+medium,270633,Mazraat ed Dallîl,Mazraat ed Dallil,PPL,0,34.04083,36.05111,Bouday,53459,2.287,0.211,https://www.geonames.org/270633
+medium,270686,Mazraat ej Jaouïk,Mazraat ej Jaouik,PPL,0,34.34556,36.0375,Bqarsouna,37319,3.381,0.333,https://www.geonames.org/270686
+medium,270746,Ma‘zār,Ma`zar,PPL,0,33.58333,35.96667,Selsata (Mazraat Deir El-Aachaiyer),55191,2.054,0.4,https://www.geonames.org/270746
+medium,279290,Mchaïtîyé,Mchaitiye,PPL,0,34.155,36.085,Aaynata Baalbek,53377,3.871,0.5,https://www.geonames.org/279290
+medium,270185,Moql el Khaff,Moql el Khaff,PPL,0,33.95361,35.83694,Baskinta,22797,2.073,0.235,https://www.geonames.org/270185
+medium,279321,Mqaïblé,Mqaible,PPL,0,34.64361,36.35278,Machta Hammoud,35437,2.383,0.348,https://www.geonames.org/279321
+medium,6278121,Mrah Bou Zaïd,Mrah Bou Zaid,PPL,0,34.5025,36.33139,Charbine El-Hermel,54127,4.523,0.32,https://www.geonames.org/6278121
+medium,6278157,Mrah Khirbet Halouâs,Mrah Khirbet Halouas,PPL,0,34.5725,36.39306,Mazareaa Jabal Akroum,35516,4.817,0.432,https://www.geonames.org/6278157
+medium,271589,Mrah el Bsatine,Mrah el Bsatine,PPL,0,34.575,36.34778,Mazareaa Jabal Akroum,35516,2.088,0.452,https://www.geonames.org/271589
+medium,271560,Mrah el Khaoukh,Mrah el Khaoukh,PPL,0,34.58722,36.35472,Mazareaa Jabal Akroum,35516,3.554,0.4,https://www.geonames.org/271560
+medium,271598,Mrah el Âaokch,Mrah el Aaokch,PPL,0,34.22389,36.2625,Sbouba,53261,2.17,0.125,https://www.geonames.org/271598
+medium,6278174,Mrah es Soûs,Mrah es Sous,PPL,0,34.53917,36.37639,Mazareaa Jabal Akroum,35516,3.519,0.375,https://www.geonames.org/6278174
+medium,271625,Mrâh Aabbâs,Mrah Aabbas,PPL,0,34.39722,36.35056,Zighrine,54119,3.075,0.167,https://www.geonames.org/271625
+medium,271572,Mrâh Aali Mehdi Aallaou,Mrah Aali Mehdi Aallaou,PPL,0,34.36778,36.27722,Zighrine,54119,4.409,0.294,https://www.geonames.org/271572
+medium,271622,Mrâh Abou Handal,Mrah Abou Handal,PPL,0,34.32167,36.31472,Ras Baalbek Ouadi Faara,54143,3.659,0.529,https://www.geonames.org/271622
+medium,271496,Mrâh Beït Aallaou,Mrah Beit Aallaou,PPL,0,34.36722,36.3425,Zighrine,54119,2.826,0.207,https://www.geonames.org/271496
+medium,271493,Mrâh Beït Aassâf,Mrah Beit Aassaf,PPL,0,34.06361,36.02028,Mazraat beit Mchaik,53457,2.706,0.516,https://www.geonames.org/271493
+medium,271492,Mrâh Beït Mhammed,Mrah Beit Mhammed,PPL,0,34.31361,36.31222,Ras Baalbek Ouadi Faara,54143,3.442,0.353,https://www.geonames.org/271492
+medium,271621,Mrâh Bou Qamar ed Dîne,Mrah Bou Qamar ed Dine,PPL,0,34.39167,36.345,Zighrine,54119,2.368,0.333,https://www.geonames.org/271621
+medium,271480,Mrâh Dahr ech Chîr,Mrah Dahr ech Chir,PPL,0,34.3175,36.31139,Ras Baalbek Ouadi Faara,54143,3.684,0.294,https://www.geonames.org/271480
+medium,271481,Mrâh Daâs Taâne,Mrah Daas Taane,PPL,0,34.30722,36.31028,Ras Baalbek Ouadi Faara,54143,3.437,0.375,https://www.geonames.org/271481
+medium,271476,Mrâh Haïssoûn,Mrah Haissoun,PPL,0,34.03944,36.04028,Jebaa,53171,2.64,0.25,https://www.geonames.org/271476
+medium,271475,Mrâh Hqâb en Najjâr,Mrah Hqab en Najjar,PPL,0,34.33583,36.36944,Deir Mar Maroun Baalbek,53244,3.179,0.368,https://www.geonames.org/271475
+medium,271473,Mrâh Hsaïn Taâne,Mrah Hsain Taane,PPL,0,34.30361,36.30333,Maaysra El-Hermel,54167,3.643,0.37,https://www.geonames.org/271473
+medium,271448,Mrâh Sabri Hsaïn,Mrah Sabri Hsain,PPL,0,34.33444,36.325,Ras Baalbek Ouadi Faara,54143,4.078,0.424,https://www.geonames.org/271448
+medium,271447,Mrâh Sahlet el Barghach,Mrah Sahlet el Barghach,PPL,0,34.375,36.29222,Zighrine,54119,2.823,0.25,https://www.geonames.org/271447
+medium,271440,Mrâh Yâssîne,Mrah Yassine,PPL,0,34.33722,36.335,Ras Baalbek Ouadi Faara,54143,3.999,0.267,https://www.geonames.org/271440
+medium,271436,Mrâh Zouaïtîni,Mrah Zouaitini,PPL,0,34.35639,36.32583,Zighrine,54119,3.218,0.296,https://www.geonames.org/271436
+medium,6277913,Mrâh ech Charqi,Mrah ech Charqi,PPL,0,34.39917,36.38306,Hermel,54111,3.965,0.316,https://www.geonames.org/6277913
+medium,271524,Mrâh ech Chnaïn,Mrah ech Chnain,PPL,0,34.4,36.345,Zighrine,54119,2.8,0.37,https://www.geonames.org/271524
+medium,271618,Mrâh ed Dahr,Mrah ed Dahr,PPL,0,34.32806,36.36472,Ras Baalbek Ouadi Faara,54143,3.24,0.37,https://www.geonames.org/271618
+medium,271613,Mrâh ed Deqaïyeq,Mrah ed Deqaiyeq,PPL,0,34.05694,36.02722,Bouday,53459,2.724,0.316,https://www.geonames.org/271613
+medium,271609,Mrâh el Aabd,Mrah el Aabd,PPL,0,34.23972,36.265,Kharayeb El-Hermel,54175,2.494,0.5,https://www.geonames.org/271609
+medium,271602,Mrâh el Aarab,Mrah el Aarab,PPL,0,34.47778,36.35444,Charbine El-Hermel,54127,3.925,0.435,https://www.geonames.org/271602
+medium,271538,Mrâh el Aataïbé,Mrah el Aataibe,PPL,0,34.345,36.34306,Ras Baalbek Ouadi Faara,54143,4.717,0.4,https://www.geonames.org/271538
+medium,271606,Mrâh el Ahmar,Mrah el Ahmar,PPL,0,34.04278,36.01222,Jebaa,53171,2.805,0.286,https://www.geonames.org/271606
+medium,271600,Mrâh el Aouja,Mrah el Aouja,PPL,0,34.13472,36.08194,Btedaai,53375,3.302,0.25,https://www.geonames.org/271600
+medium,271590,Mrâh el Balloût,Mrah el Ballout,PPL,0,34.36222,36.33361,Zighrine,54119,2.804,0.16,https://www.geonames.org/271590
+medium,6277915,Mrâh el Gharbi,Mrah el Gharbi,PPL,0,34.3975,36.37833,Hermel,54111,4.385,0.125,https://www.geonames.org/6277915
+medium,271583,Mrâh el Ghâmirât,Mrah el Ghamirat,PPL,0,34.29389,36.28917,Maaysra El-Hermel,54167,2.374,0.462,https://www.geonames.org/271583
+medium,274387,Mrâh el Harfoûch,Mrah el Harfouch,PPL,0,34.19528,36.24444,Harabta,53264,2.401,0.462,https://www.geonames.org/274387
+medium,271576,Mrâh el Harîqa,Mrah el Hariqa,PPL,0,34.3975,36.33833,Zighrine,54119,2.147,0.333,https://www.geonames.org/271576
+medium,271561,Mrâh el Khaoukh,Mrah el Khaoukh,PPL,0,34.19028,36.2,Ram Baalbek,53281,2.664,0.286,https://www.geonames.org/271561
+medium,271553,Mrâh el Mahlisé,Mrah el Mahlise,PPL,0,34.28056,36.26111,Ouadi Faara,54151,2.522,0.261,https://www.geonames.org/271553
+medium,271554,Mrâh el Mahlîssi,Mrah el Mahlissi,PPL,0,34.41361,36.32028,Zighrine,54119,3.182,0.231,https://www.geonames.org/271554
+medium,271550,Mrâh el Mechref,Mrah el Mechref,PPL,0,34.43167,36.36222,Hermel,54111,4.379,0.353,https://www.geonames.org/271550
+medium,271541,Mrâh el Qloûd,Mrah el Qloud,PPL,0,34.12861,36.06889,Dar El-Ouassaa,53366,2.602,0.316,https://www.geonames.org/271541
+medium,271540,Mrâh el Qorné,Mrah el Qorne,PPL,0,34.3275,36.32111,Ras Baalbek Ouadi Faara,54143,3.657,0.276,https://www.geonames.org/271540
+medium,271515,Mrâh es Siyâd,Mrah es Siyad,PPL,0,34.37278,36.34361,Zighrine,54119,2.519,0.24,https://www.geonames.org/271515
+medium,271502,Mrâh ez Zouârîb,Mrah ez Zouarib,PPL,0,34.28889,36.26806,Ras Baalbek El Gharbi,54135,2.206,0.414,https://www.geonames.org/271502
+medium,271412,Mâr Boutros,Mar Boutros,PPL,0,34.12056,35.90528,Mghayre Jbeil,26341,2.868,0.4,https://www.geonames.org/271412
+medium,270026,Nabaa ej Jdîd,Nabaa ej Jdid,PPL,0,34.19917,35.95278,Tannourine El-Faouqa,34386,2.33,0.25,https://www.geonames.org/270026
+medium,270021,Nabaa el Mghâra,Nabaa el Mghara,PPL,0,34.01278,35.79722,Hrajel,25471,2.126,0.353,https://www.geonames.org/270021
+medium,266375,Ouâdi ed Deleb,Ouadi ed Deleb,PPL,0,33.93194,35.82944,Mtain,22711,2.152,0.308,https://www.geonames.org/266375
+medium,266357,Ouâdi ej Jord,Ouadi ej Jord,PPL,0,34.17028,35.92,Aarab El-Lahib,26374,2.835,0.3,https://www.geonames.org/266357
+medium,266370,Ouâdi el Assouad,Ouadi el Assouad,PPL,0,34.04,35.99806,Mazraat beit Mchaik,53457,2.801,0.231,https://www.geonames.org/266370
+medium,266342,Ouâdi en Naïra,Ouadi en Naira,PPL,0,34.31278,36.30639,Ras Baalbek Ouadi Faara,54143,3.92,0.516,https://www.geonames.org/266342
+medium,266361,Ouâdi en Njâss,Ouadi en Njass,PPL,0,34.35694,36.04028,Bqarsouna,37319,2.168,0.333,https://www.geonames.org/266361
+medium,269464,Qalaat es Saouda,Qalaat es Saouda,PPL,0,34.1775,35.91222,Ouata Houb,34381,2.17,0.455,https://www.geonames.org/269464
+medium,269383,Qalb es Sabaa,Qalb es Sabaa,PPL,0,34.03167,36.00139,Jebaa,53171,2.507,0.5,https://www.geonames.org/269383
+medium,279229,Qalïlé,Qalile,PPL,0,34.19917,36.22778,Harabta,53264,2.25,0.308,https://www.geonames.org/279229
+medium,269224,Qasr el Loujoûj,Qasr el Loujouj,PPL,0,34.025,36.24833,Baalbek,53111,4.071,0.25,https://www.geonames.org/269224
+medium,269110,Qebrâya,Qebraya,PPL,0,34.175,35.91278,Ouata Houb,34381,2.444,0.267,https://www.geonames.org/269110
+medium,269082,Qenia,Qenia,PPL,0,34.58583,36.36667,Aamayer,35512,3.774,0.25,https://www.geonames.org/269082
+medium,269102,Qlâa el Borj,Qlaa el Borj,PPL,0,34.19056,35.92361,Ouata Houb,34381,2.047,0.375,https://www.geonames.org/269102
+medium,268199,Sannîne,Sannine,PPL,0,33.93694,35.84167,Baskinta,22797,2.807,0.429,https://www.geonames.org/268199
+medium,278294,Shanbouq,Shanbouq,PPL,0,34.5225,36.28611,Qbaiyat Aakkar,35487,3.744,0.267,https://www.geonames.org/278294
+medium,266768,Taoufîqîyé,Taoufiqiye,PPL,0,34.17611,36.31722,Moqraq,53251,2.235,0.25,https://www.geonames.org/266768
+medium,266576,Toût Remmâne,Tout Remmane,PPL,0,34.08361,36.04806,Bouday,53459,2.637,0.353,https://www.geonames.org/266576
+medium,265945,Zerîbet es Sabhâ,Zeribet es Sabha,PPL,0,34.04,36.01611,Jebaa,53171,2.387,0.421,https://www.geonames.org/265945
+medium,265823,Zighrîne et Tahte,Zighrine et Tahte,PPL,0,34.42528,36.36,Hermel,54111,4.561,0.421,https://www.geonames.org/265823
+medium,277720,‘Ayn Āhilah,`Ayn Ahilah,PPL,0,34.13333,36.28333,Chaat,53274,2.848,0.333,https://www.geonames.org/277720
+low,275368,Fadous,Fadous,PPL,750,34.22833,35.65584,Kfar Aabida,34144,0.779,0.375,https://www.geonames.org/275368
+low,6273741,Aabadiyé ej Jdidé,Aabadiye ej Jdide,PPL,0,33.82111,35.61361,Chouit,21354,1.255,0.095,https://www.geonames.org/6273741
+low,281056,Aabboûd,Aabboud,PPL,0,34.1025,35.8575,Mar Sarkis,26314,0.766,0.25,https://www.geonames.org/281056
+low,266560,Aadaïssé,Aadaisse,PPL,0,33.25397,35.54241,Aadaysse Marjaayoun,73211,0.759,0.667,https://www.geonames.org/266560
+low,266553,Aakfor,Aakfor,PPL,0,34.19917,35.84194,Douma,34311,1.103,0.2,https://www.geonames.org/266553
+low,6273743,Aaley ej Jdidé,Aaley ej Jdide,PPL,0,33.81806,35.61028,Chouit,21354,1.401,0.111,https://www.geonames.org/6273743
+low,279567,Aalmâne,Aalmane,PPL,0,33.58444,35.40778,Aalmane Ech-Chouf,23311,0.854,0.923,https://www.geonames.org/279567
+low,8595350,Aamrane,Aamrane,PPL,0,33.1946,35.23888,Qlaile Sour,62287,0.971,0.286,https://www.geonames.org/8595350
+low,6273711,Aamroussiyé,Aamroussiye,PPL,0,33.82278,35.52389,Kfar Chima,21251,1.263,0.333,https://www.geonames.org/6273711
+low,278935,Aamzît,Aamzit,PPL,0,34.22889,36.37417,Aain Baalbek,53217,1.195,0.444,https://www.geonames.org/278935
+low,278926,Aanj en Nahlé,Aanj en Nahle,PPL,0,33.6775,35.56833,Aathrine,23544,1.854,0.421,https://www.geonames.org/278926
+low,277824,Aaoura,Aaoura,PPL,0,34.23595,35.80315,Daael,34279,0.798,0.4,https://www.geonames.org/277824
+low,266310,Aaouâdé,Aaouade,PPL,0,34.62611,36.37722,Aamayer,35512,0.82,0.762,https://www.geonames.org/266310
+low,6273987,Aaqabé,Aaqabe,PPL,0,33.76449,35.50758,Aaramoun Aaley,24211,0.877,0.421,https://www.geonames.org/6273987
+low,278751,Aaqbet Sebaail,Aaqbet Sebaail,PPL,0,34.31722,35.91972,Ayto,33243,0.885,0.267,https://www.geonames.org/278751
+low,6278429,Aarab Jourmnaya,Aarab Jourmnaya,PPL,0,34.61194,36.36139,Aamayer,35512,1.598,0.476,https://www.geonames.org/6278429
+low,278570,Aarîd en Naas,Aarid en Naas,PPL,0,34.10111,35.85111,Mar Sarkis,26314,0.953,0.444,https://www.geonames.org/278570
+low,6280010,Aayoûn el Aalaq,Aayoun el Aalaq,PPL,0,34.13917,35.87194,Laqlouq,26361,1.017,0.706,https://www.geonames.org/6280010
+low,273625,Aaz el Arab,Aaz el Arab,PPL,0,33.52,35.80222,Aaqabet Rachaya,55114,1.11,0.5,https://www.geonames.org/273625
+low,281006,Abou Aafta,Abou Aafta,PPL,0,34.43333,36.04861,Btermaz,37343,1.066,0.5,https://www.geonames.org/281006
+low,6279714,Abou Saad,Abou Saad,PPL,0,34.24889,35.77194,Jebla,34274,0.816,0.154,https://www.geonames.org/6279714
+low,280966,Abū Ḩammād,Abu Hammad,PPL,0,34.48917,35.93389,Minie,37271,1.208,0.143,https://www.geonames.org/280966
+low,278277,Achamssîyé,Achamssiye,PPL,0,33.47111,35.32667,Aadoussiye,61466,0.92,0.7,https://www.geonames.org/278277
+low,280157,Al Ghazālah,Al Ghazalah,PPL,0,33.86667,35.53333,Furn Ech-Chebbak,21133,0.794,0.211,https://www.geonames.org/280157
+low,280142,Al Ghuwayyāt,Al Ghuwayyat,PPL,0,33.8625,35.5725,Mansouriyet El-Matn,22411,0.994,0.435,https://www.geonames.org/280142
+low,279584,Al Makhāḑah,Al Makhadah,PPL,0,33.86667,35.53333,Furn Ech-Chebbak,21133,0.794,0.182,https://www.geonames.org/279584
+low,278974,Al Yahūdīyah,Al Yahudiyah,PPL,0,33.78333,35.5,Bchamoun,24243,1.286,0.429,https://www.geonames.org/278974
+low,280460,Al ‘Arīḑ,Al `Arid,PPL,0,33.4,35.48333,Habbouch En-Nabatiyeh,71155,0.852,0.286,https://www.geonames.org/280460
+low,269367,Amr ed Dîne,Amr ed Dine,PPL,0,34.50722,36.0825,Bqerzla,35147,1.66,0.267,https://www.geonames.org/269367
+low,7870022,Ansariyeh,Ansariyeh,PPL,0,33.41276,35.2792,Insariye,61436,0.86,0.941,https://www.geonames.org/7870022
+low,278482,Ar Rayḩānīyah,Ar Rayhaniyah,PPL,0,34.33333,35.98333,Behouaita,37371,1.29,0.2,https://www.geonames.org/278482
+low,278466,Ar Ru’ays,Ar Ru'ays,PPL,0,34.51667,36.15,Tikrit,35171,0.89,0.308,https://www.geonames.org/278466
+low,278608,Ard Bou Torbey,Ard Bou Torbey,PPL,0,34.22889,35.95333,Dimane,36161,1.048,0.222,https://www.geonames.org/278608
+low,278648,Ard el Faouâr,Ard el Faouar,PPL,0,33.89583,35.825,Majdel tarchich,22774,0.828,0.174,https://www.geonames.org/278648
+low,8509013,As Şawwānah,As Sawwanah,PPL,0,33.63713,35.42557,Sibline,23243,1.469,0.286,https://www.geonames.org/8509013
+low,269211,Assoûba,Assouba,PPL,0,34.24333,35.91444,Qnat,36127,0.841,0.444,https://www.geonames.org/269211
+low,7869877,Ayta Al Jabal,Ayta Al Jabal,PPL,0,33.16935,35.40258,Aaita Ej-Jabal,72224,0.844,0.87,https://www.geonames.org/7869877
+low,277814,Aïdamoûn,Aidamoun,PPL,0,34.1529,35.65498,Ghofrine,26291,0.946,0.286,https://www.geonames.org/277814
+low,277808,Aïlout,Ailout,PPL,0,33.86111,35.57833,Mansouriyet El-Matn,22411,1.217,0.444,https://www.geonames.org/277808
+low,277481,Aïn Bourdaï,Ain Bourdai,PPL,0,33.99083,36.20139,Aain Bourday,53115,2.423,0.947,https://www.geonames.org/277481
+low,277688,Aïn Faouâr,Ain Faouar,PPL,0,34.50278,35.98333,Bebnine,35275,0.849,0.25,https://www.geonames.org/277688
+low,274731,Aïn Hâla,Ain Hala,PPL,0,33.79722,35.60917,Bkhichtay,24321,0.997,0.25,https://www.geonames.org/274731
+low,277464,Aïn Iskandar,Ain Iskandar,PPL,0,34.17583,35.89889,Chatine,34366,1.994,0.333,https://www.geonames.org/277464
+low,277449,Aïn Jouaïya,Ain Jouaiya,PPL,0,34.04833,35.72611,Ghbale Kesrouane,25363,0.796,0.348,https://www.geonames.org/277449
+low,277441,Aïn Majdalaïne,Ain Majdalaine,PPL,0,33.52167,35.60222,Jezzine,63111,1.528,0.4,https://www.geonames.org/277441
+low,277437,Aïn Najm,Ain Najm,PPL,0,33.86111,35.58278,Aain Saade,22423,1.1,0.625,https://www.geonames.org/277437
+low,277389,Aïn Ouarqa,Ain Ouarqa,PPL,0,33.99472,35.67611,Ghosta,25319,0.829,0.133,https://www.geonames.org/277389
+low,277425,Aïn Qlaïâa,Ain Qlaiaa,PPL,0,33.88028,35.82306,Majdel tarchich,22774,1.332,0.333,https://www.geonames.org/277425
+low,277428,Aïn Qâra,Ain Qara,PPL,0,34.11861,35.87361,Mghayre Jbeil,26341,1.417,0.429,https://www.geonames.org/277428
+low,277414,Aïn Saoufar,Ain Saoufar,PPL,0,33.805,35.70306,Saoufar,24427,0.852,0.889,https://www.geonames.org/277414
+low,277744,Aïn ed Deïr,Ain ed Deir,PPL,0,34.11889,35.78333,Aalmat Ech-Chamliye,26212,1.06,0.455,https://www.geonames.org/277744
+low,277635,Aïn ej Jorn,Ain ej Jorn,PPL,0,34.01083,35.75722,Ouata El-Jaouz,25455,1.898,0.375,https://www.geonames.org/277635
+low,277713,Aïn el Assad,Ain el Assad,PPL,0,33.6468,35.45582,Chammis Ech-Chouf,23223,0.924,0.696,https://www.geonames.org/277713
+low,277700,Aïn el Batrak,Ain el Batrak,PPL,0,34.12667,35.84472,Hema Mar Maroun Aannaya,26388,0.863,0.276,https://www.geonames.org/277700
+low,277707,Aïn el Blât,Ain el Blat,PPL,0,34.18667,35.88583,Chatine,34366,1.334,0.429,https://www.geonames.org/277707
+low,277705,Aïn el Bârdé,Ain el Barde,PPL,0,34.02806,35.76278,Ouata El-Jaouz,25455,0.803,0.316,https://www.geonames.org/277705
+low,277656,Aïn el Hiloué,Ain el Hiloue,PPL,0,33.54694,35.38167,Saida Ed-Dekermane,61119,0.86,0.348,https://www.geonames.org/277656
+low,277666,Aïn el Hânoût,Ain el Hanout,PPL,0,34.07083,35.725,Jouret Bedrane,25365,1.174,0.19,https://www.geonames.org/277666
+low,277664,Aïn el Hâour,Ain el Haour,PPL,0,33.66,35.49694,Dibbiye,23259,0.78,0.267,https://www.geonames.org/277664
+low,277621,Aïn el Laboué,Ain el Laboue,PPL,0,33.51639,35.82167,Aaqabet Rachaya,55114,1.383,0.571,https://www.geonames.org/277621
+low,277611,Aïn el Marj,Ain el Marj,PPL,0,34.02,35.80333,Hrajel,25471,1.228,0.308,https://www.geonames.org/277611
+low,277603,Aïn el Mehnaïde,Ain el Mehnaide,PPL,0,33.84639,35.67694,Deir El-harf,21367,1.172,0.211,https://www.geonames.org/277603
+low,277597,Aïn el Qadah,Ain el Qadah,PPL,0,34.05278,35.80389,Qahmez,26367,1.08,0.429,https://www.geonames.org/277597
+low,277576,Aïn er Râha,Ain er Raha,PPL,0,34.20889,35.90389,Tannourine Et-Tahta,34356,0.763,0.583,https://www.geonames.org/277576
+low,277569,Aïn er Rîhâné,Ain er Rihane,PPL,0,33.95722,35.645,Aain Er-Rihane,25251,0.752,0.957,https://www.geonames.org/277569
+low,277548,Aïn es Salîb,Ain es Salib,PPL,0,34.15083,35.86917,Hema Er-Rehban,26390,0.823,0.182,https://www.geonames.org/277548
+low,277539,Aïn es Sghaïri,Ain es Sghairi,PPL,0,34.03472,35.62667,Tabarja,25151,0.961,0.316,https://www.geonames.org/277539
+low,277543,Aïn es Sihha,Ain es Sihha,PPL,0,33.83917,35.75194,Khalouat Baabda,21421,1.518,0.222,https://www.geonames.org/277543
+low,277532,Aïn et Tannoûr,Ain et Tannour,PPL,0,34.01833,35.79778,Hrajel,25471,1.528,0.125,https://www.geonames.org/277532
+low,7840015,Baadba,Baadba,PPL,0,33.8338,35.54415,Boutchay,21227,0.904,0.286,https://www.geonames.org/7840015
+low,277123,Baal en Nâamé,Baal en Naame,PPL,0,33.74778,35.45417,Naame,23141,0.811,0.625,https://www.geonames.org/277123
+low,277053,Baalchmay ej Jdîdé,Baalchmay ej Jdide,PPL,0,33.81194,35.65306,Bhamdoun El-Mhatta,24411,0.917,0.387,https://www.geonames.org/277053
+low,276897,Baatâra,Baatara,PPL,0,34.15389,35.8625,Hema Er-Rehban,26390,0.907,0.222,https://www.geonames.org/276897
+low,6279308,Baddoûaa,Baddouaa,PPL,0,34.48972,35.99111,Rihaniyet-Miniye,37281,0.818,0.133,https://www.geonames.org/6279308
+low,277210,Baddé,Badde,PPL,0,33.65917,35.60111,Jdeidet Ech-Chouf,23623,1.021,0.364,https://www.geonames.org/277210
+low,277151,Bajaa,Bajaa,PPL,0,34.48972,36.07556,Dinbou,35318,0.927,0.182,https://www.geonames.org/277151
+low,277084,Baldah,Baldah,PPL,0,34.56667,36.15,Balde WaMazraatBalde,35158,0.782,0.588,https://www.geonames.org/277084
+low,277013,Baqaoun el Faouqa,Baqaoun el Faouqa,PPL,0,33.67528,35.47806,Dibbiye,23259,1.123,0.167,https://www.geonames.org/277013
+low,276703,Bayt Mubārak,Bayt Mubarak,PPL,0,33.83333,36.08333,Jenta,53447,1.323,0.353,https://www.geonames.org/276703
+low,6278734,Baïtsanîyé,Baitsaniye,PPL,0,33.42111,35.71028,Meimes,74128,1.505,0.267,https://www.geonames.org/6278734
+low,8624783,Bchamra,Bchamra,PPLL,0,34.40367,35.81686,Ras Masqa,32185,1.132,0.5,https://www.geonames.org/8624783
+low,276347,Bcheaaqâb,Bcheaaqab,PPL,0,33.72444,35.5225,Kfar Matta,24377,1.071,0.333,https://www.geonames.org/276347
+low,6276277,Bchellâma,Bchellama,PPL,0,33.89778,35.74944,Aain Ez-Zeitoune,22714,1.104,0.222,https://www.geonames.org/6276277
+low,276352,Bchillâma,Bchillama,PPL,0,33.90167,35.75556,Mrouj,22733,0.943,0.143,https://www.geonames.org/276352
+low,276361,Bchâma,Bchama,PPL,0,34.42972,35.92667,Miriata,33271,1.196,0.308,https://www.geonames.org/276361
+low,276465,Beaachta,Beaachta,PPL,0,34.15778,35.63333,Rihanet Jbayl,26159,1.08,0.5,https://www.geonames.org/276465
+low,277066,Bellânet el Hîssa,Bellanet el Hissa,PPL,0,34.58056,36.04861,Hayssa,35221,0.971,0.556,https://www.geonames.org/277066
+low,276949,Bersaïssa,Bersaissa,PPL,0,34.12278,35.78083,Aalmat Ech-Chamliye,26212,1.548,0.333,https://www.geonames.org/276949
+low,276095,Bessaïlet el Faouqa,Bessailet el Faouqa,PPL,0,34.13444,36.12,Deir El-Ahmar,53311,1.299,0.333,https://www.geonames.org/276095
+low,276094,Bessaïlet et Tahta,Bessailet et Tahta,PPL,0,34.13083,36.12139,Deir El-Ahmar,53311,0.894,0.435,https://www.geonames.org/276094
+low,276787,Beïn en Nhoûr,Bein en Nhour,PPL,0,34.01139,35.82583,Faraya,25475,1.099,0.353,https://www.geonames.org/276787
+low,276684,Beït Aabeïd,Beit Aabeid,PPL,0,34.43,35.92028,Boussit,33279,1.272,0.471,https://www.geonames.org/276684
+low,276739,Beït Aaoukar,Beit Aaoukar,PPL,0,34.43278,35.91639,Boussit,33279,1.14,0.375,https://www.geonames.org/276739
+low,276720,Beït Aatmâne,Beit Aatmane,PPL,0,34.39694,35.98278,Beit Zoud,37349,1.112,0.5,https://www.geonames.org/276720
+low,276773,Beït Abou Ishâq,Beit Abou Ishaq,PPL,0,34.26694,35.86528,Berhalioun,36137,0.893,0.435,https://www.geonames.org/276773
+low,6278113,Beït Ali Adraa,Beit Ali Adraa,PPL,0,34.55361,36.32639,Mazareaa Jabal Akroum,35516,1.661,0.323,https://www.geonames.org/6278113
+low,8624754,Beït Barakat,Beit Barakat,PPL,0,34.43067,35.90887,Aalma,33133,0.835,0.375,https://www.geonames.org/8624754
+low,276733,Beït Daoud,Beit Daoud,PPL,0,34.51889,36.17278,Tikrit,35171,1.221,0.267,https://www.geonames.org/276733
+low,276734,Beït Dâoud,Beit Daoud,PPL,0,34.37877,35.96135,Izal,37341,1.78,0.308,https://www.geonames.org/276734
+low,276719,Beït Eid,Beit Eid,PPL,0,33.99083,35.69639,Aachqout,25423,1.017,0.286,https://www.geonames.org/276719
+low,276716,Beït Jîda,Beit Jida,PPL,0,34.39528,36.01028,Sir Ed-Danniye,37311,0.796,0.353,https://www.geonames.org/276716
+low,276713,Beït Khlaïyel,Beit Khlaiyel,PPL,0,34.53417,36.22389,Daouret Aakkar,35126,1.439,0.348,https://www.geonames.org/276713
+low,434889,Beït Radouâne,Beit Radouane,PPL,0,34.38972,35.96889,Izal,37341,1.546,0.25,https://www.geonames.org/434889
+low,6275574,Beït Zakhoûr,Beit Zakhour,PPL,0,33.8275,35.87111,Chtaura,51211,1.901,0.444,https://www.geonames.org/6275574
+low,276750,Beït ech Chaaer,Beit ech Chaaer,PPL,0,34.19,35.88556,Ouata Houb,34381,1.618,0.4,https://www.geonames.org/276750
+low,276769,Beït el Aarab,Beit el Aarab,PPL,0,34.42722,35.99389,Aazqai,37361,0.989,0.429,https://www.geonames.org/276769
+low,276766,Beït el Boûmi,Beit el Boumi,PPL,0,34.09111,35.65583,Halate,26147,0.936,0.4,https://www.geonames.org/276766
+low,276764,Beït el Hâj,Beit el Haj,PPL,0,34.55917,36.10611,Hokr Etti,35223,1.181,0.308,https://www.geonames.org/276764
+low,276754,Beït el Mihdi,Beit el Mihdi,PPL,0,34.01556,35.76056,Ouata El-Jaouz,25455,1.476,0.333,https://www.geonames.org/276754
+low,276606,Bikdâha,Bikdaha,PPL,0,33.90167,35.77556,Mrouj,22733,1.882,0.0,https://www.geonames.org/276606
+low,434096,Bilone,Bilone,PPL,0,33.16341,35.49025,Mhaibib,73248,1.736,0.333,https://www.geonames.org/434096
+low,276005,Biout es Sayed,Biout es Sayed,PPL,0,33.16792,35.19287,Mansouri Sour,62296,1.308,0.286,https://www.geonames.org/276005
+low,6275282,Bir ed Daïaa,Bir ed Daiaa,PPL,0,33.83917,35.51639,Laylake,21166,0.794,0.429,https://www.geonames.org/6275282
+low,266076,Biyout Zabboud,Biyout Zabboud,PPL,0,34.53111,36.26,Aakkar El-Aatiqa,35191,1.776,0.174,https://www.geonames.org/266076
+low,276832,Biâder Rachaaïne,Biader Rachaaine,PPL,0,34.3925,35.91972,Rachaaine,33117,1.04,0.75,https://www.geonames.org/276832
+low,276448,Bkarta,Bkarta,PPL,0,34.12861,35.79833,Mazraat El-Maaden,26213,1.361,0.421,https://www.geonames.org/276448
+low,276434,Bkoûna,Bkouna,PPL,0,34.115,35.6725,Blat Jbeil,26129,0.865,0.444,https://www.geonames.org/276434
+low,277093,Blatet ej Jamjîm,Blatet ej Jamjim,PPL,0,33.36963,35.28233,Hartiye,61423,1.185,0.375,https://www.geonames.org/277093
+low,276182,Boqaâta en Nahr,Boqaata en Nahr,PPL,0,33.96444,35.78056,Bqaatouta,25451,1.045,0.545,https://www.geonames.org/276182
+low,276135,Borj el Qibli,Borj el Qibli,PPL,0,33.24916,35.23506,Borj Ech-Chemali,62128,1.43,0.522,https://www.geonames.org/276135
+low,6278010,Boueïda,Boueida,PPL,0,34.43639,36.41556,Hermel,54111,1.149,0.154,https://www.geonames.org/6278010
+low,8595352,Boustane Jouar et Tannour,Boustane Jouar et Tannour,PPL,0,33.19064,35.19974,Henniye,62293,1.796,0.231,https://www.geonames.org/8595352
+low,276053,Boustâne et Tahta,Boustane et Tahta,PPL,0,34.24139,35.81694,Deir Billa,34374,1.222,0.19,https://www.geonames.org/276053
+low,6273894,Boutros,Boutros,PPL,0,33.78222,35.48889,Choueifat El-Quoubbe,24133,0.876,0.364,https://www.geonames.org/6273894
+low,276151,Boûria,Bouria,PPL,0,34.135,35.73,Birket Hjoula,26237,1.239,0.444,https://www.geonames.org/276151
+low,276587,Bqaa Safrîne,Bqaa Safrine,PPL,0,34.37694,36.02556,Sir Ed-Danniye,37311,0.788,0.316,https://www.geonames.org/276587
+low,269365,Broqta,Broqta,PPL,0,34.06889,35.79,Chouane,25479,1.441,0.5,https://www.geonames.org/269365
+low,276394,Brârîkha,Brarikha,PPL,0,34.21694,35.81583,Nahle El-Batroun,34273,0.882,0.462,https://www.geonames.org/276394
+low,276928,Bsâtîne el Aossi,Bsatine el Aossi,PPL,0,34.24056,35.82167,Deir Billa,34374,1.251,0.353,https://www.geonames.org/276928
+low,276334,Btaalîne,Btaaline,PPL,0,33.85472,35.67361,Kneisset Baabda,21377,1.33,0.273,https://www.geonames.org/276334
+low,276321,Btellaïyé,Btellaiye,PPL,0,34.31139,36.00917,Bechnnata,37359,1.559,0.353,https://www.geonames.org/276321
+low,277231,Bâb er Rejm,Bab er Rejm,PPL,0,33.73389,35.53833,Binnay,24369,1.116,0.375,https://www.geonames.org/277231
+low,276565,Bîr ed Douaïk,Bir ed Douaik,PPL,0,33.95083,35.68333,Balloune,25221,1.218,0.353,https://www.geonames.org/276565
+low,276557,Bîr el Haït,Bir el Hait,PPL,0,34.08917,35.72194,Adonis Jbayl,26239,1.18,0.333,https://www.geonames.org/276557
+low,276307,Bū ‘Arab,Bu `Arab,PPL,0,33.38333,35.63333,Kaoukaba Hasbaiya,74133,1.014,0.429,https://www.geonames.org/276307
+low,267390,Chaabiyet el Faouqa,Chaabiyet el Faouqa,PPL,0,34.09222,35.67306,Halate,26147,0.862,0.444,https://www.geonames.org/267390
+low,6279862,Chaabîyé,Chaabiye,PPL,0,34.18028,35.89333,Chatine,34366,1.523,0.667,https://www.geonames.org/6279862
+low,267932,Chabrîha,Chabriha,PPL,0,33.29212,35.2341,Aabbassiyet Sour,62276,1.68,0.375,https://www.geonames.org/267932
+low,267926,Chadra,Chadra,PPL,0,34.61972,36.32333,Khalsa,35430,1.724,0.5,https://www.geonames.org/267926
+low,6275289,Chareaa el Hamra,Chareaa el Hamra,PPL,0,33.84472,35.53083,Hadath Beyrouth,21219,0.892,0.375,https://www.geonames.org/6275289
+low,267369,Chikhnaïya,Chikhnaiya,PPL,0,34.11417,35.7675,Tourzaiya,26215,1.263,0.421,https://www.geonames.org/267369
+low,267308,Chloumâs,Chloumas,PPL,0,34.10278,35.74278,Hsoun,26229,1.043,0.462,https://www.geonames.org/267308
+low,267242,Chouâta,Chouata,PPL,0,34.07056,35.85583,Lassa,26331,0.754,0.364,https://www.geonames.org/267242
+low,267301,Chqaïq et Tahta,Chqaiq et Tahta,PPL,0,34.06778,35.65806,Kharayeb Nahr Ibrahim,25181,0.758,0.333,https://www.geonames.org/267301
+low,267675,Châna,Chana,PPL,0,34.23889,35.97722,Hasroun,36171,1.225,0.5,https://www.geonames.org/267675
+low,267330,Chîra,Chira,PPL,0,34.2725,35.86583,Bnehran,32141,0.908,0.5,https://www.geonames.org/267330
+low,6275263,Corail Beach,Corail Beach,PPL,0,33.86528,35.48222,Msaitbe foncière,10210,1.85,0.455,https://www.geonames.org/6275263
+low,6275262,Côte d’Azar,Cote d'Azar,PPL,0,33.86361,35.48417,Chiyah,21111,1.672,0.286,https://www.geonames.org/6275262
+low,6278550,Dabadeb,Dabadeb,PPL,0,34.61361,36.38417,Aamayer,35512,0.886,0.429,https://www.geonames.org/6278550
+low,275446,Dahr Aïn el Haour,Dahr Ain el Haour,PPL,0,33.66216,35.50149,Bkechtine Ouel Mcheiaa,23253,1.01,0.375,https://www.geonames.org/275446
+low,6271305,Dahr Aïn el Haour,Dahr Ain el Haour,PPL,0,33.66333,35.49972,Bkechtine Ouel Mcheiaa,23253,0.826,0.364,https://www.geonames.org/6271305
+low,275923,Dahr ed Douaïr,Dahr ed Douair,PPL,0,33.67083,35.48194,Bkechtine Ouel Mcheiaa,23253,1.363,0.3,https://www.geonames.org/275923
+low,275918,Dahr el Aïn,Dahr el Ain,PPL,0,34.39222,35.84639,Bkeftine,32189,1.584,0.267,https://www.geonames.org/275918
+low,275917,Dahr el Blâyet,Dahr el Blayet,PPL,0,33.82694,35.8475,Jdita,51224,1.261,0.429,https://www.geonames.org/275917
+low,275911,Dahr el Harf,Dahr el Harf,PPL,0,33.86472,35.82583,Touaite Zahle,51145,1.91,0.211,https://www.geonames.org/275911
+low,8624753,Dahr el Housseïn,Dahr el Houssein,PPL,0,34.45385,35.99133,Jdeidet El-Qaitaa,35344,1.1,0.261,https://www.geonames.org/8624753
+low,275907,Dahr el Hsoûn,Dahr el Hsoun,PPL,0,34.09,35.72778,Adonis Jbayl,26239,1.021,0.364,https://www.geonames.org/275907
+low,275902,Dahr el Marj,Dahr el Marj,PPL,0,34.15472,35.76306,Lehfed,26233,1.528,0.143,https://www.geonames.org/275902
+low,275900,Dahr el Mraïj,Dahr el Mraij,PPL,0,33.87139,35.8175,Tarchich,21481,1.016,0.353,https://www.geonames.org/275900
+low,6272098,Dahr el Qassaâ,Dahr el Qassaa,PPL,0,33.244,35.24008,Aain Baal,62243,1.47,0.375,https://www.geonames.org/6272098
+low,275898,Dahr el Qattîne,Dahr el Qattine,PPL,0,34.01611,35.805,Hrajel,25471,1.661,0.471,https://www.geonames.org/275898
+low,275888,Dahr es Safa,Dahr es Safa,PPL,0,34.35333,35.78417,Fiaa,32147,0.772,0.333,https://www.geonames.org/275888
+low,275797,Darjet el Qarn,Darjet el Qarn,PPL,0,34.24222,35.9675,Dimane,36161,1.409,0.375,https://www.geonames.org/275797
+low,275539,Debaal,Debaal,PPL,0,34.43472,36.07639,Qarhaiya,37360,0.821,0.286,https://www.geonames.org/275539
+low,270712,Dehayrjate,Dehayrjate,PPL,0,33.3097,35.65428,Meri,74158,1.118,0.333,https://www.geonames.org/270712
+low,275846,Dellâfi,Dellafi,PPL,0,33.4325,35.64889,Dellafe,74179,1.025,0.923,https://www.geonames.org/275846
+low,275510,Deraali,Deraali,PPL,0,34.01222,35.81611,Faraya,25475,1.589,0.462,https://www.geonames.org/275510
+low,275641,Deïr Bassa,Deir Bassa,PPL,0,34.21778,35.86139,Kfour El-Aarbi,34341,1.4,0.316,https://www.geonames.org/275641
+low,6271082,Deïr Tinna,Deir Tinna,PPL,0,33.23951,35.32559,Jouaiya,62211,0.782,0.4,https://www.geonames.org/6271082
+low,6273747,Dhour el Aabadiyé,Dhour el Aabadiye,PPL,0,33.81389,35.62056,Aain Ej-Jdide Aaley,24325,1.173,0.357,https://www.geonames.org/6273747
+low,275445,Dhoûr Broummâna,Dhour Broummana,PPL,0,33.88861,35.65083,Mzakke,22651,0.766,0.267,https://www.geonames.org/275445
+low,275447,Dhoûr ech Choueïr,Dhour ech Choueir,PPL,0,33.90444,35.72,Aain Es-Sindiane,22737,0.775,0.182,https://www.geonames.org/275447
+low,275449,Dhoûr el Aabâdîyé,Dhour el Aabadiye,PPL,0,33.81556,35.62722,Aain Ej-Jdide Aaley,24325,0.987,0.357,https://www.geonames.org/275449
+low,6280246,Diqqâr Ghorfîne,Diqqar Ghorfine,PPL,0,34.15,35.65917,Ghofrine,26291,0.829,0.727,https://www.geonames.org/6280246
+low,6273974,Doha,Doha,PPL,0,33.75583,35.46667,Naame,23141,1.204,0.4,https://www.geonames.org/6273974
+low,6276947,Douane,Douane,PPL,0,34.00111,36.19556,Baalbek,53111,1.675,0.308,https://www.geonames.org/6276947
+low,275378,Douaïr ed Debbîyé,Douair ed Debbiye,PPL,0,33.67,35.47944,Bkechtine Ouel Mcheiaa,23253,1.593,0.261,https://www.geonames.org/275378
+low,275790,Dār ‘Ayn al ‘Awrā’,Dar `Ayn al `Awra',PPL,0,34.56667,36.16667,Hedd,35169,1.025,0.154,https://www.geonames.org/275790
+low,278164,Ech Chaab,Ech Chaab,PPL,0,34.12111,35.76139,Kfar Baal,26224,1.337,0.267,https://www.geonames.org/278164
+low,6275522,Ech Chakhroûb,Ech Chakhroub,PPL,0,33.94611,35.83222,Baskinta,22797,1.617,0.2,https://www.geonames.org/6275522
+low,278300,Ech Chalqa,Ech Chalqa,PPL,0,34.09222,35.89056,Yanouh Jbayl,26347,0.822,0.381,https://www.geonames.org/278300
+low,278230,Ech Chaouâlîq,Ech Chaoualiq,PPL,0,33.69028,35.54194,GHabet Jaafar,23438,1.338,0.261,https://www.geonames.org/278230
+low,278240,Ech Charoui,Ech Charoui,PPL,0,34.15083,35.65667,Ghofrine,26291,0.924,0.353,https://www.geonames.org/278240
+low,278323,Ech Chehâhîr,Ech Chehahir,PPL,0,34.01833,35.77306,Mayrouba,25459,1.352,0.211,https://www.geonames.org/278323
+low,6279235,Ech Chehâl,Ech Chehal,PPL,0,34.07917,35.68222,Maaysra Kesrouane,25357,1.289,0.16,https://www.geonames.org/6279235
+low,278287,Ech Chmîs,Ech Chmis,PPL,0,33.96778,35.77139,Beqaata Kanaan,25443,0.977,0.182,https://www.geonames.org/278287
+low,6280302,Ech Chmîs,Ech Chmis,PPL,0,34.13417,35.72861,Birket Hjoula,26237,1.303,0.2,https://www.geonames.org/6280302
+low,278139,Ech Chouaïfât,Ech Chouaifat,PPL,0,33.80861,35.51778,Choueifat El-Aamrousiye,24111,1.165,0.69,https://www.geonames.org/278139
+low,433857,Ech Choûmé,Ech Choume,PPL,0,33.43694,35.515,Jarjouaa,71231,1.277,0.333,https://www.geonames.org/433857
+low,278248,Ech Chrîfé,Ech Chrife,PPL,0,34.23194,35.79639,Daael,34279,1.052,0.25,https://www.geonames.org/278248
+low,278324,Ech Châghoûr,Ech Chaghour,PPL,0,33.82194,35.73944,Hammana,21411,1.013,0.25,https://www.geonames.org/278324
+low,433883,Ech Châhoûta,Ech Chahouta,PPL,0,33.4675,35.57333,Aaramta,63311,1.257,0.444,https://www.geonames.org/433883
+low,278298,Ech Châloût,Ech Chalout,PPL,0,34.3605,35.98983,Karm El-Mohr,37347,1.097,0.333,https://www.geonames.org/278298
+low,278222,Ech Châoui,Ech Chaoui,PPL,0,34.16306,35.88167,Chatine,34366,1.602,0.5,https://www.geonames.org/278222
+low,278223,Ech Châoui,Ech Chaoui,PPL,0,33.97778,35.75639,Beqaata Kanaan,25443,1.546,0.19,https://www.geonames.org/278223
+low,278218,Ech Châouiyé,Ech Chaouiye,PPL,0,34.01639,35.81194,Faraya,25475,1.735,0.471,https://www.geonames.org/278218
+low,278254,Ech Chârbîne,Ech Charbine,PPL,0,33.61778,35.51778,Aanout,23239,0.917,0.375,https://www.geonames.org/278254
+low,280779,Ed Daassé,Ed Daasse,PPL,0,34.03722,35.68167,Kfour Kesrouane,25329,0.762,0.2,https://www.geonames.org/280779
+low,280839,Ed Dabbâbiyé ech Charqîyé,Ed Dabbabiye ech Charqiye,PPL,0,34.62278,36.21556,Dibbabiye,35432,0.959,0.833,https://www.geonames.org/280839
+low,280840,Ed Dabbâbiyé el Gharbîyé,Ed Dabbabiye el Gharbiye,PPL,0,34.62278,36.21556,Dibbabiye,35432,0.959,0.889,https://www.geonames.org/280840
+low,277307,Ed Daher,Ed Daher,PPL,0,34.48639,36.19028,Tshea,35356,1.237,0.4,https://www.geonames.org/277307
+low,280804,Ed Dahr,Ed Dahr,PPL,0,34.22333,35.78028,Kfarb Shlaimane,34257,1.058,0.25,https://www.geonames.org/280804
+low,6279722,Ed Dahr,Ed Dahr,PPL,0,34.24722,35.81222,Deir Billa,34374,0.968,0.5,https://www.geonames.org/6279722
+low,280798,Ed Dahrât,Ed Dahrat,PPL,0,34.06194,36.06528,Bouday,53459,0.826,0.333,https://www.geonames.org/280798
+low,280793,Ed Dalhamiyé,Ed Dalhamiye,PPLQ,0,33.6925,35.47028,Moughayret Ech-Chouf,23461,1.201,0.471,https://www.geonames.org/280793
+low,6279329,Ed Daqar,Ed Daqar,PPL,0,34.44111,35.87972,Beddaoui,37231,1.25,0.308,https://www.geonames.org/6279329
+low,280781,Ed Darjé,Ed Darje,PPL,0,34.10222,35.895,Yanouh Jbayl,26347,1.154,0.308,https://www.geonames.org/280781
+low,280754,Ed Daïaa,Ed Daiaa,PPL,0,34.06722,35.80111,Qahmez,26367,0.981,0.364,https://www.geonames.org/280754
+low,280755,Ed Daïaa,Ed Daiaa,PPL,0,34.0175,35.77472,Mayrouba,25459,1.408,0.462,https://www.geonames.org/280755
+low,280756,Ed Daïâa,Ed Daiaa,PPL,0,33.97083,35.76917,Beqaata Kanaan,25443,0.992,0.222,https://www.geonames.org/280756
+low,280731,Ed Debbîyé,Ed Debbiye,PPL,0,33.665,35.48778,Bkechtine Ouel Mcheiaa,23253,1.011,0.222,https://www.geonames.org/280731
+low,280743,Ed Dghâlé,Ed Dghale,PPL,0,34.18222,35.88333,Chatine,34366,0.806,0.462,https://www.geonames.org/280743
+low,280699,Ed Dhaïbîyé,Ed Dhaibiye,PPL,0,34.46639,35.94361,Nabi Youcheaa,37261,1.168,0.5,https://www.geonames.org/280699
+low,280729,Ed Dhaïra,Ed Dhaira,PPL,0,33.1002,35.22717,Dhayra,62341,0.939,0.857,https://www.geonames.org/280729
+low,280710,Ed Doûqa,Ed Douqa,PPL,0,34.1325,35.655,Jbayl,26111,0.883,0.364,https://www.geonames.org/280710
+low,280787,Ed Dqârîne,Ed Dqarine,PPL,0,34.03611,35.62861,Safra Kesrouane,25161,0.917,0.381,https://www.geonames.org/280787
+low,280644,Eghbet et Tahta,Eghbet et Tahta,PPL,0,34.00861,35.70528,Ighbe,25391,0.759,0.706,https://www.geonames.org/280644
+low,433749,Ej Jazâyer,Ej Jazayer,PPL,0,33.38657,35.48479,Nabatieh Et-Tahta,71111,0.991,0.364,https://www.geonames.org/433749
+low,6275251,Ej Jouaniat,Ej Jouaniat,PPL,0,33.86083,35.535,Furn Ech-Chebbak,21133,1.393,0.174,https://www.geonames.org/6275251
+low,11829545,Ej Joura,Ej Joura,PPL,0,33.78263,35.54107,Chimlane,24339,0.769,0.286,https://www.geonames.org/11829545
+low,280561,El Aabdé,El Aabde,PPL,0,34.51694,35.96833,Mhammaret,35277,1.085,0.429,https://www.geonames.org/280561
+low,280559,El Aabri,El Aabri,PPL,0,34.07611,35.78417,Chouane,25479,0.864,0.533,https://www.geonames.org/280559
+low,280555,El Aaddoûssîyé,El Aaddoussiye,PPL,0,33.47139,35.34472,Aadoussiye,61466,0.765,0.952,https://www.geonames.org/280555
+low,280557,El Aadsé,El Aadse,PPL,0,34.07139,35.68306,Maaysra Kesrouane,25357,0.786,0.381,https://www.geonames.org/280557
+low,280550,El Aafs,El Aafs,PPL,0,34.01417,35.68111,Jdaidet Ghazir,25317,1.002,0.235,https://www.geonames.org/280550
+low,280551,El Aafs,El Aafs,PPL,0,33.89167,35.77917,Aintoura El-Matn,22751,1.851,0.364,https://www.geonames.org/280551
+low,6271360,El Aansîyé,El Aansiye,PPL,0,33.58472,35.42833,Jmailiye,23316,1.489,0.533,https://www.geonames.org/6271360
+low,434810,El Aaouja,El Aaouja,PPL,0,33.535,35.65639,Machghara,52111,1.185,0.4,https://www.geonames.org/434810
+low,280427,El Aaoujâne,El Aaoujane,PPL,0,33.98472,35.77639,Kfar Dibiane,25439,1.161,0.421,https://www.geonames.org/280427
+low,11806955,El Aaqabât,El Aaqabat,PPL,0,33.44368,35.57255,Rihane Jezzine,63319,1.193,0.167,https://www.geonames.org/11806955
+low,280496,El Aaqabé,El Aaqabe,PPL,0,33.50528,35.82278,Aaqabet Rachaya,55114,1.519,0.889,https://www.geonames.org/280496
+low,279045,El Aaqaïdé,El Aaqaide,PPL,0,33.36758,35.50029,Nabatiyeh El-Faouka,71113,1.262,0.3,https://www.geonames.org/279045
+low,280493,El Aaqbé,El Aaqbe,PPL,0,34.00083,35.72639,Beqaata Aachqout,25431,0.853,0.381,https://www.geonames.org/280493
+low,280495,El Aaqbé,El Aaqbe,PPL,0,33.58469,35.46831,Joun,23336,1.534,0.0,https://www.geonames.org/280495
+low,6279334,El Aaqbé,El Aaqbe,PPL,0,34.43227,35.89241,Aalma,33133,0.853,0.545,https://www.geonames.org/6279334
+low,6280282,El Aaqbé,El Aaqbe,PPL,0,34.09278,35.72028,Zibdine Jbayl,26246,1.078,0.333,https://www.geonames.org/6280282
+low,280468,El Aaraâr,El Aaraar,PPL,0,33.89889,35.68056,Mar Moussa Ed-Douar,22784,0.858,0.526,https://www.geonames.org/280468
+low,280477,El Aarbé,El Aarbe,PPL,0,33.99444,35.67111,Ghosta,25319,0.861,0.182,https://www.geonames.org/280477
+low,6279841,El Aarâbé,El Aarabe,PPL,0,34.18667,35.82389,Bcheaali,34316,1.691,0.462,https://www.geonames.org/6279841
+low,280456,El Aarîch,El Aarich,PPL,0,34.155,35.87833,Hema Er-Rehban,26390,1.77,0.353,https://www.geonames.org/280456
+low,280450,El Aasbé,El Aasbe,PPL,0,34.18722,35.78861,Ram El-Batroun,34346,1.065,0.4,https://www.geonames.org/280450
+low,280516,El Ammîne,El Ammine,PPL,0,33.90028,35.78333,Aintoura El-Matn,22751,1.362,0.353,https://www.geonames.org/280516
+low,280506,El Ansîl,El Ansil,PPL,0,34.16139,35.8075,Saqi Richmaya,26377,1.124,0.235,https://www.geonames.org/280506
+low,279038,El Aouaïni,El Aouaini,PPL,0,34.11917,35.76972,Tourzaiya,26215,1.752,0.5,https://www.geonames.org/279038
+low,280421,El Aïn,El Ain,PPL,0,34.22583,35.86389,Kfour El-Aarbi,34341,1.28,0.308,https://www.geonames.org/280421
+low,280422,El Aïn,El Ain,PPL,0,34.04139,35.63278,Safra Kesrouane,25161,0.775,0.25,https://www.geonames.org/280422
+low,280392,El Bahhâra,El Bahhara,PPL,0,34.05139,35.73667,Ghbale Kesrouane,25363,1.318,0.286,https://www.geonames.org/280392
+low,280389,El Bahra,El Bahra,PPL,0,34.14126,35.87914,Hema Er-Rehban,26390,1.594,0.333,https://www.geonames.org/280389
+low,280388,El Bahsa,El Bahsa,PPL,0,34.0775,35.64667,Nahr Ibrahim,26171,1.124,0.471,https://www.geonames.org/280388
+low,280356,El Baqsi,El Baqsi,PPL,0,33.69169,35.44426,Dahr Ech-Chouf,23279,1.31,0.25,https://www.geonames.org/280356
+low,280350,El Barbîs,El Barbis,PPLL,0,33.18187,35.20367,Mansouri Sour,62296,1.03,0.444,https://www.geonames.org/280350
+low,280348,El Barghach,El Barghach,PPL,0,34.39222,36.30139,Zighrine,54119,1.929,0.273,https://www.geonames.org/280348
+low,280342,El Barranîyé,El Barraniye,PPL,0,34.14611,35.6575,Edde Jbayl,26135,1.2,0.353,https://www.geonames.org/280342
+low,6602977,El Bass,El Bass,PPL,0,33.2725,35.2125,Sour,62111,1.819,0.375,https://www.geonames.org/6602977
+low,280327,El Battâl,El Battal,PPL,0,33.69662,35.46147,Dibbiye,23259,1.87,0.182,https://www.geonames.org/280327
+low,6279420,El Bayâda,El Bayada,PPL,0,34.51694,35.99028,Bebnine,35275,1.215,0.154,https://www.geonames.org/6279420
+low,6280623,El Bhâssîs,El Bhassis,PPL,0,34.05611,35.81528,Qahmez,26367,0.818,0.154,https://www.geonames.org/6280623
+low,272507,El Biâra,El Biara,PPL,0,34.18806,35.905,Ouata Houb,34381,0.829,0.286,https://www.geonames.org/272507
+low,280240,El Borj,El Borj,PPL,0,34.14056,35.85556,Hema Er-Rehban,26390,0.872,0.125,https://www.geonames.org/280240
+low,280227,El Bouaïda,El Bouaida,PPL,0,33.3612,35.58159,Boueyda Marjaayoun,73116,1.353,0.417,https://www.geonames.org/280227
+low,6279508,El Bouwab,El Bouwab,PPL,0,34.53833,36.22417,Daouret Aakkar,35126,1.02,0.5,https://www.geonames.org/6279508
+low,280336,El Bsâtîne,El Bsatine,PPL,0,34.18389,35.81889,Ram El-Batroun,34346,1.748,0.471,https://www.geonames.org/280336
+low,280337,El Bsâtîne,El Bsatine,PPL,0,34.01417,35.7675,Ouata El-Jaouz,25455,1.947,0.25,https://www.geonames.org/280337
+low,280334,El Bâchqiyé,El Bachqiye,PPL,0,33.6794,35.47878,Dibbiye,23259,1.027,0.533,https://www.geonames.org/280334
+low,280398,El Bâdouâni,El Badouani,PPL,0,34.36333,35.88333,Deir Jdeide,33137,0.759,0.286,https://www.geonames.org/280398
+low,280292,El Bïyâda,El Biyada,PPL,0,33.16278,35.18167,Iskandarouna Sour,62299,0.878,0.364,https://www.geonames.org/280292
+low,279923,El Establ,El Establ,PPL,0,33.74806,35.87889,Raouda (Istabel),52295,1.239,0.923,https://www.geonames.org/279923
+low,6271598,El Fabraka,El Fabraka,PPL,0,33.79722,35.68222,Qrayet Baabda,21344,1.205,0.333,https://www.geonames.org/6271598
+low,280208,El Faouâr,El Faouar,PPL,0,34.43306,35.88861,Mejdlaiya Zgharta,33129,1.182,0.385,https://www.geonames.org/280208
+low,280211,El Faouâr,El Faouar,PPL,0,33.90111,35.83361,Majdel tarchich,22774,1.816,0.3,https://www.geonames.org/280211
+low,280216,El Farch,El Farch,PPL,0,34.12639,35.87861,Laqlouq,26361,1.425,0.167,https://www.geonames.org/280216
+low,280215,El Fasqîne,El Fasqine,PPL,0,33.86361,35.81639,Tarchich,21481,1.634,0.375,https://www.geonames.org/280215
+low,6274996,El Firdaous,El Firdaous,PPL,0,33.87694,35.56472,Fanar,22419,0.929,0.333,https://www.geonames.org/6274996
+low,280209,El Fouâr,El Fouar,PPL,0,34.2138,35.92845,Haqath Ej-Jebbe,36131,1.913,0.222,https://www.geonames.org/280209
+low,280189,El Fraïdîs,El Fraidis,PPL,0,33.71194,35.67972,Ouarhaniye,23463,1.003,0.471,https://www.geonames.org/280189
+low,280204,El Fîdâr,El Fidar,PPL,0,34.09778,35.65194,Mastita,26117,0.89,0.333,https://www.geonames.org/280204
+low,280174,El Ghabbît,El Ghabbit,PPL,0,33.90111,35.82056,Majdel tarchich,22774,1.107,0.19,https://www.geonames.org/280174
+low,280172,El Ghabîyé,El Ghabiye,PPL,0,34.16833,35.89778,Aarab El-Lahib,26374,1.821,0.5,https://www.geonames.org/280172
+low,6278065,El Ghawaya,El Ghawaya,PPL,0,34.56528,36.27528,Qbaiyat Aakkar,35487,1.2,0.3,https://www.geonames.org/6278065
+low,280159,El Ghaïda,El Ghaida,PPL,0,33.87333,35.81972,Tarchich,21481,1.093,0.286,https://www.geonames.org/280159
+low,280152,El Ghmâq,El Ghmaq,PPL,0,34.14028,35.63639,Aamchit,26141,0.851,0.308,https://www.geonames.org/280152
+low,280144,El Ghomq,El Ghomq,PPL,0,34.08667,35.65556,Halate,26147,0.904,0.333,https://www.geonames.org/280144
+low,280183,El Ghâbé,El Ghabe,PPL,0,33.84583,35.97083,Haouch El-Aamara,51335,1.879,0.333,https://www.geonames.org/280183
+low,280140,El Habach,El Habach,PPL,0,33.92167,35.80083,Mtain,22711,1.954,0.182,https://www.geonames.org/280140
+low,280019,El Habâbîyé,El Hababiye,PPL,0,33.57972,35.39556,Bramiye,61123,0.764,0.571,https://www.geonames.org/280019
+low,280133,El Hadet,El Hadet,PPL,0,34.00139,36.02833,Hadath Baalbek,53183,0.968,0.923,https://www.geonames.org/280133
+low,6271599,El Haffé,El Haffe,PPL,0,33.79778,35.68444,Saoufar,24427,1.049,0.462,https://www.geonames.org/6271599
+low,280024,El Haouta,El Haouta,PPL,0,33.55582,35.3849,Haret Saida,61159,0.947,0.5,https://www.geonames.org/280024
+low,433477,El Harqât,El Harqat,PPL,0,33.86389,35.90694,Ouadi El-Aarayech,51189,0.789,0.333,https://www.geonames.org/433477
+low,6273491,El Harâqîne,El Haraqine,PPL,0,33.61056,35.62611,Haret Jandal,23647,1.641,0.526,https://www.geonames.org/6273491
+low,280081,El Harâyeq,El Harayeq,PPL,0,33.82329,35.99824,Hoshmosh,51341,1.536,0.235,https://www.geonames.org/280081
+low,280042,El Hassek,El Hassek,PPL,0,33.98083,35.7625,Beqaata Kanaan,25443,1.813,0.333,https://www.geonames.org/280042
+low,280112,El Hemmâr,El Hemmar,PPL,0,33.86667,35.89583,Ouadi El-Aarayech,51189,1.119,0.333,https://www.geonames.org/280112
+low,280003,El Heqr,El Heqr,PPL,0,34.49333,35.94028,Minie,37271,1.705,0.222,https://www.geonames.org/280003
+low,279977,El Hnoûd,El Hnoud,PPL,0,34.25056,35.94111,Ouadi Qannoubine,36141,0.972,0.316,https://www.geonames.org/279977
+low,279987,El Hrazmîne,El Hrazmine,PPL,0,34.12528,35.795,Mazraat El-Maaden,26213,0.987,0.4,https://www.geonames.org/279987
+low,280080,El Hrâyeq,El Hrayeq,PPL,0,34.20722,35.85417,Douma,34311,1.088,0.182,https://www.geonames.org/280080
+low,280065,El Hrîq,El Hriq,PPL,0,34.03861,35.71889,Chahtoul,25351,0.859,0.308,https://www.geonames.org/280065
+low,280055,El Hrîqa,El Hriqa,PPL,0,33.98389,35.77139,Bqaatouta,25451,1.521,0.286,https://www.geonames.org/280055
+low,279995,El Hsâr,El Hsar,PPL,0,34.0075,35.71917,Raachine,25435,0.84,0.308,https://www.geonames.org/279995
+low,280036,El Hâoûz,El Haouz,PPL,0,34.09806,36.07444,Dar El-Ouassaa,53366,1.994,0.4,https://www.geonames.org/280036
+low,280091,El Hâra,El Hara,PPL,0,33.58742,35.46011,Joun,23336,1.027,0.0,https://www.geonames.org/280091
+low,280093,El Hâra,El Hara,PPL,0,33.55861,35.38703,Haret Saida,61159,0.822,0.571,https://www.geonames.org/280093
+low,280094,El Hâra,El Hara,PPL,0,33.19722,35.41111,Tibnine,72211,0.861,0.154,https://www.geonames.org/280094
+low,279983,El Héloué,El Heloue,PPL,0,34.1775,35.6325,Mounsef,26177,0.955,0.462,https://www.geonames.org/279983
+low,279862,El Joubânîyé,El Joubaniye,PPL,0,34.18194,36.18222,Ram Baalbek,53281,0.867,0.316,https://www.geonames.org/279862
+low,272757,El Karak,El Karak,PPL,0,33.85,35.92639,Zahle El-Maallaqa,51121,1.074,0.348,https://www.geonames.org/272757
+low,434867,El Kerdi,El Kerdi,PPL,0,34.40722,35.92333,Rachaaine,33117,0.821,0.286,https://www.geonames.org/434867
+low,433415,El Khanâdeq,El Khanadeq,PPL,0,33.55306,35.54056,Aazour,63184,0.907,0.286,https://www.geonames.org/433415
+low,279730,El Khirbé,El Khirbe,PPL,0,34.58806,36.01889,Qleiaat Aakkar,35243,1.123,0.462,https://www.geonames.org/279730
+low,6275252,El Khouziyé,El Khouziye,PPL,0,33.85861,35.52333,Haret Hreik,21144,1.285,0.316,https://www.geonames.org/6275252
+low,279711,El Khraïzé,El Khraize,PPL,0,34.24944,35.75361,Boqsmaiya,34277,1.126,0.471,https://www.geonames.org/279711
+low,11829546,El Kroum,El Kroum,PPL,0,33.7878,35.52632,Bchamoun,24243,1.261,0.308,https://www.geonames.org/11829546
+low,279687,El Ksâr,El Ksar,PPL,0,33.97889,35.77139,Bqaatouta,25451,1.168,0.286,https://www.geonames.org/279687
+low,279812,El Ksâyer,El Ksayer,PPL,0,34.00667,35.68167,Dlebta,25323,0.791,0.167,https://www.geonames.org/279812
+low,279660,El Lâhbîyé,El Lahbiye,PPL,0,33.69972,35.46361,Mechref,23171,1.578,0.364,https://www.geonames.org/279660
+low,279621,El Maadlé,El Maadle,PPL,0,34.15472,35.88639,Aarab El-Lahib,26374,1.161,0.471,https://www.geonames.org/279621
+low,279575,El Maallîyé,El Maalliye,PPLL,0,33.20451,35.23249,Qlaile Sour,62287,1.098,0.429,https://www.geonames.org/279575
+low,279631,El Mabrak,El Mabrak,PPL,0,33.97778,35.7475,Kfar Tay Kesrouane,25447,1.711,0.364,https://www.geonames.org/279631
+low,279623,El Madfan,El Madfan,PPLL,0,33.18028,35.19639,Mansouri Sour,62296,1.203,0.429,https://www.geonames.org/279623
+low,279622,El Madfoûn,El Madfoun,PPL,0,34.21083,35.64917,Thoum,34133,0.87,0.333,https://www.geonames.org/279622
+low,6279902,El Madqoûr,El Madqour,PPL,0,34.24944,35.91694,Qnat,36127,1.054,0.182,https://www.geonames.org/6279902
+low,279602,El Mahatta,El Mahatta,PPL,0,34.00333,35.64583,Sahel Aalma,25136,1.094,0.235,https://www.geonames.org/279602
+low,279598,El Mahmara,El Mahmara,PPL,0,34.17583,35.72833,Bejje,26276,1.24,0.333,https://www.geonames.org/279598
+low,6272111,El Mahmoûdîyé,El Mahmoudiye,PPLL,0,33.36406,35.25104,Mazraat El Yahoudiye (Aaitaniyé),61412,0.756,0.632,https://www.geonames.org/6272111
+low,279594,El Mahroûqa,El Mahrouqa,PPL,0,33.95083,35.82444,Baskinta,22797,0.88,0.25,https://www.geonames.org/279594
+low,279585,El Makhâbi,El Makhabi,PPL,0,33.24255,35.24715,Aain Baal,62243,0.81,0.4,https://www.geonames.org/279585
+low,279556,El Mamboûkh,El Mamboukh,PPL,0,33.92833,35.82,Mtain,22711,1.567,0.5,https://www.geonames.org/279556
+low,420304,El Mamlaha,El Mamlaha,PPL,0,33.39036,35.71722,Aain Qinia,74126,1.512,0.375,https://www.geonames.org/420304
+low,279531,El Manzlé,El Manzle,PPL,0,34.15917,35.87944,Aarab El-Lahib,26374,1.933,0.444,https://www.geonames.org/279531
+low,279533,El Manzlé,El Manzle,PPL,0,33.6175,35.40528,Rmeilet Ech-Chouf,23321,1.651,0.533,https://www.geonames.org/279533
+low,6272069,El Maqsbé,El Maqsbe,PPL,0,33.17781,35.19649,Mansouri Sour,62296,1.023,0.429,https://www.geonames.org/6272069
+low,279487,El Marmagha,El Marmagha,PPL,0,34.10444,36.04889,Dar El-Ouassaa,53366,0.764,0.444,https://www.geonames.org/279487
+low,6279853,El Masbak,El Masbak,PPL,0,34.21139,35.88472,Tannourine Et-Tahta,34356,1.125,0.19,https://www.geonames.org/6279853
+low,11829480,El Mashrah,El Mashrah,PPL,0,33.81455,35.62335,Aain Ej-Jdide Aaley,24325,1.049,0.182,https://www.geonames.org/11829480
+low,11829487,El Maslakh,El Maslakh,PPL,0,33.8,35.61017,Aaley,24311,0.874,0.364,https://www.geonames.org/11829487
+low,279461,El Masloûkh,El Masloukh,PPL,0,34.20667,35.64528,Kfar Kidde,26189,1.086,0.267,https://www.geonames.org/279461
+low,279448,El Massaoûdîyé,El Massaoudiye,PPL,0,34.60583,36.04889,Massaaoudiye,35229,1.226,0.957,https://www.geonames.org/279448
+low,6272091,El Mazâbil,El Mazabil,PPL,0,33.23897,35.23967,Batoulay,62162,1.112,0.4,https://www.geonames.org/6272091
+low,279637,El Maâdene,El Maadene,PPL,0,34.05917,35.73889,yahchouch,25373,1.062,0.235,https://www.geonames.org/279637
+low,279636,El Maâmelteïne,El Maamelteine,PPL,0,34.00833,35.64611,Sahel Aalma,25136,1.571,0.4,https://www.geonames.org/279636
+low,279369,El Mbâr Kîyé,El Mbar Kiye,PPL,0,34.49583,36.06861,Qloud El-Baqie,35317,0.908,0.571,https://www.geonames.org/279369
+low,279471,El Mchété,El Mchete,PPL,0,34.04972,35.76278,Nahr Ed-Dahab,25371,0.885,0.375,https://www.geonames.org/279471
+low,270295,El Mdaoura,El Mdaoura,PPL,0,33.8358,35.48427,Tahouitat El Ghadir,21188,1.142,0.364,https://www.geonames.org/270295
+low,279357,El Mdaïrej,El Mdairej,PPL,0,33.80306,35.72722,Hammana,21411,1.517,0.286,https://www.geonames.org/279357
+low,279620,El Medîné ej Jdîdé,El Medine ej Jdide,PPL,0,34.45,35.86278,Beddaoui,37231,0.906,0.286,https://www.geonames.org/279620
+low,6271366,El Meghraïqa,El Meghraiqa,PPL,0,33.59787,35.45255,Mghairiye Ech-Chouf,23341,0.765,0.571,https://www.geonames.org/6271366
+low,279432,El Meïl,El Meil,PPL,0,34.19139,35.945,Tannourine El-Faouqa,34386,1.822,0.111,https://www.geonames.org/279432
+low,433714,El Mhanbar,El Mhanbar,PPL,0,33.36464,35.40727,Aabba,71351,1.501,0.615,https://www.geonames.org/433714
+low,279603,El Mhatta,El Mhatta,PPL,0,33.82861,35.83528,Zebdoul,51214,1.721,0.167,https://www.geonames.org/279603
+low,279342,El Mhaïdthé,El Mhaidthe,PPL,0,33.55694,35.81167,Mhaiydse Rachaiya,55141,1.537,0.75,https://www.geonames.org/279342
+low,6280250,El Midâne,El Midane,PPL,0,34.13028,35.64583,Jbayl,26111,1.099,0.364,https://www.geonames.org/6280250
+low,279406,El Mihti,El Mihti,PPL,0,34.255,35.68083,Kfar Khollos,34281,0.9,0.133,https://www.geonames.org/279406
+low,279576,El Millâha,El Millaha,PPL,0,33.82722,35.83639,Zebdoul,51214,1.55,0.154,https://www.geonames.org/279576
+low,279401,El Mina,El Mina,PPL,0,34.32833,35.72528,Chikka,34188,1.377,0.4,https://www.geonames.org/279401
+low,433379,El Mlâzeq,El Mlazeq,PPL,0,33.55972,35.56167,Sabbah,63134,0.89,0.308,https://www.geonames.org/433379
+low,279327,El Mnaïtra,El Mnaitra,PPL,0,34.07324,35.89069,Afqa Jbayl,26364,0.814,0.364,https://www.geonames.org/279327
+low,279558,El Mnâzîl,El Mnazil,PPL,0,34.12639,35.74944,Hjoula,26226,0.832,0.167,https://www.geonames.org/279558
+low,279356,El Mogheïri,El Mogheiri,PPL,0,34.09889,35.87417,Tadmor,26344,0.808,0.429,https://www.geonames.org/279356
+low,6275019,El Mountazah,El Mountazah,PPL,0,33.85361,35.57722,Daychouniye,22415,0.827,0.4,https://www.geonames.org/6275019
+low,11829588,El Mrayjate,El Mrayjate,PPL,0,33.75433,35.53824,Aain Ksour,24371,0.937,0.25,https://www.geonames.org/11829588
+low,432810,El Msahlé,El Msahle,PPL,0,33.71389,35.54306,Bchtfine,23423,0.777,0.286,https://www.geonames.org/432810
+low,279293,El Msayed,El Msayed,PPL,0,33.62361,35.49611,Chhim,23211,1.144,0.308,https://www.geonames.org/279293
+low,279298,El Msaïjed,El Msaijed,PPL,0,33.68083,35.5675,Beit Ed-Dine,23411,1.755,0.353,https://www.geonames.org/279298
+low,6271611,El Msaïqa,El Msaiqa,PPL,0,33.78222,35.65222,Chanay,24417,0.944,0.429,https://www.geonames.org/6271611
+low,279578,El Mâlkîyé,El Malkiye,PPL,0,33.20996,35.24676,Kneisset Sour,62267,1.358,0.429,https://www.geonames.org/279578
+low,279632,El Méaaoul,El Meaaoul,PPL,0,34.18278,35.72972,Dahr Abi Yaghi,34211,0.79,0.333,https://www.geonames.org/279632
+low,6278718,El Ouaar,El Ouaar,PPL,0,33.46833,35.63917,Maydoun,52287,1.083,0.333,https://www.geonames.org/6278718
+low,435416,El Ouaqf,El Ouaqf,PPL,0,33.56528,35.37917,Saida El-Qadimeh,61115,0.954,0.267,https://www.geonames.org/435416
+low,279011,El Ouardâni,El Ouardani,PPL,0,33.198,35.29549,Qana,62229,1.078,0.429,https://www.geonames.org/279011
+low,278990,El Ouata,El Ouata,PPL,0,34.23167,35.79222,Daael,34279,1.18,0.444,https://www.geonames.org/278990
+low,278991,El Ouata,El Ouata,PPL,0,34.18667,35.82083,Bcheaali,34316,1.689,0.364,https://www.geonames.org/278991
+low,278993,El Ouata,El Ouata,PPL,0,34.16611,35.8125,Jaj,26381,1.211,0.286,https://www.geonames.org/278993
+low,278994,El Ouata,El Ouata,PPL,0,34.14333,35.75306,Habil,26234,1.515,0.222,https://www.geonames.org/278994
+low,278908,El Ouzaaï,El Ouzaai,PPL,0,33.85151,35.486,Chiyah,21111,1.409,0.364,https://www.geonames.org/278908
+low,6274921,El Ouzaaï,El Ouzaai,PPL,0,33.84722,35.48611,Chiyah,21111,1.645,0.182,https://www.geonames.org/6274921
+low,279021,El Ouâdi,El Ouadi,PPL,0,34.2,35.88333,Tannourine Et-Tahta,34356,1.402,0.593,https://www.geonames.org/279021
+low,279024,El Ouâdi,El Ouadi,PPL,0,34.14833,35.77528,Michmich Jbayl,26218,0.83,0.3,https://www.geonames.org/279024
+low,279025,El Ouâdi,El Ouadi,PPL,0,34.02972,35.67889,Kfour Kesrouane,25329,0.936,0.4,https://www.geonames.org/279025
+low,279026,El Ouâdi,El Ouadi,PPL,0,34.02222,35.80028,Hrajel,25471,1.041,0.2,https://www.geonames.org/279026
+low,279210,El Qaaqîyé,El Qaaqiye,PPL,0,34.07472,36.08722,Chlifa,53467,1.633,0.154,https://www.geonames.org/279210
+low,279264,El Qabou,El Qabou,PPL,0,34.31417,35.73111,Chikka,34188,1.362,0.2,https://www.geonames.org/279264
+low,432785,El Qachâya,El Qachaya,PPL,0,33.675,35.56389,Baaqline,23511,1.664,0.267,https://www.geonames.org/432785
+low,6271760,El Qammoûaâ,El Qammouaa,PPL,0,33.81694,35.72639,Chbaniye,21426,1.206,0.25,https://www.geonames.org/6271760
+low,6272078,El Qandaoûli,El Qandaouli,PPL,0,33.17544,35.21632,Mansouri Sour,62296,1.035,0.588,https://www.geonames.org/6272078
+low,279223,El Qanâter,El Qanater,PPL,0,33.99861,35.78972,Kfar Dibiane,25439,0.943,0.333,https://www.geonames.org/279223
+low,279222,El Qanâyé,El Qanaye,PPL,0,33.56155,35.3847,Hlaliye Saida,61147,0.764,0.533,https://www.geonames.org/279222
+low,279195,El Qarqfi,El Qarqfi,PPL,0,34.15722,35.63778,Jeoddayel Jbayl,26165,0.876,0.286,https://www.geonames.org/279195
+low,279180,El Qarqoûf,El Qarqouf,PPL,0,34.125,35.78389,Mazraat El-Maaden,26213,1.49,0.211,https://www.geonames.org/279180
+low,279181,El Qarqoûf,El Qarqouf,PPL,0,34.10389,35.89528,Yanouh Jbayl,26347,1.275,0.462,https://www.geonames.org/279181
+low,279165,El Qasr,El Qasr,PPL,0,34.03278,36.06972,Saaide,53167,0.935,0.222,https://www.geonames.org/279165
+low,279166,El Qasr,El Qasr,PPL,0,33.74222,35.68722,Mrayjat Aaley,24481,1.016,0.235,https://www.geonames.org/279166
+low,279167,El Qasr,El Qasr,PPL,0,33.71611,35.76417,Deir Tahniche,52166,1.929,0.25,https://www.geonames.org/279167
+low,6279509,El Qass,El Qass,PPL,0,34.53722,36.21833,Daouret Aakkar,35126,1.035,0.2,https://www.geonames.org/6279509
+low,279147,El Qatlabé,El Qatlabe,PPL,0,34.54444,36.28472,Qbaiyat Aakkar,35487,1.516,0.476,https://www.geonames.org/279147
+low,280542,El Qhâf,El Qhaf,PPL,0,34.16417,35.88972,Aarab El-Lahib,26374,1.582,0.429,https://www.geonames.org/280542
+low,279129,El Qiddémiyé,El Qiddemiye,PPL,0,34.135,35.65278,Jbayl,26111,1.188,0.308,https://www.geonames.org/279129
+low,279088,El Qlaïaât,El Qlaiaat,PPL,0,34.58222,36.01667,Qleiaat Aakkar,35243,1.348,0.833,https://www.geonames.org/279088
+low,279141,El Qottâra,El Qottara,PPL,0,34.18278,35.78611,Mayfouq,26257,1.224,0.143,https://www.geonames.org/279141
+low,279199,El Qrâqef,El Qraqef,PPL,0,34.1575,35.75889,Lehfed,26233,1.615,0.333,https://www.geonames.org/279199
+low,279268,El Qâa,El Qaa,PPL,0,34.34417,36.47444,Qaa Baalbek,53241,1.861,0.462,https://www.geonames.org/279268
+low,279153,El Qâteaa,El Qateaa,PPL,0,34.14976,35.65003,Aamchit,26141,0.816,0.545,https://www.geonames.org/279153
+low,279154,El Qâteaa,El Qateaa,PPL,0,33.72222,35.45528,Damour,23111,1.015,0.2,https://www.geonames.org/279154
+low,279155,El Qâteaa,El Qateaa,PPL,0,33.67611,35.48167,Ouadi Abou Youssef,23237,1.371,0.211,https://www.geonames.org/279155
+low,279151,El Qâtia,El Qatia,PPL,0,34.25139,35.70028,Aabrine,34269,0.825,0.4,https://www.geonames.org/279151
+low,278976,El Wazzani,El Wazzani,PPL,0,33.27539,35.62303,Salaiyeb,74141,0.908,0.533,https://www.geonames.org/278976
+low,278831,En Naas,En Naas,PPL,0,33.9125,35.67917,Bhersaf,22535,1.08,0.308,https://www.geonames.org/278831
+low,278912,En Nabboût,En Nabbout,PPL,0,33.98556,35.73167,Faytroun,25427,1.412,0.353,https://www.geonames.org/278912
+low,434029,En Naffâra,En Naffara,PPL,0,33.2097,35.40689,Soultaniyet Bent Jbayl,72214,1.0,0.267,https://www.geonames.org/434029
+low,278849,En Najjarîyé,En Najjariye,PPL,0,33.47153,35.34936,Najjariye,61464,1.175,0.9,https://www.geonames.org/278849
+low,278808,En Nmaïrîyé,En Nmairiye,PPL,0,33.42482,35.39849,Nmairiye,71327,0.933,0.889,https://www.geonames.org/278808
+low,434061,En Nqîri,En Nqiri,PPL,0,33.24361,35.45849,Qabrikha,73262,0.926,0.4,https://www.geonames.org/434061
+low,278818,En Nâaoûra,En Naaoura,PPL,0,34.0125,35.64361,Kfar Yassine,25146,1.158,0.222,https://www.geonames.org/278818
+low,435092,Er Rabatîyé,Er Rabatiye,PPL,0,33.55972,35.38278,Hlaliye Saida,61147,1.025,0.444,https://www.geonames.org/435092
+low,278531,Er Raboué,Er Raboue,PPL,0,33.91444,35.60944,Mtayleb,22447,0.976,0.462,https://www.geonames.org/278531
+low,6275283,Er Radout,Er Radout,PPL,0,33.84139,35.51361,Bourj El-Brajneh,21177,0.776,0.364,https://www.geonames.org/6275283
+low,278529,Er Rafîd,Er Rafid,PPL,0,33.57194,35.81694,Rafid Rachaiya,55157,0.942,0.769,https://www.geonames.org/278529
+low,8624752,Er Raouda,Er Raouda,PPL,0,34.4473,35.97942,Mzraat Kefraya,33283,1.284,0.533,https://www.geonames.org/8624752
+low,278418,Er Rmaïlîyé,Er Rmailiye,PPL,0,34.06028,35.82222,Qahmez,26367,1.209,0.375,https://www.geonames.org/278418
+low,278509,Er Rmoûl,Er Rmoul,PPLW,0,34.43306,35.8175,Mina Jardin,31186,1.095,0.222,https://www.geonames.org/278509
+low,278445,Er Rouaïssé,Er Rouaisse,PPL,0,33.96167,35.78028,Kfar Tay Kesrouane,25447,0.911,0.471,https://www.geonames.org/278445
+low,278490,Er Rouâyess,Er Rouayess,PPL,0,33.40901,35.31344,Loubie,61439,1.068,0.375,https://www.geonames.org/278490
+low,278502,Er Rânsîyé,Er Ransiye,PPL,0,34.53083,36.02611,Deir Dalloum,35149,0.847,0.316,https://www.geonames.org/278502
+low,268520,Es Sabtiyé,Es Sabtiye,PPL,0,33.87417,35.56778,Fanar,22419,0.798,0.308,https://www.geonames.org/268520
+low,278092,Es Sahl,Es Sahl,PPL,0,33.67611,35.42222,Jiye,23267,1.099,0.364,https://www.geonames.org/278092
+low,6270935,Es Saouané,Es Saouane,PPL,0,33.0854,35.42662,Yaroun,72159,0.791,0.625,https://www.geonames.org/6270935
+low,278033,Es Saraaounîyé,Es Saraaouniye,PPL,0,33.57833,35.43722,Joun,23336,1.435,0.4,https://www.geonames.org/278033
+low,278006,Es Sayed,Es Sayed,PPL,0,34.50639,36.09111,Ilat,35145,1.87,0.182,https://www.geonames.org/278006
+low,6279573,Es Sayeh,Es Sayeh,PPL,0,34.515,36.245,Aakkar El-Aatiqa,35191,1.432,0.118,https://www.geonames.org/6279573
+low,277993,Es Seffaï,Es Seffai,PPL,0,33.74056,35.68389,Mrayjat Aaley,24481,0.798,0.353,https://www.geonames.org/277993
+low,278100,Es Sfîré,Es Sfire,PPL,0,34.40028,36.04806,Aain Et-Tine-Miniyé,37333,0.889,0.375,https://www.geonames.org/278100
+low,277992,Es Sifri,Es Sifri,PPL,0,33.92139,36.07861,Haouch Snaid,53433,1.133,0.333,https://www.geonames.org/277992
+low,277983,Es Siyâr,Es Siyar,PPL,0,33.69131,35.43939,Dahr Ech-Chouf,23279,1.456,0.375,https://www.geonames.org/277983
+low,277985,Es Siâha,Es Siaha,PPL,0,33.1796,35.20896,Mansouri Sour,62296,0.82,0.375,https://www.geonames.org/277985
+low,277967,Es Slaïyeb,Es Slaiyeb,PPL,0,33.292,35.63,Aain Aarab Marjaayoun,73162,1.061,0.353,https://www.geonames.org/277967
+low,278068,Es Slâyekh,Es Slayekh,PPL,0,34.01944,35.78528,Mayrouba,25459,1.39,0.235,https://www.geonames.org/278068
+low,278051,Es Snaoubar,Es Snaoubar,PPL,0,34.06944,35.74944,yahchouch,25373,0.951,0.316,https://www.geonames.org/278051
+low,278011,Es Souâné,Es Souane,PPL,0,33.99167,35.73083,Faytroun,25427,1.097,0.375,https://www.geonames.org/278011
+low,278031,Es Souâqi,Es Souaqi,PPL,0,34.32972,36.01028,Bechnnata,37359,0.829,0.267,https://www.geonames.org/278031
+low,277954,Es Sraïj,Es Sraij,PPL,0,34.07278,35.75611,Mchane,26231,1.161,0.286,https://www.geonames.org/277954
+low,277955,Es Sraïj,Es Sraij,PPL,0,33.8,35.82361,Makse,51217,1.753,0.4,https://www.geonames.org/277955
+low,277953,Es Sraïri,Es Srairi,PPL,0,33.43667,35.62639,Srayri,63298,0.865,0.8,https://www.geonames.org/277953
+low,277949,Es Stoûh,Es Stouh,PPL,0,34.26333,35.66389,Batroun,34111,0.788,0.429,https://www.geonames.org/277949
+low,11829549,Esh Shkayer,Esh Shkayer,PPL,0,33.77187,35.49675,Aaramoun Aaley,24211,0.82,0.333,https://www.geonames.org/11829549
+low,278247,Esh Shraïfé,Esh Shraife,PPL,0,34.50028,36.14944,Rahbe,35357,1.025,0.4,https://www.geonames.org/278247
+low,277889,Et Taamîr,Et Taamir,PPL,0,33.59444,35.39389,Rmeilet Ech-Chouf,23321,1.188,0.308,https://www.geonames.org/277889
+low,277892,Et Tallé,Et Talle,PPL,0,34.50639,35.95139,Zouq Bhannine,37291,1.483,0.25,https://www.geonames.org/277892
+low,277894,Et Tallé,Et Talle,PPL,0,33.98056,35.75722,Beqaata Kanaan,25443,1.824,0.455,https://www.geonames.org/277894
+low,6271546,Et Tallîté,Et Tallite,PPL,0,33.81806,35.63361,Baalchmay,21311,1.009,0.353,https://www.geonames.org/6271546
+low,277871,Et Taybeh,Et Taybeh,PPL,0,33.95833,36.16611,Taibet Baalbek,53139,1.732,0.667,https://www.geonames.org/277871
+low,433352,Et Terrâch,Et Terrach,PPLQ,0,33.39917,35.57556,Maraat Ouazaiye,63359,1.17,0.364,https://www.geonames.org/433352
+low,277875,Et Touârîaa,Et Touariaa,PPL,0,33.97333,35.74167,Kfar Tay Kesrouane,25447,1.261,0.4,https://www.geonames.org/277875
+low,277914,Et Tâmrîyé,Et Tamriye,PPL,0,33.2403,35.455,Saouanet Marjayoun,73280,1.391,0.4,https://www.geonames.org/277914
+low,277249,Ez Zaaroûrîyé,Ez Zaarouriye,PPL,0,33.61472,35.51972,Zaarouriye,23381,0.767,0.947,https://www.geonames.org/277249
+low,277302,Ez Zakroûr,Ez Zakrour,PPL,0,34.14806,35.78167,Michmich Jbayl,26218,1.197,0.118,https://www.geonames.org/277302
+low,277287,Ez Zarâyeb,Ez Zarayeb,PPL,0,34.09417,36.04639,Dar El-Ouassaa,53366,1.755,0.444,https://www.geonames.org/277287
+low,277255,Ez Zheïrîyé,Ez Zheiriye,PPLL,0,33.20818,35.2184,Deir Qanoun El-Aain,62179,1.474,0.333,https://www.geonames.org/277255
+low,6279529,Ez Ziré,Ez Zire,PPL,0,34.54111,36.18861,Borj Aakkar,35183,1.009,0.182,https://www.geonames.org/6279529
+low,277261,Ez Zîré,Ez Zire,PPL,0,34.23889,36.34833,Bajjaje,53221,1.287,0.316,https://www.geonames.org/277261
+low,277263,Ez Zîré,Ez Zire,PPL,0,33.98417,35.78,Kfar Dibiane,25439,0.946,0.333,https://www.geonames.org/277263
+low,275295,Farchaa,Farchaa,PPL,0,34.12972,35.76444,Michmich Jbayl,26218,1.467,0.3,https://www.geonames.org/275295
+low,275371,Fdâr el Faouqa,Fdar el Faouqa,PPL,0,34.13278,35.70361,Bichtlida,26243,1.034,0.316,https://www.geonames.org/275371
+low,275370,Fdâr et Tahta,Fdar et Tahta,PPL,0,34.13361,35.69167,Bintaael,26269,0.97,0.4,https://www.geonames.org/275370
+low,275360,Fkhâra,Fkhara,PPL,0,33.6344,35.49342,Chhim,23211,0.845,0.308,https://www.geonames.org/275360
+low,275174,Fnaïdeq,Fnaideq,PPL,0,34.47667,36.1825,Qornet Aakkar,35352,1.631,0.364,https://www.geonames.org/275174
+low,280210,Fouâr,Fouar,PPL,0,34.00167,36.09917,Haouche Barada,53151,1.881,0.444,https://www.geonames.org/280210
+low,275197,Foûtra,Foutra,PPL,0,34.22417,35.80028,Nahle El-Batroun,34273,1.024,0.364,https://www.geonames.org/275197
+low,275330,Fâqoûs,Faqous,PPL,0,34.38778,35.97333,Izal,37341,1.115,0.222,https://www.geonames.org/275330
+low,280148,Ghobeïré,Ghobeire,PPL,0,33.86,35.50972,Haret Hreik,21144,0.897,0.471,https://www.geonames.org/280148
+low,274892,Ghochraya,Ghochraya,PPL,0,34.07306,35.72694,Adonis Jbayl,26239,0.934,0.3,https://www.geonames.org/274892
+low,275048,Ghommâs el Qottâra,Ghommas el Qottara,PPL,0,34.18417,35.7875,Ram El-Batroun,34346,1.154,0.4,https://www.geonames.org/275048
+low,274918,Ghîyoûta,Ghiyouta,PPL,0,34.16806,35.89222,Chatine,34366,1.698,0.267,https://www.geonames.org/274918
+low,7838966,Greater Beirut Area,Greater Beirut Area,PPLL,0,33.84778,35.55694,Baabda,21211,1.058,0.261,https://www.geonames.org/7838966
+low,7869858,Hadatha,Hadatha,PPL,0,33.16513,35.38873,Haddatha,72231,0.942,0.933,https://www.geonames.org/7869858
+low,274810,Haffet el Hajal,Haffet el Hajal,PPL,0,33.61502,35.49066,mazboud,23215,1.237,0.133,https://www.geonames.org/274810
+low,6275313,Haffet el Mahrouqa,Haffet el Mahrouqa,PPL,0,33.85333,35.55861,Mansouriyet El-Matn,22411,0.866,0.345,https://www.geonames.org/6275313
+low,7839993,Halioune El Faouqa,Halioune El Faouqa,PPL,0,33.66721,35.46919,Dibbiye,23259,1.5,0.19,https://www.geonames.org/7839993
+low,7839994,Halioune Et Tahta,Halioune Et Tahta,PPL,0,33.66382,35.469,Bourjein,23247,1.627,0.381,https://www.geonames.org/7839994
+low,274702,Halioûnet el Faouqa,Haliounet el Faouqa,PPL,0,33.66694,35.47,Dibbiye,23259,1.538,0.353,https://www.geonames.org/274702
+low,274701,Halioûnet et Tahta,Haliounet et Tahta,PPL,0,33.66556,35.47194,Bourjein,23247,1.633,0.364,https://www.geonames.org/274701
+low,274661,Hammâdîyé,Hammadiye,PPLL,0,33.2879,35.24181,Aabbassiyet Sour,62276,1.098,0.421,https://www.geonames.org/274661
+low,274200,Haouch el Omara,Haouch el Omara,PPL,0,33.83611,35.9,Zahle Mar Elias,51135,0.933,0.455,https://www.geonames.org/274200
+low,280030,Haouqa,Haouqa,PPL,0,34.27222,35.94167,Aarbet Qozhaiya,33227,1.325,0.353,https://www.geonames.org/280030
+low,274572,Haql el Aïn,Haql el Ain,PPL,0,33.82306,35.87472,Taalbaya,51221,1.419,0.533,https://www.geonames.org/274572
+low,274569,Haql el Baïda,Haql el Baida,PPL,0,33.89778,35.80778,Aintoura El-Matn,22751,0.922,0.286,https://www.geonames.org/274569
+low,434887,Haqlet el Baïda,Haqlet el Baida,PPL,0,34.3875,35.96472,Izal,37341,1.698,0.286,https://www.geonames.org/434887
+low,274540,Haqlet el Heya,Haqlet el Heya,PPL,0,34.125,35.80028,Mazraat El-Maaden,26213,1.013,0.435,https://www.geonames.org/274540
+low,274510,Haqlît,Haqlit,PPL,0,34.40639,36.01944,Sir Ed-Danniye,37311,0.927,0.267,https://www.geonames.org/274510
+low,274421,Harbata,Harbata,PPL,0,34.20833,36.26389,Harabta,53264,2.361,0.923,https://www.geonames.org/274421
+low,7840001,Haret Al Naame,Haret Al Naame,PPL,0,33.73913,35.45525,Naame,23141,0.982,0.667,https://www.geonames.org/7840001
+low,280511,Haret el Aamroussiyé,Haret el Aamroussiye,PPL,0,33.81083,35.52,Choueifat El-Aamrousiye,24111,1.092,0.878,https://www.geonames.org/280511
+low,279048,Haret el Amâra,Haret el Amara,PPL,0,33.80583,35.51611,Choueifat El-Oumara,24155,1.319,0.867,https://www.geonames.org/279048
+low,6274044,Haret el Faouqa,Haret el Faouqa,PPL,0,33.77667,35.59583,Ghaboune,24323,0.752,0.444,https://www.geonames.org/6274044
+low,274476,Haret el Fikâni,Haret el Fikani,PPL,0,33.84944,36.0275,Riyaq,51311,1.015,0.375,https://www.geonames.org/274476
+low,274466,Haret el Maabad,Haret el Maabad,PPL,0,34.22389,35.66139,Kfar Aabida,34144,0.766,0.6,https://www.geonames.org/274466
+low,6274954,Haret el Mjadlé,Haret el Mjadle,PPL,0,33.86083,35.52778,Furn Ech-Chebbak,21133,1.176,0.182,https://www.geonames.org/6274954
+low,274460,Haret el Qalaa,Haret el Qalaa,PPL,0,34.245,35.92778,Breissat,36157,1.439,0.353,https://www.geonames.org/274460
+low,279098,Haret el Qobbé,Haret el Qobbe,PPL,0,33.80333,35.51222,Deir Qoubel,24177,1.033,0.538,https://www.geonames.org/279098
+low,274392,Harf Hzîr,Harf Hzir,PPLL,0,34.34722,35.94167,Jarjour,37375,0.862,0.4,https://www.geonames.org/274392
+low,274405,Harf el Aakaïs,Harf el Aakais,PPL,0,34.07861,35.65333,Kharayeb Nahr Ibrahim,25181,1.248,0.483,https://www.geonames.org/274405
+low,271577,Harfoûch,Harfouch,PPL,0,34.2,36.245,Harabta,53264,1.896,0.429,https://www.geonames.org/271577
+low,11829544,Hart Fakhr ed Dine,Hart Fakhr ed Dine,PPL,0,33.78509,35.54122,Aain Aanoub,24259,0.829,0.381,https://www.geonames.org/11829544
+low,274080,Hay Bir Nasser,Hay Bir Nasser,PPL,0,33.12352,35.4734,Aaintaroun,72151,1.658,0.4,https://www.geonames.org/274080
+low,11829570,Hay ej Jouar,Hay ej Jouar,PPL,0,33.76342,35.51871,Sirhmoul,24227,1.21,0.333,https://www.geonames.org/11829570
+low,274125,Hay el Maslakh,Hay el Maslakh,PPL,0,33.12181,35.44922,Aaynata Bent Jbayl,72119,0.956,0.375,https://www.geonames.org/274125
+low,274038,Hazrîta,Hazrita,PPL,0,34.17222,35.89389,Chatine,34366,1.62,0.429,https://www.geonames.org/274038
+low,274073,Haï Mâr Doumît,Hai Mar Doumit,PPL,0,34.05417,35.63778,Aaqaibe Kesrouane,25171,0.981,0.37,https://www.geonames.org/274073
+low,274065,Haï Mâr Jeryos,Hai Mar Jeryos,PPL,0,34.11917,35.76889,Tourzaiya,26215,1.695,0.3,https://www.geonames.org/274065
+low,6280319,Haï Mâr Semaâne,Hai Mar Semaane,PPL,0,34.12444,35.6675,Bmehrayn,26283,1.033,0.421,https://www.geonames.org/6280319
+low,274050,Haï Sabra,Hai Sabra,PPL,0,34.39139,35.91389,Kfardlaqous,33115,1.006,0.211,https://www.geonames.org/274050
+low,274048,Haï Saïdet en Naja,Hai Saidet en Naja,PPL,0,34.12194,35.77306,Aalmat Ech-Chamliye,26212,1.88,0.4,https://www.geonames.org/274048
+low,274156,Haï ed Dhaïni,Hai ed Dhaini,PPL,0,33.82278,35.86917,Chtaura,51211,1.412,0.444,https://www.geonames.org/274156
+low,274132,Haï ej Jâmia,Hai ej Jamia,PPL,0,33.81944,35.87167,Taalbaya,51221,1.015,0.375,https://www.geonames.org/274132
+low,274150,Haï el Aarbé,Hai el Aarbe,PPL,0,34.13889,35.64306,Aamchit,26141,0.813,0.4,https://www.geonames.org/274150
+low,274142,Haï el Baal,Hai el Baal,PPL,0,33.96556,35.77083,Beqaata Kanaan,25443,0.864,0.786,https://www.geonames.org/274142
+low,274143,Haï el Baal,Hai el Baal,PPL,0,33.81806,35.86556,Chtaura,51211,0.853,0.429,https://www.geonames.org/274143
+low,274141,Haï el Baalbakié,Hai el Baalbakie,PPL,0,34.08694,35.65028,Halate,26147,1.383,0.444,https://www.geonames.org/274141
+low,274144,Haï el Bahr,Hai el Bahr,PPL,0,34.08306,35.64861,Halate,26147,1.626,0.462,https://www.geonames.org/274144
+low,274138,Haï el Bayâder,Hai el Bayader,PPL,0,33.87833,35.79917,Tarchich,21481,0.892,0.316,https://www.geonames.org/274138
+low,274135,Haï el Faouqa,Hai el Faouqa,PPL,0,34.10083,35.78,Souanet Jbayl,26220,0.882,0.4,https://www.geonames.org/274135
+low,274120,Haï el Qanâ,Hai el Qana,PPL,0,34.01861,35.67972,Jdaidet Ghazir,25317,0.975,0.3,https://www.geonames.org/274120
+low,6275162,Haï en Naas,Hai en Naas,PPL,0,33.88222,35.61167,Roumie,22427,0.928,0.267,https://www.geonames.org/6275162
+low,6273707,Haï es Sellom,Hai es Sellom,PPL,0,33.82611,35.51111,Laylake,21166,0.754,0.444,https://www.geonames.org/6273707
+low,274101,Haï es Sindiâné,Hai es Sindiane,PPL,0,33.99167,35.77278,Kfar Dibiane,25439,1.31,0.5,https://www.geonames.org/274101
+low,274089,Haï ez Zaaïtri,Hai ez Zaaitri,PPL,0,33.98833,35.77389,Kfar Dibiane,25439,1.224,0.312,https://www.geonames.org/274089
+low,273892,Hbeïchîyé,Hbeichiye,PPL,0,33.63611,35.41722,Jadra,23271,0.76,0.429,https://www.geonames.org/273892
+low,274022,Hidchêt,Hidchet,PPL,0,34.05521,35.73794,Ghbale Kesrouane,25363,1.371,0.308,https://www.geonames.org/274022
+low,273874,Hikr Jânîne,Hikr Janine,PPL,0,34.63611,36.13056,Kharnoubet Aakkar,35257,0.812,0.421,https://www.geonames.org/273874
+low,273878,Hokr el Haïssa,Hokr el Haissa,PPL,0,34.59639,36.05472,Hayssa,35221,0.896,0.667,https://www.geonames.org/273878
+low,273877,Hokr el Koûssé,Hokr el Kousse,PPL,0,34.59222,36.02806,Tall Meaayan Tall Kiri,35231,0.93,0.25,https://www.geonames.org/273877
+low,273815,Hourâtâ,Hourata,PPL,0,34.11778,35.66667,Bmehrayn,26283,1.188,0.429,https://www.geonames.org/273815
+low,273826,Hqoûl el Mehdi,Hqoul el Mehdi,PPL,0,34.06278,35.84083,Lassa,26331,0.91,0.267,https://www.geonames.org/273826
+low,274453,Hâret Aarîda,Haret Aarida,PPL,0,34.24,35.99861,Bazaaoun,36181,1.299,0.333,https://www.geonames.org/274453
+low,274423,Hâret Chaaya,Haret Chaaya,PPL,0,34.24111,35.98972,Bazaaoun,36181,1.085,0.333,https://www.geonames.org/274423
+low,274449,Hâret ech Charfé,Haret ech Charfe,PPL,0,34.42333,35.85167,Trablous Ez-Zeitoun,31111,0.97,0.214,https://www.geonames.org/274449
+low,274470,Hâret ej Jdîdé,Haret ej Jdide,PPL,0,34.57639,36.01917,Qaabrine,35233,0.998,0.3,https://www.geonames.org/274470
+low,274492,Hâret el Aïn,Haret el Ain,PPL,0,34.32611,35.81111,Bterram,32119,0.99,0.267,https://www.geonames.org/274492
+low,434868,Hâret el Baklîl,Haret el Baklil,PPL,0,34.41111,35.92583,Miriata,33271,0.995,0.444,https://www.geonames.org/434868
+low,274488,Hâret el Bayâder,Haret el Bayader,PPL,0,33.53722,35.58,Jezzine,63111,1.272,0.308,https://www.geonames.org/274488
+low,274487,Hâret el Boustâne,Haret el Boustane,PPL,0,33.74306,35.5675,Bou Zride,24355,0.852,0.381,https://www.geonames.org/274487
+low,274482,Hâret el Faouqa,Haret el Faouqa,PPL,0,34.18389,35.90444,Ouata Houb,34381,1.266,0.333,https://www.geonames.org/274482
+low,274483,Hâret el Faouqa,Haret el Faouqa,PPL,0,34.06306,35.73417,yahchouch,25373,0.778,0.3,https://www.geonames.org/274483
+low,274484,Hâret el Faouqâ,Haret el Faouqa,PPL,0,33.82611,35.83306,Zebdoul,51214,1.511,0.333,https://www.geonames.org/274484
+low,274468,Hâret el Khassé,Haret el Khasse,PPL,0,34.38275,35.83677,Barsa,32187,0.776,0.471,https://www.geonames.org/274468
+low,274457,Hâret el Ouâsta,Haret el Ouasta,PPL,0,33.63556,35.60889,Aain Qania,23619,1.653,0.476,https://www.geonames.org/274457
+low,274455,Hâret en Nabaa,Haret en Nabaa,PPL,0,33.41276,35.55463,Mazraat Zighrine Jezzine,63343,1.133,0.387,https://www.geonames.org/274455
+low,274454,Hâret en Nâamé,Haret en Naame,PPL,0,33.73833,35.45583,Naame,23141,1.015,0.588,https://www.geonames.org/274454
+low,274443,Hâret et Tahta,Haret et Tahta,PPL,0,34.18472,35.9,Ouata Houb,34381,1.169,0.444,https://www.geonames.org/274443
+low,6275576,Hâret et Tahtâ,Haret et Tahta,PPL,0,33.82167,35.84028,Jdita,51224,0.904,0.375,https://www.geonames.org/6275576
+low,274385,Hârîbi,Haribi,PPL,0,33.19547,35.46409,Chaqra,72229,1.926,0.545,https://www.geonames.org/274385
+low,279886,Jaouharîyé,Jaouhariye,PPL,0,33.33083,35.42421,Qaaqaaiyet Ej-Jisr,71381,0.992,0.385,https://www.geonames.org/279886
+low,273375,Jaïroûn,Jairoun,PPL,0,34.43222,36.1075,Aasaymout,37362,1.215,0.4,https://www.geonames.org/273375
+low,8595511,Jdaidé,Jdaide,PPLL,0,33.32544,35.27722,Jazira Saida,61411,1.108,0.667,https://www.geonames.org/8595511
+low,273175,Jdaïdet Barqâcha,Jdaidet Barqacha,PPL,0,34.39083,35.84417,Barsa,32187,1.411,0.4,https://www.geonames.org/273175
+low,273177,Jdaïdet el Qaïtaa,Jdaidet el Qaitaa,PPL,0,34.46583,36.01167,Aayoun El-Ghizlane,35347,0.777,0.3,https://www.geonames.org/273177
+low,273186,Jebb Farah,Jebb Farah,PPL,0,33.51667,35.79306,Rachaiya,55111,1.032,0.353,https://www.geonames.org/273186
+low,273536,Jellab el Faouqa,Jellab el Faouqa,PPL,0,34.09415,35.68173,Aalita,26219,0.934,0.545,https://www.geonames.org/273536
+low,273303,Jesr ed Djêj,Jesr ed Djej,PPL,0,34.13252,35.64649,Jbayl,26111,1.217,0.429,https://www.geonames.org/273303
+low,273343,Jiblayé,Jiblaye,PPL,0,33.61333,35.60972,Haret Jandal,23647,0.856,0.471,https://www.geonames.org/273343
+low,6278321,Jichet Aali Housseïn,Jichet Aali Houssein,PPL,0,34.63389,36.37472,Aamayer,35512,1.695,0.345,https://www.geonames.org/6278321
+low,273137,Jinjol,Jinjol,PPL,0,34.12472,35.68917,Hboub,26284,0.783,0.182,https://www.geonames.org/273137
+low,6280295,Jisr el Hajar,Jisr el Hajar,PPL,0,34.09361,35.65167,Mastita,26117,1.317,0.267,https://www.geonames.org/6280295
+low,273297,Jisr el Misri,Jisr el Misri,PPL,0,33.70778,35.67333,Ouarhaniye,23463,1.24,0.333,https://www.geonames.org/273297
+low,7869859,Jmayjmeh,Jmayjmeh,PPL,0,33.21528,35.43417,Jmaijme,72221,0.825,0.8,https://www.geonames.org/7869859
+low,277643,Jnah,Jnah,PPL,0,33.86667,35.48333,Msaitbe foncière,10210,1.67,0.364,https://www.geonames.org/277643
+low,273191,Joubb el Ghabra,Joubb el Ghabra,PPL,0,33.64,35.42139,Jadra,23271,1.29,0.571,https://www.geonames.org/273191
+low,273277,Jouâr el Bouâcheq,Jouar el Bouacheq,PPL,0,34.00028,35.70167,Aachqout,25423,1.065,0.476,https://www.geonames.org/273277
+low,273234,Jouâr es Souss,Jouar es Souss,PPL,0,33.54861,35.56639,Homsiye,63127,0.978,0.222,https://www.geonames.org/273234
+low,6275546,Joûret Qamar,Jouret Qamar,PPL,0,33.98361,35.75472,Faytroun,25427,1.71,0.211,https://www.geonames.org/6275546
+low,273125,Joûret ed Dardoûr,Jouret ed Dardour,PPL,0,33.99028,35.77528,Kfar Dibiane,25439,1.073,0.387,https://www.geonames.org/273125
+low,8508250,Junaynat Junbalāţ,Junaynat Junbalat,PPL,0,33.5844,35.4147,Aalmane Ech-Chouf,23311,0.834,0.273,https://www.geonames.org/8508250
+low,12241331,Juwār al Bawāshiq,JuwaralBawashiq,PPL,0,33.99634,35.69988,Aachqout,25423,0.844,0.4,https://www.geonames.org/12241331
+low,6271554,Kaab el Massâr,Kaab el Massar,PPL,0,33.80472,35.66972,Bhamdoun El-Mhatta,24411,0.888,0.381,https://www.geonames.org/6271554
+low,6278551,Kalkha,Kalkha,PPL,0,34.60972,36.39167,Aamayer,35512,1.693,0.471,https://www.geonames.org/6278551
+low,6278420,Karm Zebdine,Karm Zebdine,PPL,0,34.61833,36.35778,Aamayer,35512,1.738,0.364,https://www.geonames.org/6278420
+low,6279325,Karm el Akhras,Karm el Akhras,PPL,0,34.45917,35.92389,Nabi Youcheaa,37261,0.814,0.273,https://www.geonames.org/6279325
+low,272306,Kelbâtâ,Kelbata,PPL,0,34.28056,35.73278,Kfar Hata El-Koura,32155,1.102,0.533,https://www.geonames.org/272306
+low,272684,Ketf Ouâdi er Raayâne,Ketf Ouadi er Raayane,PPL,0,34.15278,36.31278,Moqraq,53251,1.978,0.25,https://www.geonames.org/272684
+low,272673,Kezbar,Kezbar,PPL,0,34.23806,35.98083,Bazaaoun,36181,1.064,0.429,https://www.geonames.org/272673
+low,272892,Kfar Bebnîne,Kfar Bebnine,PPL,0,34.40667,36.07889,Kfar Bibnine,37395,1.158,0.909,https://www.geonames.org/272892
+low,272864,Kfar Hbâb,Kfar Hbab,PPL,0,34.01057,35.65864,Ghazir,25311,0.767,0.286,https://www.geonames.org/272864
+low,272853,Kfar Kikhlé,Kfar Kikhle,PPL,0,34.14222,35.65222,Aamchit,26141,1.014,0.353,https://www.geonames.org/272853
+low,6280253,Kfar Siyâdâ,Kfar Siyada,PPL,0,34.12944,35.66333,Jbayl,26111,0.896,0.267,https://www.geonames.org/6280253
+low,272832,Kfar Sâlé,Kfar Sale,PPL,0,34.13806,35.65139,Aamchit,26141,1.231,0.375,https://www.geonames.org/272832
+low,272808,Kfar Toun,Kfar Toun,PPL,0,34.55833,36.35917,Mazareaa Jabal Akroum,35516,1.387,0.571,https://www.geonames.org/272808
+low,272798,Kfar Zboûna,Kfar Zbouna,PPL,0,34.12167,35.6675,Bmehrayn,26283,1.005,0.267,https://www.geonames.org/272798
+low,272822,Kfarchillé,Kfarchille,PPL,0,34.1775,35.77889,Mayfouq,26257,0.937,0.235,https://www.geonames.org/272822
+low,272666,Khaab,Khaab,PPL,0,34.12722,35.75583,Hjoula,26226,1.281,0.4,https://www.geonames.org/272666
+low,272658,Khabtoûra,Khabtoura,PPL,0,34.21361,35.79806,Nahle El-Batroun,34273,0.815,0.5,https://www.geonames.org/272658
+low,6272097,Khallet Abou Haïdar,Khallet Abou Haidar,PPL,0,33.24761,35.23035,Borj Ech-Chemali,62128,1.693,0.276,https://www.geonames.org/6272097
+low,6275571,Khallet Im Sleïmane,Khallet Im Sleimane,PPL,0,33.83056,35.84889,Jdita,51224,1.673,0.235,https://www.geonames.org/6275571
+low,272546,Khandaq,Khandaq,PPL,0,33.67333,35.4875,Bkechtine Ouel Mcheiaa,23253,0.911,0.471,https://www.geonames.org/272546
+low,272540,Khandaq et Tahta,Khandaq et Tahta,PPL,0,33.6725,35.48444,Bkechtine Ouel Mcheiaa,23253,1.156,0.476,https://www.geonames.org/272540
+low,6273744,Khane ech Cheïkh,Khane ech Cheikh,PPL,0,33.81694,35.60722,Aaley,24311,1.266,0.5,https://www.geonames.org/6273744
+low,272515,Kharâyeb el Aaqabé,Kharayeb el Aaqabe,PPL,0,34.22,36.2775,Sbouba,53261,0.813,0.211,https://www.geonames.org/272515
+low,272464,Khawjā Bustān,Khawja Bustan,PPL,0,34.61667,36.3,Aaouaainat Aakkar,35420,1.26,0.381,https://www.geonames.org/272464
+low,272438,Khazzâne Saoufar,Khazzane Saoufar,PPL,0,33.80556,35.7075,Chbaniye,21426,1.215,0.375,https://www.geonames.org/272438
+low,6272131,Kherbet Aïn el Qanâter,Kherbet Ain el Qanater,PPLL,0,33.34316,35.24822,Mzaraat El-Ouasta,61414,1.553,0.345,https://www.geonames.org/6272131
+low,272405,Khirbat al Jurd,Khirbat al Jurd,PPL,0,34.48333,36.13333,Khreibet Aakkar,35330,0.798,0.32,https://www.geonames.org/272405
+low,272397,Khirbat ‘Ayn al Qanāţir,Khirbat `Ayn al Qanatir,PPL,0,33.33333,35.25,Aain Abou Abdallah,62291,1.543,0.188,https://www.geonames.org/272397
+low,272413,Khirbet ed Dwayr,Khirbet ed Dwayr,PPL,0,33.27983,35.63888,Salaiyeb,74141,1.013,0.316,https://www.geonames.org/272413
+low,6272083,Khirbet el Qlaïlé,Khirbet el Qlaile,PPLL,0,33.18702,35.23505,Qlaile Sour,62287,1.098,0.526,https://www.geonames.org/6272083
+low,272636,Khlâya er Raml,Khlaya er Raml,PPL,0,34.16194,35.86694,Hema Er-Rehban,26390,1.844,0.5,https://www.geonames.org/272636
+low,6275573,Khommâret Jraïssâti,Khommaret Jraissati,PPL,0,33.83111,35.86806,Zahle Aradi,51133,1.999,0.37,https://www.geonames.org/6275573
+low,272332,Khormaalâya,Khormaalaya,PPL,0,34.19417,35.91028,Ouata Houb,34381,0.765,0.286,https://www.geonames.org/272332
+low,272331,Khourmâta,Khourmata,PPL,0,34.09667,36.26167,Youmine,53284,1.973,0.375,https://www.geonames.org/272331
+low,11829484,Kittani,Kittani,PPL,0,33.80475,35.61208,Aaley,24311,0.766,0.444,https://www.geonames.org/11829484
+low,272237,Knaïsset Ouâdi en Naïra,Knaisset Ouadi en Naira,PPL,0,34.31361,36.33222,Ras Baalbek Ouadi Faara,54143,1.839,0.45,https://www.geonames.org/272237
+low,272170,Kouaïkhât,Kouaikhat,PPL,0,34.575,36.08972,Koueikhat,35215,0.924,0.889,https://www.geonames.org/272170
+low,272174,Koûchâ,Koucha,PPL,0,34.56083,36.10111,Khreibet Ej-Jindi,35216,0.842,0.5,https://www.geonames.org/272174
+low,272240,Koûkdâne,Koukdane,PPL,0,34.1115,35.73673,Ras Osta,26241,1.115,0.286,https://www.geonames.org/272240
+low,272231,Koûr el Haoua,Kour el Haoua,PPL,0,34.16889,35.66417,Hasrayel,26153,0.873,0.4,https://www.geonames.org/272231
+low,435079,Krabraïbé,Krabraibe,PPL,0,34.2975,35.87361,Moghr El-Ahoual,36154,0.974,0.364,https://www.geonames.org/435079
+low,6270936,Kroum Chehab,Kroum Chehab,PPL,0,33.08419,35.42704,Yaroun,72159,0.793,0.444,https://www.geonames.org/6270936
+low,272207,Kroûm ed Daïaa,Kroum ed Daiaa,PPL,0,33.80417,35.82972,Makse,51217,1.252,0.143,https://www.geonames.org/272207
+low,6271814,Kroûm el Birke,Kroum el Birke,PPL,0,33.81889,35.72583,Khreibet Baabda,21431,1.195,0.471,https://www.geonames.org/6271814
+low,6274137,Ksâr el Hanach,Ksar el Hanach,PPL,0,33.75167,35.87806,Marj BG,52277,0.876,0.267,https://www.geonames.org/6274137
+low,272272,Ksâr el Mechrqé,Ksar el Mechrqe,PPL,0,34.1013,35.78489,Aalmat Ech-Chamliye,26212,0.999,0.462,https://www.geonames.org/272272
+low,272271,Ksâr-ech-Chidiâq,Ksar-ech-Chidiaq,PPL,0,34.075,35.76444,Chouane,25479,1.02,0.417,https://www.geonames.org/272271
+low,272067,Loûssi,Loussi,PPL,0,33.64528,35.83833,Soultan Yaacoub Faouqa,52231,1.401,0.333,https://www.geonames.org/272067
+low,270504,Maamârîyet el Kharâb,Maamariyet el Kharab,PPL,0,33.46152,35.35265,Khirbet El-Bassal,61467,1.627,0.345,https://www.geonames.org/270504
+low,270925,Machta Hassan,Machta Hassan,PPL,0,34.62306,36.32389,Khalsa,35430,1.443,0.471,https://www.geonames.org/270925
+low,270927,Machta el Izzîyé,Machta el Izziye,PPL,0,33.18251,35.24266,Aaziye,62294,0.86,0.667,https://www.geonames.org/270927
+low,6280249,Mafraq Aamchît,Mafraq Aamchit,PPL,0,34.13639,35.64333,Aamchit,26141,1.092,0.7,https://www.geonames.org/6280249
+low,271992,Mafraq Abou Rghîf,Mafraq Abou Rghif,PPL,0,34.52278,36.00889,Aamaret Aakkar,35265,0.947,0.429,https://www.geonames.org/271992
+low,271989,Mafraq Ghazîr,Mafraq Ghazir,PPL,0,34.00583,35.64528,Sahel Aalma,25136,1.355,0.182,https://www.geonames.org/271989
+low,271689,Maql el Bouâdté,Maql el Bouadte,PPL,0,34.09472,36.05083,Dar El-Ouassaa,53366,1.526,0.381,https://www.geonames.org/271689
+low,271703,Maqlaa el Blât,Maqlaa el Blat,PPL,0,33.88528,35.83583,Majdel tarchich,22774,1.802,0.333,https://www.geonames.org/271703
+low,271663,Maqsaba,Maqsaba,PPL,0,33.68394,35.42297,Jiye,23267,1.971,0.154,https://www.geonames.org/271663
+low,6273781,Maqtané,Maqtane,PPL,0,33.80778,35.51655,Choueifat El-Aamrousiye,24111,1.198,0.308,https://www.geonames.org/6273781
+low,6274974,Mar Taqla,Mar Taqla,PPL,0,33.85556,35.5475,Mkalles,22279,0.792,0.429,https://www.geonames.org/6274974
+low,271304,Marj Aali,Marj Aali,PPL,0,33.63069,35.49611,Chhim,23211,0.924,0.182,https://www.geonames.org/271304
+low,433490,Marj Aali,Marj Aali,PPL,0,33.85694,35.96111,Ablah,51163,1.201,0.308,https://www.geonames.org/433490
+low,7839987,Marj Barja,Marj Barja,PPL,0,33.64803,35.45878,Chammis Ech-Chouf,23223,0.951,0.083,https://www.geonames.org/7839987
+low,6274050,Marj Chartoun,Marj Chartoun,PPL,0,33.76333,35.58694,Kfar Aamay,24341,0.898,0.222,https://www.geonames.org/6274050
+low,271224,Marj Ketermâya,Marj Ketermaya,PPL,0,33.61333,35.47028,mazboud,23215,1.033,0.235,https://www.geonames.org/271224
+low,271220,Marj Mokhtâra,Marj Mokhtara,PPL,0,34.12139,35.86333,Mazraat Es Siyad,26321,0.839,0.333,https://www.geonames.org/271220
+low,271087,Marouâhîne,Marouahine,PPL,0,33.10855,35.27563,Merouahine,62311,0.835,0.947,https://www.geonames.org/271087
+low,271088,Maroûs el Jouânîyé,Marous el Jouaniye,PPLQ,0,33.55833,35.4775,Anane,63274,1.147,0.316,https://www.geonames.org/271088
+low,271624,Marāḩ ‘Abbās,Marah `Abbas,PPL,0,34.43333,36.41667,Hermel,54111,0.93,0.125,https://www.geonames.org/271624
+low,271358,Marīsī,Marisi,PPL,0,33.86667,35.53333,Furn Ech-Chebbak,21133,0.794,0.118,https://www.geonames.org/271358
+low,10124005,Masnaa,Masnaa,PPL,0,33.70228,35.92289,Majdel Aanjar,51284,1.01,0.471,https://www.geonames.org/10124005
+low,270900,Masnaa Bednâyel,Masnaa Bednayel,PPL,0,33.91,36.00972,Qsarnaba,53413,1.122,0.476,https://www.geonames.org/270900
+low,270540,Maydān az Zayr,Maydan az Zayr,PPL,0,33.7576,35.45857,Naame,23141,1.388,0.375,https://www.geonames.org/270540
+low,270634,Mazraat Aazzi,Mazraat Aazzi,PPL,0,33.60833,35.84306,Biret Rachaiya,55164,1.407,0.333,https://www.geonames.org/270634
+low,270706,Mazraat Aâdoûr,Mazraat Aadour,PPL,0,33.44861,35.59306,Qatrani,63327,1.188,0.333,https://www.geonames.org/270706
+low,270636,Mazraat Aïn Qeniyé,Mazraat Ain Qeniye,PPL,0,33.61806,35.90417,Yanta,55184,1.595,0.286,https://www.geonames.org/270636
+low,270639,Mazraat Aïn el Qantara,Mazraat Ain el Qantara,PPL,0,33.46389,35.30083,Sarafand,61449,1.353,0.24,https://www.geonames.org/270639
+low,270622,Mazraat Beit Taqch,Mazraat Beit Taqch,PPL,0,33.92944,36.03583,Beit Chama,53417,1.098,0.48,https://www.geonames.org/270622
+low,270623,Mazraat Beït Slaïbi,Mazraat Beit Slaibi,PPL,0,33.97222,35.98583,Chmistar,53429,1.468,0.24,https://www.geonames.org/270623
+low,270627,Mazraat Beït el Ghoussaïn,Mazraat Beit el Ghoussain,PPL,0,34.11528,36.08361,Btedaai,53375,1.679,0.222,https://www.geonames.org/270627
+low,8717525,Mazraat Bolhos,Mazraat Bolhos,PPL,0,34.29749,35.94684,Aintourine,33219,1.043,0.174,https://www.geonames.org/8717525
+low,270621,Mazraat Brâk et Tall,Mazraat Brak et Tall,PPL,0,33.48194,35.32639,Aadoussiye,61466,1.441,0.24,https://www.geonames.org/270621
+low,270615,Mazraat Deïr el Aachâyer,Mazraat Deir el Aachayer,PPL,0,33.57682,36.00837,Deir El-Aachayer,55187,1.243,0.774,https://www.geonames.org/270615
+low,7839981,Mazraat El Barghoutiye,Mazraat El Barghoutiye,PPL,0,33.59011,35.42189,Aalmane Ech-Chouf,23311,0.965,0.303,https://www.geonames.org/7839981
+low,270608,Mazraat Hannoûch,Mazraat Hannouch,PPL,0,34.30083,35.67639,Hamat,34287,1.386,0.333,https://www.geonames.org/270608
+low,270606,Mazraat Islamiyé,Mazraat Islamiye,PPL,0,33.32632,35.6617,Khreibet Hasbaiya,74181,1.724,0.429,https://www.geonames.org/270606
+low,8595351,Mazraat Jall el Bahr,Mazraat Jall el Bahr,PPL,0,33.19313,35.20161,Henniye,62293,1.686,0.111,https://www.geonames.org/8595351
+low,270601,Mazraat Jinjlâya,Mazraat Jinjlaya,PPL,0,33.48517,35.39894,Erkay,61479,1.145,0.353,https://www.geonames.org/270601
+low,270600,Mazraat Kafrâ,Mazraat Kafra,PPL,0,33.4975,35.52139,Jbaa En-Nabatiyeh,71211,0.895,0.476,https://www.geonames.org/270600
+low,6275451,Mazraat Kfar Debiâne,Mazraat Kfar Debiane,PPL,0,33.97944,35.74972,Faytroun,25427,1.855,0.308,https://www.geonames.org/6275451
+low,270598,Mazraat Kfardibiâne,Mazraat Kfardibiane,PPL,0,33.98417,35.76667,Bqaatouta,25451,1.86,0.296,https://www.geonames.org/270598
+low,270595,Mazraat Khafîché,Mazraat Khafiche,PPL,0,33.59639,35.5975,Bater,23675,0.795,0.3,https://www.geonames.org/270595
+low,270684,Mazraat Khaïzarâne,Mazraat Khaizarane,PPL,0,33.44535,35.27828,Saksakiye,61461,1.117,0.385,https://www.geonames.org/270684
+low,270591,Mazraat Matar,Mazraat Matar,PPL,0,34.09833,36.09167,Btedaai,53375,1.45,0.211,https://www.geonames.org/270591
+low,8622260,Mazraat Mhaïbet,Mazraat Mhaibet,PPL,0,34.02163,35.65721,Ghazir,25311,0.859,0.3,https://www.geonames.org/8622260
+low,270592,Mazraat Mâr Eliâs,Mazraat Mar Elias,PPL,0,34.16639,35.78639,Lehfed,26233,1.17,0.095,https://www.geonames.org/270592
+low,270590,Mazraat Nahhoûlé,Mazraat Nahhoule,PPL,0,33.38325,35.26424,Aadloun,61434,1.105,0.364,https://www.geonames.org/270590
+low,270566,Mazraat Ouâdi Smayâ,Mazraat Ouadi Smaya,PPL,0,34.07306,35.68306,Maaysra Kesrouane,25357,0.86,0.56,https://www.geonames.org/270566
+low,270587,Mazraat Qnât,Mazraat Qnat,PPL,0,34.43139,35.94028,Aachach,33267,1.298,0.333,https://www.geonames.org/270587
+low,270584,Mazraat Râs el Baïdar,Mazraat Ras el Baidar,PPL,0,33.40212,35.66851,Hasbaiya,74111,1.159,0.522,https://www.geonames.org/270584
+low,270653,Mazraat ech Chamîssé,Mazraat ech Chamisse,PPL,0,33.51583,35.7275,Kfar Lichki,55154,1.899,0.357,https://www.geonames.org/270653
+low,270710,Mazraat ed Daoudîyé,Mazraat ed Daoudiye,PPL,0,33.46167,35.36583,Merouaniye,61463,0.845,0.56,https://www.geonames.org/270710
+low,270708,Mazraat ed Dhoûr,Mazraat ed Dhour,PPL,0,34.03528,36.03444,Jebaa,53171,1.966,0.235,https://www.geonames.org/270708
+low,270687,Mazraat ej Jmayel,Mazraat ej Jmayel,PPL,0,34.14138,35.68124,Kfar Mashoun,26287,0.812,0.364,https://www.geonames.org/270687
+low,270704,Mazraat el Aâqbîyé,Mazraat el Aaqbiye,PPL,0,33.46701,35.3178,Bissariye,61453,1.239,0.435,https://www.geonames.org/270704
+low,270702,Mazraat el Aïn,Mazraat el Ain,PPL,0,34.12667,35.72472,Bichtlida,26243,1.029,0.211,https://www.geonames.org/270702
+low,8622078,Mazraat el Boustane,Mazraat el Boustane,PPL,0,34.02463,35.68534,Jdaidet Ghazir,25317,0.773,0.231,https://www.geonames.org/8622078
+low,270680,Mazraat el Manhali,Mazraat el Manhali,PPL,0,33.40003,35.26776,Aadloun,61434,0.795,0.333,https://www.geonames.org/270680
+low,270673,Mazraat el Qnaïtra,Mazraat el Qnaitra,PPL,0,33.48045,35.40057,Erkay,61479,0.972,0.462,https://www.geonames.org/270673
+low,270672,Mazraat el Qraïyé,Mazraat el Qraiye,PPL,0,33.41866,35.32901,Babliye,61444,0.831,0.4,https://www.geonames.org/270672
+low,270648,Mazraat es Saknoûniyé,Mazraat es Saknouniye,PPL,0,33.46972,35.3525,Khirbet El-Bassal,61467,1.219,0.375,https://www.geonames.org/270648
+low,270647,Mazraat es Slâfni,Mazraat es Slafni,PPL,0,34.23611,35.80806,Bechtoudar,34331,1.123,0.267,https://www.geonames.org/270647
+low,270644,Mazraat es Souaïri,Mazraat es Souairi,PPL,0,33.41188,35.57621,Mazraat Louzid (Louayziye),63348,1.088,0.595,https://www.geonames.org/270644
+low,270631,Mazraat ez Zaïnâti,Mazraat ez Zainati,PPL,0,34.34417,35.87111,Bchannine,33157,0.879,0.25,https://www.geonames.org/270631
+low,432808,Mazraat ez Zehzlâne,Mazraat ez Zehzlane,PPL,0,33.71667,35.53333,Kfar Faqoud,23433,1.468,0.222,https://www.geonames.org/432808
+low,270764,Maïssate,Maissate,PPL,0,33.26313,35.61952,Aamra,73191,1.469,0.545,https://www.geonames.org/270764
+low,270923,Maʿšūq,Ma'suq,PPL,0,33.26845,35.22414,Borj Ech-Chemali,62128,1.349,0.235,https://www.geonames.org/270923
+low,270402,Mechhlêne,Mechhlene,PPL,0,34.1425,35.68611,Kfar Mashoun,26287,0.945,0.444,https://www.geonames.org/270402
+low,270531,Meftâh Bou Nsaïr,Meftah Bou Nsair,PPL,0,34.06833,35.68694,Zaaitre,25353,0.985,0.4,https://www.geonames.org/270531
+low,6271329,Merjîyât,Merjiyat,PPL,0,33.63894,35.48183,Chhim,23211,1.099,0.267,https://www.geonames.org/6271329
+low,271943,Mgharet Obeid,Mgharet Obeid,PPL,0,34.17972,35.75722,Kharbet Jbayl,26249,1.016,0.56,https://www.geonames.org/271943
+low,271920,Mhall en Nabaa,Mhall en Nabaa,PPL,0,34.22167,35.89028,Niha El-Batroun,34376,1.026,0.364,https://www.geonames.org/271920
+low,270399,Michmich,Michmich,PPL,0,34.47222,36.17056,Beit Ayoub,35337,1.074,0.118,https://www.geonames.org/270399
+low,270518,Mihqâne el Mazloûm,Mihqane el Mazloum,PPL,0,34.01611,35.755,Ouata El-Jaouz,25455,1.291,0.348,https://www.geonames.org/270518
+low,435089,Mkâtbé,Mkatbe,PPL,0,33.56278,35.37889,Saida El-Qadimeh,61115,0.899,0.25,https://www.geonames.org/435089
+low,432820,Mlâzeq Hreqta,Mlazeq Hreqta,PPL,0,33.66722,35.52361,Jahliye,23577,1.075,0.3,https://www.geonames.org/432820
+low,266891,Mont Mîchel,Mont Michel,PPL,0,34.41611,35.83,Ras Masqa,32185,1.691,0.471,https://www.geonames.org/266891
+low,6275082,Monteverdé,Monteverde,PPL,0,33.85,35.59,Beit Meri,22667,1.144,0.333,https://www.geonames.org/6275082
+low,270157,Morh el Mnaïtra,Morh el Mnaitra,PPL,0,34.07694,35.88917,Aarasta,26392,0.868,0.333,https://www.geonames.org/270157
+low,6276397,Morh el Ouaarât,Morh el Ouaarat,PPL,0,33.60111,36.02083,Helouet Rachaiya,55197,1.251,0.471,https://www.geonames.org/6276397
+low,272566,Mounsé,Mounse,PPL,0,33.76361,35.52639,Sirhmoul,24227,0.751,0.429,https://www.geonames.org/272566
+low,270214,Moûlîd,Moulid,PPL,0,34.395,35.97583,Beit Zoud,37349,1.622,0.5,https://www.geonames.org/270214
+low,432778,Mqoufti,Mqoufti,PPL,0,33.72222,35.60556,Aammiq Ech-Chouf,23427,1.435,0.476,https://www.geonames.org/432778
+low,271611,Mrah Aakkar,Mrah Aakkar,PPL,0,34.54639,36.23889,Daouret Aakkar,35126,1.809,0.696,https://www.geonames.org/271611
+low,6275165,Mrah Ghanem,Mrah Ghanem,PPL,0,33.87528,35.6175,Broummana El-Matn,22611,1.124,0.417,https://www.geonames.org/6275165
+low,271539,Mrah el Aallayq,Mrah el Aallayq,PPL,0,34.55333,36.36417,Mazareaa Jabal Akroum,35516,1.862,0.4,https://www.geonames.org/271539
+low,8717530,Mrah el Habchi,Mrah el Habchi,PPL,0,34.29267,35.75766,Kfar Hata El-Koura,32155,1.554,0.476,https://www.geonames.org/8717530
+low,6253819,Mraymîs,Mraymis,PPL,0,33.46583,35.76194,Haouch El Qinnabe Rachaiya,55161,1.383,0.286,https://www.geonames.org/6253819
+low,271491,Mrâh Beït Slîm,Mrah Beit Slim,PPL,0,34.05778,36.04083,Bouday,53459,1.476,0.3,https://www.geonames.org/271491
+low,271497,Mrâh Beït el Aabd,Mrah Beit el Aabd,PPL,0,34.39417,36.33333,Zighrine,54119,1.558,0.231,https://www.geonames.org/271497
+low,271485,Mrâh Bou Brahîm,Mrah Bou Brahim,PPL,0,34.06778,36.04056,Bouday,53459,1.646,0.421,https://www.geonames.org/271485
+low,271483,Mrâh Boû Châhîne,Mrah Bou Chahine,PPL,0,34.11528,36.08944,Btedaai,53375,1.207,0.3,https://www.geonames.org/271483
+low,271470,Mrâh Jouâr el Qorra,Mrah Jouar el Qorra,PPL,0,34.2975,36.27667,Ras Baalbek El Gharbi,54135,1.897,0.333,https://www.geonames.org/271470
+low,271460,Mrâh Najîb,Mrah Najib,PPL,0,34.09333,36.06806,Dar El-Ouassaa,53366,1.937,0.4,https://www.geonames.org/271460
+low,271461,Mrâh Nâyef,Mrah Nayef,PPL,0,34.37889,36.32778,Zighrine,54119,0.953,0.353,https://www.geonames.org/271461
+low,271443,Mrâh Ouâdi el Malloûl,Mrah Ouadi el Malloul,PPL,0,34.38333,36.31028,Zighrine,54119,0.956,0.207,https://www.geonames.org/271443
+low,271452,Mrâh Rouhânâ,Mrah Rouhana,PPL,0,34.1425,36.1325,Bechouat,53333,0.989,0.421,https://www.geonames.org/271452
+low,6276059,Mrâh Semaane,Mrah Semaane,PPL,0,34.17917,36.15361,Barqa,53344,1.517,0.25,https://www.geonames.org/6276059
+low,6276058,Mrâh Soukkar,Mrah Soukkar,PPL,0,34.17833,36.145,Barqa,53344,0.751,0.375,https://www.geonames.org/6276058
+low,271505,Mrâh Torhonn,Mrah Torhonn,PPL,0,34.38389,36.33722,Zighrine,54119,1.54,0.286,https://www.geonames.org/271505
+low,271531,Mrâh ech Chiaaïr,Mrah ech Chiaair,PPL,0,34.1725,36.13167,Barqa,53344,0.998,0.333,https://www.geonames.org/271531
+low,271527,Mrâh ech Choaab,Mrah ech Choaab,PPL,0,34.23222,36.28278,Kharayeb El-Hermel,54175,0.91,0.4,https://www.geonames.org/271527
+low,271569,Mrâh ej Jamal,Mrah ej Jamal,PPL,0,34.05472,36.03611,Bouday,53459,1.992,0.125,https://www.geonames.org/271569
+low,271563,Mrâh ej Jeddâoui,Mrah ej Jeddaoui,PPL,0,34.07417,36.05,Bouday,53459,1.586,0.333,https://www.geonames.org/271563
+low,271599,Mrâh el Aaouja,Mrah el Aaouja,PPL,0,34.18,36.16028,Ram Baalbek,53281,1.673,0.421,https://www.geonames.org/271599
+low,271604,Mrâh el Aaqabé,Mrah el Aaqabe,PPL,0,34.28417,36.27528,Maaysra El-Hermel,54167,1.91,0.435,https://www.geonames.org/271604
+low,271593,Mrâh el Aaïnoûni,Mrah el Aainouni,PPL,0,34.50111,36.0925,Dinbou,35318,1.59,0.444,https://www.geonames.org/271593
+low,271587,Mrâh el Biyâd,Mrah el Biyad,PPL,0,34.37278,36.30528,Zighrine,54119,1.948,0.261,https://www.geonames.org/271587
+low,271591,Mrâh el Blâta,Mrah el Blata,PPL,0,34.07556,36.05611,Bouday,53459,1.628,0.133,https://www.geonames.org/271591
+low,276622,Mrâh el Byâra,Mrah el Byara,PPL,0,33.17893,35.2991,Aaiye,62242,0.942,0.429,https://www.geonames.org/276622
+low,271547,Mrâh el Mechmechi,Mrah el Mechmechi,PPL,0,34.16167,36.19583,Qarha Baalbek,53277,1.316,0.316,https://www.geonames.org/271547
+low,271545,Mrâh el Moghr,Mrah el Moghr,PPL,0,34.39194,36.3225,Zighrine,54119,0.794,0.353,https://www.geonames.org/271545
+low,271548,Mrâh el Mîr Aali,Mrah el Mir Aali,PPL,0,34.14389,36.18833,Riha,53355,0.913,0.267,https://www.geonames.org/271548
+low,271536,Mrâh el Ouadi,Mrah el Ouadi,PPL,0,34.16389,36.19389,Qarha Baalbek,53277,1.44,0.429,https://www.geonames.org/271536
+low,271537,Mrâh el Ouadi,Mrah el Ouadi,PPL,0,34.13222,36.13333,Deir El-Ahmar,53311,1.54,0.444,https://www.geonames.org/271537
+low,271518,Mrâh es Saïyed,Mrah es Saiyed,PPL,0,34.10167,36.08667,Btedaai,53375,1.512,0.316,https://www.geonames.org/271518
+low,271504,Mrâh et Tît,Mrah et Tit,PPL,0,33.67611,35.48806,Ouadi Abou Youssef,23237,0.803,0.25,https://www.geonames.org/271504
+low,270080,Mtaïrîyât,Mtairiyat,PPL,0,33.61806,35.47639,mazboud,23215,1.108,0.286,https://www.geonames.org/270080
+low,271124,Mâr Chaînâ,Mar Chaina,PPL,0,34.22389,35.735,Deir Kfifane,34223,0.849,0.211,https://www.geonames.org/271124
+low,271403,Mâr Doûmit,Mar Doumit,PPL,0,33.98639,35.73167,Faytroun,25427,1.346,0.471,https://www.geonames.org/271403
+low,271191,Mâr Mkhâyel,Mar Mkhayel,PPL,0,34.20531,35.91562,Ouata Houb,34381,1.688,0.235,https://www.geonames.org/271191
+low,271104,Mâr Taqla,Mar Taqla,PPL,0,33.72944,35.4525,Damour,23111,1.785,0.308,https://www.geonames.org/271104
+low,271209,Mârlayet Haddâra,Marlayet Haddara,PPL,0,34.54083,36.03306,Marlaya Melhem,35255,0.815,0.571,https://www.geonames.org/271209
+low,6273746,Mîdane,Midane,PPL,0,33.81694,35.625,Aain Ej-Jdide Aaley,24325,1.202,0.4,https://www.geonames.org/6273746
+low,271175,Mār Nahrā,Mar Nahra,PPL,0,33.86667,35.51667,Furn Ech-Chebbak,21133,1.077,0.316,https://www.geonames.org/271175
+low,269983,Nabaa Tourzaïya,Nabaa Tourzaiya,PPL,0,34.11139,35.76917,Tourzaiya,26215,1.298,0.783,https://www.geonames.org/269983
+low,270031,Nabaa el Aassal,Nabaa el Aassal,PPL,0,33.82667,35.81833,Mazraat Er-Remtaniye,51185,1.091,0.357,https://www.geonames.org/270031
+low,270018,Nabaa es Safa,Nabaa es Safa,PPL,0,33.75083,35.69778,Ighmid,24451,1.026,0.235,https://www.geonames.org/270018
+low,278916,Nabaât,Nabaat,PPL,0,33.48934,35.75436,Nabi Safa,55199,1.416,0.714,https://www.geonames.org/278916
+low,270664,Nabi Qâssem,Nabi Qassem,PPL,0,33.32855,35.25361,Aain Abou Abdallah,62291,0.92,0.353,https://www.geonames.org/270664
+low,278882,Nabi Rchâdé,Nabi Rchade,PPL,0,33.99472,36.03861,Hadath Baalbek,53183,1.43,0.5,https://www.geonames.org/278882
+low,6279277,Nahr el Hsaïn,Nahr el Hsain,PPL,0,34.05556,35.71194,Hsayn,25345,0.759,0.571,https://www.geonames.org/6279277
+low,278852,Nahriyé,Nahriye,PPL,0,34.60056,36.27139,Mazraat En-Nahriye,35486,0.826,0.692,https://www.geonames.org/278852
+low,269933,Najd,Najd,PPL,0,33.98333,35.75,Faytroun,25427,1.476,0.167,https://www.geonames.org/269933
+low,6275547,Najd,Najd,PPL,0,33.97889,35.75278,Beqaata Kanaan,25443,1.788,0.235,https://www.geonames.org/6275547
+low,269924,Najmet es Sobh,Najmet es Sobh,PPL,0,34.15444,35.88083,Aarab El-Lahib,26374,1.655,0.455,https://www.geonames.org/269924
+low,269777,Nimrîne,Nimrine,PPL,0,34.385,36.04972,Aain Et-Tine-Miniyé,37333,0.902,0.571,https://www.geonames.org/269777
+low,13415518,Ouata,Ouata,PPL,0,34.08744,35.84233,Qartaba,26311,0.842,0.545,https://www.geonames.org/13415518
+low,266189,Ouata Fârès,Ouata Fares,PPL,0,34.26042,35.81417,Deir Billa,34374,1.154,0.333,https://www.geonames.org/266189
+low,266185,Ouata Mansoûr,Ouata Mansour,PPL,0,34.19833,35.71611,Jrabta El-Batroun,34219,0.793,0.375,https://www.geonames.org/266185
+low,266181,Ouata Tabriyé,Ouata Tabriye,PPL,0,34.01611,35.73667,Raachine,25435,1.113,0.4,https://www.geonames.org/266181
+low,266203,Ouata el Borj,Ouata el Borj,PPL,0,34.19306,35.63472,Berbara Jbayl,26183,0.929,0.364,https://www.geonames.org/266203
+low,266202,Ouata el Hrâjlîyé,Ouata el Hrajliye,PPL,0,34.05389,35.79611,Qahmez,26367,1.468,0.316,https://www.geonames.org/266202
+low,266199,Ouata el Kalb,Ouata el Kalb,PPL,0,34.14,35.74472,Hjoula,26226,0.945,0.4,https://www.geonames.org/266199
+low,266198,Ouata el Khirbé,Ouata el Khirbe,PPL,0,34.06556,35.83389,Lassa,26331,1.344,0.25,https://www.geonames.org/266198
+low,266197,Ouata el Laouz,Ouata el Laouz,PPL,0,34.01444,35.74444,Beqaata Aachqout,25431,1.397,0.48,https://www.geonames.org/266197
+low,266334,Ouâdi Aïn el Aallaïq,Ouadi Ain el Aallaiq,PPL,0,33.9875,35.72583,Faytroun,25427,1.708,0.286,https://www.geonames.org/266334
+low,266359,Ouâdi ej Jâmoûs,Ouadi ej Jamous,PPL,0,34.50111,36.01694,Qardaf,35341,1.182,0.4,https://www.geonames.org/266359
+low,266336,Ouâdi et Tourkmâne,Ouadi et Tourkmane,PPL,0,34.37667,36.31917,Zighrine,54119,0.934,0.364,https://www.geonames.org/266336
+low,266329,Ouâdi ez Zeïni,Ouadi ez Zeini,PPL,0,33.6277,35.40153,Jadra,23271,1.019,0.4,https://www.geonames.org/266329
+low,7869972,Qaaqaait Ej Jisr,Qaaqaait Ej Jisr,PPL,0,33.32455,35.42446,Qaaqaaiyet Ej-Jisr,71381,0.903,0.933,https://www.geonames.org/7869972
+low,269682,Qabr es Sindiâne,Qabr es Sindiane,PPL,0,34.18972,35.81611,Bcheaali,34316,1.459,0.273,https://www.geonames.org/269682
+low,269681,Qabrchmoun,Qabrchmoun,PPL,0,33.75389,35.545,Aain Ksour,24371,1.243,0.333,https://www.geonames.org/269681
+low,271499,Qalaat Bakdâch,Qalaat Bakdach,PPL,0,34.30139,36.36222,Ras Baalbek Ouadi Faara,54143,1.379,0.312,https://www.geonames.org/271499
+low,269402,Qalaat Sanioûra,Qalaat Sanioura,PPL,0,33.61889,35.48611,Chhim,23211,1.208,0.111,https://www.geonames.org/269402
+low,269557,Qalaat el Hamra,Qalaat el Hamra,PPL,0,34.02306,35.68028,Jdaidet Ghazir,25317,1.026,0.435,https://www.geonames.org/269557
+low,269409,Qal‘at Nusayr an Nimr,Qal`at Nusayr an Nimr,PPL,0,34.51667,36.23333,Aakkar El-Aatiqa,35191,1.398,0.296,https://www.geonames.org/269409
+low,269570,Qal‘at al Burj,Qal`at al Burj,PPL,0,34.61667,36.36667,Aamayer,35512,0.952,0.375,https://www.geonames.org/269570
+low,166180,Qal‘at Şubaybī,Qal`at Subaybi,PPL,0,33.33853,35.60395,Marjaayoun,73111,1.849,0.364,https://www.geonames.org/166180
+low,269342,Qannābat Brummānā,Qannabat Brummana,PPL,0,33.88333,35.61667,Qennabet Broummana,22643,1.021,0.848,https://www.geonames.org/269342
+low,269351,Qanât Bakîsh,Qanat Bakish,PPL,0,33.96389,35.81389,Baskinta,22797,1.634,0.421,https://www.geonames.org/269351
+low,269212,Qassoûba,Qassouba,PPL,0,33.67249,35.4267,Jiye,23267,0.812,0.154,https://www.geonames.org/269212
+low,269149,Qattîne el Marj,Qattine el Marj,PPL,0,33.98861,35.76806,Kfar Dibiane,25439,1.75,0.364,https://www.geonames.org/269149
+low,279132,Qbaïyat,Qbaiyat,PPL,0,34.57083,36.28111,Qbaiyat Aakkar,35487,1.933,0.7,https://www.geonames.org/279132
+low,269018,Qbaïyat el Gharbiyé,Qbaiyat el Gharbiye,PPL,0,34.57972,36.26,Barde,35408,1.921,0.4,https://www.geonames.org/269018
+low,269655,Qeddâm,Qeddam,PPL,0,34.18278,36.19611,Ram Baalbek,53281,1.908,0.444,https://www.geonames.org/269655
+low,269089,Qelia,Qelia,PPL,0,33.43694,35.65556,Qelaya,52291,0.781,0.8,https://www.geonames.org/269089
+low,268978,Qommol,Qommol,PPL,0,33.84278,35.86139,Zahle Aradi,51133,1.853,0.133,https://www.geonames.org/268978
+low,414026,Qoubaiyat,Qoubaiyat,PPL,0,34.56667,36.28333,Qbaiyat Aakkar,35487,1.611,0.8,https://www.geonames.org/414026
+low,268907,Qouâlé,Qouale,PPL,0,34.06332,35.65742,Nahr Ibrahim,26171,0.873,0.222,https://www.geonames.org/268907
+low,269072,Qraïta,Qraita,PPL,0,34.37444,36.315,Zighrine,54119,1.278,0.286,https://www.geonames.org/269072
+low,279169,Qâsmiyé,Qasmiye,PPL,0,33.33168,35.25266,Aain Abou Abdallah,62291,1.248,0.333,https://www.geonames.org/279169
+low,269199,Qâteaa Bou Mrâd,Qateaa Bou Mrad,PPL,0,34.24694,35.92583,Breissat,36157,1.699,0.222,https://www.geonames.org/269199
+low,269202,Qâteaa el Baaïnîyé,Qateaa el Baainiye,PPL,0,34.03111,35.76194,Ouata El-Jaouz,25455,0.818,0.348,https://www.geonames.org/269202
+low,268766,Ra's al-Misri,Ra's al-Misri,PPL,0,33.11389,35.17194,Aalma Ech-Chaab,62316,1.116,0.364,https://www.geonames.org/268766
+low,268857,Rakti,Rakti,PPL,0,34.07333,35.68917,Zaaitre,25353,0.868,0.182,https://www.geonames.org/268857
+low,6275265,Ramlet el Bayda,Ramlet el Bayda,PPL,0,33.86972,35.48278,Msaitbe foncière,10210,1.374,0.273,https://www.geonames.org/6275265
+low,268812,Ramlet el Hamra,Ramlet el Hamra,PPL,0,34.40278,36.06778,Sfire,37337,0.863,0.25,https://www.geonames.org/268812
+low,7840027,Ras Aalous,Ras Aalous,PPL,0,33.65692,35.45356,Baassir,23255,0.907,0.375,https://www.geonames.org/7840027
+low,268723,Rasm el Hadeth,Rasm el Hadeth,PPL,0,34.14139,36.27556,Chaat,53274,1.873,0.533,https://www.geonames.org/268723
+low,7870308,Rawda,Rawda,PPL,0,33.74759,35.87888,Raouda (Istabel),52295,1.234,0.632,https://www.geonames.org/7870308
+low,6278558,Rejm Beït Housseïn,Rejm Beit Houssein,PPL,0,34.60639,36.38361,Aamayer,35512,1.509,0.222,https://www.geonames.org/6278558
+low,6278549,Rejm Beït Khalaf,Rejm Beit Khalaf,PPL,0,34.61944,36.39056,Aamayer,35512,1.264,0.4,https://www.geonames.org/6278549
+low,268795,Reqlây,Reqlay,PPL,0,33.22696,35.28759,Aaytit,62217,1.156,0.364,https://www.geonames.org/268795
+low,6274919,Riviéra,Riviera,PPL,0,33.85472,35.48472,Chiyah,21111,1.43,0.333,https://www.geonames.org/6274919
+low,268601,Rjoum,Rjoum,PPL,0,33.81833,35.59472,Kahhale,24313,0.811,0.0,https://www.geonames.org/268601
+low,268628,Rouaïssat Saoufar,Rouaissat Saoufar,PPL,0,33.80028,35.6725,Qrayet Baabda,21344,1.057,0.48,https://www.geonames.org/268628
+low,268629,Rouaïssât Salîma,Rouaissat Salima,PPL,0,33.87222,35.68306,Aarbaniye,21381,0.869,0.286,https://www.geonames.org/268629
+low,6271733,Râai es Sâleh,Raai es Saleh,PPL,0,33.82972,35.73222,Qalaat Baabda,21416,0.932,0.267,https://www.geonames.org/6271733
+low,6253857,Râchaïya el Ouadi,Rachaiya el Ouadi,PPLA2,0,33.50089,35.8437,Rachaiya,55111,3.211,0.87,https://www.geonames.org/6253857
+low,268731,Râchkiddé,Rachkidde,PPL,0,34.23861,35.76944,Helta,34267,0.825,0.167,https://www.geonames.org/268731
+low,268837,Râmât,Ramat,PPL,0,34.21833,35.71639,Deir Kfifane,34223,0.999,0.25,https://www.geonames.org/268837
+low,268750,Râs Aaqabet er Ratl,Ras Aaqabet er Ratl,PPL,0,34.38917,36.30833,Zighrine,54119,1.209,0.2,https://www.geonames.org/268750
+low,6277947,Râs el Aâssi,Ras el Aassi,PPL,0,34.35278,36.38806,Deir Mar Maroun Baalbek,53244,0.873,0.286,https://www.geonames.org/6277947
+low,268783,Râs el Aïn,Ras el Ain,PPL,0,34.00028,36.21861,Baalbek,53111,1.808,0.308,https://www.geonames.org/268783
+low,268784,Râs el Aïn,Ras el Ain,PPL,0,33.22769,35.21719,Deir Qanoun El-Aain,62179,1.877,0.545,https://www.geonames.org/268784
+low,6278747,Râs el Aïn,Ras el Ain,PPL,0,33.99889,36.21861,Baalbek,53111,1.932,0.308,https://www.geonames.org/6278747
+low,268772,Râs el Karm,Ras el Karm,PPL,0,34.06667,35.79722,Qahmez,26367,1.244,0.308,https://www.geonames.org/268772
+low,6277960,Râs el Kroûm,Ras el Kroum,PPL,0,34.33972,36.47917,Qaa Baalbek,53241,1.987,0.222,https://www.geonames.org/6277960
+low,272113,Râs el Laouzé,Ras el Laouze,PPL,0,33.18451,35.23424,Aaziye,62294,1.099,0.533,https://www.geonames.org/272113
+low,268768,Râs el Marj,Ras el Marj,PPL,0,34.12972,35.87472,Laqlouq,26361,0.953,0.143,https://www.geonames.org/268768
+low,6270937,Sadr el Massaouil,Sadr el Massaouil,PPL,0,33.08719,35.42575,Yaroun,72159,0.813,0.421,https://www.geonames.org/6270937
+low,268337,Sahret el Qach,Sahret el Qach,PPL,0,33.78722,35.81694,Qabb Elias,51234,1.65,0.3,https://www.geonames.org/268337
+low,6275260,Saint Michel,Saint Michel,PPL,0,33.85972,35.48389,Chiyah,21111,1.538,0.25,https://www.geonames.org/6275260
+low,6275261,Saint Simon,Saint Simon,PPL,0,33.86167,35.48444,Chiyah,21111,1.557,0.133,https://www.geonames.org/6275261
+low,268216,Sanaallah,Sanaallah,PPL,0,34.40639,35.93139,Rachaaine,33117,0.839,0.333,https://www.geonames.org/268216
+low,268164,Saqi Lâssa,Saqi Lassa,PPL,0,34.07722,35.85028,Lassa,26331,1.01,0.714,https://www.geonames.org/268164
+low,7839016,Saraain El Faouqa,Saraain El Faouqa,PPL,0,33.87864,36.09288,Nabi Chit,53445,1.903,0.2,https://www.geonames.org/7839016
+low,7839006,Saraain Et Tahta,Saraain Et Tahta,PPL,0,33.87978,36.07874,Serraaine Et-Tahta,53437,1.303,0.846,https://www.geonames.org/7839006
+low,7840025,Saraouniye,Saraouniye,PPL,0,33.5822,35.4383,Joun,23336,1.32,0.429,https://www.geonames.org/7840025
+low,6274091,Sebaal,Sebaal,PPL,0,33.76111,35.61583,Btater,24447,1.125,0.364,https://www.geonames.org/6274091
+low,6275295,Serail,Serail,PPL,0,33.83444,35.54028,Boutchay,21227,0.976,0.143,https://www.geonames.org/6275295
+low,267132,Serraaïn el Faouqa,Serraain el Faouqa,PPL,0,33.87861,36.09306,Nabi Chit,53445,1.893,0.222,https://www.geonames.org/267132
+low,267131,Serraaïn et Tahta,Serraain et Tahta,PPL,0,33.88056,36.07944,Serraaine Et-Tahta,53437,1.305,0.963,https://www.geonames.org/267131
+low,268133,Sertoûka,Sertouka,PPL,0,34.39,36.02,Qattine-Miniyé,37315,0.789,0.286,https://www.geonames.org/268133
+low,268464,Sfaïnet el Qaïtaa,Sfainet el Qaitaa,PPL,0,34.46139,36.02889,Sfaynet El-Qaitaa,35324,1.139,0.923,https://www.geonames.org/268464
+low,267668,Shaqdouf Aakkar,Shaqdouf Aakkar,PPL,0,34.52389,36.21806,Aain Yaaqoub,35187,1.563,0.32,https://www.geonames.org/267668
+low,11126042,Sheikh Ayash,Sheikh Ayash,PPL,0,34.62306,36.0925,Chir Hmairine,35224,0.972,0.32,https://www.geonames.org/11126042
+low,267048,Sollom,Sollom,PPL,0,33.52722,35.48889,Berti,61488,0.947,0.0,https://www.geonames.org/267048
+low,6275314,Sotlay,Sotlay,PPL,0,33.85333,35.52389,Haret Hreik,21144,1.124,0.235,https://www.geonames.org/6275314
+low,267062,Soukkara,Soukkara,PPL,0,33.31388,35.26001,Aain Abou Abdallah,62291,0.953,0.4,https://www.geonames.org/267062
+low,277961,Soultâne Yaaqoûb,Soultane Yaaqoub,PPL,0,33.64472,35.86111,Soultan Yaacoub Faouqa,52231,1.557,0.846,https://www.geonames.org/277961
+low,277960,Soultâne Yaaqoûb et Tahta,Soultane Yaaqoub et Tahta,PPL,0,33.64417,35.84333,Soultan Yaacoub Faouqa,52231,1.24,0.75,https://www.geonames.org/277960
+low,277930,Souâq es Safsâf,Souaq es Safsaf,PPL,0,33.87667,35.82,Tarchich,21481,1.047,0.182,https://www.geonames.org/277930
+low,268170,Sâqiet Zaîdâne,Saqiet Zaidane,PPL,0,34.12667,35.64333,Jbayl,26111,1.151,0.267,https://www.geonames.org/268170
+low,268178,Sâqiet ed Delb,Saqiet ed Delb,PPL,0,34.105,35.89583,Yanouh Jbayl,26347,1.39,0.364,https://www.geonames.org/268178
+low,267139,Sîret Hana,Siret Hana,PPL,0,34.02667,36.00556,Jebaa,53171,1.905,0.429,https://www.geonames.org/267139
+low,268173,Sāqiyyat al-Misk,Saqiyyat al-Misk,PPL,0,33.91833,35.67694,Bhersaf,22535,1.085,0.667,https://www.geonames.org/268173
+low,266901,Tall al Ḩayyāt,Tall al Hayyat,PPL,0,34.56667,36.0,Mqaiteaa,35261,0.883,0.333,https://www.geonames.org/266901
+low,266889,Tall ez Zaatar,Tall ez Zaatar,PPL,0,33.86861,35.54917,Mkalles,22279,0.829,0.421,https://www.geonames.org/266889
+low,266884,Tall Ḏunūb al-Ǧadida,Tall Dunub al-Gadida,PPL,0,33.67278,35.76667,Aana,52161,1.203,0.333,https://www.geonames.org/266884
+low,266895,Tallet el Mjabber,Tallet el Mjabber,PPL,0,34.57861,36.07889,Tall Aabbas El-Gharbi,35211,1.076,0.6,https://www.geonames.org/266895
+low,266892,Tallet ez Zefîr,Tallet ez Zefir,PPL,0,34.57556,36.08333,Koueikhat,35215,1.018,0.182,https://www.geonames.org/266892
+low,266813,Tariq ej Jdîdé,Tariq ej Jdide,PPL,0,33.79556,35.82528,Makse,51217,1.693,0.235,https://www.geonames.org/266813
+low,266787,Tarouel,Tarouel,PPL,0,34.15222,35.63139,Aamchit,26141,1.208,0.286,https://www.geonames.org/266787
+low,6274009,Tassouîné,Tassouine,PPL,0,33.76611,35.555,Aaynab,24351,0.853,0.615,https://www.geonames.org/6274009
+low,266922,Taḩwīţat an Nahr,Tahwitat an Nahr,PPL,0,33.86667,35.51667,Furn Ech-Chebbak,21133,1.077,0.08,https://www.geonames.org/266922
+low,266909,Tell Aabbâs ech Charqi,Tell Aabbas ech Charqi,PPL,0,34.58833,36.07917,Koueikhat,35215,1.08,0.214,https://www.geonames.org/266909
+low,266911,Tell Aabbâs el Gharbi,Tell Aabbas el Gharbi,PPL,0,34.58361,36.0775,Tall Aabbas El-Gharbi,35211,0.876,0.968,https://www.geonames.org/266911
+low,266887,Tell Bîbî,Tell Bibi,PPL,0,34.61722,36.00667,Cheikh Zennad,35267,0.924,0.444,https://www.geonames.org/266887
+low,266881,Tell Kindi,Tell Kindi,PPL,0,34.61139,36.07361,Tall Hmayra,35237,1.167,0.421,https://www.geonames.org/266881
+low,6277882,Tell el Fâr,Tell el Far,PPL,0,34.41333,36.4125,Hermel,54111,1.572,0.308,https://www.geonames.org/6277882
+low,266890,Tell ez Zaazeaa,Tell ez Zaazeaa,PPL,0,33.67361,35.85361,Soltan Yacoub el Aradi,52241,1.356,0.429,https://www.geonames.org/266890
+low,266706,Temnîne et Tehta,Temnine et Tehta,PPL,0,33.88611,35.99444,Temnine Et-Tahta,53425,1.242,0.917,https://www.geonames.org/266706
+low,266820,Târây,Taray,PPL,0,33.21267,35.45059,Jmaijme,72221,1.116,0.182,https://www.geonames.org/266820
+low,6273887,Yanâr,Yanar,PPL,0,33.78694,35.50389,Bchamoun,24243,1.02,0.308,https://www.geonames.org/6273887
+low,6274968,Yarzé,Yarze,PPL,0,33.83611,35.55194,Baabda,21211,1.186,0.333,https://www.geonames.org/6274968
+low,266092,Yohmor el Beqâa,Yohmor el Beqaa,PPL,0,33.48528,35.66889,Yohmor BG,52281,0.805,0.737,https://www.geonames.org/266092
+low,266110,Yârîta,Yarita,PPL,0,34.22694,35.79028,Assia,34263,0.956,0.545,https://www.geonames.org/266110
+low,266057,Zaghla,Zaghla,PPL,0,33.4037,35.6877,Hasbaiya,74111,1.509,0.6,https://www.geonames.org/266057
+low,6273742,Zahhar,Zahhar,PPL,0,33.81917,35.61306,Chouit,21354,1.402,0.167,https://www.geonames.org/6273742
+low,8624750,Zaqzouq,Zaqzouq,PPL,0,34.45218,36.00725,Jdeidet El-Qaitaa,35344,1.074,0.111,https://www.geonames.org/8624750
+low,265953,Zarâyeb Choukr,Zarayeb Choukr,PPL,0,34.09278,36.06167,Dar El-Ouassaa,53366,1.735,0.381,https://www.geonames.org/265953
+low,265717,Zouaïtîni,Zouaitini,PPL,0,33.86417,35.7775,Kfar Selouane,21476,1.146,0.381,https://www.geonames.org/265717
+low,265976,Zoummar,Zoummar,PPL,0,34.12296,35.72011,Ras Osta,26241,0.886,0.308,https://www.geonames.org/265976
+low,265975,Zoummâr,Zoummar,PPL,0,34.14306,35.63222,Aamchit,26141,0.99,0.308,https://www.geonames.org/265975
+low,8624336,Zouq el Bacha,Zouq el Bacha,PPL,0,34.49186,35.99763,Beit El-Haouch,35367,1.336,0.421,https://www.geonames.org/8624336
+low,277286,Zrâzîr,Zrazir,PPL,0,34.15194,36.12417,Bechouat,53333,0.946,0.25,https://www.geonames.org/277286
+low,265820,Zélhmaya,Zelhmaya,PPL,0,34.07873,35.66255,Kharayeb Nahr Ibrahim,25181,0.753,0.357,https://www.geonames.org/265820
+low,274464,Ḩārat al Mawārinah,Harat al Mawarinah,PPL,0,33.58333,35.46667,Joun,23336,1.349,0.375,https://www.geonames.org/274464
