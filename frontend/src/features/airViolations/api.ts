@@ -3,26 +3,26 @@ import type { AirViolation, AirViolationCreateInput, AirViolationFilters, AirVio
 import type { WorkbookImportSummary } from "../news/api";
 
 export const createAirViolation = async (payload: AirViolationCreateInput): Promise<AirViolation> => {
-  const response = await apiClient.post<AirViolation>("/api/air-violations", payload);
+  const response = await apiClient.post<AirViolation>("/air-violations", payload);
   return response.data;
 };
 
 export const updateAirViolation = async (id: number, payload: AirViolationUpdateInput): Promise<AirViolation> => {
-  const response = await apiClient.put<AirViolation>(`/api/air-violations/${id}`, payload);
+  const response = await apiClient.put<AirViolation>(`/air-violations/${id}`, payload);
   return response.data;
 };
 
 export const deleteAirViolation = async (id: number, version: number): Promise<void> => {
-  await apiClient.delete(`/api/air-violations/${id}`, { params: { version } });
+  await apiClient.delete(`/air-violations/${id}`, { params: { version } });
 };
 
 export const acquireAirViolationEditLock = async (id: number): Promise<AirViolation> => {
-  const response = await apiClient.post<AirViolation>(`/api/air-violations/${id}/edit-lock`);
+  const response = await apiClient.post<AirViolation>(`/air-violations/${id}/edit-lock`);
   return response.data;
 };
 
 export const releaseAirViolationEditLock = async (id: number): Promise<void> => {
-  await apiClient.delete(`/api/air-violations/${id}/edit-lock`);
+  await apiClient.delete(`/air-violations/${id}/edit-lock`);
 };
 
 export const getAirViolations = async (
@@ -49,7 +49,7 @@ export const getAirViolations = async (
   }
 
   const response = await apiClient.get<AirViolationListResponse>(
-    `/api/air-violations?${params.toString()}`,
+    `/air-violations?${params.toString()}`,
   );
   return response.data;
 };
@@ -63,7 +63,7 @@ export const getAirViolationSummary = async (
   if (filters.cazaEn) params.set("caza_en", filters.cazaEn);
   if (filters.lastHours) params.set("last_hours", filters.lastHours);
   const response = await apiClient.get<AirViolationSummary>(
-    `/api/air-violations/summary?${params.toString()}`,
+    `/air-violations/summary?${params.toString()}`,
   );
   return response.data;
 };
@@ -71,12 +71,12 @@ export const getAirViolationSummary = async (
 export const importAirViolations = async (file: File): Promise<WorkbookImportSummary> => {
   const form = new FormData();
   form.append("file", file);
-  const response = await apiClient.post<WorkbookImportSummary>("/api/air-violations/import", form);
+  const response = await apiClient.post<WorkbookImportSummary>("/air-violations/import", form);
   return response.data;
 };
 
 export const exportAirViolations = async (): Promise<void> => {
-  const response = await apiClient.get("/api/air-violations/export", { responseType: "blob" });
+  const response = await apiClient.get("/air-violations/export", { responseType: "blob" });
   const url = URL.createObjectURL(response.data);
   const anchor = document.createElement("a");
   anchor.href = url;
