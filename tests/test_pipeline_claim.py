@@ -80,6 +80,29 @@ def test_claim_pending_match_excludes_fresh_processing_leases() -> None:
     assert "processing_claim_stage" in compiled
 
 
+def test_claim_pending_extraction_orders_newest_first() -> None:
+    repo = PipelineClaimRepository(db=None)  # type: ignore[arg-type]
+    stmt = (
+        repo._claimable_raw_messages()  # type: ignore[attr-defined]
+        .where(
+            RawMessage.status == MessageStatus.parsed,
+            RawMessage.extraction_result.is_(None),
+            RawMessage.duplicate_of_id.is_(None),
+        )
+        .order_by(RawMessage.id.desc())
+        .limit(1)
+        .with_for_update(skip_locked=True)
+    )
+    compiled = str(
+        stmt.compile(
+            dialect=postgresql.dialect(),
+            compile_kwargs={"literal_binds": True},
+        )
+    )
+
+    assert "ORDER BY raw_messages.id DESC" in compiled
+
+
 def test_claim_pending_fast_path_excludes_rows_with_active_incidents() -> None:
     repo = PipelineClaimRepository(db=None)  # type: ignore[arg-type]
     assert hasattr(repo, "claim_pending_fast_path")
