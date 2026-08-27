@@ -111,7 +111,7 @@ class PipelineClaimRepository:
                 RawMessage.match_result.is_(None),
                 RawMessage.duplicate_of_id.is_(None),
             )
-            .order_by(RawMessage.id.asc())
+            .order_by(RawMessage.id.desc())
             .limit(1)
             .with_for_update(skip_locked=True)
         )
