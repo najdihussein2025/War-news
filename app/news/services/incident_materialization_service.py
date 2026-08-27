@@ -229,6 +229,11 @@ class IncidentMaterializationService:
         self.fast_stats.marked_unmaterializable += 1
         self.db.commit()
 
+    @staticmethod
+    def _mark_materialized(representative: RawMessage) -> None:
+        representative.status = MessageStatus.materialized
+        representative.error_message = None
+
     def _insert_fast_incident(
         self,
         *,
@@ -286,6 +291,7 @@ class IncidentMaterializationService:
                     children_i=casualties.children_injuries,
                 )
             )
+            self._mark_materialized(representative)
             self.db.commit()
             self.fast_stats.inserted += 1
             logger.info(
@@ -420,6 +426,7 @@ class IncidentMaterializationService:
                             },
                             raw_message_id=representative.id,
                         )
+                        self._mark_materialized(representative)
                         self.db.commit()
                         self.stats.merged_into_existing += 1
                         logger.info(
@@ -482,6 +489,7 @@ class IncidentMaterializationService:
                         **mapped_fields,
                     )
                 )
+                self._mark_materialized(representative)
                 self.db.commit()
                 self.stats.inserted += 1
                 created.append(incident)
