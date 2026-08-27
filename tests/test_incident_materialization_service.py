@@ -179,8 +179,9 @@ def _representative(*, match_result: dict | None = None):
 def test_eligible_representative_inserts_incident_and_detail() -> None:
     db = _SessionStub()
     service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    representative = _representative()
 
-    result = service.materialize(_representative())
+    result = service.materialize(representative)
 
     assert len(result) == 1
     assert isinstance(result[0], Incident)
@@ -204,6 +205,7 @@ def test_eligible_representative_inserts_incident_and_detail() -> None:
     assert incident.created_by is None
     assert detail.incident_id == incident.id
     assert service.stats.inserted == 1
+    assert representative.status == MessageStatus.materialized
 
 
 def test_casualty_fields_map_from_top_level_extraction_result() -> None:
@@ -273,6 +275,7 @@ def test_fast_path_strips_emoji_from_khabar_and_hash() -> None:
     assert incident.exact_hash == hashlib.sha256(
         "\u062e\u0628\u0631 \u0639\u0627\u062c\u0644|976|5|2026-08-17".encode("utf-8")
     ).hexdigest()
+    assert representative.status == MessageStatus.materialized
 
 
 @pytest.mark.parametrize("condition_id", [35, 36, 38])
@@ -374,10 +377,9 @@ def test_two_village_match_produces_two_incidents() -> None:
     """A raw_message with two matched villages creates two separate Incident rows."""
     db = _SessionStub()
     service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    representative = _representative(match_result=_two_village_match_result())
 
-    result = service.materialize(
-        _representative(match_result=_two_village_match_result())
-    )
+    result = service.materialize(representative)
 
     assert len(result) == 2
     assert db.commit_calls == 2  # one commit per village
@@ -387,6 +389,7 @@ def test_two_village_match_produces_two_incidents() -> None:
     # Both incidents share the same khabar
     assert all(inc.khabar == "  خبر   عاجل " for inc in incidents)
     assert service.stats.inserted == 2
+    assert representative.status == MessageStatus.materialized
 
 
 def test_old_flat_match_result_is_backward_compatible() -> None:
@@ -441,8 +444,9 @@ def test_dedup_high_score_merges_and_skips_insert() -> None:
     dedup = _DedupServiceStub(existing=existing, score=0.85)  # type: ignore[arg-type]
     db = _SessionStub()
     service = IncidentMaterializationService(db, dedup_service=dedup)  # type: ignore[arg-type]
+    representative = _representative()
 
-    result = service.materialize(_representative())
+    result = service.materialize(representative)
 
     assert len(result) == 1
     assert result[0] is existing
@@ -450,6 +454,7 @@ def test_dedup_high_score_merges_and_skips_insert() -> None:
     assert service.stats.merged_into_existing == 1
     assert service.stats.inserted == 0
     assert not any(isinstance(value, Incident) for value in db.committed)
+    assert representative.status == MessageStatus.materialized
 
 
 def test_dedup_mid_score_creates_incident_with_duplicate_flag() -> None:

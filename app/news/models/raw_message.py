@@ -25,6 +25,7 @@ from app.core.database import Base
 class MessageStatus(str, Enum):
     pending = "pending"
     parsed = "parsed"
+    materialized = "materialized"
     duplicate = "duplicate"
     rejected = "rejected"
     error = "error"

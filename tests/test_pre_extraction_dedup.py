@@ -12,6 +12,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from app.news.models import MessageStatus
+from app.news.services.pre_extraction_dedup import find_pre_dedup_match
 from app.news.services.pipeline_sweep_stages import sweep_pre_extraction_dedup
 
 
@@ -60,6 +61,7 @@ class _StubSession:
         self._scalars_call = 0
         self.committed = 0
         self.rolled_back = 0
+        self.last_execute_stmt = None
 
     def scalars(self, stmt) -> _ScalarsResult:
         self._scalars_call += 1
@@ -72,6 +74,7 @@ class _StubSession:
         return self._messages.get(pk)
 
     def execute(self, stmt) -> _ExecuteResult:
+        self.last_execute_stmt = stmt
         return _ExecuteResult(self._similarity_result)
 
     def commit(self) -> None:
@@ -232,3 +235,27 @@ def test_out_of_window_near_duplicate_not_flagged() -> None:
     assert msg.duplicate_of_id is None
     assert session.committed == 0
     assert session.rolled_back == 0
+
+
+def test_similarity_query_excludes_materialized_rows() -> None:
+    session = _StubSession(
+        batch_ids=[],
+        messages={},
+        similarity_result=None,
+    )
+
+    find_pre_dedup_match(
+        session,  # type: ignore[arg-type]
+        raw_message_id=3,
+        raw_text="dummy",
+        threshold=0.92,
+    )
+
+    compiled = session.last_execute_stmt.compile()
+    params = tuple(compiled.params.values())
+    sql = str(compiled)
+    assert any(
+        isinstance(value, list) and MessageStatus.materialized in value
+        for value in params
+    )
+    assert "materialized" not in sql
