@@ -252,7 +252,10 @@ def test_similarity_query_excludes_materialized_rows() -> None:
     )
 
     compiled = session.last_execute_stmt.compile()
-    params = set(compiled.params.values())
+    params = tuple(compiled.params.values())
     sql = str(compiled)
-    assert MessageStatus.materialized in params
+    assert any(
+        isinstance(value, list) and MessageStatus.materialized in value
+        for value in params
+    )
     assert "materialized" not in sql

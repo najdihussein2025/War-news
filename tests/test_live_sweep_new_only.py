@@ -335,7 +335,10 @@ def test_downstream_stage_patches_leave_parsed_rows_visible_below_new_cutoff() -
 
 def test_terminalize_ineligible_fast_path_filtered_preserves_air_violation_status() -> None:
     message = MagicMock()
-    message.match_result = {"matched_condition_id": 35}
+    message.match_result = {
+        "matched_condition_id": 35,
+        "condition_match_status": "matched",
+    }
     repo = MagicMock()
     repo.db.scalars.return_value.all.return_value = [message]
 
