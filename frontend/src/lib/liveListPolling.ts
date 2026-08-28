@@ -3,6 +3,7 @@ export const LIVE_LIST_POLL_INTERVAL_MS = 30_000;
 
 export const liveListQueryOptions = {
   refetchInterval: LIVE_LIST_POLL_INTERVAL_MS,
+  refetchOnReconnect: true,
   refetchOnWindowFocus: true,
   staleTime: 0,
   // refetchIntervalInBackground defaults to false — polling pauses when the tab is hidden.

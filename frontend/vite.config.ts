@@ -14,7 +14,6 @@ export default defineConfig(({ mode }) => {
             env.VITE_API_PROXY_TARGET ||
             "http://localhost:8000",
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ""),
         },
       },
     },

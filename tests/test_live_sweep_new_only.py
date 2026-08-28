@@ -72,19 +72,11 @@ def test_downstream_claim_queries_do_not_use_cutoff() -> None:
 
     live_sweep._claim_pending_pre_dedup_filtered(repo)
     pre_dedup_stmt = repo.db.scalar.call_args.args[0]
-
-    live_sweep._claim_pending_extraction_filtered(repo)
-    extraction_stmt = repo.db.scalar.call_args.args[0]
-
-    live_sweep._claim_pending_match_filtered(repo)
-    matching_stmt = repo.db.scalar.call_args.args[0]
-
-    for statement in (pre_dedup_stmt, extraction_stmt, matching_stmt):
-        params = _bound_ids(statement)
-        sql = str(statement.compile())
-        assert 42 not in params
-        assert 695974 not in params
-        assert "raw_messages.id >" not in sql
+    params = _bound_ids(pre_dedup_stmt)
+    sql = str(pre_dedup_stmt.compile())
+    assert 42 not in params
+    assert 695974 not in params
+    assert "raw_messages.id >" not in sql
 
 
 def test_filtered_session_uses_runtime_cursor() -> None:
@@ -312,25 +304,130 @@ async def test_run_stages_stops_after_aborted_tier1(monkeypatch) -> None:
     run_sync.assert_not_called()
 
 
+def test_stage_max_rows_per_pass_is_a_positive_batch_bound() -> None:
+    assert isinstance(live_sweep.STAGE_MAX_ROWS_PER_PASS, int)
+    assert live_sweep.STAGE_MAX_ROWS_PER_PASS > 0
+    # Mirrors the existing settings.pre_dedup_sweep_row_cap precedent (=100).
+    assert live_sweep.STAGE_MAX_ROWS_PER_PASS == 100
+
+
+@pytest.mark.asyncio
+async def test_run_async_stage_forwards_explicit_max_rows_and_defaults_to_module() -> None:
+    seen: list[int | None] = []
+
+    async def fake_sweep(*, max_rows: int | None) -> StageSweepResult:
+        seen.append(max_rows)
+        return _stage("tier1_extraction")
+
+    await live_sweep._run_async_stage(
+        "tier1_extraction",
+        fake_sweep,
+        cutoff_raw_message_id=1,
+        max_rows=live_sweep.STAGE_MAX_ROWS_PER_PASS,
+    )
+    await live_sweep._run_async_stage(
+        "matching",
+        fake_sweep,
+        cutoff_raw_message_id=1,
+    )
+
+    assert seen == [live_sweep.STAGE_MAX_ROWS_PER_PASS, live_sweep.MAX_ROWS]
+
+
+@pytest.mark.asyncio
+async def test_run_stages_caps_claim_until_empty_stages_and_reaches_matching(
+    monkeypatch,
+) -> None:
+    """A tier1_extraction backlog larger than the per-pass cap must not starve
+    matching: extraction is bounded, and the pass still reaches every later
+    stage in order."""
+    seen_max_rows: dict[str, int | None] = {}
+
+    async def fake_relevance_stage(
+        *,
+        cutoff_raw_message_id: int,
+    ) -> tuple[StageSweepResult, int | None]:
+        return _stage("relevance_filter"), 1630
+
+    async def fake_async_stage(
+        stage_name: str,
+        sweep_fn,
+        *,
+        cutoff_raw_message_id: int,
+        max_rows: int | None = live_sweep.MAX_ROWS,
+    ) -> StageSweepResult:
+        seen_max_rows[stage_name] = max_rows
+        if stage_name == "tier1_extraction":
+            # Simulate the extraction queue exceeding the cap: the stage returns
+            # having processed exactly its per-pass bound, not aborted.
+            return _stage(
+                "tier1_extraction",
+                processed=live_sweep.STAGE_MAX_ROWS_PER_PASS,
+            )
+        return _stage(stage_name)
+
+    def fake_sync_stage(
+        stage_name: str,
+        sweep_fn,
+        *,
+        cutoff_raw_message_id: int,
+        max_rows: int | None = live_sweep.MAX_ROWS,
+    ) -> StageSweepResult:
+        seen_max_rows[stage_name] = max_rows
+        return _stage(stage_name)
+
+    monkeypatch.setattr(live_sweep, "_run_relevance_stage", fake_relevance_stage)
+    monkeypatch.setattr(live_sweep, "_run_async_stage", fake_async_stage)
+    monkeypatch.setattr(live_sweep, "_run_sync_stage", fake_sync_stage)
+    monkeypatch.setattr(live_sweep, "_persist_cursor", MagicMock())
+
+    stages = await live_sweep._run_stages(cutoff_raw_message_id=201)
+
+    assert [stage.stage for stage in stages] == [
+        "relevance_filter",
+        "pre_extraction_dedup",
+        "tier1_extraction",
+        "matching",
+        "fast_path",
+        "tier2_detail_fill",
+        "embedding",
+        "clustering",
+        "materialization",
+    ]
+    matching_stage = next(s for s in stages if s.stage == "matching")
+    assert matching_stage.processed == 2
+    assert matching_stage.succeeded == 2
+    assert matching_stage.failed == 0
+
+    cap = live_sweep.STAGE_MAX_ROWS_PER_PASS
+    assert seen_max_rows["tier1_extraction"] == cap
+    assert seen_max_rows["matching"] == cap
+    assert seen_max_rows["fast_path"] == cap
+    assert seen_max_rows["tier2_detail_fill"] == cap
+    assert seen_max_rows["embedding"] == cap
+    assert seen_max_rows["clustering"] == cap
+    assert seen_max_rows["materialization"] == cap
+    # pre_extraction_dedup keeps its own settings-driven cap, not the pass cap.
+    assert seen_max_rows["pre_extraction_dedup"] is live_sweep.MAX_ROWS
+
+
 def test_downstream_stage_patches_leave_parsed_rows_visible_below_new_cutoff() -> None:
     raw_repo = MagicMock()
     raw_repo.db.scalars.return_value.all.return_value = []
-    claim_repo = MagicMock()
-    claim_repo.db.scalar.return_value = None
+    original_claim_pending_extraction = live_sweep.PipelineClaimRepository.claim_pending_extraction
+    original_claim_pending_match = live_sweep.PipelineClaimRepository.claim_pending_match
 
     with live_sweep._apply_downstream_stage_patches():
         live_sweep.RawMessageRepository.get_pending_extraction_batch(raw_repo, 10)
-        live_sweep.PipelineClaimRepository.claim_pending_extraction(claim_repo)
+        assert live_sweep.PipelineClaimRepository.claim_pending_extraction is original_claim_pending_extraction
+        assert live_sweep.PipelineClaimRepository.claim_pending_match is original_claim_pending_match
 
     batch_stmt = raw_repo.db.scalars.call_args.args[0]
-    claim_stmt = claim_repo.db.scalar.call_args.args[0]
-
-    for statement in (batch_stmt, claim_stmt):
-        params = _bound_ids(statement)
-        sql = str(statement.compile())
-        assert 1630 not in params
-        assert "raw_messages.id >" not in sql
-        assert "status" in sql.lower()
+    params = _bound_ids(batch_stmt)
+    sql = str(batch_stmt.compile())
+    assert 1630 not in params
+    assert "raw_messages.id >" not in sql
+    assert "status" in sql.lower()
 
 
 def test_terminalize_ineligible_fast_path_filtered_preserves_air_violation_status() -> None:

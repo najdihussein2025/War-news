@@ -1,7 +1,7 @@
 """add air violation edit lock
 
-Revision ID: 20260827_0037
-Revises: 20260827_0036
+Revision ID: 20260827_0041
+Revises: 20260827_0040
 Create Date: 2026-08-27
 
 """
@@ -13,8 +13,8 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 
-revision: str = "20260827_0037"
-down_revision: Union[str, Sequence[str], None] = "20260827_0036"
+revision: str = "20260827_0041"
+down_revision: Union[str, Sequence[str], None] = "20260827_0040"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

@@ -112,7 +112,7 @@ def _extraction_worker_count() -> int:
 
 
 def _claim_raw_message_id(claim_fn: Callable[[Session], RawMessage | None]) -> int | None:
-    """Claim one row and commit immediately so the FOR UPDATE lock is released."""
+    """Claim one row, persist the claim lease, and release the row lock."""
     with SessionLocal() as db:
         message = claim_fn(db)
         if message is None:
@@ -120,6 +120,11 @@ def _claim_raw_message_id(claim_fn: Callable[[Session], RawMessage | None]) -> i
         raw_message_id = message.id
         db.commit()
         return raw_message_id
+
+
+def _release_raw_message_claim(raw_message_id: int) -> None:
+    with SessionLocal() as db:
+        PipelineClaimRepository(db).release_claim(raw_message_id)
 
 
 def _claim_tier2_work() -> tuple[object, int] | None:
@@ -284,6 +289,7 @@ async def _tier1_extraction_worker(
         if raw_message_id is None:
             return
         if abort_state.triggered():
+            await asyncio.to_thread(_release_raw_message_claim, raw_message_id)
             return
 
         try:
@@ -304,6 +310,7 @@ async def _tier1_extraction_worker(
             stats.record_capped()
         except Exception as exc:
             if abort_state.trigger(exc) is not None:
+                await asyncio.to_thread(_release_raw_message_claim, raw_message_id)
                 return
             logger.exception(
                 "Concurrent tier1 extraction failed raw_message_id=%s error=%s",
@@ -390,10 +397,22 @@ async def _matching_worker(
 
         with SessionLocal() as db:
             action = build_match_incident_action(db)
+            raw_messages = RawMessageRepository(db)
             try:
                 action.execute(raw_message_id)
                 stats.record_success()
-            except Exception:
+            except Exception as exc:
+                db.rollback()
+                message = raw_messages.get_by_id(raw_message_id)
+                if (
+                    message is not None
+                    and message.status == MessageStatus.parsed
+                    and message.extraction_result is not None
+                    and message.match_result is None
+                ):
+                    raw_messages.record_transient_matching_failure(message, exc)
+                else:
+                    PipelineClaimRepository(db).release_claim(raw_message_id)
                 logger.exception(
                     "Concurrent matching failed raw_message_id=%s",
                     raw_message_id,
@@ -405,6 +424,19 @@ async def sweep_matching_concurrent(
     *,
     max_rows: int | None = None,
 ) -> StageSweepResult:
+    reset_count = 0
+    reset_capped = 0
+    with SessionLocal() as db:
+        reset_count, reset_capped = RawMessageRepository(
+            db
+        ).reset_retryable_matching_errors()
+        if reset_count or reset_capped:
+            logger.info(
+                "Matching retry reset re_queued=%s capped=%s before matching sweep",
+                reset_count,
+                reset_capped,
+            )
+
     started_at = time.monotonic()
     stats = _WorkerStats()
     workers = [

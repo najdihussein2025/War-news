@@ -21,7 +21,7 @@ from app.accounts.services.auth_service import AuthService
 from app.logs.repositories import LoginLogRepository
 from app.core.config import settings
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 def _record_login_attempt(

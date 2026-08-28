@@ -122,6 +122,25 @@ class RawMessage(Base):
         default=0,
         server_default=text("0"),
     )
+    match_retry_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default=text("0"),
+    )
+    processing_claim_stage: Mapped[str | None] = mapped_column(
+        String,
+        index=True,
+        nullable=True,
+    )
+    processing_claimed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    processing_claimed_by: Mapped[str | None] = mapped_column(
+        String,
+        nullable=True,
+    )
 
     source = relationship("Source", back_populates="raw_messages")
     source_platform_ref = relationship("SourcePlatform", back_populates="raw_messages")

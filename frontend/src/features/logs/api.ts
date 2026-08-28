@@ -13,14 +13,14 @@ export const getLogs = async (): Promise<ModerationLog[]> => {
 };
 
 export const getAuditLogs = async (filters: AuditLogFilters): Promise<AuditLogPage> => {
-  const response = await apiClient.get<AuditLogPage>("/api/logs/audit", { params: { search: filters.search?.trim() || undefined, action: filters.action || undefined, date_from: filters.dateFrom || undefined, date_to: filters.dateTo || undefined, page: filters.page ?? 1, page_size: filters.pageSize ?? 100 } });
+  const response = await apiClient.get<AuditLogPage>("/logs/audit", { params: { search: filters.search?.trim() || undefined, action: filters.action || undefined, date_from: filters.dateFrom || undefined, date_to: filters.dateTo || undefined, page: filters.page ?? 1, page_size: filters.pageSize ?? 100 } });
   return response.data;
 };
 
 export const getLoginLogs = async (
   filters: LoginLogFilters,
 ): Promise<LoginLogPage> => {
-  const response = await apiClient.get<LoginLogPage>("/api/logs/login", {
+  const response = await apiClient.get<LoginLogPage>("/logs/login", {
     params: {
       search: filters.search?.trim() || undefined,
       result: filters.result ?? "success",
@@ -34,7 +34,7 @@ export const getLoginLogs = async (
 };
 
 export const getIngestionLogs = async (filters: IngestionLogFilters): Promise<IngestionLogPage> => {
-  const response = await apiClient.get<IngestionLogPage>("/api/logs/ingestion", {
+  const response = await apiClient.get<IngestionLogPage>("/logs/ingestion", {
     params: {
       source_id: filters.sourceId || undefined,
       status: filters.status === "all" ? undefined : filters.status,
@@ -48,11 +48,11 @@ export const getIngestionLogs = async (filters: IngestionLogFilters): Promise<In
 };
 
 export const getIngestionLog = async (logId: number): Promise<IngestionLog> => {
-  const response = await apiClient.get<IngestionLog>(`/api/logs/ingestion/${logId}`);
+  const response = await apiClient.get<IngestionLog>(`/logs/ingestion/${logId}`);
   return response.data;
 };
 
 export const retryIngestion = async (logId: number): Promise<IngestionLog> => {
-  const response = await apiClient.post<IngestionLog>(`/api/logs/ingestion/${logId}/retry`);
+  const response = await apiClient.post<IngestionLog>(`/logs/ingestion/${logId}/retry`);
   return response.data;
 };

@@ -44,6 +44,17 @@ SWEEP_NAME = "live_sweep_new_only"
 EXTRACTION_RETRY_CAP_PREFIX = "extraction: exceeded max retries"
 MAX_ROWS: int | None = None
 
+# Per-pass row cap for stages that otherwise claim-until-empty. Each downstream
+# stage runs to completion before the next one starts, so an unbounded stage
+# (tier1_extraction is the worst: ~40s per LLM call, concurrency 2) drains its
+# entire backlog before matching / fast_path / tier2 / materialization get a
+# turn -- starving them for hours whenever a backlog exists. Capping each stage
+# to a bounded slice per pass lets the pass reach every stage, while the
+# SELECT ... FOR UPDATE SKIP LOCKED lease claim guarantees each pass advances
+# onto a fresh slice rather than reprocessing the same rows. Mirrors the
+# existing settings.pre_dedup_sweep_row_cap (=100) precedent.
+STAGE_MAX_ROWS_PER_PASS: int = 100
+
 class FilteredSession:
     """Process-local session wrapper for sync stage eligibility queries."""
 
@@ -263,39 +274,6 @@ def _claim_pending_pre_dedup_filtered(
     )
 
 
-def _claim_pending_extraction_filtered(
-    self: PipelineClaimRepository,
-) -> RawMessage | None:
-    return self.db.scalar(
-        select(RawMessage)
-        .where(
-            RawMessage.status == MessageStatus.parsed,
-            RawMessage.extraction_result.is_(None),
-            RawMessage.duplicate_of_id.is_(None),
-        )
-        .order_by(RawMessage.id.asc())
-        .limit(1)
-        .with_for_update(skip_locked=True)
-    )
-
-
-def _claim_pending_match_filtered(
-    self: PipelineClaimRepository,
-) -> RawMessage | None:
-    return self.db.scalar(
-        select(RawMessage)
-        .where(
-            RawMessage.status == MessageStatus.parsed,
-            RawMessage.extraction_result.is_not(None),
-            RawMessage.match_result.is_(None),
-            RawMessage.duplicate_of_id.is_(None),
-        )
-        .order_by(RawMessage.id.asc())
-        .limit(1)
-        .with_for_update(skip_locked=True)
-    )
-
-
 def _claim_pending_fast_path_filtered(
     self: PipelineClaimRepository,
 ) -> RawMessage | None:
@@ -469,16 +447,6 @@ def _apply_downstream_stage_patches() -> ExitStack:
     ) -> RawMessage | None:
         return _claim_pending_pre_dedup_filtered(self)
 
-    def claim_pending_extraction(
-        self: PipelineClaimRepository,
-    ) -> RawMessage | None:
-        return _claim_pending_extraction_filtered(self)
-
-    def claim_pending_match(
-        self: PipelineClaimRepository,
-    ) -> RawMessage | None:
-        return _claim_pending_match_filtered(self)
-
     def claim_pending_fast_path(
         self: PipelineClaimRepository,
     ) -> RawMessage | None:
@@ -511,20 +479,6 @@ def _apply_downstream_stage_patches() -> ExitStack:
             PipelineClaimRepository,
             "claim_pending_pre_dedup",
             claim_pending_pre_dedup,
-        )
-    )
-    stack.enter_context(
-        patch.object(
-            PipelineClaimRepository,
-            "claim_pending_extraction",
-            claim_pending_extraction,
-        )
-    )
-    stack.enter_context(
-        patch.object(
-            PipelineClaimRepository,
-            "claim_pending_match",
-            claim_pending_match,
         )
     )
     stack.enter_context(
@@ -592,10 +546,11 @@ async def _run_async_stage(
     sweep_fn,
     *,
     cutoff_raw_message_id: int,
+    max_rows: int | None = MAX_ROWS,
 ) -> StageSweepResult:
     started_at = time.monotonic()
     try:
-        return await sweep_fn(max_rows=MAX_ROWS)
+        return await sweep_fn(max_rows=max_rows)
     except Exception:
         logger.exception(
             "Pipeline stage=%s failed cutoff_raw_message_id=%s",
@@ -616,12 +571,13 @@ async def _run_async_stage_with_db(
     sweep_fn,
     *,
     cutoff_raw_message_id: int,
+    max_rows: int | None = MAX_ROWS,
 ) -> StageSweepResult:
     started_at = time.monotonic()
     with SessionLocal() as db:
         filtered_db = FilteredSession(db, cutoff_raw_message_id)
         try:
-            return await sweep_fn(filtered_db, max_rows=MAX_ROWS)
+            return await sweep_fn(filtered_db, max_rows=max_rows)
         except Exception:
             logger.exception(
                 "Pipeline stage=%s failed cutoff_raw_message_id=%s",
@@ -642,11 +598,12 @@ def _run_sync_stage(
     sweep_fn,
     *,
     cutoff_raw_message_id: int,
+    max_rows: int | None = MAX_ROWS,
 ) -> StageSweepResult:
     started_at = time.monotonic()
     with SessionLocal() as db:
         try:
-            return sweep_fn(db, max_rows=MAX_ROWS)
+            return sweep_fn(db, max_rows=max_rows)
         except Exception:
             logger.exception(
                 "Pipeline stage=%s failed cutoff_raw_message_id=%s",
@@ -714,6 +671,7 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                     "tier1_extraction",
                     sweep_extraction_concurrent,
                     cutoff_raw_message_id=cutoff_raw_message_id,
+                    max_rows=STAGE_MAX_ROWS_PER_PASS,
                 ),
                 cutoff_raw_message_id=cutoff_raw_message_id,
             )
@@ -726,6 +684,7 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                     "matching",
                     sweep_matching_concurrent,
                     cutoff_raw_message_id=cutoff_raw_message_id,
+                    max_rows=STAGE_MAX_ROWS_PER_PASS,
                 ),
                 cutoff_raw_message_id=cutoff_raw_message_id,
             )
@@ -736,6 +695,7 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                     "fast_path",
                     sweep_fast_path_concurrent,
                     cutoff_raw_message_id=cutoff_raw_message_id,
+                    max_rows=STAGE_MAX_ROWS_PER_PASS,
                 ),
                 cutoff_raw_message_id=cutoff_raw_message_id,
             )
@@ -746,6 +706,7 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                     "tier2_detail_fill",
                     sweep_tier2_detail_fill_concurrent,
                     cutoff_raw_message_id=cutoff_raw_message_id,
+                    max_rows=STAGE_MAX_ROWS_PER_PASS,
                 ),
                 cutoff_raw_message_id=cutoff_raw_message_id,
             )
@@ -758,6 +719,7 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                     "embedding",
                     sweep_embedding_generation,
                     cutoff_raw_message_id=cutoff_raw_message_id,
+                    max_rows=STAGE_MAX_ROWS_PER_PASS,
                 ),
                 cutoff_raw_message_id=cutoff_raw_message_id,
             )
@@ -768,6 +730,7 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                     "clustering",
                     sweep_clustering,
                     cutoff_raw_message_id=cutoff_raw_message_id,
+                    max_rows=STAGE_MAX_ROWS_PER_PASS,
                 ),
                 cutoff_raw_message_id=cutoff_raw_message_id,
             )
@@ -778,6 +741,7 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                     "materialization",
                     sweep_materialization,
                     cutoff_raw_message_id=cutoff_raw_message_id,
+                    max_rows=STAGE_MAX_ROWS_PER_PASS,
                 ),
                 cutoff_raw_message_id=cutoff_raw_message_id,
             )

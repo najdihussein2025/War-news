@@ -9,12 +9,12 @@ import type {
 } from "./types";
 
 export const getSources = async (): Promise<Source[]> => {
-  const response = await apiClient.get<Source[]>("/api/sources");
+  const response = await apiClient.get<Source[]>("/sources");
   return response.data;
 };
 
 export const getSource = async (sourceId: number): Promise<SourceDetail> => {
-  const response = await apiClient.get<SourceDetail>(`/api/sources/${sourceId}`);
+  const response = await apiClient.get<SourceDetail>(`/sources/${sourceId}`);
   return response.data;
 };
 
@@ -24,7 +24,7 @@ export const setSourceActive = async (
 ): Promise<SourceDetail> => {
   const action = isActive ? "resume" : "pause";
   const response = await apiClient.post<SourceDetail>(
-    `/api/sources/${sourceId}/${action}`,
+    `/sources/${sourceId}/${action}`,
   );
   return response.data;
 };
@@ -32,7 +32,7 @@ export const setSourceActive = async (
 export const getContentSources = async (
   filters: ContentSourceFilters = {},
 ): Promise<ContentSource[]> => {
-  const response = await apiClient.get<ContentSource[]>("/api/content-sources", {
+  const response = await apiClient.get<ContentSource[]>("/content-sources", {
     params: {
       platform: filters.platform || undefined,
       search: filters.search || undefined,
@@ -42,7 +42,7 @@ export const getContentSources = async (
 };
 
 const contentSourcePath = (sourcePlatform: string, originAccount: string) =>
-  `/api/content-sources/${encodeURIComponent(sourcePlatform)}/${encodeURIComponent(
+  `/content-sources/${encodeURIComponent(sourcePlatform)}/${encodeURIComponent(
     originAccount,
   )}`;
 

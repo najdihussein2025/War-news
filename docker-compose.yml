@@ -100,6 +100,26 @@ services:
     networks:
       - appnet
 
+  backlog-relevance-worker:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      PG_APPLICATION_NAME: war-news-backlog-relevance
+      PIPELINE_ROLE: backlog-relevance-worker
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - .:/app
+    command: sh -c "while true; do python -m scripts.backlog_relevance_sweep; sleep 1800; done"
+    restart: unless-stopped
+    networks:
+      - appnet
+
   cnrs-poll-worker:
     build:
       context: .

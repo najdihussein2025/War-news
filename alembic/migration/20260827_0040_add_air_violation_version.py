@@ -1,7 +1,7 @@
 """add air violation version
 
-Revision ID: 20260827_0036
-Revises: 20260827_0035
+Revision ID: 20260827_0040
+Revises: 20260827_0037
 Create Date: 2026-08-27
 
 """
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from alembic import op
 
 
-revision: str = "20260827_0036"
-down_revision: Union[str, Sequence[str], None] = "20260827_0035"
+revision: str = "20260827_0040"
+down_revision: Union[str, Sequence[str], None] = "20260827_0037"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

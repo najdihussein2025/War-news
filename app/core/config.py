@@ -76,7 +76,9 @@ class Settings(BaseSettings):
     pg_application_name: str = "war-news"
     pipeline_role: str = "api"
     pipeline_worker_poll_seconds: float = 2.0
+    pipeline_claim_lease_seconds: int = 240
     extraction_max_retries: int = 5
+    matching_max_retries: int = 5
     redis_url: str = "redis://redis:6379/0"
     cache_enabled: bool = True
 
