@@ -43,7 +43,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         return list(
             self.db.scalars(
                 select(RawMessage)
-                .options(joinedload(RawMessage.source))
+                .options(joinedload(RawMessage.source, innerjoin=True))
                 .where(
                     RawMessage.status == MessageStatus.pending,
                     RawMessage.filter_result.is_(None),
