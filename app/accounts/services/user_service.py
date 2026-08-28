@@ -188,7 +188,14 @@ class UserService:
             raise UserNotFoundError("User does not exist.")
         self.users.release_edit_lock(user_id, requested_by_user.id)
 
-    def change_password(self, user_id, current_password: str, new_password: str, requested_by_user: User) -> User:
+    def change_password(
+        self,
+        user_id,
+        current_password: str,
+        new_password: str,
+        version: int,
+        requested_by_user: User,
+    ) -> User:
         target_user = self.users.get_by_id(user_id)
         if target_user is None:
             raise UserNotFoundError("User does not exist.")
@@ -202,7 +209,17 @@ class UserService:
         if not password_context.verify(current_password, requested_by_user.password_hash):
             raise PasswordChangeError("Current password is incorrect.")
 
-        target_user.password_hash = password_context.hash(new_password)
-        updated = self.users.update(target_user)
+        try:
+            updated = self.users.change_password(
+                target_user.id,
+                version,
+                password_context.hash(new_password),
+            )
+        except StaleDataError as exc:
+            raise UserConflictError(
+                "Your account changed after this settings page was opened. Refresh and try again."
+            ) from exc
+        if updated is None:
+            raise UserNotFoundError("User does not exist.")
         self.sessions.revoke_all_for_user(target_user.id)
         return updated

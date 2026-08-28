@@ -174,6 +174,11 @@ export const SettingsPage = () => {
       return;
     }
 
+    if (!user.version) {
+      setSubmitError("Your account information is out of date. Please sign in again.");
+      return;
+    }
+
     if (form.newPassword !== form.confirmPassword) {
       setSubmitError("New password and confirmation must match.");
       return;
@@ -186,6 +191,7 @@ export const SettingsPage = () => {
       await changeAccountPassword(user.id, {
         current_password: form.currentPassword,
         new_password: form.newPassword,
+        version: user.version,
       });
       setForm(emptyPasswordForm);
       shell?.showToast("Password changed successfully. Please sign in again.");

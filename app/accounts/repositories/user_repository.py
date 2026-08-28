@@ -58,6 +58,20 @@ class UserRepository:
         self.db.refresh(user)
         return user
 
+    def change_password(self, user_id: UUID, version: int, password_hash: str) -> User | None:
+        result = self.db.execute(
+            sa_update(User)
+            .where(User.id == user_id, User.version == version)
+            .values(password_hash=password_hash, version=User.version + 1)
+        )
+        if result.rowcount == 0:
+            self.db.rollback()
+            if self.db.get(User, user_id) is None:
+                return None
+            raise StaleDataError("Account version is stale.")
+        self.db.commit()
+        return self.get_by_id(user_id)
+
     def soft_deactivate(self, user: User) -> User:
         user.is_active = False
         return self.update(user)

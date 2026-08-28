@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiClient } from "../lib/apiClient";
 import { login } from "./auth/api";
+import { changeAccountPassword } from "./accounts/api";
 import { acquireAirViolationEditLock, createAirViolation, deleteAirViolation, releaseAirViolationEditLock, updateAirViolation } from "./airViolations/api";
 import { getConditions, getVillages } from "./news/api";
 import { acquireIncidentEditLock, deleteIncident, releaseIncidentEditLock, updateIncidentDetails } from "./news/api";
@@ -56,6 +57,19 @@ describe("frontend API contracts", () => {
     expect(client.delete).toHaveBeenCalledWith("/api/air-violations/8", { params: { version: 4 } });
     expect(client.post).toHaveBeenCalledWith("/api/air-violations/8/edit-lock");
     expect(client.delete).toHaveBeenCalledWith("/api/air-violations/8/edit-lock");
+  });
+
+  it("sends the account version when changing a password", async () => {
+    await changeAccountPassword("user-1", {
+      current_password: "old-password",
+      new_password: "new-password",
+      version: 7,
+    });
+    expect(client.patch).toHaveBeenCalledWith("/api/accounts/user-1/password", {
+      current_password: "old-password",
+      new_password: "new-password",
+      version: 7,
+    });
   });
 
   it("uses versioned Incident mutation and edit-lock endpoints", async () => {

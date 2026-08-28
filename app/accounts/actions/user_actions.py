@@ -67,7 +67,13 @@ def change_account_password(
     dto: PasswordChangeDTO,
     current_user: User,
 ) -> None:
-    _service(db).change_password(user_id, dto.current_password, dto.new_password, current_user)
+    _service(db).change_password(
+        user_id,
+        dto.current_password,
+        dto.new_password,
+        dto.version,
+        current_user,
+    )
 
 
 def acquire_account_edit_lock(db: Session, user_id: UUID, current_user: User) -> UserResponseDTO:
