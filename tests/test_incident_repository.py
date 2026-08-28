@@ -111,6 +111,17 @@ def test_list_all_default_does_not_require_materialized_incident() -> None:
     assert "incidents.id is not null" not in compiled
 
 
+def test_list_all_excludes_ocr_payload_rows() -> None:
+    db = _ListSessionStub()
+
+    IncidentRepository(db).list_all(IncidentListParams())  # type: ignore[arg-type]
+
+    compiled = str(
+        db.statements[0].compile(compile_kwargs={"literal_binds": True})
+    ).lower()
+    assert "not (raw_messages.raw_payload ? 'ocr_text')" in compiled
+
+
 def test_list_all_incident_scoped_filters_require_materialized_incident() -> None:
     db = _ListSessionStub()
 
@@ -150,3 +161,21 @@ def test_incident_list_item_accepts_pre_materialization_row() -> None:
     assert item.id is None
     assert item.raw_message_id == 42
     assert item.raw_status == "parsed"
+
+
+def test_list_duplicate_candidates_excludes_same_raw_message_when_requested() -> None:
+    db = _ListSessionStub()
+
+    IncidentRepository(db).list_duplicate_candidates(  # type: ignore[arg-type]
+        village_id=976,
+        event_date=date(2026, 8, 28),
+        khabar_embedding=[0.1, 0.2, 0.3],
+        window_days=2,
+        exclude_raw_message_id=42,
+    )
+
+    compiled = str(
+        db.statements[0].compile(compile_kwargs={"literal_binds": True})
+    ).lower()
+    assert "incidents.village_id = 976" in compiled
+    assert "incidents.raw_message_id != 42" in compiled

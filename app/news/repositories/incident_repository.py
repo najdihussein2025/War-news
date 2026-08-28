@@ -466,24 +466,26 @@ class IncidentRepository(IncidentRepositoryInterface):
         event_date: date,
         khabar_embedding: list[float],
         window_days: int,
+        exclude_raw_message_id: int | None = None,
     ) -> list[tuple[Incident, float]]:
         start_date = event_date - timedelta(days=window_days)
         end_date = event_date + timedelta(days=window_days)
         embedding_similarity = (
             1.0 - Incident.khabar_embedding.cosine_distance(khabar_embedding)
         ).label("embedding_similarity")
+        filters = [
+            Incident.village_id == village_id,
+            Incident.is_deleted.is_(False),
+            Incident.event_date >= start_date,
+            Incident.event_date <= end_date,
+            Incident.khabar_embedding.is_not(None),
+        ]
+        if exclude_raw_message_id is not None:
+            filters.append(Incident.raw_message_id != exclude_raw_message_id)
 
         rows = self.db.execute(
             select(Incident, embedding_similarity)
-            .where(
-                and_(
-                    Incident.village_id == village_id,
-                    Incident.is_deleted.is_(False),
-                    Incident.event_date >= start_date,
-                    Incident.event_date <= end_date,
-                    Incident.khabar_embedding.is_not(None),
-                )
-            )
+            .where(and_(*filters))
             .order_by(desc(embedding_similarity))
         ).all()
 
@@ -783,7 +785,8 @@ class IncidentRepository(IncidentRepositoryInterface):
                     MessageStatus.parsed,
                     MessageStatus.materialized,
                 ]
-            )
+            ),
+            ~RawMessage.raw_payload.op("?")("ocr_text"),
         ]
         if cls._has_incident_scoped_filters(params):
             filters.append(Incident.id.is_not(None))

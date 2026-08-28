@@ -58,6 +58,7 @@ class IncidentRepositoryInterface(ABC):
         event_date: date,
         khabar_embedding: list[float],
         window_days: int,
+        exclude_raw_message_id: int | None = None,
     ) -> list[tuple[Incident, float]]:
         pass
 

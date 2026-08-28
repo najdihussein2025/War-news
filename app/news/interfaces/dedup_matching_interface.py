@@ -13,6 +13,7 @@ class DedupMatchingInterface(ABC):
         condition_id: int,
         event_date: date,
         khabar_embedding: list[float],
+        exclude_raw_message_id: int | None = None,
     ) -> tuple[Incident | None, float]:
         pass
 

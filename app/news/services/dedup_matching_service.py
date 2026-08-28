@@ -32,6 +32,7 @@ class DedupMatchingService(DedupMatchingInterface):
         condition_id: int,
         event_date: date,
         khabar_embedding: list[float],
+        exclude_raw_message_id: int | None = None,
     ) -> tuple[Incident | None, float]:
         window_days = settings.dedup_time_window_days
         candidates = self.incident_repository.list_duplicate_candidates(
@@ -39,6 +40,7 @@ class DedupMatchingService(DedupMatchingInterface):
             event_date=event_date,
             khabar_embedding=khabar_embedding,
             window_days=window_days,
+            exclude_raw_message_id=exclude_raw_message_id,
         )
         if not candidates:
             return None, 0.0

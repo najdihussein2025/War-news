@@ -411,6 +411,7 @@ class IncidentMaterializationService:
                     condition_id=condition_id,
                     event_date=event_datetime.date(),
                     khabar_embedding=khabar_embedding,
+                    exclude_raw_message_id=representative.id,
                 )
                 if existing is not None and score >= settings.dedup_high_threshold:
                     try:

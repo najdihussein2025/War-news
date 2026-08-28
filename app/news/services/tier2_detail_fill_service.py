@@ -165,6 +165,7 @@ class Tier2DetailFillService:
             condition_id=incident.condition_id,
             event_date=incident.event_date,
             khabar_embedding=embedding,
+            exclude_raw_message_id=incident.raw_message_id or raw_message_id,
         )
         if existing is None or existing.id == incident.id:
             return
