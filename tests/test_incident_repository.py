@@ -82,7 +82,42 @@ def test_list_all_defaults_to_newest_created_first() -> None:
         db.statements[0].compile(compile_kwargs={"literal_binds": True})
     ).lower()
     order_at = compiled.index("order by")
-    created_at = compiled.index("incidents.created_at", order_at)
+    created_at = compiled.index(
+        "coalesce(incidents.created_at, raw_messages.received_at)",
+        order_at,
+    )
     event_date_at = compiled.index("incidents.event_date", order_at)
     assert created_at < event_date_at
-    assert "incidents.created_at desc" in compiled
+    assert (
+        "coalesce(incidents.created_at, raw_messages.received_at) desc"
+        in compiled
+    )
+
+
+def test_list_all_default_does_not_require_materialized_incident() -> None:
+    db = _ListSessionStub()
+
+    IncidentRepository(db).list_all(IncidentListParams())  # type: ignore[arg-type]
+
+    compiled = str(
+        db.statements[0].compile(compile_kwargs={"literal_binds": True})
+    ).lower()
+    assert "from raw_messages" in compiled
+    assert (
+        "raw_messages.status in ('parsed', 'materialized', 'routed_air_violation')"
+        in compiled
+    )
+    assert "incidents.id is not null" not in compiled
+
+
+def test_list_all_incident_scoped_filters_require_materialized_incident() -> None:
+    db = _ListSessionStub()
+
+    IncidentRepository(db).list_all(  # type: ignore[arg-type]
+        IncidentListParams(village="Aitaroun")
+    )
+
+    compiled = str(
+        db.statements[0].compile(compile_kwargs={"literal_binds": True})
+    ).lower()
+    assert "incidents.id is not null" in compiled

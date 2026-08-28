@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import and_, case, desc, func, or_, select, update as sa_update
+from sqlalchemy import and_, case, desc, func, or_, select, true, update as sa_update
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import StaleDataError
 
@@ -29,6 +29,7 @@ from app.news.models import (
     IncidentUpdate,
     MatchStatus,
     MatchType,
+    MessageStatus,
     RawMessage,
     UpdateAction,
     Village,
@@ -51,16 +52,29 @@ class IncidentRepository(IncidentRepositoryInterface):
     def list_all(self, params: IncidentListParams) -> IncidentListResponse:
         filters = self._list_filters(params)
         low_confidence = self._low_confidence_match()
+        event_datetime = func.coalesce(
+            RawMessage.message_datetime,
+            RawMessage.received_at,
+        )
+        event_date = func.coalesce(
+            Incident.event_date,
+            func.date(event_datetime),
+        )
+        created_at = func.coalesce(Incident.created_at, RawMessage.received_at)
 
         base_query = (
             select(
-                Incident.id,
-                Incident.raw_message_id,
+                Incident.id.label("id"),
+                RawMessage.id.label("raw_message_id"),
+                RawMessage.status.label("raw_status"),
                 func.coalesce(Village.ref_name_en, Village.cad_name).label("village"),
                 Condition.action_en.label("condition"),
-                Incident.event_date,
+                event_date.label("event_date"),
                 Incident.event_time,
-                Incident.khabar,
+                func.coalesce(
+                    Incident.khabar,
+                    func.left(RawMessage.raw_text, 300),
+                ).label("khabar"),
                 case(
                     (RawMessage.source_platform.is_not(None), func.initcap(RawMessage.source_platform)),
                     (RawMessage.external_message_id.ilike("twitter:%"), "Twitter"),
@@ -75,21 +89,34 @@ class IncidentRepository(IncidentRepositoryInterface):
                     else_=None,
                 ).label("source"),
                 self._source_reference_expression().label("source_reference"),
-                case((low_confidence, False), else_=True).label("matched"),
+                case(
+                    (Incident.id.is_(None), False),
+                    (low_confidence, False),
+                    else_=True,
+                ).label("matched"),
                 case(
                     (Incident.duplicate_flag.is_(True), "possible"),
                     else_="none",
                 ).label("duplicate_flag"),
-                Incident.details_pending,
-                Incident.created_at,
-                Incident.version,
+                func.coalesce(Incident.details_pending, true()).label(
+                    "details_pending"
+                ),
+                created_at.label("created_at"),
+                func.coalesce(Incident.version, 1).label("version"),
                 Incident.locked_by_user_id,
                 Incident.edit_lock_expires_at,
+            )
+            .select_from(RawMessage)
+            .outerjoin(
+                Incident,
+                and_(
+                    Incident.raw_message_id == RawMessage.id,
+                    Incident.is_deleted.is_(False),
+                ),
             )
             .outerjoin(Village, Village.id == Incident.village_id)
             .outerjoin(Condition, Condition.id == Incident.condition_id)
             .outerjoin(Source, Source.id == Incident.source_id)
-            .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
             .where(*filters)
         )
 
@@ -101,23 +128,40 @@ class IncidentRepository(IncidentRepositoryInterface):
             .offset(params.offset)
         ).all()
         total = self.db.scalar(
-            select(func.count(Incident.id))
+            select(func.count(RawMessage.id))
+            .select_from(RawMessage)
+            .outerjoin(
+                Incident,
+                and_(
+                    Incident.raw_message_id == RawMessage.id,
+                    Incident.is_deleted.is_(False),
+                ),
+            )
             .outerjoin(Village, Village.id == Incident.village_id)
             .outerjoin(Condition, Condition.id == Incident.condition_id)
             .outerjoin(Source, Source.id == Incident.source_id)
-            .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
             .where(*filters)
         )
         latest_incident_at = self.db.scalar(
             select(
                 func.max(
-                    func.greatest(Incident.created_at, Incident.updated_at)
+                    func.greatest(
+                        created_at,
+                        func.coalesce(Incident.updated_at, RawMessage.received_at),
+                    )
                 )
+            )
+            .select_from(RawMessage)
+            .outerjoin(
+                Incident,
+                and_(
+                    Incident.raw_message_id == RawMessage.id,
+                    Incident.is_deleted.is_(False),
+                ),
             )
             .outerjoin(Village, Village.id == Incident.village_id)
             .outerjoin(Condition, Condition.id == Incident.condition_id)
             .outerjoin(Source, Source.id == Incident.source_id)
-            .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
             .where(*filters)
         )
 
@@ -733,7 +777,17 @@ class IncidentRepository(IncidentRepositoryInterface):
 
     @classmethod
     def _list_filters(cls, params: IncidentListParams) -> list[object]:
-        filters: list[object] = [Incident.is_deleted.is_(False)]
+        filters: list[object] = [
+            RawMessage.status.in_(
+                [
+                    MessageStatus.parsed,
+                    MessageStatus.materialized,
+                    MessageStatus.routed_air_violation,
+                ]
+            )
+        ]
+        if cls._has_incident_scoped_filters(params):
+            filters.append(Incident.id.is_not(None))
         if params.village:
             village_pattern = f"%{params.village}%"
             filters.append(
@@ -773,16 +827,38 @@ class IncidentRepository(IncidentRepositoryInterface):
 
     @staticmethod
     def _list_ordering(params: IncidentListParams) -> tuple[object, ...]:
+        event_datetime = func.coalesce(
+            RawMessage.message_datetime,
+            RawMessage.received_at,
+        )
+        event_date = func.coalesce(
+            Incident.event_date,
+            func.date(event_datetime),
+        )
+        created_at = func.coalesce(Incident.created_at, RawMessage.received_at)
         if params.sort_order == "oldest":
             return (
-                Incident.event_date.asc(),
+                created_at.asc(),
+                event_date.asc(),
                 Incident.event_time.asc().nullslast(),
-                Incident.created_at.asc(),
             )
         return (
-            Incident.event_date.desc(),
+            created_at.desc(),
+            event_date.desc(),
             Incident.event_time.desc().nullslast(),
-            Incident.created_at.desc(),
+        )
+
+    @staticmethod
+    def _has_incident_scoped_filters(params: IncidentListParams) -> bool:
+        return bool(
+            params.village
+            or params.condition
+            or params.source_type
+            or params.event_date_from is not None
+            or params.event_date_to is not None
+            or params.flagged_only
+            or params.verification_status is not None
+            or params.duplicate_only
         )
 
     @staticmethod
