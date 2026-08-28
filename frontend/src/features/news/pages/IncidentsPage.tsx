@@ -26,6 +26,29 @@ const PAGE_SIZE = 25;
 const twoLineClampClass =
   "overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]";
 
+const preMaterializationStatus = (
+  rawStatus: string,
+  incidentId: string | null,
+) => {
+  if (incidentId) {
+    return null;
+  }
+  if (rawStatus === "parsed") {
+    return { label: "Processing", variant: "accent" as const };
+  }
+  if (rawStatus === "routed_air_violation") {
+    return { label: "Air violation (routed)", variant: "warning" as const };
+  }
+  return { label: "Processing", variant: "neutral" as const };
+};
+
+const PreMaterializationStatusBadge = ({ row }: { row: Incident }) => {
+  const status = preMaterializationStatus(row.raw_status, row.id);
+  return status ? (
+    <StatusBadge label={status.label} variant={status.variant} />
+  ) : null;
+};
+
 const PlusIcon = () => (
   <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none">
     <path
@@ -180,6 +203,7 @@ export const IncidentsPage = () => {
             <span className="font-semibold text-text-primary">
               {row.village || "Unknown village"}
             </span>
+            <PreMaterializationStatusBadge row={row} />
             {row.duplicate_flag === "possible" ? (
               <StatusBadge label="Possible duplicate" variant="warning" />
             ) : null}
@@ -451,7 +475,7 @@ export const IncidentsPage = () => {
         <DataTable
           columns={columns}
           rows={rows}
-          getRowKey={(row) => row.id}
+          getRowKey={(row) => row.id ?? `raw-${row.raw_message_id}`}
           loading={isLoading}
           error={isError}
           clientSort={false}
@@ -476,7 +500,12 @@ export const IncidentsPage = () => {
               type="button"
               variant="secondary"
               className="h-9 w-full sm:w-auto"
-              onClick={() => navigate(`${roleBase}/incidents/${row.id}`)}
+              disabled={!row.id}
+              onClick={() => {
+                if (row.id) {
+                  navigate(`${roleBase}/incidents/${row.id}`);
+                }
+              }}
             >
               View details
             </Button>

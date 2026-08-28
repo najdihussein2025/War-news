@@ -8,8 +8,9 @@ export type IncidentSource =
   | "Other";
 
 export type Incident = {
-  id: string;
-  raw_message_id: number | null;
+  id: string | null;
+  raw_message_id: number;
+  raw_status: string;
   village: string | null;
   condition: string | null;
   event_date: string;
