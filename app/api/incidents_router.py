@@ -38,7 +38,7 @@ def create_incident(
 
 @router.get("", response_model=IncidentListResponse)
 def list_incidents(
-    limit: int = Query(default=25, ge=1, le=100),
+    limit: int = Query(default=150, ge=1, le=150),
     offset: int = Query(default=0, ge=0),
     village: str | None = Query(default=None),
     condition: str | None = Query(default=None),

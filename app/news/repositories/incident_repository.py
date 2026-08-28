@@ -782,7 +782,6 @@ class IncidentRepository(IncidentRepositoryInterface):
                 [
                     MessageStatus.parsed,
                     MessageStatus.materialized,
-                    MessageStatus.routed_air_violation,
                 ]
             )
         ]

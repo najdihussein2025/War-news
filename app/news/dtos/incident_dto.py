@@ -30,7 +30,7 @@ class IncidentListItemDTO(BaseModel):
 class IncidentListParams(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    limit: int = Field(default=25, ge=1, le=100)
+    limit: int = Field(default=150, ge=1, le=150)
     offset: int = Field(default=0, ge=0)
     village: str | None = None
     condition: str | None = None

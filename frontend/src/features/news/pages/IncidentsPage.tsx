@@ -22,7 +22,7 @@ import { useConditionsQuery, useIncidentsQuery, useVillagesQuery } from "../hook
 import { createIncident } from "../api";
 import type { Incident } from "../types";
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 150;
 const twoLineClampClass =
   "overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]";
 

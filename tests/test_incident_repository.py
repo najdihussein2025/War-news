@@ -105,7 +105,7 @@ def test_list_all_default_does_not_require_materialized_incident() -> None:
     ).lower()
     assert "from raw_messages" in compiled
     assert (
-        "raw_messages.status in ('parsed', 'materialized', 'routed_air_violation')"
+        "raw_messages.status in ('parsed', 'materialized')"
         in compiled
     )
     assert "incidents.id is not null" not in compiled
