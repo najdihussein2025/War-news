@@ -459,6 +459,16 @@ export const AccountsPage = () => {
       && new Date(user.admin_edit_lock_expires_at).getTime() > Date.now(),
     );
 
+  useEffect(() => {
+    if (!openMenuId) {
+      return;
+    }
+    const openUser = users.find((user) => user.id === openMenuId);
+    if (openUser && isLockedByAnotherAdmin(openUser)) {
+      setOpenMenuId(null);
+    }
+  }, [currentUserId, openMenuId, users]);
+
   const clearFilters = () => {
     setSearch("");
     setRoleFilter("all");
@@ -856,21 +866,24 @@ export const AccountsPage = () => {
                       <div className="absolute right-4 top-14 z-20 w-56 rounded-lg border border-border bg-surface-raised p-1.5 text-left shadow-overlay">
                         <button
                           type="button"
-                          className="block w-full rounded-md px-3 py-2 text-left text-small font-medium text-text-primary hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+                          className="block w-full rounded-md px-3 py-2 text-left text-small font-medium text-text-primary hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={isLockedByAnotherAdmin(user)}
                           onClick={() => openEditDialog(user)}
                         >
                           Edit
                         </button>
                         <button
                           type="button"
-                          className="block w-full rounded-md px-3 py-2 text-left text-small font-medium text-danger hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+                          className="block w-full rounded-md px-3 py-2 text-left text-small font-medium text-danger hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={isLockedByAnotherAdmin(user)}
                           onClick={() => requestActiveChange(user)}
                         >
                           {user.is_active ? "Deactivate" : "Reactivate"}
                         </button>
                         <button
                           type="button"
-                          className="mt-1 block w-full rounded-md border-t border-border px-3 py-2 text-left text-small font-medium text-danger hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+                          className="mt-1 block w-full rounded-md border-t border-border px-3 py-2 text-left text-small font-medium text-danger hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={isLockedByAnotherAdmin(user)}
                           onClick={() => requestDelete(user)}
                         >
                           Delete
