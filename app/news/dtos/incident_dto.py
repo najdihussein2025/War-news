@@ -8,8 +8,9 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class IncidentListItemDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True, frozen=True)
 
-    id: UUID
-    raw_message_id: int | None
+    id: UUID | None
+    raw_message_id: int
+    raw_status: str
     village: str | None
     condition: str | None
     event_date: date

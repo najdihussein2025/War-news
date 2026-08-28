@@ -1,9 +1,10 @@
+from datetime import date, datetime, timezone
 from uuid import uuid4
 
 import app.accounts.models  # noqa: F401
 import app.logs.models  # noqa: F401
 import app.sources.models  # noqa: F401
-from app.news.dtos import IncidentListParams
+from app.news.dtos import IncidentListItemDTO, IncidentListParams
 from app.news.models import Incident
 from app.news.repositories.incident_repository import IncidentRepository
 
@@ -121,3 +122,31 @@ def test_list_all_incident_scoped_filters_require_materialized_incident() -> Non
         db.statements[0].compile(compile_kwargs={"literal_binds": True})
     ).lower()
     assert "incidents.id is not null" in compiled
+
+
+def test_incident_list_item_accepts_pre_materialization_row() -> None:
+    item = IncidentListItemDTO.model_validate(
+        {
+            "id": None,
+            "raw_message_id": 42,
+            "raw_status": "parsed",
+            "village": None,
+            "condition": None,
+            "event_date": date(2026, 8, 28),
+            "event_time": None,
+            "khabar": "Incoming report still in processing.",
+            "source": "Telegram",
+            "source_reference": "source-channel",
+            "matched": False,
+            "duplicate_flag": "none",
+            "details_pending": True,
+            "created_at": datetime(2026, 8, 28, 9, 30, tzinfo=timezone.utc),
+            "version": 1,
+            "locked_by_user_id": None,
+            "edit_lock_expires_at": None,
+        }
+    )
+
+    assert item.id is None
+    assert item.raw_message_id == 42
+    assert item.raw_status == "parsed"
