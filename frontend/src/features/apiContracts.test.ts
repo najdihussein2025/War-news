@@ -23,6 +23,7 @@ import {
   updateIncidentDetails,
 } from "./news/api";
 import { getContentSource, getContentSources } from "./sources/api";
+import { getMapEvents } from "./map/api";
 
 vi.mock("../lib/apiClient", () => ({
   apiClient: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn(), patch: vi.fn() },
@@ -57,6 +58,18 @@ describe("frontend API contracts", () => {
     vi.mocked(client.get).mockResolvedValue({ data: [] });
     await getVillages();
     expect(client.get).toHaveBeenCalledWith("/villages");
+  });
+
+  it("loads the unified map with repeated event-type filters", async () => {
+    vi.mocked(client.get).mockResolvedValue({ data: { items: [], unmapped_count: 0, truncated: false } });
+    await getMapEvents({
+      dateFrom: "2026-08-27",
+      dateTo: "2026-08-28",
+      eventTypes: ["incident", "air_violation"],
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/map/events?event_date_from=2026-08-27&event_date_to=2026-08-28&event_type=incident&event_type=air_violation",
+    );
   });
 
   it("uses normalized incident endpoints without duplicating the api base path", async () => {

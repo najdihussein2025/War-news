@@ -11,6 +11,7 @@ from app.api.logs_router import router as logs_router
 from app.api.pipeline_router import router as pipeline_router
 from app.api.sources_router import router as sources_router
 from app.api.webhooks_router import router as webhooks_router
+from app.api.map_router import router as map_router
 
 router = APIRouter()
 router.include_router(accounts_router)
@@ -24,3 +25,4 @@ router.include_router(incidents_router)
 router.include_router(news_router)
 router.include_router(logs_router)
 router.include_router(pipeline_router)
+router.include_router(map_router)
