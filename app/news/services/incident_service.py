@@ -11,6 +11,7 @@ from app.news.dtos import (
     IncidentListParams,
     IncidentListResponse,
     IncidentUpdateDTO,
+    IncidentVerificationDTO,
 )
 from app.news.interfaces import IncidentRepositoryInterface
 
@@ -88,6 +89,15 @@ class IncidentService:
 
     def release_edit_lock(self, incident_id: UUID, user_id: UUID) -> None:
         self.incidents.release_edit_lock(incident_id, user_id)
+
+    def set_verification(self, incident_id: UUID, payload: IncidentVerificationDTO, user_id: UUID) -> IncidentDetailDTO:
+        try:
+            incident = self.incidents.set_verification(incident_id, payload.status, payload.reason, payload.version, user_id)
+        except StaleDataError as exc:
+            raise IncidentConflictError("This incident verification was changed by another administrator.") from exc
+        if incident is None:
+            raise IncidentNotFoundError("Incident not found.")
+        return incident
 
     def get_duplicate_candidate(
         self, incident_id: UUID

@@ -19,6 +19,10 @@ export type Incident = {
   source: IncidentSource | null;
   source_reference: string | null;
   matched: boolean;
+  verification_status: "auto_processed" | "needs_verification" | "verified" | "rejected";
+  verification_reason: string | null;
+  verified_by_user_id: string | null;
+  verified_at: string | null;
   duplicate_flag: "none" | "possible";
   duplicate_level?: "low" | "medium" | "high" | null;
   duplicate_similarity_score?: number | null;
@@ -46,7 +50,7 @@ export type IncidentFilters = {
   eventDateFrom?: string;
   eventDateTo?: string;
   flaggedOnly?: boolean;
-  verificationStatus?: "matched" | "needs_verification";
+  verificationStatus?: "auto_processed" | "needs_verification" | "verified" | "rejected";
   duplicateOnly?: boolean;
   sortOrder?: "newest" | "oldest";
 };

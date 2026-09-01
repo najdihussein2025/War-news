@@ -31,6 +31,16 @@ from app.news.services.fast_path_eligibility import (
     permanent_ineligibility_reason,
 )
 
+
+def _initial_verification_status(match_result: dict | None) -> str:
+    result = match_result or {}
+    if result.get("condition_match_status") != "matched":
+        return "needs_verification"
+    villages = result.get("village_matches") or []
+    if any(v.get("village_match_status") != "matched" for v in villages):
+        return "needs_verification"
+    return "auto_processed"
+
 logger = logging.getLogger(__name__)
 
 EXACT_HASH_CONSTRAINT = "uq_incidents_exact_hash_active"
@@ -274,6 +284,7 @@ class IncidentMaterializationService:
             exact_hash=exact_hash,
             duplicate_flag=False,
             details_pending=True,
+            verification_status=_initial_verification_status(representative.match_result),
             created_by=None,
         )
 
@@ -485,6 +496,7 @@ class IncidentMaterializationService:
                 duplicate_flag=duplicate_flag,
                 duplicate_level=duplicate_level,
                 duplicate_similarity_score=duplicate_score,
+                verification_status=_initial_verification_status(representative.match_result),
                 created_by=None,
             )
 

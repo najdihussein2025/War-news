@@ -85,3 +85,22 @@ def test_news_summary_never_exposes_unreadable_red_alert_ocr() -> None:
 
     assert summary == "رُصدت طائرة مسيّرة. تعذّر تحديد المنطقة بدقة من الصورة."
     assert "SSS" not in summary
+
+
+def test_rejection_reason_contextualizes_legacy_red_alert_ocr_reason() -> None:
+    message = SimpleNamespace(
+        status=MessageStatus.rejected,
+        duplicate_of_id=None,
+        filter_result={"verdict": "not_relevant", "reasoning": "No canonical village matched"},
+        cnrs_classification=None,
+        error_message=None,
+        low_confidence_relevance=False,
+        source_name="Red Alert Lebanon",
+        raw_text="redalert.com.lb OCR noise",
+        raw_payload={"ocr_text": "OCR noise"},
+    )
+
+    assert _reason(message) == (
+        "not_relevant",
+        "تعذّر تحديد المنطقة بدقة من صورة التنبيه.",
+    )

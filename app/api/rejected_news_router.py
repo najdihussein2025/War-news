@@ -49,6 +49,9 @@ class RestoreRejectedResult(BaseModel):
 def _arabic_reason(reason: str, rejection_type: str) -> str:
     normalized = reason.strip().lower()
     translations = (
+        (("general multi-area alert", "no single village applies"), "التنبيه عام ويشمل عدة مناطق، لذلك لا ينطبق على بلدة واحدة."),
+        (("location could not be identified reliably from the alert image",), "تعذّر تحديد المنطقة بدقة من صورة التنبيه."),
+        (("no locality was specified in the red alert notice",), "لم يحدّد تنبيه Red Alert بلدة بعينها."),
         (("no canonical village matched", "no village matched", "unmatched village"), "لم يتم العثور على بلدة معتمدة مطابقة للخبر."),
         (("no canonical condition matched", "no condition matched", "unmatched condition"), "لم يتم العثور على حالة أو نوع حدث معتمد مطابق للخبر."),
         (("not related to lebanon", "not relevant to lebanon", "outside lebanon"), "الخبر غير مرتبط بلبنان."),
@@ -135,6 +138,14 @@ def _reason_details(message: RawMessage) -> tuple[str, str, str]:
         or classification.get("reason")
         or message.error_message
     )
+    if str(reason or "").strip().lower() == "no canonical village matched" and getattr(message, "source_name", None) == "Red Alert Lebanon":
+        text = (getattr(message, "raw_text", None) or "").casefold()
+        if ("آخر تحديث" in text or "اخر تحديث" in text) and "لبنان" in text:
+            reason = "General multi-area alert; no single village applies"
+        elif (getattr(message, "raw_payload", None) or {}).get("ocr_text"):
+            reason = "Location could not be identified reliably from the alert image"
+        else:
+            reason = "No locality was specified in the Red Alert notice"
     if verdict in {"uncertain", "needs_review"} or message.low_confidence_relevance:
         text = str(reason or "Relevance was uncertain and requires review.")
         return "uncertain", text, _arabic_reason(text, "uncertain")

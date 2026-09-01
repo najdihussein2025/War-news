@@ -2,7 +2,7 @@ from datetime import date, datetime, time
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class IncidentListItemDTO(BaseModel):
@@ -19,6 +19,10 @@ class IncidentListItemDTO(BaseModel):
     source: str | None
     source_reference: str | None
     matched: bool
+    verification_status: Literal["auto_processed", "needs_verification", "verified", "rejected"] = "auto_processed"
+    verification_reason: str | None = None
+    verified_by_user_id: UUID | None = None
+    verified_at: datetime | None = None
     duplicate_flag: Literal["none", "possible"]
     duplicate_level: Literal["low", "medium", "high"] | None = None
     duplicate_similarity_score: float | None = None
@@ -40,7 +44,7 @@ class IncidentListParams(BaseModel):
     event_date_from: date | None = None
     event_date_to: date | None = None
     flagged_only: bool = False
-    verification_status: Literal["matched", "needs_verification"] | None = None
+    verification_status: Literal["auto_processed", "needs_verification", "verified", "rejected"] | None = None
     duplicate_only: bool = False
     sort_order: Literal["newest", "oldest"] = "newest"
 
@@ -116,6 +120,10 @@ class IncidentDetailDTO(BaseModel):
     locked_by_user_id: UUID | None = None
     edit_lock_expires_at: datetime | None = None
     matched: bool
+    verification_status: Literal["auto_processed", "needs_verification", "verified", "rejected"] = "auto_processed"
+    verification_reason: str | None = None
+    verified_by_user_id: UUID | None = None
+    verified_at: datetime | None = None
     duplicate_flag: Literal["none", "possible"]
     duplicate_level: Literal["low", "medium", "high"] | None = None
     duplicate_similarity_score: float | None = None
@@ -214,3 +222,17 @@ class IncidentDuplicateResolutionResultDTO(BaseModel):
     decision: Literal["confirmed_duplicate", "false_positive"]
     incident_id: UUID
     canonical_incident_id: UUID
+
+
+class IncidentVerificationDTO(BaseModel):
+    status: Literal["verified", "rejected"]
+    reason: str | None = Field(default=None, max_length=2000)
+    version: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def rejection_requires_reason(self):
+        cleaned = self.reason.strip() if self.reason else None
+        if self.status == "rejected" and not cleaned:
+            raise ValueError("A rejection reason is required.")
+        object.__setattr__(self, "reason", cleaned)
+        return self

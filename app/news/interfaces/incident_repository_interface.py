@@ -54,6 +54,10 @@ class IncidentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    def set_verification(self, incident_id: UUID, status: str, reason: str | None, version: int, user_id: UUID) -> IncidentDetailDTO | None:
+        pass
+
+    @abstractmethod
     def get_pending_duplicate_candidate(
         self, incident_id: UUID
     ) -> IncidentDuplicateCandidateDTO | None:

@@ -21,6 +21,7 @@ from app.news.dtos.incident_dto import (
     IncidentListParams,
     IncidentListResponse,
     IncidentUpdateDTO,
+    IncidentVerificationDTO,
 )
 from app.news.dtos.import_dto import WorkbookImportRowErrorDTO, WorkbookImportSummaryDTO
 from app.news.dtos.match_result_dto import MatchResultDTO, MatchResultStatus, VillageMatchResult
@@ -47,6 +48,7 @@ __all__ = [
     "IncidentListResponse",
     "IncidentDetailsPatchDTO",
     "IncidentUpdateDTO",
+    "IncidentVerificationDTO",
     "WorkbookImportRowErrorDTO",
     "WorkbookImportSummaryDTO",
     "MatchResultDTO",

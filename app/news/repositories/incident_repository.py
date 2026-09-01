@@ -97,6 +97,10 @@ class IncidentRepository(IncidentRepositoryInterface):
                     (low_confidence, False),
                     else_=True,
                 ).label("matched"),
+                Incident.verification_status,
+                Incident.verification_reason,
+                Incident.verified_by_user_id,
+                Incident.verified_at,
                 case(
                     (Incident.duplicate_flag.is_(True), "possible"),
                     else_="none",
@@ -266,6 +270,10 @@ class IncidentRepository(IncidentRepositoryInterface):
             "locked_by_user_id": incident.locked_by_user_id,
             "edit_lock_expires_at": incident.edit_lock_expires_at,
             "matched": row.matched,
+            "verification_status": incident.verification_status,
+            "verification_reason": incident.verification_reason,
+            "verified_by_user_id": incident.verified_by_user_id,
+            "verified_at": incident.verified_at,
             "duplicate_flag": row.duplicate_flag,
             "duplicate_level": incident.duplicate_level,
             "duplicate_similarity_score": incident.duplicate_similarity_score,
@@ -322,6 +330,8 @@ class IncidentRepository(IncidentRepositoryInterface):
             note=sanitized_note,
             source_link=sanitized_source_link,
             created_by=created_by,
+            verification_status="verified",
+            verified_at=datetime.now(timezone.utc),
         )
         self.db.add(incident)
         self.db.commit()
@@ -457,6 +467,45 @@ class IncidentRepository(IncidentRepositoryInterface):
             if self.db.scalar(select(Incident.id).where(Incident.id == incident_id, Incident.is_deleted.is_(False))) is None:
                 return None
             raise StaleDataError("Incident is being edited by another administrator.")
+        self.db.commit()
+        return self.get_by_id(incident_id)
+
+    def set_verification(
+        self,
+        incident_id: UUID,
+        status: str,
+        reason: str | None,
+        version: int,
+        user_id: UUID,
+    ) -> IncidentDetailDTO | None:
+        incident = self.db.scalar(
+            select(Incident).where(
+                Incident.id == incident_id,
+                Incident.is_deleted.is_(False),
+                Incident.version == version,
+            ).with_for_update()
+        )
+        if incident is None:
+            self.db.rollback()
+            if self.db.scalar(select(Incident.id).where(Incident.id == incident_id, Incident.is_deleted.is_(False))) is None:
+                return None
+            raise StaleDataError("Incident verification version is stale.")
+        old_values = {
+            "verification_status": incident.verification_status,
+            "verification_reason": incident.verification_reason,
+            "verified_by_user_id": str(incident.verified_by_user_id) if incident.verified_by_user_id else None,
+        }
+        incident.verification_status = status
+        incident.verification_reason = reason
+        incident.verified_by_user_id = user_id
+        incident.verified_at = datetime.now(timezone.utc)
+        self.db.add(IncidentUpdate(
+            incident_id=incident.id,
+            action=UpdateAction.status_change,
+            old_values=old_values,
+            new_values={"verification_status": status, "verification_reason": reason, "verified_by_user_id": str(user_id)},
+            performed_by=user_id,
+        ))
         self.db.commit()
         return self.get_by_id(incident_id)
 
@@ -968,10 +1017,8 @@ class IncidentRepository(IncidentRepositoryInterface):
                     cls._low_confidence_match(),
                 )
             )
-        if params.verification_status == "needs_verification":
-            filters.append(func.coalesce(cls._low_confidence_match(), False).is_(True))
-        elif params.verification_status == "matched":
-            filters.append(func.coalesce(cls._low_confidence_match(), False).is_(False))
+        if params.verification_status is not None:
+            filters.append(Incident.verification_status == params.verification_status)
         if params.duplicate_only:
             filters.append(Incident.duplicate_flag.is_(True))
         return filters

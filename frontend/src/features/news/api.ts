@@ -161,3 +161,17 @@ export const importIncidents = async (file: File): Promise<WorkbookImportSummary
   const response = await apiClient.post<WorkbookImportSummary>("/incidents/import", form);
   return response.data;
 };
+
+export const reviewIncident = async (
+  incidentId: string,
+  status: "verified" | "rejected",
+  reason: string | null,
+  version: number,
+): Promise<IncidentDetail> => {
+  const response = await apiClient.post<IncidentDetail>(`/incidents/${incidentId}/verification`, {
+    status,
+    reason,
+    version,
+  });
+  return response.data;
+};

@@ -50,6 +50,7 @@ def test_rejects_air_violation_without_a_canonical_village() -> None:
     message = SimpleNamespace(
         id=99,
         raw_text="warplanes over the south",
+        raw_payload={},
         filter_result=None,
         match_result=None,
         status=MessageStatus.pending,
@@ -60,7 +61,25 @@ def test_rejects_air_violation_without_a_canonical_village() -> None:
     assert repository.routed is None
     assert repository.discarded is True
     assert message.status == MessageStatus.rejected
-    assert message.filter_result["reasoning"] == "No canonical village matched"
+    assert message.filter_result["reasoning"] == "No locality was specified in the Red Alert notice"
+
+
+def test_rejects_unreadable_ocr_with_an_image_specific_reason() -> None:
+    repository = MagicMock()
+    service = RedAlertAirViolationService(repository, lambda text: 36, lambda text, villages: None)
+    message = SimpleNamespace(
+        id=100,
+        raw_text="redalert.com.lb OCR noise",
+        raw_payload={"ocr_text": "OCR noise"},
+        filter_result=None,
+        status=MessageStatus.pending,
+        error_message=None,
+    )
+
+    assert service.process(message, []) is False
+    assert message.filter_result["reasoning"] == (
+        "Location could not be identified reliably from the alert image"
+    )
 
 
 def _village(village_id: int, arabic: str, caza_en: str = "Sour") -> SimpleNamespace:

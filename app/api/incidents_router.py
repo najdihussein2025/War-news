@@ -18,6 +18,7 @@ from app.news.dtos import (
     IncidentListParams,
     IncidentListResponse,
     IncidentUpdateDTO,
+    IncidentVerificationDTO,
     WorkbookImportSummaryDTO,
 )
 from app.news.repositories import IncidentRepository
@@ -49,7 +50,7 @@ def list_incidents(
     event_date_from: date | None = Query(default=None),
     event_date_to: date | None = Query(default=None),
     flagged_only: bool = Query(default=False),
-    verification_status: Literal["matched", "needs_verification"] | None = Query(default=None),
+    verification_status: Literal["auto_processed", "needs_verification", "verified", "rejected"] | None = Query(default=None),
     duplicate_only: bool = Query(default=False),
     sort_order: Literal["newest", "oldest"] = Query(default="newest"),
     db: Session = Depends(get_db),
@@ -69,6 +70,21 @@ def list_incidents(
         sort_order=sort_order,
     )
     return IncidentService(IncidentRepository(db)).list_all(params)
+
+
+@router.post("/{incident_id}/verification", response_model=IncidentDetailDTO)
+def verify_incident(
+    incident_id: UUID,
+    payload: IncidentVerificationDTO,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> IncidentDetailDTO:
+    try:
+        return IncidentService(IncidentRepository(db)).set_verification(incident_id, payload, current_user.id)
+    except IncidentNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except IncidentConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
 
 @router.post("/import", response_model=WorkbookImportSummaryDTO)
