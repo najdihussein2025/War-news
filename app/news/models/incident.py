@@ -92,6 +92,8 @@ class Incident(Base):
         default=False,
         server_default=text("false"),
     )
+    duplicate_level: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    duplicate_similarity_score: Mapped[float | None] = mapped_column(nullable=True)
     details_pending: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,

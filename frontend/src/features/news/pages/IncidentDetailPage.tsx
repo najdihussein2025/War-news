@@ -6,14 +6,15 @@ import { Button, ConfirmDialog, Dialog, EmptyState, Input, Label } from "../../.
 import { formatDate, formatRelativeTime } from "../../../lib/formatters";
 import { roleBaseFromPath } from "../../../lib/rolePath";
 import { useAuthStore } from "../../../stores/authStore";
-import { useIncidentQuery } from "../hooks";
-import { acquireIncidentEditLock, deleteIncident, releaseIncidentEditLock, updateIncident, updateIncidentDetails } from "../api";
+import { useIncidentDuplicateCandidateQuery, useIncidentQuery } from "../hooks";
+import { acquireIncidentEditLock, deleteIncident, releaseIncidentEditLock, resolveIncidentDuplicate, updateIncident, updateIncidentDetails } from "../api";
 import { IncidentCategorySectionFields } from "../components/IncidentCategorySectionFields";
 import { IncidentCategorySectionEditForm } from "../components/IncidentCategorySectionEditForm";
 import { incidentCategorySections } from "../incidentCategorySections";
 import type { IncidentCategorySectionKey } from "../incidentCategorySections";
 import type {
   CasualtyDemographics,
+  IncidentDuplicateDecision,
   IncidentSource,
 } from "../types";
 
@@ -46,12 +47,21 @@ export const IncidentDetailPage = () => {
   const incidentsPath = `${roleBase}/incidents`;
   const navigate = useNavigate();
   const { data: incident, isLoading, error, refetch } = useIncidentQuery(incidentId);
+  const {
+    data: duplicateCandidate,
+    isLoading: isDuplicateCandidateLoading,
+    refetch: refetchDuplicateCandidate,
+  } = useIncidentDuplicateCandidateQuery(
+    incidentId,
+    incident?.duplicate_flag === "possible",
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [editingSection, setEditingSection] = useState<IncidentCategorySectionKey | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [actionError, setActionError] = useState("");
   const [isVillageDetailsOpen, setIsVillageDetailsOpen] = useState(false);
+  const [duplicateDecision, setDuplicateDecision] = useState<IncidentDuplicateDecision | null>(null);
   const currentUserId = useAuthStore((state) => state.user?.id ?? null);
   const villageDetails = incident?.village_details;
   const isLockedByAnother = Boolean(
@@ -215,6 +225,71 @@ export const IncidentDetailPage = () => {
           </div>
         </dl>
       </section>
+
+      {incident.duplicate_flag === "possible" ? (
+        <section className="rounded-lg border border-warning/40 bg-warning/5 p-5 sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-caption font-semibold uppercase tracking-wide text-warning">Duplicate review required</p>
+              <h2 className="mt-1 text-h4 font-semibold text-text-primary">Possible duplicate</h2>
+              <p className="mt-2 text-small text-text-muted">
+                {duplicateCandidate
+                  ? `${Math.round(duplicateCandidate.similarity_score * 100)}% similarity (Medium confidence)`
+                  : isDuplicateCandidateLoading
+                    ? "Loading the suggested match..."
+                    : "The suggested matching record could not be loaded."}
+              </p>
+            </div>
+            {duplicateCandidate ? (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button type="button" variant="secondary" disabled={isLockedByAnother || isSaving} onClick={async () => {
+                  if (!incidentId) return;
+                  setActionError("");
+                  try {
+                    await acquireIncidentEditLock(incidentId);
+                    await refetch();
+                    setDuplicateDecision("false_positive");
+                  } catch (error) {
+                    setActionError(isAxiosError(error) && error.response?.status === 409
+                      ? "This incident is currently being edited by another administrator."
+                      : "Could not open the duplicate review.");
+                  }
+                }}>Not a duplicate</Button>
+                <Button type="button" disabled={isLockedByAnother || isSaving} onClick={async () => {
+                  if (!incidentId) return;
+                  setActionError("");
+                  try {
+                    await acquireIncidentEditLock(incidentId);
+                    await refetch();
+                    setDuplicateDecision("confirmed_duplicate");
+                  } catch (error) {
+                    setActionError(isAxiosError(error) && error.response?.status === 409
+                      ? "This incident is currently being edited by another administrator."
+                      : "Could not open the duplicate review.");
+                  }
+                }}>Confirm duplicate</Button>
+              </div>
+            ) : null}
+          </div>
+
+          {duplicateCandidate ? (
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              {[
+                { title: "Current incident", value: incident },
+                { title: "Suggested main incident", value: duplicateCandidate.candidate },
+              ].map(({ title, value }) => (
+                <article key={title} className="rounded-lg border border-border bg-surface-raised p-4">
+                  <p className="text-caption font-semibold uppercase text-text-muted">{title}</p>
+                  <p className="mt-2 font-semibold text-text-primary">{value.village || "Unknown village"}</p>
+                  <p className="text-small text-text-muted">{value.condition || "No condition"} · {formatDate(value.event_date)}</p>
+                  <p className="mt-3 whitespace-pre-wrap text-small text-text-primary">{value.khabar}</p>
+                  <p className="mt-3 text-caption text-text-muted">Source: {value.source || "Unknown"}</p>
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="rounded-lg border border-border bg-surface-raised p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -567,6 +642,52 @@ export const IncidentDetailPage = () => {
             } catch {
               setActionError("Could not delete the incident. Please try again.");
               setIsDeleting(false);
+            } finally {
+              setIsSaving(false);
+            }
+          }}
+        />
+      ) : null}
+
+      {duplicateDecision && duplicateCandidate ? (
+        <ConfirmDialog
+          title={duplicateDecision === "confirmed_duplicate" ? "Confirm duplicate?" : "Keep both incidents?"}
+          description={duplicateDecision === "confirmed_duplicate"
+            ? "The suggested existing incident will be kept as the main record. This incident will be merged and removed from active records."
+            : "Both incidents will remain active and the possible-duplicate warning will be removed."}
+          confirmLabel={duplicateDecision === "confirmed_duplicate" ? "Confirm and merge" : "Not a duplicate"}
+          destructive={duplicateDecision === "confirmed_duplicate"}
+          isLoading={isSaving}
+          onCancel={async () => {
+            if (!isSaving && incidentId) {
+              await releaseIncidentEditLock(incidentId);
+              setDuplicateDecision(null);
+              await refetch();
+            }
+          }}
+          onConfirm={async () => {
+            if (!incidentId) return;
+            setIsSaving(true);
+            setActionError("");
+            try {
+              const result = await resolveIncidentDuplicate(
+                incidentId,
+                duplicateCandidate.match_id,
+                duplicateDecision,
+                incident.version,
+              );
+              setDuplicateDecision(null);
+              if (result.decision === "confirmed_duplicate") {
+                navigate(`${roleBase}/incidents/${result.canonical_incident_id}`, { replace: true });
+              } else {
+                await Promise.all([refetch(), refetchDuplicateCandidate()]);
+              }
+            } catch (error) {
+              setActionError(isAxiosError(error) && error.response?.status === 409
+                ? "This duplicate review was changed, resolved, or locked by another administrator."
+                : "Could not resolve the possible duplicate.");
+              setDuplicateDecision(null);
+              await refetch();
             } finally {
               setIsSaving(false);
             }

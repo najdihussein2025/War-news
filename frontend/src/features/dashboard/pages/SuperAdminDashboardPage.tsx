@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Card, EmptyState } from "../../../components/ui";
 import { formatDateTime } from "../../../lib/formatters";
 import { getBeirutDate } from "../../../lib/localDate";
@@ -33,7 +34,13 @@ export const SuperAdminDashboardPage = () => {
   const incidentsToday = useIncidentsQuery({ limit: 1, offset: 0, eventDateFrom: today() }, false);
   const airViolations = useAirViolationsQuery({ limit: 1, offset: 0 }, false);
   const airViolationsToday = useAirViolationsQuery({ limit: 1, offset: 0, eventDateFrom: today() }, false);
-  const failedLogins = useLoginLogsQuery({ result: "failure", dateFrom: yesterday(), page: 1, pageSize: 1 });
+  const [failedLoginCutoff, setFailedLoginCutoff] = useState(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+  useEffect(() => {
+    const updateCutoff = () => setFailedLoginCutoff(new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+    const interval = window.setInterval(updateCutoff, 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
+  const failedLogins = useLoginLogsQuery({ result: "failure", createdAfter: failedLoginCutoff, page: 1, pageSize: 1 });
   const ingestion = useIngestionLogsQuery({ status: "all", dateFrom: today(), page: 1, pageSize: 100 });
   const auditLogs = useAuditLogsQuery({ page: 1, pageSize: 5 });
   const ingestionRows = ingestion.data?.items ?? [];

@@ -26,6 +26,7 @@ export const getLoginLogs = async (
       result: filters.result ?? "success",
       date_from: filters.dateFrom || undefined,
       date_to: filters.dateTo || undefined,
+      created_after: filters.createdAfter || undefined,
       page: filters.page ?? 1,
       page_size: filters.pageSize ?? 25,
     },

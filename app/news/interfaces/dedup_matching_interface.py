@@ -25,3 +25,12 @@ class DedupMatchingInterface(ABC):
         raw_message_id: int,
     ) -> None:
         pass
+
+    @abstractmethod
+    def record_possible_duplicate(
+        self,
+        incident: Incident,
+        matched_incident: Incident,
+        similarity_score: float,
+    ) -> None:
+        pass

@@ -95,7 +95,7 @@ def test_list_all_defaults_to_newest_created_first() -> None:
     )
 
 
-def test_list_all_default_does_not_require_materialized_incident() -> None:
+def test_list_all_requires_an_incident_but_not_a_successful_raw_message_status() -> None:
     db = _ListSessionStub()
 
     IncidentRepository(db).list_all(IncidentListParams())  # type: ignore[arg-type]
@@ -104,11 +104,8 @@ def test_list_all_default_does_not_require_materialized_incident() -> None:
         db.statements[0].compile(compile_kwargs={"literal_binds": True})
     ).lower()
     assert "from raw_messages" in compiled
-    assert (
-        "raw_messages.status in ('parsed', 'materialized')"
-        in compiled
-    )
-    assert "incidents.id is not null" not in compiled
+    assert "raw_messages.status in" not in compiled
+    assert "incidents.id is not null" in compiled
 
 
 def test_list_all_excludes_ocr_payload_rows() -> None:

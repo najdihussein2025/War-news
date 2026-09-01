@@ -120,25 +120,6 @@ services:
     networks:
       - appnet
 
-  cnrs-poll-worker:
-    build:
-      context: .
-      dockerfile: app/Dockerfile
-    depends_on:
-      db:
-        condition: service_healthy
-    env_file:
-      - .env
-    environment:
-      PG_APPLICATION_NAME: war-news-cnrs-poll
-      PIPELINE_ROLE: cnrs-poll-worker
-    volumes:
-      - .:/app
-    command: sh -c "while true; do python scripts/cnrs_poll_worker.py --hours 6; sleep 300; done"
-    restart: unless-stopped
-    networks:
-      - appnet
-
   red-alert-collector:
     build:
       context: .

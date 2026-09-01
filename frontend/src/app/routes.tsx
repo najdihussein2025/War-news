@@ -9,6 +9,7 @@ import { LogsPage } from "../features/logs/pages/LogsPage";
 import { AirViolationsPage } from "../features/airViolations/pages/AirViolationsPage";
 import { IncidentDetailPage } from "../features/news/pages/IncidentDetailPage";
 import { IncidentsPage } from "../features/news/pages/IncidentsPage";
+import { RejectedNewsPage } from "../features/news/pages/RejectedNewsPage";
 import { SettingsPage } from "../features/settings/pages/SettingsPage";
 import { SourcesPage } from "../features/sources/pages/SourcesPage";
 import { AppShell } from "./AppShell";
@@ -91,6 +92,7 @@ const HomeRedirect = () => {
 };
 
 export const createRoutes = (): RouteObject[] => [
+    // Role-scoped operational routes.
     { path: "/login", element: <LoginPage /> },
     {
       path: "/admin",
@@ -100,6 +102,7 @@ export const createRoutes = (): RouteObject[] => [
         { path: "dashboard", element: <AdminDashboardPage /> },
         { path: "incidents", element: <IncidentsPage /> },
         { path: "incidents/:incidentId", element: <IncidentDetailPage /> },
+        { path: "rejected-news", element: <RejectedNewsPage /> },
         { path: "air-violations", element: <AirViolationsPage /> },
         { path: "map", element: <Navigate to="/admin/dashboard" replace /> },
         { path: "sources", element: <SourcesPage /> },
@@ -117,6 +120,7 @@ export const createRoutes = (): RouteObject[] => [
         { path: "dashboard", element: <SuperAdminDashboardPage /> },
         { path: "incidents", element: <IncidentsPage /> },
         { path: "incidents/:incidentId", element: <IncidentDetailPage /> },
+        { path: "rejected-news", element: <RejectedNewsPage /> },
         { path: "air-violations", element: <AirViolationsPage /> },
         { path: "map", element: <Navigate to="/superadmin/dashboard" replace /> },
         { path: "sources", element: <SourcesPage /> },

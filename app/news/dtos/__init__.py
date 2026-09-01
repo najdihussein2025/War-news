@@ -9,6 +9,10 @@ from app.news.dtos.air_violation_dto import (
 from app.news.dtos.condition_dto import ConditionOptionDTO
 from app.news.dtos.incident_dto import (
     CasualtyDemographicsDTO,
+    DuplicateCandidateIncidentDTO,
+    IncidentDuplicateCandidateDTO,
+    IncidentDuplicateResolutionDTO,
+    IncidentDuplicateResolutionResultDTO,
     IncidentDetailDTO,
     IncidentCreateDTO,
     IncidentVillageDetailDTO,
@@ -31,6 +35,10 @@ __all__ = [
     "AirViolationUpdateDTO",
     "ConditionOptionDTO",
     "CasualtyDemographicsDTO",
+    "DuplicateCandidateIncidentDTO",
+    "IncidentDuplicateCandidateDTO",
+    "IncidentDuplicateResolutionDTO",
+    "IncidentDuplicateResolutionResultDTO",
     "IncidentDetailDTO",
     "IncidentCreateDTO",
     "IncidentVillageDetailDTO",

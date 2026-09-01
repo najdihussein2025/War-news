@@ -11,6 +11,7 @@ class LoginLogFilterData(BaseModel):
     success: bool | None = True
     date_from: date | None = None
     date_to: date | None = None
+    created_after: datetime | None = None
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=25, ge=1, le=100)
 

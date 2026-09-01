@@ -17,6 +17,7 @@ export type LoginLogFilters = {
   result?: LoginLogResultFilter;
   dateFrom?: string;
   dateTo?: string;
+  createdAfter?: string;
   page?: number;
   pageSize?: number;
 };

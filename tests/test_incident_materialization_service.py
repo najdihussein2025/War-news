@@ -426,6 +426,9 @@ class _DedupServiceStub:
         self.existing = existing
         self.score = score
         self.merge_calls: list[tuple[Incident, dict, int]] = []
+        self.possible_duplicate_calls: list[
+            tuple[Incident, Incident, float]
+        ] = []
 
     def find_best_match(self, **_kwargs):
         return self.existing, self.score
@@ -437,6 +440,16 @@ class _DedupServiceStub:
         raw_message_id: int,
     ) -> None:
         self.merge_calls.append((existing, new_candidate_data, raw_message_id))
+
+    def record_possible_duplicate(
+        self,
+        incident: Incident,
+        matched_incident: Incident,
+        similarity_score: float,
+    ) -> None:
+        self.possible_duplicate_calls.append(
+            (incident, matched_incident, similarity_score)
+        )
 
 
 def test_dedup_high_score_merges_and_skips_insert() -> None:
@@ -450,6 +463,8 @@ def test_dedup_high_score_merges_and_skips_insert() -> None:
 
     assert len(result) == 1
     assert result[0] is existing
+    assert existing.duplicate_level == "high"
+    assert existing.duplicate_similarity_score == 0.85
     assert len(dedup.merge_calls) == 1
     assert service.stats.merged_into_existing == 1
     assert service.stats.inserted == 0
@@ -467,12 +482,24 @@ def test_dedup_mid_score_creates_incident_with_duplicate_flag() -> None:
 
     assert len(result) == 1
     assert result[0].duplicate_flag is True
+    assert result[0].duplicate_level == "medium"
+    assert result[0].duplicate_similarity_score == 0.65
     assert service.stats.inserted == 1
     assert service.stats.merged_into_existing == 0
+    assert len(dedup.possible_duplicate_calls) == 1
+
+    new_incident, matched_incident, similarity_score = (
+        dedup.possible_duplicate_calls[0]
+    )
+
+    assert new_incident is result[0]
+    assert matched_incident is existing
+    assert similarity_score == 0.65
 
 
 def test_dedup_low_score_creates_incident_without_duplicate_flag() -> None:
-    dedup = _DedupServiceStub(existing=None, score=0.30)
+    existing = SimpleNamespace(id=uuid4())
+    dedup = _DedupServiceStub(existing=existing, score=0.30)  # type: ignore[arg-type]
     db = _SessionStub()
     service = IncidentMaterializationService(db, dedup_service=dedup)  # type: ignore[arg-type]
 
@@ -480,7 +507,10 @@ def test_dedup_low_score_creates_incident_without_duplicate_flag() -> None:
 
     assert len(result) == 1
     assert result[0].duplicate_flag is False
+    assert result[0].duplicate_level == "low"
+    assert result[0].duplicate_similarity_score == 0.30
     assert service.stats.inserted == 1
+    assert dedup.possible_duplicate_calls == []
 
 
 def test_dedup_skipped_when_no_embedding() -> None:

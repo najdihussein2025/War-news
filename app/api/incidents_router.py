@@ -10,6 +10,9 @@ from app.api.deps import require_admin, require_super_admin
 from app.core.database import get_db
 from app.news.dtos import (
     IncidentDetailDTO,
+    IncidentDuplicateCandidateDTO,
+    IncidentDuplicateResolutionDTO,
+    IncidentDuplicateResolutionResultDTO,
     IncidentCreateDTO,
     IncidentDetailsPatchDTO,
     IncidentListParams,
@@ -105,6 +108,41 @@ def get_incident(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),
         ) from exc
+
+
+@router.get(
+    "/{incident_id}/duplicate-candidate",
+    response_model=IncidentDuplicateCandidateDTO,
+)
+def get_incident_duplicate_candidate(
+    incident_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> IncidentDuplicateCandidateDTO:
+    try:
+        return IncidentService(IncidentRepository(db)).get_duplicate_candidate(incident_id)
+    except IncidentNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.post(
+    "/{incident_id}/duplicate-resolution",
+    response_model=IncidentDuplicateResolutionResultDTO,
+)
+def resolve_incident_duplicate(
+    incident_id: UUID,
+    payload: IncidentDuplicateResolutionDTO,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> IncidentDuplicateResolutionResultDTO:
+    try:
+        return IncidentService(IncidentRepository(db)).resolve_duplicate(
+            incident_id, payload, current_user.id
+        )
+    except IncidentNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except IncidentConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
 
 @router.put("/{incident_id}", response_model=IncidentDetailDTO)

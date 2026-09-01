@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
@@ -25,6 +25,7 @@ def list_login_logs(
     result: Literal["success", "failure", "all"] = "success",
     date_from: date | None = None,
     date_to: date | None = None,
+    created_after: datetime | None = None,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -36,6 +37,7 @@ def list_login_logs(
             success=None if result == "all" else result == "success",
             date_from=date_from,
             date_to=date_to,
+            created_after=created_after,
             page=page,
             page_size=page_size,
         )

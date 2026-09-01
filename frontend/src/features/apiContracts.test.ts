@@ -15,10 +15,12 @@ import {
   deleteIncident,
   getConditions,
   getIncidentById,
+  getIncidentDuplicateCandidate,
   getIncidents,
   getVillages,
   importIncidents,
   releaseIncidentEditLock,
+  resolveIncidentDuplicate,
   updateIncident,
   updateIncidentDetails,
 } from "./news/api";
@@ -146,5 +148,19 @@ describe("frontend API contracts", () => {
     expect(client.patch).toHaveBeenCalledWith("/incidents/incident-1/details", { fields: { lam_d: 2 }, version: 4 });
     expect(client.delete).toHaveBeenCalledWith("/incidents/incident-1", { params: { version: 5 } });
     expect(client.delete).toHaveBeenCalledWith("/incidents/incident-1/edit-lock");
+  });
+
+  it("loads and resolves pending incident duplicates", async () => {
+    vi.mocked(client.get).mockResolvedValue({ data: { match_id: 8 } });
+    vi.mocked(client.post).mockResolvedValue({ data: { canonical_incident_id: "main-1" } });
+
+    await getIncidentDuplicateCandidate("incident-1");
+    await resolveIncidentDuplicate("incident-1", 8, "false_positive", 3);
+
+    expect(client.get).toHaveBeenCalledWith("/incidents/incident-1/duplicate-candidate");
+    expect(client.post).toHaveBeenCalledWith(
+      "/incidents/incident-1/duplicate-resolution",
+      { match_id: 8, decision: "false_positive", version: 3 },
+    );
   });
 });

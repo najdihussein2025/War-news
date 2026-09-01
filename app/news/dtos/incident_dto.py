@@ -20,6 +20,8 @@ class IncidentListItemDTO(BaseModel):
     source_reference: str | None
     matched: bool
     duplicate_flag: Literal["none", "possible"]
+    duplicate_level: Literal["low", "medium", "high"] | None = None
+    duplicate_similarity_score: float | None = None
     details_pending: bool
     created_at: datetime
     version: int = 1
@@ -115,6 +117,8 @@ class IncidentDetailDTO(BaseModel):
     edit_lock_expires_at: datetime | None = None
     matched: bool
     duplicate_flag: Literal["none", "possible"]
+    duplicate_level: Literal["low", "medium", "high"] | None = None
+    duplicate_similarity_score: float | None = None
     casualty_demographics: CasualtyDemographicsDTO
     lebanese_army: IncidentCategorySectionDTO | None = None
     unifil: IncidentCategorySectionDTO | None = None
@@ -171,3 +175,42 @@ class IncidentDetailsPatchDTO(BaseModel):
         if not value:
             raise ValueError("At least one field must be provided.")
         return value
+
+
+class DuplicateCandidateIncidentDTO(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    id: UUID
+    village: str | None
+    condition: str | None
+    event_date: date
+    event_time: time | None
+    khabar: str
+    source: str | None
+    source_reference: str | None
+    total_deaths: int | None
+    total_injuries: int | None
+
+
+class IncidentDuplicateCandidateDTO(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    match_id: int
+    similarity_score: float
+    level: Literal["medium"] = "medium"
+    status: Literal["pending"] = "pending"
+    candidate: DuplicateCandidateIncidentDTO
+
+
+class IncidentDuplicateResolutionDTO(BaseModel):
+    match_id: int
+    decision: Literal["confirmed_duplicate", "false_positive"]
+    version: int = Field(ge=1)
+
+
+class IncidentDuplicateResolutionResultDTO(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    decision: Literal["confirmed_duplicate", "false_positive"]
+    incident_id: UUID
+    canonical_incident_id: UUID

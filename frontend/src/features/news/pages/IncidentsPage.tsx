@@ -207,6 +207,18 @@ export const IncidentsPage = () => {
             {row.duplicate_flag === "possible" ? (
               <StatusBadge label="Possible duplicate" variant="warning" />
             ) : null}
+            {row.duplicate_level === "low" ? (
+              <StatusBadge
+                label={`Low similarity${row.duplicate_similarity_score == null ? "" : ` — ${Math.round(row.duplicate_similarity_score * 100)}%`}`}
+                variant="neutral"
+              />
+            ) : null}
+            {row.duplicate_level === "high" ? (
+              <StatusBadge
+                label={`Automatically merged${row.duplicate_similarity_score == null ? "" : ` — ${Math.round(row.duplicate_similarity_score * 100)}%`}`}
+                variant="success"
+              />
+            ) : null}
             {row.details_pending ? (
               <StatusBadge label="Details pending" variant="neutral" />
             ) : null}
