@@ -22,3 +22,11 @@ class PipelineSweepResult(BaseModel):
     stages: list[StageSweepResult] = Field(default_factory=list)
     elapsed_seconds: float = Field(default=0.0, ge=0.0)
     partial_failure: bool = False
+
+
+class StageQueueDepthResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    stage_name: str
+    queue_depth: int
+    oldest_waiting_seconds: float | None = None

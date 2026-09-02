@@ -18,16 +18,26 @@ CLAIM_STAGE_EXTRACTION = "tier1_extraction"
 CLAIM_STAGE_MATCHING = "matching"
 
 
+def claimable_lease_filter(now: datetime | None = None):
+    """OR-predicate for a raw_message whose processing claim is free or expired.
+
+    Single source of truth shared by the claim repository and read-only
+    health checks so the two cannot drift.
+    """
+    reference = now or datetime.now(timezone.utc)
+    cutoff = reference - timedelta(seconds=settings.pipeline_claim_lease_seconds)
+    return (
+        RawMessage.processing_claimed_at.is_(None)
+        | (RawMessage.processing_claimed_at < cutoff)
+        | (RawMessage.processing_claim_stage.is_(None))
+    )
+
+
 class PipelineClaimRepository:
     """Row-level work claiming via SELECT ... FOR UPDATE SKIP LOCKED."""
 
     def __init__(self, db: Session) -> None:
         self.db = db
-
-    def _claim_cutoff(self) -> datetime:
-        return datetime.now(timezone.utc) - timedelta(
-            seconds=settings.pipeline_claim_lease_seconds
-        )
 
     def _claim_owner(self) -> str:
         return (
@@ -35,13 +45,7 @@ class PipelineClaimRepository:
         )
 
     def _claimable_raw_messages(self):
-        return select(RawMessage).where(
-            (
-                RawMessage.processing_claimed_at.is_(None)
-            )
-            | (RawMessage.processing_claimed_at < self._claim_cutoff())
-            | (RawMessage.processing_claim_stage.is_(None))
-        )
+        return select(RawMessage).where(claimable_lease_filter())
 
     def _mark_claimed(self, message: RawMessage, *, stage: str) -> RawMessage:
         message.processing_claim_stage = stage
