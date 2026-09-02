@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 from typing import Literal
 
@@ -10,10 +10,11 @@ from sqlalchemy.orm import Session
 from app.accounts.models import User
 from app.api.deps import require_admin
 from app.core.database import get_db
-from app.news.models import MessageStatus, RawMessage
+from app.news.models import Incident, MessageStatus, RawMessage, Village
 
 
 router = APIRouter(prefix="/api/rejected-news", tags=["rejected-news"])
+RED_ALERT_SOURCE_NAME = "Red Alert Lebanon"
 
 
 class RejectedNewsItem(BaseModel):
@@ -188,7 +189,24 @@ def list_rejected_news(
     _current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ) -> RejectedNewsList:
-    filters = [RawMessage.status.in_([MessageStatus.rejected, MessageStatus.duplicate])]
+    cutoff = datetime.now().astimezone() - timedelta(days=7)
+    south_incident_raw_messages = (
+        select(Incident.raw_message_id)
+        .join(Village, Village.id == Incident.village_id)
+        .where(
+            Incident.raw_message_id.is_not(None),
+            Village.mohafaza_en.in_(("South", "Nabatiye")),
+        )
+    )
+    filters = [
+        RawMessage.status == MessageStatus.duplicate,
+        func.coalesce(RawMessage.message_datetime, RawMessage.received_at) >= cutoff,
+        RawMessage.duplicate_of_id.in_(south_incident_raw_messages),
+        or_(
+            RawMessage.source_name.is_(None),
+            RawMessage.source_name != RED_ALERT_SOURCE_NAME,
+        ),
+    ]
     if search and search.strip():
         pattern = f"%{search.strip()}%"
         filters.append(or_(RawMessage.raw_text.ilike(pattern), RawMessage.source_name.ilike(pattern)))

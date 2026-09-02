@@ -51,7 +51,7 @@ export const RejectedNewsPage = () => {
   const selected = detail.data;
   const totalPages = Math.max(1, Math.ceil((list.data?.total ?? 0) / PAGE_SIZE));
   return <div className="space-y-6">
-    <section><p className="text-caption font-semibold uppercase tracking-[0.14em] text-text-muted">Pipeline review</p><h1 className="text-h3 font-semibold text-text-primary">Rejected news</h1><p className="mt-2 text-small text-text-muted">Review reports rejected for relevance or duplication and return valid reports to incident processing.</p></section>
+    <section><p className="text-caption font-semibold uppercase tracking-[0.14em] text-text-muted">Pipeline review</p><h1 className="text-h3 font-semibold text-text-primary">Rejected news</h1></section>
     <section className="rounded-xl border border-border bg-surface-raised p-4"><Input value={search} placeholder="Search report or source" onChange={(event) => { setSearch(event.target.value); setPage(1); }} /></section>
     <DataTable
       columns={columns}
@@ -59,7 +59,7 @@ export const RejectedNewsPage = () => {
       getRowKey={(row) => String(row.id)}
       loading={list.isLoading}
       error={list.isError}
-      emptyState={<EmptyState title="No rejected news" description="Rejected and duplicate reports will appear here." />}
+      emptyState={<EmptyState title="No rejected news" description="Matching reports from the latest 7 days will appear here automatically." />}
       errorState={<EmptyState title="Could not load rejected news" description="Try again." />}
       actions={(row) => <div className="flex gap-2"><Button variant="secondary" onClick={() => setSelectedId(row.id)}>View details</Button><Button onClick={() => setRestoreItem(row)}>Move to incidents</Button></div>}
     />
