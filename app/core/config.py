@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     # Independent Tier 1 / Tier 2 LLM concurrency pools (see ollama_concurrency.py).
     tier1_llm_max_concurrent_requests: int = 2
     tier2_llm_max_concurrent_requests: int = 2
+    # When true, Tier 1 uses one combined presence+general LLM call instead of two.
+    tier1_use_combined_presence_extraction: bool = False
     extraction_llm_request_retries: int = 2
     extraction_llm_retry_backoff_seconds: float = 2.0
     relevance_llm_batch_size: int = 4

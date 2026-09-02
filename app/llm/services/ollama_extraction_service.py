@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 import logging
 from datetime import datetime, timezone
+from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from app.core.config import settings
 from app.core.ollama_client import JsonObject, OllamaChatClient, OllamaChatMessage
 from app.llm.dtos import (
     ExtractionCasualties,
@@ -18,6 +20,7 @@ from app.llm.services.ollama_category_detail_service import OllamaCategoryDetail
 from app.llm.services.ollama_auth_failures import coerce_ollama_auth_failure
 from app.llm.services.ollama_presence_gate_service import (
     LOW_TEMPERATURE,
+    PRESENCE_GATE_RESPONSE_SCHEMA,
     OllamaPresenceGateService,
 )
 from app.llm.services.ollama_relevance_classifier_service import is_valid_reason_text
@@ -101,6 +104,35 @@ GENERAL_EXTRACTION_RESPONSE_SCHEMA: JsonObject = {
     "required": ["is_relevant", "village", "action_description", "casualties"],
 }
 
+COMBINED_TIER1_PROMPT_PATH = (
+    Path(__file__).resolve().parents[3]
+    / "scripts"
+    / "phase2-extraction-testing"
+    / "combined_tier1_presence_extraction_instruction.txt"
+)
+COMBINED_TIER1_PROMPT = COMBINED_TIER1_PROMPT_PATH.read_text(encoding="utf-8")
+
+COMBINED_TIER1_RESPONSE_SCHEMA: JsonObject = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "categories_present": PRESENCE_GATE_RESPONSE_SCHEMA["properties"]["categories_present"],  # type: ignore[index]
+        "category_evidence": PRESENCE_GATE_RESPONSE_SCHEMA["properties"]["category_evidence"],  # type: ignore[index]
+        "is_relevant": {"type": "boolean"},
+        "village": {"type": ["array", "null"], "items": {"type": "string"}},
+        "action_description": {"type": ["string", "null"]},
+        "casualties": GENERAL_EXTRACTION_RESPONSE_SCHEMA["properties"]["casualties"],  # type: ignore[index]
+    },
+    "required": [
+        "categories_present",
+        "category_evidence",
+        "is_relevant",
+        "village",
+        "action_description",
+        "casualties",
+    ],
+}
+
 
 class _RawExtractionResponse(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True)
@@ -128,6 +160,12 @@ class OllamaExtractionService(ExtractionClassifierInterface):
         post_text: str,
         raw_message_id: int | None = None,
     ) -> ExtractionResult:
+        if settings.tier1_use_combined_presence_extraction:
+            return self._extract_tier1_combined(
+                post_text,
+                raw_message_id=raw_message_id,
+            )
+
         categories_present = self.presence_gate.categories_present(
             post_text,
             raw_message_id=raw_message_id,
@@ -136,6 +174,68 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             post_text,
             raw_message_id=raw_message_id,
         )
+        return self._build_tier1_result(
+            categories_present=categories_present,
+            general_response=general_response,
+            raw_message_id=raw_message_id,
+        )
+
+    def _extract_tier1_combined(
+        self,
+        post_text: str,
+        raw_message_id: int | None = None,
+    ) -> ExtractionResult:
+        content = self.client.chat(
+            [
+                OllamaChatMessage(role="system", content=COMBINED_TIER1_PROMPT),
+                OllamaChatMessage(role="user", content=post_text),
+            ],
+            response_format=COMBINED_TIER1_RESPONSE_SCHEMA,
+            temperature=LOW_TEMPERATURE,
+        )
+        try:
+            payload = json.loads(content.strip())
+        except json.JSONDecodeError as exc:
+            logger.warning(
+                "Malformed combined Tier1 response from model=%s "
+                "for raw_message_id=%s: %s",
+                self.client.model,
+                raw_message_id,
+                exc,
+            )
+            raise RuntimeError("Malformed combined Tier1 extraction response.") from exc
+
+        presence_result = self.presence_gate.parse_presence_payload(
+            payload,
+            raw_message_id=raw_message_id,
+            post_text=post_text,
+        )
+        general_payload = {
+            key: payload.get(key)
+            for key in (
+                "is_relevant",
+                "village",
+                "action_description",
+                "casualties",
+            )
+        }
+        general_response = self._parse_general_response(
+            json.dumps(general_payload, ensure_ascii=False),
+            raw_message_id=raw_message_id,
+        )
+        return self._build_tier1_result(
+            categories_present=presence_result.categories_present,
+            general_response=general_response,
+            raw_message_id=raw_message_id,
+        )
+
+    def _build_tier1_result(
+        self,
+        *,
+        categories_present: list[ExtractionCategoryKey],
+        general_response: _RawExtractionResponse,
+        raw_message_id: int | None,
+    ) -> ExtractionResult:
         categories: dict[ExtractionCategoryKey, ExtractionCategory] = {}
         self._inject_casualty_demographics_from_root(
             categories,

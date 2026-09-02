@@ -188,6 +188,24 @@ class OllamaPresenceGateService:
             post_text=post_text,
         )
 
+    def parse_presence_payload(
+        self,
+        payload: dict,
+        *,
+        raw_message_id: int | None,
+        post_text: str,
+    ) -> PresenceGateResult:
+        """Parse presence fields from a combined Tier-1 response payload."""
+        presence_payload = {
+            "categories_present": payload.get("categories_present", []),
+            "category_evidence": payload.get("category_evidence", []),
+        }
+        return self._parse_response(
+            json.dumps(presence_payload, ensure_ascii=False),
+            raw_message_id=raw_message_id,
+            post_text=post_text,
+        )
+
     def _parse_response(
         self,
         content: str,
