@@ -4,6 +4,7 @@ from typing import Any
 from app.core.config import settings
 from app.news.interfaces import DedupMatchingInterface, IncidentRepositoryInterface
 from app.news.models import Incident
+from app.news.services.incident_merge_service import IncidentMergeService
 
 # Weights are fixed; tune thresholds via DEDUP_* env vars instead.
 # First estimate; action agreement weight in the total duplicate score.
@@ -25,6 +26,7 @@ DEDUP_LOW_THRESHOLD: float = settings.dedup_low_threshold
 class DedupMatchingService(DedupMatchingInterface):
     def __init__(self, incident_repository: IncidentRepositoryInterface) -> None:
         self.incident_repository = incident_repository
+        self.merge_service = IncidentMergeService(incident_repository)
 
     def find_best_match(
         self,
@@ -66,7 +68,8 @@ class DedupMatchingService(DedupMatchingInterface):
         new_candidate_data: dict[str, Any],
         raw_message_id: int,
     ) -> None:
-        self.incident_repository.merge_existing(
+        # Delegates to the single shared merge path (see IncidentMergeService).
+        self.merge_service.merge(
             existing=existing,
             new_candidate_data=new_candidate_data,
             raw_message_id=raw_message_id,
