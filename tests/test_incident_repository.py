@@ -193,6 +193,13 @@ def test_incident_list_item_accepts_pre_materialization_row() -> None:
     assert item.raw_status == "parsed"
 
 
+def test_list_item_text_sanitization_preserves_arabic_text() -> None:
+    assert (
+        IncidentRepository._sanitize_optional_text("خبر \U0001f6a8 من النبطية")
+        == "خبر  من النبطية"
+    )
+
+
 def test_list_duplicate_candidates_excludes_same_raw_message_when_requested() -> None:
     db = _ListSessionStub()
 

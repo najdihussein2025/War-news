@@ -204,7 +204,14 @@ class IncidentRepository(IncidentRepositoryInterface):
 
         return IncidentListResponse(
             items=[
-                IncidentListItemDTO.model_validate(row._mapping)
+                IncidentListItemDTO.model_validate(
+                    {
+                        **row._mapping,
+                        "khabar": strip_emoji_and_pictographs(
+                            row._mapping["khabar"]
+                        ).strip(),
+                    }
+                )
                 for row in page_rows
             ],
             total=int(total or 0),
@@ -284,8 +291,8 @@ class IncidentRepository(IncidentRepositoryInterface):
             "condition": row.condition,
             "source": row.source,
             "source_reference": row.source_reference,
-            "khabar": incident.khabar,
-            "note": incident.note,
+            "khabar": strip_emoji_and_pictographs(incident.khabar).strip(),
+            "note": self._sanitize_optional_text(incident.note),
             "moh": incident.moh,
             "martyrs": incident.martyrs,
             "worker_name": incident.worker_name,
