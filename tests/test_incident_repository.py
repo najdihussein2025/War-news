@@ -135,6 +135,29 @@ def test_list_all_incident_scoped_filters_require_materialized_incident() -> Non
     assert "incidents.id is not null" in compiled
 
 
+def test_list_all_uses_keyset_filter_without_offset() -> None:
+    db = _ListSessionStub()
+    repository = IncidentRepository(db)  # type: ignore[arg-type]
+    cursor = repository._encode_list_cursor(
+        {
+            "created_at": datetime(2026, 8, 28, 9, 30, tzinfo=timezone.utc),
+            "event_date": date(2026, 8, 28),
+            "event_time": None,
+            "raw_message_id": 42,
+            "id": None,
+        }
+    )
+
+    repository.list_all(IncidentListParams(cursor=cursor))
+
+    compiled = str(
+        db.statements[0].compile(compile_kwargs={"literal_binds": True})
+    ).lower()
+    assert "offset" not in compiled
+    assert "raw_messages.id < 42" in compiled
+    assert "raw_messages.id desc, incidents.id desc nulls last" in compiled
+
+
 def test_incident_list_item_accepts_pre_materialization_row() -> None:
     item = IncidentListItemDTO.model_validate(
         {

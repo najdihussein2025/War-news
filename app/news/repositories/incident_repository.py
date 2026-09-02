@@ -1,10 +1,12 @@
+import base64
 import hashlib
+import json
 from contextlib import AbstractContextManager
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import and_, case, desc, func, or_, select, true, update as sa_update
+from sqlalchemy import and_, case, desc, false, func, or_, select, true, update as sa_update
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import StaleDataError
 
@@ -61,6 +63,7 @@ class IncidentRepository(IncidentRepositoryInterface):
             func.date(event_datetime),
         )
         created_at = func.coalesce(Incident.created_at, RawMessage.received_at)
+        cursor = self._decode_list_cursor(params.cursor)
 
         base_query = (
             select(
@@ -119,14 +122,24 @@ class IncidentRepository(IncidentRepositoryInterface):
             .outerjoin(Source, Source.id == Incident.source_id)
             .where(*filters)
         )
+        if cursor is not None:
+            base_query = base_query.where(
+                self._list_cursor_filter(
+                    params,
+                    cursor,
+                    created_at,
+                    event_date,
+                )
+            )
 
         rows = self.db.execute(
             base_query.order_by(
                 *self._list_ordering(params),
             )
-            .limit(params.limit)
-            .offset(params.offset)
+            .limit(params.limit + 1)
         ).all()
+        has_next_page = len(rows) > params.limit
+        page_rows = rows[:params.limit]
         total = self.db.scalar(
             select(func.count(RawMessage.id))
             .select_from(RawMessage)
@@ -168,11 +181,15 @@ class IncidentRepository(IncidentRepositoryInterface):
         return IncidentListResponse(
             items=[
                 IncidentListItemDTO.model_validate(row._mapping)
-                for row in rows
+                for row in page_rows
             ],
             total=int(total or 0),
             limit=params.limit,
-            offset=params.offset,
+            next_cursor=(
+                self._encode_list_cursor(page_rows[-1]._mapping)
+                if has_next_page and page_rows
+                else None
+            ),
             latest_incident_at=latest_incident_at,
         )
 
@@ -843,11 +860,116 @@ class IncidentRepository(IncidentRepositoryInterface):
                 created_at.asc(),
                 event_date.asc(),
                 Incident.event_time.asc().nullslast(),
+                RawMessage.id.asc(),
+                Incident.id.asc().nullslast(),
             )
         return (
             created_at.desc(),
             event_date.desc(),
             Incident.event_time.desc().nullslast(),
+            RawMessage.id.desc(),
+            Incident.id.desc().nullslast(),
+        )
+
+    @staticmethod
+    def _decode_list_cursor(cursor: str | None) -> dict[str, object] | None:
+        if cursor is None:
+            return None
+        try:
+            payload = json.loads(
+                base64.urlsafe_b64decode(cursor.encode("ascii") + b"===")
+            )
+            created_at = datetime.fromisoformat(payload["sort_created_at"])
+            event_date = date.fromisoformat(payload["sort_event_date"])
+            event_time_is_null = payload["sort_event_time_is_null"]
+            event_time = (
+                None
+                if event_time_is_null
+                else time.fromisoformat(payload["sort_event_time"])
+            )
+            incident_id = payload["incident_id"]
+            return {
+                "sort_created_at": created_at,
+                "sort_event_date": event_date,
+                "sort_event_time_is_null": event_time_is_null,
+                "sort_event_time": event_time,
+                "raw_message_id": int(payload["raw_message_id"]),
+                "incident_id": UUID(incident_id) if incident_id is not None else None,
+            }
+        except (KeyError, TypeError, ValueError, UnicodeDecodeError) as exc:
+            raise ValueError("Invalid incidents cursor.") from exc
+
+    @staticmethod
+    def _encode_list_cursor(row: Any) -> str:
+        event_time = row["event_time"]
+        payload = {
+            "sort_created_at": row["created_at"].isoformat(),
+            "sort_event_date": row["event_date"].isoformat(),
+            "sort_event_time_is_null": event_time is None,
+            "sort_event_time": event_time.isoformat() if event_time is not None else None,
+            "raw_message_id": row["raw_message_id"],
+            "incident_id": str(row["id"]) if row["id"] is not None else None,
+        }
+        return base64.urlsafe_b64encode(
+            json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        ).decode("ascii").rstrip("=")
+
+    @staticmethod
+    def _list_cursor_filter(
+        params: IncidentListParams,
+        cursor: dict[str, object],
+        created_at: object,
+        event_date: object,
+    ) -> object:
+        created_value = cursor["sort_created_at"]
+        event_date_value = cursor["sort_event_date"]
+        event_time_value = cursor["sort_event_time"]
+        raw_message_id = cursor["raw_message_id"]
+        incident_id = cursor["incident_id"]
+        before = params.sort_order == "newest"
+        comparison = (lambda column, value: column < value) if before else (lambda column, value: column > value)
+        created_equal = created_at == created_value
+        event_date_equal = event_date == event_date_value
+        event_time_after = (
+            Incident.event_time.is_(None)
+            if event_time_value is not None
+            else false()
+        )
+        if event_time_value is not None:
+            event_time_after = or_(
+                comparison(Incident.event_time, event_time_value),
+                Incident.event_time.is_(None),
+            )
+        incident_after = (
+            or_(Incident.id.is_(None), comparison(Incident.id, incident_id))
+            if incident_id is not None
+            else false()
+        )
+        return or_(
+            comparison(created_at, created_value),
+            and_(created_equal, comparison(event_date, event_date_value)),
+            and_(created_equal, event_date_equal, event_time_after),
+            and_(
+                created_equal,
+                event_date_equal,
+                (
+                    Incident.event_time.is_(None)
+                    if event_time_value is None
+                    else Incident.event_time.is_not(None)
+                ),
+                comparison(RawMessage.id, raw_message_id),
+            ),
+            and_(
+                created_equal,
+                event_date_equal,
+                (
+                    Incident.event_time.is_(None)
+                    if event_time_value is None
+                    else Incident.event_time.is_not(None)
+                ),
+                RawMessage.id == raw_message_id,
+                incident_after,
+            ),
         )
 
     @staticmethod

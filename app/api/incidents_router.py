@@ -39,7 +39,7 @@ def create_incident(
 @router.get("", response_model=IncidentListResponse)
 def list_incidents(
     limit: int = Query(default=150, ge=1, le=150),
-    offset: int = Query(default=0, ge=0),
+    cursor: str | None = Query(default=None),
     village: str | None = Query(default=None),
     condition: str | None = Query(default=None),
     source_type: SourceType | None = Query(default=None),
@@ -54,7 +54,7 @@ def list_incidents(
 ) -> IncidentListResponse:
     params = IncidentListParams(
         limit=limit,
-        offset=offset,
+        cursor=cursor,
         village=village,
         condition=condition,
         source_type=source_type.value if source_type is not None else None,

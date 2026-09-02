@@ -31,7 +31,7 @@ class IncidentListParams(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     limit: int = Field(default=150, ge=1, le=150)
-    offset: int = Field(default=0, ge=0)
+    cursor: str | None = None
     village: str | None = None
     condition: str | None = None
     source_type: str | None = None
@@ -49,7 +49,7 @@ class IncidentListResponse(BaseModel):
     items: list[IncidentListItemDTO]
     total: int
     limit: int
-    offset: int
+    next_cursor: str | None = None
     latest_incident_at: datetime | None = None
 
 

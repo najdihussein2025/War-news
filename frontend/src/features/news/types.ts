@@ -31,13 +31,13 @@ export type IncidentListResponse = {
   items: Incident[];
   total: number;
   limit: number;
-  offset: number;
+  next_cursor: string | null;
   latest_incident_at: string | null;
 };
 
 export type IncidentFilters = {
   limit: number;
-  offset: number;
+  cursor?: string;
   village?: string;
   condition?: string;
   sourceType?: string;

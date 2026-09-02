@@ -24,7 +24,9 @@ export const getIncidents = async (
 ): Promise<IncidentListResponse> => {
   const params = new URLSearchParams();
   params.set("limit", String(filters.limit));
-  params.set("offset", String(filters.offset));
+  if (filters.cursor) {
+    params.set("cursor", filters.cursor);
+  }
 
   if (filters.village) {
     params.set("village", filters.village);

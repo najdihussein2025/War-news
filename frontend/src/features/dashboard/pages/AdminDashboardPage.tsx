@@ -14,7 +14,7 @@ const DashboardLink = ({ label, detail, action, to }: { label: string; detail: s
 );
 
 export const AdminDashboardPage = () => {
-  const incidents = useIncidentsQuery({ limit: 5, offset: 0 }, false);
+  const incidents = useIncidentsQuery({ limit: 5 }, false);
 
   return <div className="space-y-6">
     <section className="rounded-lg border border-border bg-surface-raised p-5 sm:p-6"><p className="text-caption font-semibold uppercase tracking-wide text-accent">Operations overview</p><h2 className="mt-2 text-h3 font-semibold text-text-primary">Incident operations</h2></section>

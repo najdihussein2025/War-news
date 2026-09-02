@@ -68,8 +68,9 @@ export const IncidentsPage = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState("");
-  const page = Math.max(1, Number(params.get("page") ?? "1") || 1);
-  const offset = (page - 1) * PAGE_SIZE;
+  const [cursorHistory, setCursorHistory] = useState<string[]>([]);
+  const cursor = cursorHistory.at(-1);
+  const page = cursorHistory.length + 1;
   const village = params.get("village") ?? "";
   const condition = params.get("condition") ?? "";
   const sourceType = params.get("source_type") ?? "";
@@ -86,7 +87,7 @@ export const IncidentsPage = () => {
   const filters = useMemo(
     () => ({
       limit: PAGE_SIZE,
-      offset,
+      cursor,
       village,
       condition,
       sourceType,
@@ -103,7 +104,7 @@ export const IncidentsPage = () => {
       eventDateTo,
       flaggedOnly,
       duplicateOnly,
-      offset,
+      cursor,
       sortOrder,
       sourceType,
       verificationStatus,
@@ -122,8 +123,8 @@ export const IncidentsPage = () => {
     data: villages = [],
     isLoading: isVillagesLoading,
   } = useVillagesQuery();
-  const verificationSummary = useIncidentsQuery({ limit: 1, offset: 0, verificationStatus: "needs_verification" });
-  const duplicateSummary = useIncidentsQuery({ limit: 1, offset: 0, duplicateOnly: true });
+  const verificationSummary = useIncidentsQuery({ limit: 1, verificationStatus: "needs_verification" });
+  const duplicateSummary = useIncidentsQuery({ limit: 1, duplicateOnly: true });
   useLiveQueryTitleAddon(data?.latest_incident_at ?? null, isFetching);
   const rows = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -143,7 +144,6 @@ export const IncidentsPage = () => {
     }
     return shared;
   }, [rows]);
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const flaggedCount = verificationSummary.data?.total ?? 0;
   const duplicateCount = duplicateSummary.data?.total ?? 0;
   const verificationOptions: SelectOption[] = [
@@ -169,17 +169,7 @@ export const IncidentsPage = () => {
     } else {
       next.delete(key);
     }
-    next.delete("page");
-    setParams(next);
-  };
-
-  const setPage = (nextPage: number) => {
-    const next = new URLSearchParams(params);
-    if (nextPage <= 1) {
-      next.delete("page");
-    } else {
-      next.set("page", String(nextPage));
-    }
+    setCursorHistory([]);
     setParams(next);
   };
 
@@ -190,7 +180,7 @@ export const IncidentsPage = () => {
       headerClassName: "w-14 whitespace-nowrap",
       cellClassName: "w-14 tabular-nums text-text-muted",
       mobileLabel: "Record",
-      render: (row) => offset + rows.indexOf(row) + 1,
+      render: (row) => (page - 1) * PAGE_SIZE + rows.indexOf(row) + 1,
     },
     {
       key: "village",
@@ -516,22 +506,27 @@ export const IncidentsPage = () => {
       {total > PAGE_SIZE ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-small text-text-muted">
-            Showing {offset + 1}-{Math.min(offset + PAGE_SIZE, total)} of {total} incidents | Page {page} of {totalPages}
+            Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, total)} of {total} incidents | Page {page}
           </p>
           <div className="flex gap-2">
             <Button
               type="button"
               variant="secondary"
-              disabled={page <= 1}
-              onClick={() => setPage(page - 1)}
+              disabled={cursorHistory.length === 0}
+              onClick={() => setCursorHistory((history) => history.slice(0, -1))}
             >
               Previous
             </Button>
             <Button
               type="button"
               variant="secondary"
-              disabled={page >= totalPages}
-              onClick={() => setPage(page + 1)}
+              disabled={!data?.next_cursor}
+              onClick={() => {
+                const nextCursor = data?.next_cursor;
+                if (nextCursor) {
+                  setCursorHistory((history) => [...history, nextCursor]);
+                }
+              }}
             >
               Next
             </Button>
@@ -560,7 +555,7 @@ export const IncidentsPage = () => {
                   source_link: nullable("source_link"),
                 });
                 setIsCreateOpen(false);
-                setPage(1);
+                setCursorHistory([]);
                 await refetch();
               } catch (error) {
                 setCreateError(isAxiosError(error) && typeof error.response?.data?.detail === "string" ? error.response.data.detail : "Could not create the incident. Please try again.");

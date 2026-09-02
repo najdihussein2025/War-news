@@ -29,8 +29,8 @@ const friendlyAuditAction = (action: string) => ({
 export const SuperAdminDashboardPage = () => {
   const contentSources = useContentSourcesQuery();
   const sources = useSourcesQuery();
-  const incidents = useIncidentsQuery({ limit: 1, offset: 0 }, false);
-  const incidentsToday = useIncidentsQuery({ limit: 1, offset: 0, eventDateFrom: today() }, false);
+  const incidents = useIncidentsQuery({ limit: 1 }, false);
+  const incidentsToday = useIncidentsQuery({ limit: 1, eventDateFrom: today() }, false);
   const airViolations = useAirViolationsQuery({ limit: 1, offset: 0 }, false);
   const airViolationsToday = useAirViolationsQuery({ limit: 1, offset: 0, eventDateFrom: today() }, false);
   const failedLogins = useLoginLogsQuery({ result: "failure", dateFrom: yesterday(), page: 1, pageSize: 1 });
