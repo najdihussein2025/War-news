@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.accounts.models import User
 from app.api.deps import require_admin
 from app.core.database import get_db
-from app.news.models import Incident, MessageStatus, RawMessage, Village
+from app.news.models import MessageStatus, RawMessage
 
 
 router = APIRouter(prefix="/api/rejected-news", tags=["rejected-news"])
@@ -190,18 +190,9 @@ def list_rejected_news(
     db: Session = Depends(get_db),
 ) -> RejectedNewsList:
     cutoff = datetime.now().astimezone() - timedelta(days=7)
-    south_incident_raw_messages = (
-        select(Incident.raw_message_id)
-        .join(Village, Village.id == Incident.village_id)
-        .where(
-            Incident.raw_message_id.is_not(None),
-            Village.mohafaza_en.in_(("South", "Nabatiye")),
-        )
-    )
     filters = [
-        RawMessage.status == MessageStatus.duplicate,
+        RawMessage.status.in_([MessageStatus.rejected, MessageStatus.duplicate]),
         func.coalesce(RawMessage.message_datetime, RawMessage.received_at) >= cutoff,
-        RawMessage.duplicate_of_id.in_(south_incident_raw_messages),
         or_(
             RawMessage.source_name.is_(None),
             RawMessage.source_name != RED_ALERT_SOURCE_NAME,

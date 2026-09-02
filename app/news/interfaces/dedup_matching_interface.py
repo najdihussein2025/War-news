@@ -17,7 +17,7 @@ class DedupMatchingInterface(ABC):
         khabar_embedding: list[float],
         exclude_raw_message_id: int | None = None,
     ) -> tuple[Incident | None, float]:
-        ...
+        raise NotImplementedError
 
     @abstractmethod
     def merge_into_incident(
@@ -26,7 +26,7 @@ class DedupMatchingInterface(ABC):
         new_candidate_data: dict[str, Any],
         raw_message_id: int,
     ) -> None:
-        ...
+        raise NotImplementedError
 
     @abstractmethod
     def record_possible_duplicate(
@@ -35,4 +35,4 @@ class DedupMatchingInterface(ABC):
         matched_incident: Incident,
         similarity_score: float,
     ) -> None:
-        ...
+        raise NotImplementedError
