@@ -6,6 +6,7 @@ from app.news.models.duplicate_match import DuplicateMatch, MatchStatus, MatchTy
 from app.news.models.incident import Incident
 from app.news.models.incident_detail import DidValue, IncidentDetail
 from app.news.models.incident_update import IncidentUpdate, UpdateAction
+from app.news.models.pipeline_stage_run import PipelineStageRun
 from app.news.models.raw_message import MessageStatus, RawMessage
 from app.news.models.sweep_cursor import SweepCursor
 from app.news.models.village import Village
@@ -19,6 +20,7 @@ __all__ = [
     "Incident",
     "IncidentDetail",
     "IncidentUpdate",
+    "PipelineStageRun",
     "MatchStatus",
     "MatchType",
     "MessageStatus",

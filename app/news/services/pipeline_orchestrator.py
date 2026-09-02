@@ -28,6 +28,7 @@ from app.news.services.pipeline_sweep_stages import (
     sweep_materialization,
     sweep_relevance_filter,
 )
+from app.news.services.pipeline_stage_run_service import record_stage_run
 
 logger = logging.getLogger(__name__)
 
@@ -172,6 +173,14 @@ async def run_full_pipeline_sweep(
 
     def _record_stage(result: StageSweepResult) -> None:
         stages.append(result)
+        try:
+            record_stage_run(
+                result,
+                sweep_type="manual" if use_advisory_lock else "live",
+            )
+        except Exception:
+            # Telemetry must never turn a completed processing stage into a failure.
+            logger.exception("Failed to persist pipeline stage run stage=%s", result.stage)
         _log_stage_result(result)
         if on_stage is not None:
             on_stage(result)
