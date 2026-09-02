@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.news.models import Incident, MessageStatus, RawMessage
+from app.news.models.sweep_cursor import LIVE_SWEEP_NAME, SweepCursor
 from app.news.repositories.pipeline_claim_repository import claimable_lease_filter
 from app.news.services.fast_path_eligibility import fast_path_materializable_clause
 
@@ -16,6 +18,15 @@ class StageQueueDepth:
     stage_name: str
     queue_depth: int
     oldest_waiting_seconds: float | None
+
+
+@dataclass(frozen=True)
+class CursorGap:
+    sweep_name: str
+    last_processed_id: int
+    max_raw_message_id: int | None
+    gap: int
+    unhealthy: bool
 
 
 def _has_active_incident_clause():
@@ -158,6 +169,45 @@ class PipelineHealthService:
             stage_name=stage_name,
             queue_depth=int(depth or 0),
             oldest_waiting_seconds=self._age_seconds(oldest, now),
+        )
+
+    def cursor_gap(self) -> CursorGap:
+        """Live-sweep watermark vs MAX(raw_messages.id).
+
+        ``unhealthy`` is a data field, never a status code: the endpoint
+        returns 200 regardless. It flips true when the cursor trails the
+        newest raw_message by more than
+        ``settings.pipeline_cursor_gap_row_threshold`` rows, OR the cursor
+        has not advanced in ``settings.pipeline_cursor_stale_minutes``
+        minutes while newer rows exist.
+        """
+        now = datetime.now(timezone.utc)
+        cursor = self.db.get(SweepCursor, LIVE_SWEEP_NAME)
+        last_processed_id = int(cursor.last_processed_id) if cursor is not None else 0
+        cursor_updated_at = cursor.updated_at if cursor is not None else None
+
+        max_raw_message_id = self.db.execute(
+            select(func.max(RawMessage.id))
+        ).scalar_one()
+
+        gap = max(0, (max_raw_message_id or 0) - last_processed_id)
+        newer_rows_exist = gap > 0
+
+        unhealthy_by_gap = gap > settings.pipeline_cursor_gap_row_threshold
+
+        unhealthy_by_staleness = False
+        if newer_rows_exist and cursor_updated_at is not None:
+            if cursor_updated_at.tzinfo is None:
+                cursor_updated_at = cursor_updated_at.replace(tzinfo=timezone.utc)
+            stale_after = timedelta(minutes=settings.pipeline_cursor_stale_minutes)
+            unhealthy_by_staleness = (now - cursor_updated_at) > stale_after
+
+        return CursorGap(
+            sweep_name=LIVE_SWEEP_NAME,
+            last_processed_id=last_processed_id,
+            max_raw_message_id=max_raw_message_id,
+            gap=gap,
+            unhealthy=unhealthy_by_gap or unhealthy_by_staleness,
         )
 
     def _tier2_detail_fill_stage(self, *, now: datetime) -> StageQueueDepth:

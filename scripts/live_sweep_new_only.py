@@ -15,6 +15,7 @@ from app.core.database import SessionLocal
 from app.core.logging_config import configure_logging
 from app.news.dtos.pipeline_dto import StageSweepResult
 from app.news.models import Incident, MessageStatus, RawMessage
+from app.news.models.sweep_cursor import LIVE_SWEEP_NAME
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
 from app.news.repositories.raw_message_repository import RawMessageRepository
 from app.news.repositories.sweep_cursor_repository import SweepCursorRepository
@@ -40,7 +41,7 @@ from app.news.services.pipeline_sweep_stages import (
 
 logger = logging.getLogger(__name__)
 
-SWEEP_NAME = "live_sweep_new_only"
+SWEEP_NAME = LIVE_SWEEP_NAME
 EXTRACTION_RETRY_CAP_PREFIX = "extraction: exceeded max retries"
 MAX_ROWS: int | None = None
 

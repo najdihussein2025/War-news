@@ -10,7 +10,7 @@ import app.api.pipeline_router as pipeline_router_module
 from app.api.deps import require_super_admin
 from app.core.database import get_db
 from app.main import app
-from app.news.services.pipeline_health_service import StageQueueDepth
+from app.news.services.pipeline_health_service import CursorGap, StageQueueDepth
 
 
 @pytest.fixture
@@ -23,7 +23,7 @@ def client() -> TestClient:
         app.dependency_overrides.clear()
 
 
-def test_pipeline_health_returns_stage_queue_depths(
+def test_pipeline_health_returns_stages_and_cursor_gap(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     class _Service:
@@ -36,23 +36,68 @@ def test_pipeline_health_returns_stage_queue_depths(
                 StageQueueDepth("matching", 3, 3600.5),
             ]
 
+        def cursor_gap(self):
+            return CursorGap(
+                sweep_name="live_sweep_new_only",
+                last_processed_id=2500,
+                max_raw_message_id=2600,
+                gap=100,
+                unhealthy=False,
+            )
+
     monkeypatch.setattr(pipeline_router_module, "PipelineHealthService", _Service)
 
     response = client.get("/api/pipeline/health")
 
     assert response.status_code == 200
-    assert response.json() == [
-        {
-            "stage_name": "relevance_filter",
-            "queue_depth": 0,
-            "oldest_waiting_seconds": None,
+    assert response.json() == {
+        "stages": [
+            {
+                "stage_name": "relevance_filter",
+                "queue_depth": 0,
+                "oldest_waiting_seconds": None,
+            },
+            {
+                "stage_name": "matching",
+                "queue_depth": 3,
+                "oldest_waiting_seconds": 3600.5,
+            },
+        ],
+        "cursor_gap": {
+            "sweep_name": "live_sweep_new_only",
+            "last_processed_id": 2500,
+            "max_raw_message_id": 2600,
+            "gap": 100,
+            "unhealthy": False,
         },
-        {
-            "stage_name": "matching",
-            "queue_depth": 3,
-            "oldest_waiting_seconds": 3600.5,
-        },
-    ]
+    }
+
+
+def test_pipeline_health_returns_200_even_when_cursor_unhealthy(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class _Service:
+        def __init__(self, _db) -> None:
+            pass
+
+        def stage_queue_depths(self):
+            return []
+
+        def cursor_gap(self):
+            return CursorGap(
+                sweep_name="live_sweep_new_only",
+                last_processed_id=10,
+                max_raw_message_id=9000,
+                gap=8990,
+                unhealthy=True,
+            )
+
+    monkeypatch.setattr(pipeline_router_module, "PipelineHealthService", _Service)
+
+    response = client.get("/api/pipeline/health")
+
+    assert response.status_code == 200
+    assert response.json()["cursor_gap"]["unhealthy"] is True
 
 
 def test_pipeline_health_requires_super_admin() -> None:

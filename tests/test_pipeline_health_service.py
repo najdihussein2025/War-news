@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
+from app.core.config import settings
 from app.news.services.pipeline_health_service import PipelineHealthService
 
 _STAGE_ORDER = [
@@ -70,3 +72,93 @@ def test_age_seconds_treats_naive_timestamp_as_utc() -> None:
     now = datetime(2026, 9, 2, 12, 0, tzinfo=timezone.utc)
     naive = datetime(2026, 9, 2, 11, 59, 0)
     assert PipelineHealthService._age_seconds(naive, now) == 60.0
+
+
+class _CursorStubSession:
+    def __init__(self, *, cursor, max_id) -> None:
+        self._cursor = cursor
+        self._max_id = max_id
+
+    def get(self, _model, _pk):
+        return self._cursor
+
+    def execute(self, _stmt):
+        return SimpleNamespace(scalar_one=lambda: self._max_id)
+
+
+def test_cursor_gap_healthy_when_within_thresholds() -> None:
+    cursor = SimpleNamespace(
+        last_processed_id=2500,
+        updated_at=datetime.now(timezone.utc) - timedelta(minutes=1),
+    )
+    service = PipelineHealthService(
+        _CursorStubSession(cursor=cursor, max_id=2550)  # type: ignore[arg-type]
+    )
+
+    gap = service.cursor_gap()
+
+    assert gap.sweep_name == "live_sweep_new_only"
+    assert gap.last_processed_id == 2500
+    assert gap.max_raw_message_id == 2550
+    assert gap.gap == 50
+    assert gap.unhealthy is False
+
+
+def test_cursor_gap_unhealthy_when_row_gap_exceeds_threshold() -> None:
+    cursor = SimpleNamespace(
+        last_processed_id=10,
+        updated_at=datetime.now(timezone.utc),
+    )
+    max_id = 10 + settings.pipeline_cursor_gap_row_threshold + 1
+    service = PipelineHealthService(
+        _CursorStubSession(cursor=cursor, max_id=max_id)  # type: ignore[arg-type]
+    )
+
+    gap = service.cursor_gap()
+
+    assert gap.gap == settings.pipeline_cursor_gap_row_threshold + 1
+    assert gap.unhealthy is True
+
+
+def test_cursor_gap_unhealthy_when_stalled_with_newer_rows() -> None:
+    stale_minutes = settings.pipeline_cursor_stale_minutes + 5
+    cursor = SimpleNamespace(
+        last_processed_id=2500,
+        updated_at=datetime.now(timezone.utc) - timedelta(minutes=stale_minutes),
+    )
+    # Small row gap (below threshold) but the cursor has not advanced in a while.
+    service = PipelineHealthService(
+        _CursorStubSession(cursor=cursor, max_id=2505)  # type: ignore[arg-type]
+    )
+
+    gap = service.cursor_gap()
+
+    assert gap.gap == 5
+    assert gap.unhealthy is True
+
+
+def test_cursor_gap_not_stale_flagged_when_no_newer_rows() -> None:
+    cursor = SimpleNamespace(
+        last_processed_id=2500,
+        updated_at=datetime.now(timezone.utc) - timedelta(days=2),
+    )
+    service = PipelineHealthService(
+        _CursorStubSession(cursor=cursor, max_id=2500)  # type: ignore[arg-type]
+    )
+
+    gap = service.cursor_gap()
+
+    assert gap.gap == 0
+    assert gap.unhealthy is False
+
+
+def test_cursor_gap_handles_missing_cursor_row() -> None:
+    service = PipelineHealthService(
+        _CursorStubSession(cursor=None, max_id=42)  # type: ignore[arg-type]
+    )
+
+    gap = service.cursor_gap()
+
+    assert gap.last_processed_id == 0
+    assert gap.gap == 42
+    assert gap.unhealthy is False

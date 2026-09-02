@@ -30,3 +30,20 @@ class StageQueueDepthResponse(BaseModel):
     stage_name: str
     queue_depth: int
     oldest_waiting_seconds: float | None = None
+
+
+class CursorGapResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    sweep_name: str
+    last_processed_id: int
+    max_raw_message_id: int | None = None
+    gap: int
+    unhealthy: bool
+
+
+class PipelineHealthResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    stages: list[StageQueueDepthResponse] = Field(default_factory=list)
+    cursor_gap: CursorGapResponse
