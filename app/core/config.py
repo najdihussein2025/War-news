@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     tier2_llm_max_concurrent_requests: int = 2
     # When true, Tier 1 uses one combined presence+general LLM call instead of two.
     tier1_use_combined_presence_extraction: bool = False
+    # When true, Tier 2 uses one batched category-detail LLM call per message.
+    tier2_use_batched_category_detail: bool = False
     extraction_llm_request_retries: int = 2
     extraction_llm_retry_backoff_seconds: float = 2.0
     relevance_llm_batch_size: int = 4

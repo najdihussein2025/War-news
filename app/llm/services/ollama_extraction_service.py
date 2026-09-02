@@ -269,7 +269,18 @@ class OllamaExtractionService(ExtractionClassifierInterface):
         root_casualties: ExtractionCasualties | None = None,
         raw_message_id: int | None = None,
     ) -> dict[ExtractionCategoryKey, ExtractionCategory]:
-        """Run per-category detail LLM calls for keys detected in Tier 1."""
+        """Run Tier-2 category detail extraction for keys detected in Tier 1."""
+        if not presence_category_keys:
+            return {}
+
+        if settings.tier2_use_batched_category_detail:
+            return self._extract_tier2_details_batched(
+                post_text,
+                presence_category_keys,
+                root_casualties=root_casualties,
+                raw_message_id=raw_message_id,
+            )
+
         category_details: dict[str, ExtractionCategory] = {}
         failed_categories: list[str] = []
         for category_key in presence_category_keys:
@@ -321,6 +332,73 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 list(category_details.keys()),
             )
 
+        return self._finalize_tier2_categories(
+            category_details,
+            root_casualties=root_casualties,
+            raw_message_id=raw_message_id,
+        )
+
+    def _extract_tier2_details_batched(
+        self,
+        post_text: str,
+        presence_category_keys: list[ExtractionCategoryKey],
+        *,
+        root_casualties: ExtractionCasualties | None,
+        raw_message_id: int | None,
+    ) -> dict[ExtractionCategoryKey, ExtractionCategory]:
+        try:
+            batched = self.category_detail.extract_details_batch(
+                post_text,
+                presence_category_keys,
+                raw_message_id=raw_message_id,
+            )
+        except Exception as exc:
+            auth_failure = coerce_ollama_auth_failure(
+                exc,
+                stage="tier2_detail_fill",
+            )
+            if auth_failure is not None:
+                raise auth_failure from exc
+            logger.exception(
+                "Failed batched Tier2 category extraction raw_message_id=%s error=%s",
+                raw_message_id,
+                exc,
+            )
+            return {}
+
+        category_details: dict[str, ExtractionCategory] = {}
+        for category_key in presence_category_keys:
+            category_detail = batched.get(category_key)
+            if category_detail is None:
+                logger.warning(
+                    "Batched Tier2 missing category=%s raw_message_id=%s",
+                    category_key.value,
+                    raw_message_id,
+                )
+                continue
+            if self._is_empty_category_detail(category_detail):
+                logger.warning(
+                    "Dropped empty batched category detail category=%s "
+                    "raw_message_id=%s",
+                    category_key.value,
+                    raw_message_id,
+                )
+                continue
+            category_details[category_key.value] = category_detail
+
+        return self._finalize_tier2_categories(
+            category_details,
+            root_casualties=root_casualties,
+            raw_message_id=raw_message_id,
+        )
+
+    def _finalize_tier2_categories(
+        self,
+        category_details: dict[str, ExtractionCategory],
+        *,
+        root_casualties: ExtractionCasualties | None,
+        raw_message_id: int | None,
+    ) -> dict[ExtractionCategoryKey, ExtractionCategory]:
         categories = self._validated_categories(
             category_details,
             raw_message_id=raw_message_id,

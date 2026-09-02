@@ -4,7 +4,7 @@ import json
 import logging
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.core.ollama_client import JsonObject, OllamaChatClient, OllamaChatMessage
 from app.llm.dtos import (
@@ -26,6 +26,16 @@ PROMPT_PATH = (
     / "category_detail_instruction.txt"
 )
 CATEGORY_DETAIL_PROMPT = PROMPT_PATH.read_text(encoding="utf-8")
+BATCHED_PROMPT_PATH = (
+    Path(__file__).resolve().parents[3]
+    / "scripts"
+    / "phase2-extraction-testing"
+    / "batched_category_detail_instruction.txt"
+)
+BATCHED_CATEGORY_DETAIL_PROMPT = BATCHED_PROMPT_PATH.read_text(encoding="utf-8")
+_CATEGORY_KEY_ENUM = [
+    category.value for category in ExtractionCategoryKey
+]
 CATEGORY_DETAIL_RESPONSE_SCHEMA: JsonObject = {
     "type": "object",
     "additionalProperties": False,
@@ -68,6 +78,28 @@ CATEGORY_DETAIL_RESPONSE_SCHEMA: JsonObject = {
     "required": ["did", "name"],
 }
 
+_BATCHED_CATEGORY_DETAIL_ITEM_SCHEMA: JsonObject = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "category_key": {"type": "string", "enum": _CATEGORY_KEY_ENUM},
+        **CATEGORY_DETAIL_RESPONSE_SCHEMA["properties"],  # type: ignore[arg-type]
+    },
+    "required": ["category_key", "did", "name"],
+}
+
+BATCHED_CATEGORY_DETAIL_RESPONSE_SCHEMA: JsonObject = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "category_details": {
+            "type": "array",
+            "items": _BATCHED_CATEGORY_DETAIL_ITEM_SCHEMA,
+        }
+    },
+    "required": ["category_details"],
+}
+
 
 class _RawCategoryDetailResponse(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True)
@@ -76,6 +108,16 @@ class _RawCategoryDetailResponse(BaseModel):
     name: str | None = None
     casualties: ExtractionCasualties | None = None
     vehicles: ExtractionVehicleDetails | None = None
+
+
+class _RawBatchedCategoryDetailItem(_RawCategoryDetailResponse):
+    category_key: str
+
+
+class _RawBatchedCategoryDetailResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore", frozen=True)
+
+    category_details: list[_RawBatchedCategoryDetailItem] = Field(default_factory=list)
 
 
 class OllamaCategoryDetailService:
@@ -107,6 +149,79 @@ class OllamaCategoryDetailService:
             category_key=category_key,
             raw_message_id=raw_message_id,
         )
+
+    def extract_details_batch(
+        self,
+        post_text: str,
+        category_keys: list[ExtractionCategoryKey],
+        raw_message_id: int | None = None,
+    ) -> dict[ExtractionCategoryKey, ExtractionCategory]:
+        if not category_keys:
+            return {}
+
+        keys_csv = ", ".join(key.value for key in category_keys)
+        content = self.client.chat(
+            [
+                OllamaChatMessage(role="system", content=BATCHED_CATEGORY_DETAIL_PROMPT),
+                OllamaChatMessage(
+                    role="user",
+                    content=(
+                        f"category_keys: [{keys_csv}]\n\n"
+                        f"النص:\n{post_text}"
+                    ),
+                ),
+            ],
+            response_format=BATCHED_CATEGORY_DETAIL_RESPONSE_SCHEMA,
+            temperature=LOW_TEMPERATURE,
+        )
+        return self._parse_batched_response(
+            content,
+            category_keys=category_keys,
+            raw_message_id=raw_message_id,
+        )
+
+    def _parse_batched_response(
+        self,
+        content: str,
+        *,
+        category_keys: list[ExtractionCategoryKey],
+        raw_message_id: int | None,
+    ) -> dict[ExtractionCategoryKey, ExtractionCategory]:
+        try:
+            payload = json.loads(content.strip())
+            response = _RawBatchedCategoryDetailResponse.model_validate(payload)
+        except (json.JSONDecodeError, ValidationError, TypeError) as exc:
+            logger.warning(
+                "Malformed batched category detail response from model=%s "
+                "for raw_message_id=%s: %s",
+                self.client.model,
+                raw_message_id,
+                exc,
+            )
+            raise RuntimeError("Malformed batched category detail response.") from exc
+
+        allowed = {key.value for key in category_keys}
+        parsed: dict[ExtractionCategoryKey, ExtractionCategory] = {}
+        for item in response.category_details:
+            if item.category_key not in allowed:
+                logger.warning(
+                    "Dropped unexpected batched category for raw_message_id=%s: %s",
+                    raw_message_id,
+                    item.category_key,
+                )
+                continue
+            category_key = ExtractionCategoryKey(item.category_key)
+            parsed[category_key] = ExtractionCategory(
+                did=item.did,
+                name=self._validated_name(
+                    item.name,
+                    category_key=category_key,
+                    raw_message_id=raw_message_id,
+                ),
+                casualties=item.casualties,
+                vehicles=item.vehicles,
+            )
+        return parsed
 
     def _parse_response(
         self,

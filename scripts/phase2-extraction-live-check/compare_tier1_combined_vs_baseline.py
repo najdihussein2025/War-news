@@ -28,6 +28,14 @@ ANSWER_KEY_PATH = (
 )
 SAMPLE_TEXTS_DIR = ANSWER_KEY_PATH.parent / "sample_texts"
 
+ANSWER_KEY_CATEGORY_ALIASES = {
+    "army": "lebanese_army",
+}
+
+
+def _map_answer_key_category(key: str) -> str:
+    return ANSWER_KEY_CATEGORY_ALIASES.get(key, key)
+
 
 def _load_text(sample: dict) -> str:
     sample_id = sample["sample_id"]
@@ -40,7 +48,7 @@ def _load_text(sample: dict) -> str:
 def _expected_categories(sample: dict) -> set[str]:
     expected = sample.get("expected") or {}
     categories = expected.get("categories") or {}
-    return set(categories.keys())
+    return {_map_answer_key_category(key) for key in categories.keys()}
 
 
 def _expected_casualties(sample: dict) -> dict[str, float]:
