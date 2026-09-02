@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     extraction_ollama_model: str = "qwen2.5:7b"
     extraction_llm_timeout_seconds: int = 240
     extraction_llm_max_concurrent_requests: int = 2
+    # Independent Tier 1 / Tier 2 LLM concurrency pools (see ollama_concurrency.py).
+    tier1_llm_max_concurrent_requests: int = 2
+    tier2_llm_max_concurrent_requests: int = 2
     extraction_llm_request_retries: int = 2
     extraction_llm_retry_backoff_seconds: float = 2.0
     relevance_llm_batch_size: int = 4

@@ -13,7 +13,10 @@ from sqlalchemy.orm import Session
 from app.api.factories.action_factory import build_match_incident_action
 from app.core.config import settings
 from app.core.database import SessionLocal
-from app.core.ollama_concurrency import run_with_ollama_limit
+from app.core.ollama_concurrency import (
+    run_with_tier1_ollama_limit,
+    run_with_tier2_ollama_limit,
+)
 from app.llm.services.ollama_auth_failures import (
     OllamaAuthFailure,
     coerce_ollama_auth_failure,
@@ -107,8 +110,12 @@ def _worker_count() -> int:
     return max(1, settings.ollama_max_concurrent_requests)
 
 
-def _extraction_worker_count() -> int:
-    return max(1, settings.extraction_llm_max_concurrent_requests)
+def _tier1_extraction_worker_count() -> int:
+    return max(1, settings.tier1_llm_max_concurrent_requests)
+
+
+def _tier2_extraction_worker_count() -> int:
+    return max(1, settings.tier2_llm_max_concurrent_requests)
 
 
 def _claim_raw_message_id(claim_fn: Callable[[Session], RawMessage | None]) -> int | None:
@@ -293,10 +300,9 @@ async def _tier1_extraction_worker(
             return
 
         try:
-            await run_with_ollama_limit(
+            await run_with_tier1_ollama_limit(
                 run_tier1_extraction_for_message,
                 raw_message_id,
-                max_concurrent_requests=settings.extraction_llm_max_concurrent_requests,
             )
             stats.record_success()
         except ExtractionRetryCappedError as exc:
@@ -349,7 +355,7 @@ async def sweep_extraction_concurrent(
             ),
             name=f"tier1-extraction-worker-{index}",
         )
-        for index in range(_extraction_worker_count())
+        for index in range(_tier1_extraction_worker_count())
     ]
     await asyncio.gather(*workers)
     if abort_state.triggered():
@@ -562,10 +568,9 @@ async def _tier2_detail_fill_worker(
         if abort_state.triggered():
             return
         try:
-            await run_with_ollama_limit(
+            await run_with_tier2_ollama_limit(
                 run_tier2_detail_fill_for_message,
                 raw_message_id,
-                max_concurrent_requests=settings.extraction_llm_max_concurrent_requests,
             )
             stats.record_success()
         except Exception as exc:
@@ -597,7 +602,7 @@ async def sweep_tier2_detail_fill_concurrent(
             ),
             name=f"tier2-detail-fill-worker-{index}",
         )
-        for index in range(_extraction_worker_count())
+        for index in range(_tier2_extraction_worker_count())
     ]
     await asyncio.gather(*workers)
     if abort_state.triggered():

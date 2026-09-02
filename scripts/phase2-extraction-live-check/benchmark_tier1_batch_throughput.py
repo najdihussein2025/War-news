@@ -205,6 +205,117 @@ def _run_parallel_probe(workers: int, model: str | None) -> None:
         )
 
 
+def _run_tier_isolation_simulation(*, pool_limit: int) -> None:
+    """Simulate Tier 2 saturation and measure Tier 1 start latency."""
+    import asyncio
+    import threading
+    import time
+
+    from app.core.ollama_concurrency import (
+        run_with_ollama_limit,
+        run_with_tier1_ollama_limit,
+        run_with_tier2_ollama_limit,
+    )
+    import app.core.ollama_concurrency as ollama_concurrency_module
+
+    tier2_hold_seconds = 1.0
+    tier2_jobs = pool_limit * 2
+    tier1_jobs = pool_limit * 2
+    tier2_started = threading.Event()
+
+    async def _shared_pool_scenario() -> float:
+        """Legacy: one gate for both tiers (same limit value shares one semaphore)."""
+
+        def tier2_work() -> None:
+            tier2_started.set()
+            time.sleep(tier2_hold_seconds)
+
+        def tier1_work() -> None:
+            time.sleep(0.01)
+
+        async def saturate_tier2() -> None:
+            await asyncio.gather(
+                *[
+                    run_with_ollama_limit(
+                        tier2_work,
+                        max_concurrent_requests=pool_limit,
+                    )
+                    for _ in range(tier2_jobs)
+                ]
+            )
+
+        tier2_started.clear()
+        tier2_task = asyncio.create_task(saturate_tier2())
+        await asyncio.to_thread(tier2_started.wait, 1.0)
+        started = time.monotonic()
+        await asyncio.gather(
+            *[
+                run_with_ollama_limit(
+                    tier1_work,
+                    max_concurrent_requests=pool_limit,
+                )
+                for _ in range(tier1_jobs)
+            ]
+        )
+        tier1_elapsed = time.monotonic() - started
+        await tier2_task
+        return tier1_elapsed
+
+    async def _separated_pools_scenario() -> float:
+        def tier2_work() -> None:
+            tier2_started.set()
+            time.sleep(tier2_hold_seconds)
+
+        def tier1_work() -> None:
+            time.sleep(0.01)
+
+        async def saturate_tier2() -> None:
+            await asyncio.gather(
+                *[
+                    run_with_tier2_ollama_limit(tier2_work)
+                    for _ in range(tier2_jobs)
+                ]
+            )
+
+        tier2_started.clear()
+        tier2_task = asyncio.create_task(saturate_tier2())
+        await asyncio.to_thread(tier2_started.wait, 1.0)
+        started = time.monotonic()
+        await asyncio.gather(
+            *[
+                run_with_tier1_ollama_limit(tier1_work)
+                for _ in range(tier1_jobs)
+            ]
+        )
+        tier1_elapsed = time.monotonic() - started
+        await tier2_task
+        return tier1_elapsed
+
+    print(f"\n=== TIER POOL ISOLATION SIMULATION (pool_limit={pool_limit}) ===")
+    ollama_concurrency_module._ollama_pool_semaphores.clear()
+    shared_elapsed = asyncio.run(_shared_pool_scenario())
+    ollama_concurrency_module._ollama_pool_semaphores.clear()
+    separated_elapsed = asyncio.run(_separated_pools_scenario())
+    print(
+        f"  shared_pool tier1_batch_elapsed={shared_elapsed:.3f}s "
+        f"(Tier 2 holds all {pool_limit} slots)"
+    )
+    print(
+        f"  separated_pools tier1_batch_elapsed={separated_elapsed:.3f}s "
+        f"(Tier 2 saturated on its own pool)"
+    )
+    if separated_elapsed < shared_elapsed * 0.75:
+        print(
+            "  interpretation: separated pools let Tier 1 proceed while Tier 2 "
+            "is saturated (expected after item 1)."
+        )
+    else:
+        print(
+            "  interpretation: little difference — check pool wiring or increase "
+            "tier2_hold_seconds."
+        )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Benchmark Tier-1 extraction batch throughput."
@@ -242,7 +353,27 @@ def main() -> None:
         action="store_true",
         help="Also run the same batch with 1 worker for comparison",
     )
+    parser.add_argument(
+        "--parallel-probe",
+        action="store_true",
+        help="Alias for --probe (presence-gate parallel probe)",
+    )
+    parser.add_argument(
+        "--tier-isolation-test",
+        action="store_true",
+        help=(
+            "Simulate Tier 2 saturation and compare Tier 1 latency under "
+            "shared vs separated concurrency pools (no Ollama/DB required)"
+        ),
+    )
     args = parser.parse_args()
+
+    if args.tier_isolation_test:
+        pool_limit = max(1, settings.tier1_llm_max_concurrent_requests)
+        print(f"Tier 1 pool limit: {settings.tier1_llm_max_concurrent_requests}")
+        print(f"Tier 2 pool limit: {settings.tier2_llm_max_concurrent_requests}")
+        _run_tier_isolation_simulation(pool_limit=pool_limit)
+        return
 
     samples = _load_samples(args.ids)
     model = args.model or settings.extraction_ollama_model
@@ -251,11 +382,13 @@ def main() -> None:
     print(f"Ollama base URL: {settings.ollama_base_url}")
     print(f"Model: {model}")
     print(f"App-side max concurrent (env): {settings.ollama_max_concurrent_requests}")
+    print(f"Tier 1 pool limit: {settings.tier1_llm_max_concurrent_requests}")
+    print(f"Tier 2 pool limit: {settings.tier2_llm_max_concurrent_requests}")
     print(f"Benchmark workers: {args.workers}")
     print(f"Sample count: {len(samples)}")
     print(f"Sample IDs: {[s.raw_message_id for s in samples]}")
 
-    if args.probe:
+    if args.probe or args.parallel_probe:
         _run_parallel_probe(args.workers, args.model)
 
     if args.sequential_baseline:
