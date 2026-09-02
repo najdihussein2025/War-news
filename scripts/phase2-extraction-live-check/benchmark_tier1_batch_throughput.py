@@ -359,6 +359,11 @@ def main() -> None:
         help="Alias for --probe (presence-gate parallel probe)",
     )
     parser.add_argument(
+        "--probe-only",
+        action="store_true",
+        help="Run parallel probe only (no DB sample batch)",
+    )
+    parser.add_argument(
         "--tier-isolation-test",
         action="store_true",
         help=(
@@ -373,6 +378,17 @@ def main() -> None:
         print(f"Tier 1 pool limit: {settings.tier1_llm_max_concurrent_requests}")
         print(f"Tier 2 pool limit: {settings.tier2_llm_max_concurrent_requests}")
         _run_tier_isolation_simulation(pool_limit=pool_limit)
+        return
+
+    if args.probe_only or (
+        (args.probe or args.parallel_probe)
+        and args.label == "run"
+        and not args.sequential_baseline
+    ):
+        print(f"Label: {args.label}")
+        print(f"Ollama base URL: {settings.ollama_base_url}")
+        print(f"Model: {args.model or settings.extraction_ollama_model}")
+        _run_parallel_probe(args.workers, args.model)
         return
 
     samples = _load_samples(args.ids)
