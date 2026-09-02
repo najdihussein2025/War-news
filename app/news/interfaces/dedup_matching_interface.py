@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from datetime import date
 from typing import Any
@@ -15,7 +17,7 @@ class DedupMatchingInterface(ABC):
         khabar_embedding: list[float],
         exclude_raw_message_id: int | None = None,
     ) -> tuple[Incident | None, float]:
-        pass
+        ...
 
     @abstractmethod
     def merge_into_incident(
@@ -24,7 +26,7 @@ class DedupMatchingInterface(ABC):
         new_candidate_data: dict[str, Any],
         raw_message_id: int,
     ) -> None:
-        pass
+        ...
 
     @abstractmethod
     def record_possible_duplicate(
@@ -33,4 +35,4 @@ class DedupMatchingInterface(ABC):
         matched_incident: Incident,
         similarity_score: float,
     ) -> None:
-        pass
+        ...
