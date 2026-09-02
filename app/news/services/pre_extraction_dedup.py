@@ -113,7 +113,6 @@ def find_pre_dedup_match(
             >= func.now() - text(f"INTERVAL '{window_hours} hours'"),
             RawMessage.id != raw_message_id,
             RawMessage.raw_text.is_not(None),
-            RawMessage.raw_text.op("%>")(literal(raw_text)),
         )
         .order_by(score_col.desc(), RawMessage.id.asc())
         .limit(1)

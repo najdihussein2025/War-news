@@ -301,3 +301,24 @@ def test_similarity_query_narrows_to_same_source_by_default() -> None:
 
     compiled = str(session.last_execute_stmt.compile())
     assert "source_id" in compiled
+
+
+def test_similarity_query_defers_threshold_to_returned_score() -> None:
+    """Avoid an unindexed pg_trgm prefilter; the caller checks the top score."""
+    session = _StubSession(
+        batch_ids=[],
+        messages={},
+        similarity_result=None,
+    )
+
+    find_pre_dedup_match(
+        session,  # type: ignore[arg-type]
+        raw_message_id=3,
+        source_id=42,
+        received_at=datetime(2026, 9, 1, 12, 0, tzinfo=timezone.utc),
+        raw_text="dummy",
+        threshold=0.92,
+    )
+
+    compiled = str(session.last_execute_stmt.compile())
+    assert "%>" not in compiled
