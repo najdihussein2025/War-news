@@ -169,6 +169,7 @@ def test_near_duplicate_within_window_marked_as_duplicate() -> None:
     assert result.failed == 0
     assert msg.status == MessageStatus.duplicate
     assert msg.duplicate_of_id == 99
+    # One commit: the duplicate decision (which also persists dedup_checked_at).
     assert session.committed == 1
     assert session.rolled_back == 0
 
@@ -198,7 +199,8 @@ def test_same_batch_pair_only_higher_id_marked_duplicate() -> None:
     assert lower.duplicate_of_id is None
     assert higher.status == MessageStatus.duplicate
     assert higher.duplicate_of_id == 711
-    assert session.committed == 1
+    # Two commits: the lower id's no-op check, then the higher id's duplicate decision.
+    assert session.committed == 2
 
 
 def test_distinct_message_left_unchanged() -> None:
@@ -220,7 +222,7 @@ def test_distinct_message_left_unchanged() -> None:
     assert result.failed == 0
     assert msg.status == MessageStatus.parsed
     assert msg.duplicate_of_id is None
-    assert session.committed == 0
+    assert session.committed == 1
     assert session.rolled_back == 0
 
 
@@ -247,7 +249,7 @@ def test_out_of_window_near_duplicate_not_flagged() -> None:
     assert result.failed == 0
     assert msg.status == MessageStatus.parsed
     assert msg.duplicate_of_id is None
-    assert session.committed == 0
+    assert session.committed == 1
     assert session.rolled_back == 0
 
 

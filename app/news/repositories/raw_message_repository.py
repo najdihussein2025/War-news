@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import or_, select
@@ -82,6 +83,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         filter_result = result.model_dump(mode="json")
         filter_result["needs_review"] = needs_review
         message.filter_result = filter_result
+        message.relevance_filtered_at = datetime.now(timezone.utc)
         message.status = new_status
         message.low_confidence_relevance = needs_review
         message.error_message = None
@@ -96,6 +98,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         audited_candidates: list[dict[str, Any]],
     ) -> None:
         message.extraction_result = result.model_dump(mode="json")
+        message.extracted_at = datetime.now(timezone.utc)
         if audited_candidates:
             message.extraction_result["candidates"] = audited_candidates
         message.error_message = None
@@ -121,6 +124,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         result: MatchResultDTO,
     ) -> None:
         message.match_result = result.model_dump(mode="json")
+        message.matched_at = datetime.now(timezone.utc)
         message.error_message = None
         message.match_retry_count = 0
         self._clear_processing_claim(message)
@@ -136,6 +140,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         if message is None:
             raise ValueError(f"RawMessage id={raw_message_id} not found")
         message.content_embedding = embedding
+        message.embedded_at = datetime.now(timezone.utc)
         self.db.add(message)
         self.db.commit()
 

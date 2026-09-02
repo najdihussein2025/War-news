@@ -141,6 +141,11 @@ class Tier2DetailFillService:
             self.db.add(detail)
             updated += 1
 
+        # Tier 2 detail fill completed for this message: stamp it in the same
+        # commit that flips details_pending to false above. Only reached when
+        # at least one details_pending incident actually needed filling.
+        raw_message.tier2_completed_at = datetime.now(timezone.utc)
+        self.db.add(raw_message)
         self.db.commit()
         logger.info(
             "tier2_detail_fill raw_message_id=%s updated_incidents=%s categories=%s",

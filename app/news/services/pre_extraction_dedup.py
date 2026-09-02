@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 
 from sqlalchemy import func, literal, select, text
 from sqlalchemy.orm import Session
@@ -146,6 +147,8 @@ def process_pre_dedup_message(
     if msg.raw_text is None:
         return False
 
+    msg.dedup_checked_at = datetime.now(timezone.utc)
+
     best = find_pre_dedup_match(
         db,
         raw_message_id=raw_message_id,
@@ -155,10 +158,12 @@ def process_pre_dedup_message(
         threshold=threshold,
     )
     if best is None or best.score < threshold:
+        db.commit()
         return False
 
     original_id = choose_pre_dedup_original_id(raw_message_id, best.id)
     if original_id is None:
+        db.commit()
         return False
 
     if not is_valid_pre_dedup_original(
@@ -172,6 +177,7 @@ def process_pre_dedup_message(
             raw_message_id,
             original_id,
         )
+        db.commit()
         return False
 
     msg.status = MessageStatus.duplicate

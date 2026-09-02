@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import select
@@ -155,6 +155,7 @@ class IncidentMaterializationService:
                             canonical_incident=decision.canonical_incident,
                             raw_message_id=representative.id,
                         )
+                    representative.fast_path_completed_at = datetime.now(timezone.utc)
                     self.db.commit()
                 except Exception:
                     self.db.rollback()
@@ -230,9 +231,13 @@ class IncidentMaterializationService:
         self.db.commit()
 
     @staticmethod
-    def _mark_materialized(representative: RawMessage) -> None:
+    def _mark_materialized(representative: RawMessage, *, fast_path: bool) -> None:
         representative.status = MessageStatus.materialized
         representative.error_message = None
+        now = datetime.now(timezone.utc)
+        if fast_path:
+            representative.fast_path_completed_at = now
+        representative.materialized_at = now
 
     def _insert_fast_incident(
         self,
@@ -291,7 +296,7 @@ class IncidentMaterializationService:
                     children_i=casualties.children_injuries,
                 )
             )
-            self._mark_materialized(representative)
+            self._mark_materialized(representative, fast_path=True)
             self.db.commit()
             self.fast_stats.inserted += 1
             logger.info(
@@ -427,7 +432,7 @@ class IncidentMaterializationService:
                             },
                             raw_message_id=representative.id,
                         )
-                        self._mark_materialized(representative)
+                        self._mark_materialized(representative, fast_path=False)
                         self.db.commit()
                         self.stats.merged_into_existing += 1
                         logger.info(
@@ -490,7 +495,7 @@ class IncidentMaterializationService:
                         **mapped_fields,
                     )
                 )
-                self._mark_materialized(representative)
+                self._mark_materialized(representative, fast_path=False)
                 self.db.commit()
                 self.stats.inserted += 1
                 created.append(incident)

@@ -109,6 +109,14 @@ class RawMessage(Base):
         nullable=False,
         server_default=func.now(),
     )
+    relevance_filtered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    dedup_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    extracted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    matched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    fast_path_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    tier2_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    embedded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    materialized_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[MessageStatus] = mapped_column(
         SqlEnum(MessageStatus, name="message_status"),
         nullable=False,

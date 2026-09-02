@@ -169,6 +169,10 @@ def _representative(*, match_result: dict | None = None):
         match_result=match_result if match_result is not None else _match_result(),
         status=MessageStatus.parsed,
         error_message=None,
+        fast_path_completed_at=None,
+        tier2_completed_at=None,
+        embedded_at=None,
+        materialized_at=None,
     )
 
 
@@ -557,3 +561,98 @@ def test_category_fields_passed_to_incident_detail() -> None:
     assert detail.hosd == 3
     # root deaths=3 + la_td=1 + hosd=3
     assert incident.total_deaths == 7
+
+
+# ---------------------------------------------------------------------------
+# Item 2: per-row pipeline stage timestamps
+# ---------------------------------------------------------------------------
+
+
+def test_full_materialization_sets_materialized_at_only() -> None:
+    """Full-path insert stamps materialized_at; fast_path_completed_at stays NULL."""
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    representative = _representative()
+
+    service.materialize(representative)
+
+    assert representative.status == MessageStatus.materialized
+    assert representative.materialized_at is not None
+    assert representative.fast_path_completed_at is None
+
+
+def test_dedup_merge_sets_materialized_at() -> None:
+    """Merge-into-existing on the full path still stamps materialized_at."""
+    existing = SimpleNamespace(id=uuid4())
+    dedup = _DedupServiceStub(existing=existing, score=0.9)  # type: ignore[arg-type]
+    db = _SessionStub()
+    service = IncidentMaterializationService(db, dedup_service=dedup)  # type: ignore[arg-type]
+    representative = _representative()
+
+    service.materialize(representative)
+
+    assert representative.status == MessageStatus.materialized
+    assert representative.materialized_at is not None
+    assert representative.fast_path_completed_at is None
+
+
+def test_fast_path_insert_sets_both_timestamps() -> None:
+    """Fast-path materialize stamps fast_path_completed_at and materialized_at."""
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    representative = _representative()
+
+    service.process_fast_path(
+        representative,
+        SimpleNamespace(
+            decide_for_village=lambda **_kwargs: SimpleNamespace(
+                outcome=FastPathDedupOutcome.materialize,
+                representative_raw_message_id=None,
+                canonical_incident_id=None,
+            )
+        ),
+    )
+
+    assert representative.status == MessageStatus.materialized
+    assert representative.fast_path_completed_at is not None
+    assert representative.materialized_at is not None
+
+
+def test_fast_path_confident_duplicate_sets_fast_path_completed_at_only() -> None:
+    """A fast-path duplicate link stamps fast_path_completed_at, not materialized_at."""
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    representative = _representative()
+
+    service.process_fast_path(
+        representative,
+        SimpleNamespace(
+            incidents=SimpleNamespace(
+                create_fast_path_duplicate_match=lambda **_kwargs: None
+            ),
+            decide_for_village=lambda **_kwargs: SimpleNamespace(
+                outcome=FastPathDedupOutcome.confident_duplicate,
+                representative_raw_message_id=999,
+                canonical_incident_id=uuid4(),
+                canonical_incident=SimpleNamespace(id=uuid4(), raw_message_id=999),
+            ),
+        ),
+    )
+
+    assert representative.fast_path_completed_at is not None
+    assert representative.materialized_at is None
+
+
+def test_terminalized_message_leaves_stage_timestamps_null() -> None:
+    """An unmaterializable row gets neither fast_path_completed_at nor materialized_at."""
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    representative = _representative(
+        match_result=_match_result(condition_status="unmatched", condition_id=None)
+    )
+
+    service.materialize(representative)
+
+    assert representative.status == MessageStatus.error
+    assert representative.fast_path_completed_at is None
+    assert representative.materialized_at is None

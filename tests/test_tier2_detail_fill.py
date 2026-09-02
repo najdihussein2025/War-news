@@ -35,6 +35,7 @@ def test_fill_for_raw_message_merges_details_and_clears_pending() -> None:
         raw_text="خبر",
         extraction_result=extraction.model_dump(mode="json"),
         content_embedding=None,
+        tier2_completed_at=None,
     )
     incident = SimpleNamespace(
         id="incident-1",
@@ -80,4 +81,37 @@ def test_fill_for_raw_message_merges_details_and_clears_pending() -> None:
     assert incident.details_pending is False
     assert incident.khabar_embedding == [0.1, 0.2]
     assert raw_message.extraction_result["extraction_tier"] == 2
+    assert raw_message.tier2_completed_at is not None
     db.commit.assert_called_once()
+
+
+def test_tier2_completed_at_left_none_when_no_pending_incidents() -> None:
+    db = MagicMock()
+    classifier = MagicMock()
+
+    extraction = ExtractionResult(
+        is_relevant=True,
+        village=["كفركلا"],
+        casualties=ExtractionCasualties(deaths=1),
+        extraction_tier=2,
+        model="test",
+        extracted_at=datetime(2026, 8, 18, 11, 0, tzinfo=timezone.utc),
+    )
+    raw_message = SimpleNamespace(
+        id=7,
+        raw_text="خبر",
+        extraction_result=extraction.model_dump(mode="json"),
+        content_embedding=[0.1, 0.2],
+        tier2_completed_at=None,
+    )
+    db.get.return_value = raw_message
+    db.scalars.return_value.all.return_value = []
+
+    service = Tier2DetailFillService(
+        db, classifier, embedding_service=MagicMock(), dedup_service=None
+    )
+    updated = service.apply_tier2_result_for_raw_message(7, tier2_categories=None)
+
+    assert updated == 0
+    assert raw_message.tier2_completed_at is None
+    db.commit.assert_not_called()
