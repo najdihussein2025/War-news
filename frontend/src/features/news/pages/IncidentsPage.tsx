@@ -519,7 +519,7 @@ export const IncidentsPage = () => {
             />
           }
           actions={(row) => (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-nowrap justify-end gap-2">
             {row.id && row.verification_status !== "verified" && row.verification_status !== "rejected" ? <Button
               type="button"
               className="h-9"
@@ -528,7 +528,7 @@ export const IncidentsPage = () => {
             <Button
               type="button"
               variant="secondary"
-              className="h-9 w-full sm:w-auto"
+              className="h-9 whitespace-nowrap"
               disabled={!row.id}
               onClick={() => {
                 if (row.id) {
