@@ -42,8 +42,26 @@ class CursorGapResponse(BaseModel):
     unhealthy: bool
 
 
+class LatencyCohortResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    p50_seconds: float | None = None
+    p95_seconds: float | None = None
+    p99_seconds: float | None = None
+    sample_size: int
+
+
+class LatencySummaryResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    window_hours: int
+    materialized: LatencyCohortResponse
+    terminal_non_materialized: LatencyCohortResponse
+
+
 class PipelineHealthResponse(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     stages: list[StageQueueDepthResponse] = Field(default_factory=list)
     cursor_gap: CursorGapResponse
+    latency: LatencySummaryResponse

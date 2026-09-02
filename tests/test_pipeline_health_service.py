@@ -162,3 +162,24 @@ def test_cursor_gap_handles_missing_cursor_row() -> None:
     assert gap.last_processed_id == 0
     assert gap.gap == 42
     assert gap.unhealthy is False
+
+
+def test_latency_summary_maps_both_cohorts_and_omits_slo_target() -> None:
+    pairs = [
+        (120.0, 300.0, 480.0, 42),  # materialized
+        (None, None, None, 0),  # terminal_non_materialized (no rows)
+    ]
+    service = PipelineHealthService(_StubSession(pairs))  # type: ignore[arg-type]
+
+    summary = service.latency_summary()
+
+    assert summary.window_hours == 24
+    assert summary.materialized.p50_seconds == 120.0
+    assert summary.materialized.p95_seconds == 300.0
+    assert summary.materialized.p99_seconds == 480.0
+    assert summary.materialized.sample_size == 42
+    assert summary.terminal_non_materialized.sample_size == 0
+    assert summary.terminal_non_materialized.p50_seconds is None
+    # No pass/fail SLO field anywhere on the summary.
+    assert not hasattr(summary, "slo_met")
+    assert not hasattr(summary.materialized, "slo_met")

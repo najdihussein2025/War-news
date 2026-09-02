@@ -29,6 +29,31 @@ class CursorGap:
     unhealthy: bool
 
 
+@dataclass(frozen=True)
+class LatencyCohort:
+    p50_seconds: float | None
+    p95_seconds: float | None
+    p99_seconds: float | None
+    sample_size: int
+
+
+@dataclass(frozen=True)
+class LatencySummary:
+    window_hours: int
+    materialized: LatencyCohort
+    terminal_non_materialized: LatencyCohort
+
+
+LATENCY_WINDOW_HOURS = 24
+
+# Terminal statuses that leave the incident pipeline without a materialized
+# incident. Kept in a separate latency cohort from the happy path.
+_TERMINAL_NON_MATERIALIZED_STATUSES = (
+    MessageStatus.routed_air_violation,
+    MessageStatus.error,
+)
+
+
 def _has_active_incident_clause():
     return (
         select(Incident.id)
@@ -208,6 +233,60 @@ class PipelineHealthService:
             max_raw_message_id=max_raw_message_id,
             gap=gap,
             unhealthy=unhealthy_by_gap or unhealthy_by_staleness,
+        )
+
+    def latency_summary(self) -> LatencySummary:
+        """p50/p95/p99 of received_at -> "done", over a rolling 24h window.
+
+        Two cohorts, kept separate on purpose:
+
+        * ``materialized`` - received_at -> materialized_at. This is the
+          happy-path end-to-end latency an SLO would eventually target, and
+          the only cohort with a dedicated item-2 "done" timestamp.
+        * ``terminal_non_materialized`` - received_at -> matched_at for rows
+          that ended in ``routed_air_violation`` or terminal ``error``.
+          These take a different, shorter (routing) or long-tailed (error
+          retry) journey that would bias the happy-path percentiles, and
+          item 2 added no routed_at/errored_at column, so matched_at is used
+          as the terminal reference.
+
+        No pass/fail SLO target is emitted - this is human-visible data only.
+        Both queries filter on an indexed item-2 timestamp column
+        (ix_raw_messages_materialized_at / ix_raw_messages_matched_at).
+        """
+        window_start = datetime.now(timezone.utc) - timedelta(
+            hours=LATENCY_WINDOW_HOURS
+        )
+        return LatencySummary(
+            window_hours=LATENCY_WINDOW_HOURS,
+            materialized=self._latency_cohort(
+                done_column=RawMessage.materialized_at,
+                extra_filters=[RawMessage.materialized_at >= window_start],
+            ),
+            terminal_non_materialized=self._latency_cohort(
+                done_column=RawMessage.matched_at,
+                extra_filters=[
+                    RawMessage.matched_at >= window_start,
+                    RawMessage.status.in_(_TERMINAL_NON_MATERIALIZED_STATUSES),
+                ],
+            ),
+        )
+
+    def _latency_cohort(self, *, done_column, extra_filters: list) -> LatencyCohort:
+        elapsed = func.extract("epoch", done_column - RawMessage.received_at)
+        p50, p95, p99, sample_size = self.db.execute(
+            select(
+                func.percentile_cont(0.5).within_group(elapsed.asc()),
+                func.percentile_cont(0.95).within_group(elapsed.asc()),
+                func.percentile_cont(0.99).within_group(elapsed.asc()),
+                func.count(),
+            ).where(done_column.is_not(None), *extra_filters)
+        ).one()
+        return LatencyCohort(
+            p50_seconds=float(p50) if p50 is not None else None,
+            p95_seconds=float(p95) if p95 is not None else None,
+            p99_seconds=float(p99) if p99 is not None else None,
+            sample_size=int(sample_size or 0),
         )
 
     def _tier2_detail_fill_stage(self, *, now: datetime) -> StageQueueDepth:

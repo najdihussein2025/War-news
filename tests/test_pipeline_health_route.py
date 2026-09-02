@@ -10,7 +10,24 @@ import app.api.pipeline_router as pipeline_router_module
 from app.api.deps import require_super_admin
 from app.core.database import get_db
 from app.main import app
-from app.news.services.pipeline_health_service import CursorGap, StageQueueDepth
+from app.news.services.pipeline_health_service import (
+    CursorGap,
+    LatencyCohort,
+    LatencySummary,
+    StageQueueDepth,
+)
+
+
+def _latency_summary() -> LatencySummary:
+    return LatencySummary(
+        window_hours=24,
+        materialized=LatencyCohort(
+            p50_seconds=120.0, p95_seconds=300.0, p99_seconds=480.0, sample_size=42
+        ),
+        terminal_non_materialized=LatencyCohort(
+            p50_seconds=None, p95_seconds=None, p99_seconds=None, sample_size=0
+        ),
+    )
 
 
 @pytest.fixture
@@ -45,6 +62,9 @@ def test_pipeline_health_returns_stages_and_cursor_gap(
                 unhealthy=False,
             )
 
+        def latency_summary(self):
+            return _latency_summary()
+
     monkeypatch.setattr(pipeline_router_module, "PipelineHealthService", _Service)
 
     response = client.get("/api/pipeline/health")
@@ -70,6 +90,21 @@ def test_pipeline_health_returns_stages_and_cursor_gap(
             "gap": 100,
             "unhealthy": False,
         },
+        "latency": {
+            "window_hours": 24,
+            "materialized": {
+                "p50_seconds": 120.0,
+                "p95_seconds": 300.0,
+                "p99_seconds": 480.0,
+                "sample_size": 42,
+            },
+            "terminal_non_materialized": {
+                "p50_seconds": None,
+                "p95_seconds": None,
+                "p99_seconds": None,
+                "sample_size": 0,
+            },
+        },
     }
 
 
@@ -91,6 +126,9 @@ def test_pipeline_health_returns_200_even_when_cursor_unhealthy(
                 gap=8990,
                 unhealthy=True,
             )
+
+        def latency_summary(self):
+            return _latency_summary()
 
     monkeypatch.setattr(pipeline_router_module, "PipelineHealthService", _Service)
 

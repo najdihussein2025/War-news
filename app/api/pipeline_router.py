@@ -6,6 +6,8 @@ from app.api.deps import require_super_admin
 from app.core.database import get_db
 from app.news.dtos.pipeline_dto import (
     CursorGapResponse,
+    LatencyCohortResponse,
+    LatencySummaryResponse,
     PipelineHealthResponse,
     StageQueueDepthResponse,
 )
@@ -49,6 +51,7 @@ def pipeline_health(
     cursor_gap.unhealthy flag is a data field, not a status-code signal."""
     service = PipelineHealthService(db)
     gap = service.cursor_gap()
+    latency = service.latency_summary()
     return PipelineHealthResponse(
         stages=[
             StageQueueDepthResponse(
@@ -64,5 +67,12 @@ def pipeline_health(
             max_raw_message_id=gap.max_raw_message_id,
             gap=gap.gap,
             unhealthy=gap.unhealthy,
+        ),
+        latency=LatencySummaryResponse(
+            window_hours=latency.window_hours,
+            materialized=LatencyCohortResponse(**vars(latency.materialized)),
+            terminal_non_materialized=LatencyCohortResponse(
+                **vars(latency.terminal_non_materialized)
+            ),
         ),
     )
