@@ -33,6 +33,8 @@ export type IncidentListResponse = {
   limit: number;
   next_cursor: string | null;
   latest_incident_at: string | null;
+  needs_verification_count: number;
+  duplicate_count: number;
 };
 
 export type IncidentFilters = {

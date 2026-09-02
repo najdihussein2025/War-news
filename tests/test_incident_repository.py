@@ -61,6 +61,13 @@ class _ListResult:
     def all(self) -> list[object]:
         return []
 
+    def one(self) -> object:
+        return type(
+            "Summary",
+            (),
+            {"needs_verification_count": 0, "duplicate_count": 0},
+        )()
+
 
 class _ListSessionStub:
     def __init__(self) -> None:

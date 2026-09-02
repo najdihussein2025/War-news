@@ -51,6 +51,8 @@ class IncidentListResponse(BaseModel):
     limit: int
     next_cursor: str | None = None
     latest_incident_at: datetime | None = None
+    needs_verification_count: int = 0
+    duplicate_count: int = 0
 
 
 class CasualtyDemographicsDTO(BaseModel):

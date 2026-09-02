@@ -123,8 +123,6 @@ export const IncidentsPage = () => {
     data: villages = [],
     isLoading: isVillagesLoading,
   } = useVillagesQuery();
-  const verificationSummary = useIncidentsQuery({ limit: 1, verificationStatus: "needs_verification" });
-  const duplicateSummary = useIncidentsQuery({ limit: 1, duplicateOnly: true });
   useLiveQueryTitleAddon(data?.latest_incident_at ?? null, isFetching);
   const rows = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -144,8 +142,8 @@ export const IncidentsPage = () => {
     }
     return shared;
   }, [rows]);
-  const flaggedCount = verificationSummary.data?.total ?? 0;
-  const duplicateCount = duplicateSummary.data?.total ?? 0;
+  const flaggedCount = data?.needs_verification_count ?? 0;
+  const duplicateCount = data?.duplicate_count ?? 0;
   const verificationOptions: SelectOption[] = [
     { value: "needs_verification", label: "Needs verification" },
     { value: "matched", label: "Matched" },

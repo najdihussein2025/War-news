@@ -177,6 +177,30 @@ class IncidentRepository(IncidentRepositoryInterface):
             .outerjoin(Source, Source.id == Incident.source_id)
             .where(*filters)
         )
+        summary = self.db.execute(
+            select(
+                func.count(Incident.id)
+                .filter(func.coalesce(low_confidence, False).is_(True))
+                .label("needs_verification_count"),
+                func.count(Incident.id)
+                .filter(Incident.duplicate_flag.is_(True))
+                .label("duplicate_count"),
+            )
+            .select_from(RawMessage)
+            .outerjoin(
+                Incident,
+                and_(
+                    Incident.raw_message_id == RawMessage.id,
+                    Incident.is_deleted.is_(False),
+                ),
+            )
+            .where(
+                RawMessage.status.in_(
+                    [MessageStatus.parsed, MessageStatus.materialized]
+                ),
+                ~RawMessage.raw_payload.op("?")("ocr_text"),
+            )
+        ).one()
 
         return IncidentListResponse(
             items=[
@@ -191,6 +215,8 @@ class IncidentRepository(IncidentRepositoryInterface):
                 else None
             ),
             latest_incident_at=latest_incident_at,
+            needs_verification_count=int(summary.needs_verification_count or 0),
+            duplicate_count=int(summary.duplicate_count or 0),
         )
 
     def get_by_id(self, incident_id: UUID) -> IncidentDetailDTO | None:
