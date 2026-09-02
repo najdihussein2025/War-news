@@ -22,7 +22,7 @@ import { useConditionsQuery, useIncidentsQuery, useVillagesQuery } from "../hook
 import { createIncident } from "../api";
 import type { Incident } from "../types";
 
-const PAGE_SIZE = 150;
+const DEFAULT_PAGE_SIZE = 150;
 const twoLineClampClass =
   "overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]";
 
@@ -69,6 +69,7 @@ export const IncidentsPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [cursorHistory, setCursorHistory] = useState<string[]>([]);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const cursor = cursorHistory.at(-1);
   const page = cursorHistory.length + 1;
   const village = params.get("village") ?? "";
@@ -86,7 +87,7 @@ export const IncidentsPage = () => {
 
   const filters = useMemo(
     () => ({
-      limit: PAGE_SIZE,
+      limit: pageSize,
       cursor,
       village,
       condition,
@@ -104,6 +105,7 @@ export const IncidentsPage = () => {
       eventDateTo,
       flaggedOnly,
       duplicateOnly,
+      pageSize,
       cursor,
       sortOrder,
       sourceType,
@@ -159,6 +161,11 @@ export const IncidentsPage = () => {
     { value: "newest", label: "Newest to oldest" },
     { value: "oldest", label: "Oldest to newest" },
   ];
+  const pageSizeOptions: SelectOption[] = [
+    { value: "50", label: "50 per page" },
+    { value: "100", label: "100 per page" },
+    { value: "150", label: "150 per page" },
+  ];
 
   const updateParam = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -178,7 +185,7 @@ export const IncidentsPage = () => {
       headerClassName: "w-14 whitespace-nowrap",
       cellClassName: "w-14 tabular-nums text-text-muted",
       mobileLabel: "Record",
-      render: (row) => (page - 1) * PAGE_SIZE + rows.indexOf(row) + 1,
+      render: (row) => (page - 1) * pageSize + rows.indexOf(row) + 1,
     },
     {
       key: "village",
@@ -413,6 +420,20 @@ export const IncidentsPage = () => {
                 onChange={(value) => updateParam("sort_order", value || "newest")}
               />
             </div>
+            <div className="space-y-2 xl:col-span-1">
+              <Label htmlFor="incident-page-size">Rows per page</Label>
+              <Select
+                id="incident-page-size"
+                value={String(pageSize)}
+                options={pageSizeOptions}
+                placeholder="150 per page"
+                className="w-full"
+                onChange={(value) => {
+                  setPageSize(Number(value) || DEFAULT_PAGE_SIZE);
+                  setCursorHistory([]);
+                }}
+              />
+            </div>
           </div>
           <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-border bg-surface p-3 sm:p-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
@@ -501,10 +522,10 @@ export const IncidentsPage = () => {
         />
       </section>
 
-      {total > PAGE_SIZE ? (
+      {total > pageSize ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-small text-text-muted">
-            Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, total)} of {total} incidents | Page {page}
+            Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, total)} of {total} incidents | Page {page}
           </p>
           <div className="flex gap-2">
             <Button
