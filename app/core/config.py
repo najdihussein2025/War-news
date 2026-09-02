@@ -68,6 +68,13 @@ class Settings(BaseSettings):
     # Fast-path materialization dedup: exact village_id + condition_id match window.
     fast_dedup_time_window_minutes: int = 120
     pre_dedup_similarity_threshold: float = 0.92
+    # Look-back window for pre-extraction dedup comparisons (hours).
+    pre_dedup_window_hours: int = 48
+    # Candidate narrowing before word_similarity(): none | same_source |
+    # same_source_time_bucket (env: PRE_DEDUP_CANDIDATE_NARROWING).
+    pre_dedup_candidate_narrowing: str = "same_source"
+    # Half-width of the optional time bucket around the candidate received_at (hours).
+    pre_dedup_time_bucket_hours: int = 6
     # Max pre-dedup rows processed per full sweep before tier1 starts.
     # Prevents multi-minute "frozen" sweeps on large backlogs.
     pre_dedup_sweep_row_cap: int = 100

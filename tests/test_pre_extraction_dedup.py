@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+from datetime import datetime, timezone
+
 from app.news.models import MessageStatus
 from app.news.services.pre_extraction_dedup import find_pre_dedup_match
 from app.news.services.pipeline_sweep_stages import sweep_pre_extraction_dedup
@@ -73,7 +75,11 @@ class _StubSession:
     def get(self, model, pk: int):
         return self._messages.get(pk)
 
-    def execute(self, stmt) -> _ExecuteResult:
+    def execute(self, stmt, params=None) -> _ExecuteResult:
+        if getattr(stmt, "text", None) and "pg_trgm.word_similarity_threshold" in str(
+            stmt.text
+        ):
+            return _ExecuteResult(None)
         self.last_execute_stmt = stmt
         return _ExecuteResult(self._similarity_result)
 
@@ -106,8 +112,13 @@ class _SameBatchStubSession(_StubSession):
         self._current_message_id = pk
         return self._messages.get(pk)
 
-    def execute(self, stmt) -> _ExecuteResult:
+    def execute(self, stmt, params=None) -> _ExecuteResult:
+        if getattr(stmt, "text", None) and "pg_trgm.word_similarity_threshold" in str(
+            stmt.text
+        ):
+            return _ExecuteResult(None)
         assert self._current_message_id is not None
+        self.last_execute_stmt = stmt
         return _ExecuteResult(
             self._similarity_targets.get(self._current_message_id)
         )
@@ -118,6 +129,7 @@ def _make_msg(
     raw_text: str = "some news text",
     *,
     status: MessageStatus = MessageStatus.parsed,
+    source_id: int = 1,
 ) -> SimpleNamespace:
     """Return a SimpleNamespace that behaves like a RawMessage ORM object."""
     return SimpleNamespace(
@@ -126,6 +138,8 @@ def _make_msg(
         status=status,
         extraction_result=None,
         duplicate_of_id=None,
+        source_id=source_id,
+        received_at=datetime(2026, 9, 1, 12, 0, tzinfo=timezone.utc),
     )
 
 
@@ -237,16 +251,23 @@ def test_out_of_window_near_duplicate_not_flagged() -> None:
     assert session.rolled_back == 0
 
 
-def test_similarity_query_excludes_materialized_rows() -> None:
+def test_similarity_query_excludes_materialized_rows(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "app.news.services.pre_extraction_dedup.settings.pre_dedup_candidate_narrowing",
+        "none",
+    )
     session = _StubSession(
         batch_ids=[],
         messages={},
         similarity_result=None,
     )
+    received_at = datetime(2026, 9, 1, 12, 0, tzinfo=timezone.utc)
 
     find_pre_dedup_match(
         session,  # type: ignore[arg-type]
         raw_message_id=3,
+        source_id=1,
+        received_at=received_at,
         raw_text="dummy",
         threshold=0.92,
     )
@@ -259,3 +280,24 @@ def test_similarity_query_excludes_materialized_rows() -> None:
         for value in params
     )
     assert "materialized" not in sql
+
+
+def test_similarity_query_narrows_to_same_source_by_default() -> None:
+    session = _StubSession(
+        batch_ids=[],
+        messages={},
+        similarity_result=None,
+    )
+    received_at = datetime(2026, 9, 1, 12, 0, tzinfo=timezone.utc)
+
+    find_pre_dedup_match(
+        session,  # type: ignore[arg-type]
+        raw_message_id=3,
+        source_id=42,
+        received_at=received_at,
+        raw_text="dummy",
+        threshold=0.92,
+    )
+
+    compiled = str(session.last_execute_stmt.compile())
+    assert "source_id" in compiled

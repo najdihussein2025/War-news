@@ -5,9 +5,14 @@ import logging
 from sqlalchemy import func, literal, select, text
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.news.models import MessageStatus, RawMessage
 
 logger = logging.getLogger(__name__)
+
+_PRE_DEDUP_NARROWING_VALUES = frozenset(
+    {"none", "same_source", "same_source_time_bucket"}
+)
 
 
 def choose_pre_dedup_original_id(
@@ -49,18 +54,52 @@ def is_valid_pre_dedup_original(
     return True
 
 
+def _pre_dedup_narrowing_mode() -> str:
+    mode = settings.pre_dedup_candidate_narrowing.strip().lower()
+    if mode not in _PRE_DEDUP_NARROWING_VALUES:
+        logger.warning(
+            "Invalid pre_dedup_candidate_narrowing=%r; falling back to same_source",
+            settings.pre_dedup_candidate_narrowing,
+        )
+        return "same_source"
+    return mode
+
+
+def _apply_pre_dedup_candidate_narrowing(
+    stmt,
+    *,
+    source_id: int,
+    received_at,
+):
+    mode = _pre_dedup_narrowing_mode()
+    if mode in {"same_source", "same_source_time_bucket"}:
+        stmt = stmt.where(RawMessage.source_id == source_id)
+    if mode == "same_source_time_bucket":
+        bucket_hours = max(1, settings.pre_dedup_time_bucket_hours)
+        stmt = stmt.where(
+            RawMessage.received_at
+            >= received_at - text(f"INTERVAL '{bucket_hours} hours'"),
+            RawMessage.received_at
+            <= received_at + text(f"INTERVAL '{bucket_hours} hours'"),
+        )
+    return stmt
+
+
 def find_pre_dedup_match(
     db: Session,
     *,
     raw_message_id: int,
+    source_id: int,
+    received_at,
     raw_text: str,
     threshold: float,
 ):
+    window_hours = max(1, settings.pre_dedup_window_hours)
     score_col = func.word_similarity(
         RawMessage.raw_text,
         literal(raw_text),
     ).label("score")
-    return db.execute(
+    stmt = (
         select(RawMessage.id, score_col)
         .where(
             RawMessage.status.not_in(
@@ -70,13 +109,25 @@ def find_pre_dedup_match(
                     MessageStatus.materialized,
                 ]
             ),
-            RawMessage.received_at >= func.now() - text("INTERVAL '48 hours'"),
+            RawMessage.received_at
+            >= func.now() - text(f"INTERVAL '{window_hours} hours'"),
             RawMessage.id != raw_message_id,
             RawMessage.raw_text.is_not(None),
+            RawMessage.raw_text.op("%>")(literal(raw_text)),
         )
         .order_by(score_col.desc(), RawMessage.id.asc())
         .limit(1)
-    ).first()
+    )
+    stmt = _apply_pre_dedup_candidate_narrowing(
+        stmt,
+        source_id=source_id,
+        received_at=received_at,
+    )
+    db.execute(
+        text("SET LOCAL pg_trgm.word_similarity_threshold = :threshold"),
+        {"threshold": threshold},
+    )
+    return db.execute(stmt).first()
 
 
 def process_pre_dedup_message(
@@ -99,6 +150,8 @@ def process_pre_dedup_message(
     best = find_pre_dedup_match(
         db,
         raw_message_id=raw_message_id,
+        source_id=msg.source_id,
+        received_at=msg.received_at,
         raw_text=msg.raw_text,
         threshold=threshold,
     )
