@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta, timezone
 from math import sqrt
 from typing import Any
@@ -13,6 +14,8 @@ from app.news.models import MessageStatus, RawMessage, TrustTier
 from app.news.repositories.channel_trust_tier_repository import (
     ChannelTrustTierRepository,
 )
+
+logger = logging.getLogger(__name__)
 
 TRUST_TIER_RANK = {
     TrustTier.official: 0,
@@ -138,6 +141,40 @@ class ClusteringService:
             if require_condition_match is not None
             else settings.cluster_require_condition_match
         )
+
+    def _effective_row_cap(self, max_rows: int | None) -> int:
+        """Never exceed settings.clustering_max_rows_per_pass in one pass."""
+        service_cap = max(1, settings.clustering_max_rows_per_pass)
+        if max_rows is None:
+            return service_cap
+        return max(1, min(max_rows, service_cap))
+
+    def load_eligible_messages(self, *, max_rows: int | None = None) -> list[RawMessage]:
+        row_cap = self._effective_row_cap(max_rows)
+        messages = list(
+            self.db.scalars(
+                select(RawMessage)
+                .where(
+                    RawMessage.status == MessageStatus.parsed,
+                    RawMessage.content_embedding.is_not(None),
+                    RawMessage.match_result.is_not(None),
+                    RawMessage.duplicate_of_id.is_(None),
+                )
+                .order_by(RawMessage.id.asc())
+                .limit(row_cap)
+            ).all()
+        )
+        if len(messages) >= row_cap:
+            logger.info(
+                "Clustering loaded %s eligible rows (cap=%s); remainder waits for next pass",
+                len(messages),
+                row_cap,
+            )
+        return messages
+
+    def cluster_eligible(self, *, max_rows: int | None = None) -> list[list[RawMessage]]:
+        messages = self.load_eligible_messages(max_rows=max_rows)
+        return self.cluster_batch(messages)
 
     def find_candidates(self, raw_message: RawMessage) -> list[RawMessage]:
         village_ids = village_ids_from_match_result(raw_message.match_result)

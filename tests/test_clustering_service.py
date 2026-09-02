@@ -488,3 +488,41 @@ def test_sweep_clustering_partial_subsumption() -> None:
 
     assert incident_repo.soft_deleted_village == [(42, 976)]
     assert incident_repo.soft_deleted_all == []  # duplicate_of_id NOT set
+
+
+class _LimitedScalarsStub:
+    def __init__(self, total_rows: int) -> None:
+        self.total_rows = total_rows
+        self.last_limit: int | None = None
+
+    def all(self) -> list[SimpleNamespace]:
+        count = self.last_limit if self.last_limit is not None else self.total_rows
+        return [
+            SimpleNamespace(id=index + 1)
+            for index in range(min(count, self.total_rows))
+        ]
+
+
+class _ClusteringDbStub:
+    def __init__(self, scalars_stub: _LimitedScalarsStub) -> None:
+        self._scalars_stub = scalars_stub
+
+    def scalars(self, stmt):
+        self._scalars_stub.last_limit = stmt._limit  # type: ignore[attr-defined]
+        return self._scalars_stub
+
+
+def test_cluster_eligible_caps_rows_at_service_limit(monkeypatch) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "clustering_max_rows_per_pass", 5)
+    scalars_stub = _LimitedScalarsStub(total_rows=50)
+    service = ClusteringService(
+        db=_ClusteringDbStub(scalars_stub),  # type: ignore[arg-type]
+        channel_trust_tiers=_TrustTierRepositoryStub({}),
+    )
+
+    messages = service.load_eligible_messages(max_rows=999)
+
+    assert scalars_stub.last_limit == 5
+    assert len(messages) == 5

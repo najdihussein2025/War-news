@@ -65,6 +65,8 @@ class Settings(BaseSettings):
     cluster_time_window_minutes: int = 300
     cluster_similarity_threshold: float = 0.75
     cluster_require_condition_match: bool = True
+    # Hard cap on clustering candidate rows per pass (memory/CPU safety).
+    clustering_max_rows_per_pass: int = 100
     # Fast-path materialization dedup: exact village_id + condition_id match window.
     fast_dedup_time_window_minutes: int = 120
     pre_dedup_similarity_threshold: float = 0.92

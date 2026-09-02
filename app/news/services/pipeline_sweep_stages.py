@@ -466,21 +466,7 @@ def cluster_all_eligible(
     *,
     max_rows: int | None = None,
 ) -> list[list[RawMessage]]:
-    query = (
-        select(RawMessage)
-        .where(
-            RawMessage.status == MessageStatus.parsed,
-            RawMessage.content_embedding.is_not(None),
-            RawMessage.match_result.is_not(None),
-            RawMessage.duplicate_of_id.is_(None),
-        )
-        .order_by(RawMessage.id.asc())
-    )
-    if max_rows is not None:
-        query = query.limit(max_rows)
-
-    messages = list(db.scalars(query).all())
-    return service.cluster_batch(messages)
+    return service.cluster_eligible(max_rows=max_rows)
 
 
 def sweep_clustering(
