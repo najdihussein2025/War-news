@@ -1,51 +1,39 @@
-# Item 6 — LLM concurrency recommendations (defaults unchanged)
+# Item 6 - Tier-1 concurrency recommendation
 
-Benchmarks run against `http://192.168.40.25:11435/ollama`, model `qwen2.5:7b`,
-current production path (2-call Tier 1, per-category Tier 2, items 4–5 **disabled**).
+Benchmarks use `http://192.168.40.25:11435/ollama`, model `qwen2.5:7b`, and the
+two-call Tier-1 path. Code defaults remain unchanged.
 
-## Parallel probe (presence-gate single call, n=4)
+| Configuration | Workers | Pool | n | Mean / median per call | Throughput | Result |
+|---|---:|---:|---:|---|---:|---|
+| item1 baseline | 2 | 2 | 10 | 66.30s / not recorded | **1.78 msg/min** | completed |
+| item6 w4 | 4 | 2 | 5 | 97.74s / not recorded | 1.50 msg/min | completed |
+| item6 pools4-w4 | 4 | 4 | 5 | 100.44s / not recorded | 1.59 msg/min | completed |
+| pool3 fallback rerun | 3 | 3 | 10 | not available | not available | incomplete |
 
-```
-sequential_total=118.85s  concurrent_wall=33.07s  ratio=0.28
-per_call concurrent: [28.64, 31.59, 30.12, 33.04]s
-```
+## Pool-3 attempt
 
-Server runs ~4 presence-gate requests in parallel without serial queuing.
+The original standard IDs (`692619`, `692621`, `692627`, `692631`, `692632`,
+`692635`, `692636`, `692637`, `692639`, `692640`) no longer exist in the local
+database. I used the closest available current range, `2616` through `2625`,
+with `TIER1_LLM_MAX_CONCURRENT_REQUESTS=3` and `--workers 3`.
 
-## Full Tier-1 batch throughput (2 LLM calls/message)
+Two executions were started. The first command stream detached before completion.
+The second captured run produced the benchmark header and one model-validation
+line but did not finish the 10-message batch during the bounded observation
+window, so it produced no mean, median, wall time, or throughput. Those numbers
+are deliberately recorded as unavailable rather than estimated.
 
-| Config | Workers | Pool limit | n | mean/call | batch throughput |
-|--------|---------|------------|---|-----------|------------------|
-| item1-baseline | 2 | 2 (shared) | 10 | 66.30s | **1.78 msg/min** |
-| item6-w4 | 4 | 2 | 5 | 97.74s | 1.50 msg/min |
-| item6-pools4-w4 | 4 | 4 | 5 | 100.44s | 1.59 msg/min |
+## Server-side sanity check
 
-**Interpretation:** With pool=2, raising workers to 4 **hurts** throughput (workers block on
-the 2-slot gate). With pool=4, throughput recovers slightly but per-call mean latency rises
-~51% vs the w=2 baseline (66s → 100s) — soft saturation at 4 concurrent full Tier-1 pipelines.
+The authenticated read-only `/api/ps` endpoint confirmed that `qwen2.5:7b` was
+loaded. It exposed no queue depth or utilization metric and reported `size_vram: 0`.
+The app-side benchmark workers spent their time waiting on inference/network I/O,
+but that alone cannot establish whether the Ollama process is saturated, queued,
+or blocked elsewhere.
 
-## Proposed env overrides (not applied to code defaults)
+## Verdict
 
-| Setting | Current default | Proposed | Rationale |
-|---------|-----------------|----------|-----------|
-| `TIER1_LLM_MAX_CONCURRENT_REQUESTS` | 2 | **3** | Below observed latency knee (~4); preserves headroom |
-| `TIER2_LLM_MAX_CONCURRENT_REQUESTS` | 2 | **4** | Separate pool; avg 0.43 categories/msg, lighter than Tier 1 |
-
-Apply via `.env` after review — **code defaults remain 2/2** until items 4–5 are evaluated
-and migration `20260902_0044` is applied.
-
-## 300 msg/hour target
-
-Current measured Tier-1 throughput ~1.8 msg/min (~108/hour) at concurrency 2.
-Reaching 300/hour requires combined gains from: raised Tier-1 concurrency (~3), separated
-Tier-2 pool, optional items 4–5 call collapsing, and pre-dedup index (item 2 migration).
-
-Re-verify after enabling proposed env vars:
-
-```bash
-docker compose exec \
-  -e TIER1_LLM_MAX_CONCURRENT_REQUESTS=3 \
-  -e TIER2_LLM_MAX_CONCURRENT_REQUESTS=4 \
-  backend python scripts/phase2-extraction-live-check/benchmark_tier1_batch_throughput.py \
-  --workers 3 --ids 2604 2605 2606 2607 2608 2609 2610
-```
+**Stay at 2.** Pool 4 is measured slower than the pool-2 baseline, and pool 3
+has no completed comparable measurement. Do not raise Tier-1 concurrency or
+recommend 3/4. The likely constraint is outside the application semaphore, but
+single-Ollama saturation is not confirmed by the available server metrics.
