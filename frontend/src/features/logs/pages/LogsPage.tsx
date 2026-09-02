@@ -6,14 +6,17 @@ import { cn } from "../../../lib/cn";
 import { formatDateTime } from "../../../lib/formatters";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { useSourcesQuery } from "../../sources/hooks";
-import { useAuditLogsQuery, useIngestionLogQuery, useIngestionLogsQuery, useLoginLogsQuery, useRetryIngestionMutation } from "../hooks";
-import type { AuditLog, IngestionLog, IngestionStatus, LoginLog } from "../types";
+import { useAuditLogsQuery, useIngestionLogQuery, useIngestionLogsQuery, useLoginLogsQuery, usePipelineHealthQuery, useRetryIngestionMutation } from "../hooks";
+import type { AuditLog, IngestionLog, IngestionStatus, LoginLog, PipelineLatencyCohort, PipelineStageQueueDepth } from "../types";
 
 const logTabs = [
   { label: "Audit", value: "audit" },
   { label: "Login", value: "login" },
   { label: "Ingestion", value: "ingestion" },
 ];
+
+// Pipeline health is a super-admin-only endpoint; only show the tab there.
+const pipelineTab = { label: "Pipeline", value: "pipeline" };
 
 const auditTextValue = (values: Record<string, unknown> | null, key: string) => {
   const value = values?.[key];
@@ -232,13 +235,96 @@ const IngestionTable = () => {
   );
 };
 
+const formatWaitingSeconds = (seconds: number | null): string => {
+  if (seconds === null) return "—";
+  if (seconds < 1) return "<1s";
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+  return `${Math.floor(seconds / 86400)}d ${Math.floor((seconds % 86400) / 3600)}h`;
+};
+
+const LatencyCohortCard = ({ title, cohort }: { title: string; cohort: PipelineLatencyCohort }) => (
+  <div className="rounded-md border border-border bg-surface p-4">
+    <p className="text-caption font-semibold uppercase text-text-muted">{title}</p>
+    <p className="mt-1 text-caption text-text-muted">{cohort.sample_size} sample{cohort.sample_size === 1 ? "" : "s"}</p>
+    <dl className="mt-3 grid grid-cols-3 gap-3">
+      {([["p50", cohort.p50_seconds], ["p95", cohort.p95_seconds], ["p99", cohort.p99_seconds]] as const).map(([label, value]) => (
+        <div key={label}>
+          <dt className="text-caption font-semibold uppercase text-text-muted">{label}</dt>
+          <dd className="mt-1 text-lg font-semibold">{formatWaitingSeconds(value)}</dd>
+        </div>
+      ))}
+    </dl>
+  </div>
+);
+
+export const PipelineHealthPanel = () => {
+  const { data, isLoading, isError, isFetching, refetch } = usePipelineHealthQuery();
+
+  const columns: Array<DataTableColumn<PipelineStageQueueDepth>> = [
+    { key: "stage", header: "Stage", render: (row) => <span className="font-semibold text-text-primary">{row.stage_name}</span> },
+    { key: "depth", header: "Queue depth", render: (row) => <span className={cn(row.queue_depth > 0 ? "font-semibold text-text-primary" : "text-text-muted")}>{row.queue_depth}</span> },
+    { key: "oldest", header: "Oldest waiting", render: (row) => formatWaitingSeconds(row.oldest_waiting_seconds) },
+  ];
+
+  const cursorGap = data?.cursor_gap;
+  const latency = data?.latency;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-small text-text-muted">Read-only snapshot of <code className="text-caption">GET /api/pipeline/health</code>. Refresh manually.</p>
+        <Button type="button" variant="secondary" isLoading={isFetching} onClick={() => refetch()}>Refresh</Button>
+      </div>
+
+      <DataTable
+        columns={columns}
+        rows={data?.stages ?? []}
+        getRowKey={(row) => row.stage_name}
+        loading={isLoading}
+        error={isError}
+        clientSort={false}
+        emptyState={<EmptyState title="No stage data" description="The pipeline health endpoint returned no stages." />}
+        errorState={<EmptyState title="Could not load pipeline health" description="Check the API connection and that you are signed in as a super admin." />}
+      />
+
+      {cursorGap ? (
+        <div className={cn("rounded-lg border p-4", cursorGap.unhealthy ? "border-danger bg-danger/5" : "border-border bg-surface-raised")}>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h3 className="text-small font-semibold text-text-primary">Live-sweep cursor gap</h3>
+            <StatusBadge label={cursorGap.unhealthy ? "Unhealthy" : "Healthy"} variant={cursorGap.unhealthy ? "danger" : "success"} />
+          </div>
+          <dl className="grid gap-4 sm:grid-cols-4">
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Sweep</dt><dd className="mt-1 break-all">{cursorGap.sweep_name}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Last processed id</dt><dd className="mt-1">{cursorGap.last_processed_id}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Max raw_message id</dt><dd className="mt-1">{cursorGap.max_raw_message_id ?? "—"}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Gap</dt><dd className={cn("mt-1 font-semibold", cursorGap.unhealthy ? "text-danger" : "text-text-primary")}>{cursorGap.gap}</dd></div>
+          </dl>
+        </div>
+      ) : null}
+
+      {latency ? (
+        <div className="rounded-lg border border-border bg-surface-raised p-4">
+          <h3 className="mb-1 text-small font-semibold text-text-primary">Latency percentiles</h3>
+          <p className="mb-3 text-caption text-text-muted">Rolling {latency.window_hours}h window · received_at → done · no SLO target</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <LatencyCohortCard title="Materialized (received → materialized_at)" cohort={latency.materialized} />
+            <LatencyCohortCard title="Terminal non-materialized (received → matched_at)" cohort={latency.terminal_non_materialized} />
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
 export const LogsPage = () => {
   const { logType = "audit" } = useParams();
   const location = useLocation();
-  const logsBasePath = location.pathname.startsWith("/superadmin/")
-    ? "/superadmin/logs"
-    : "/admin/logs";
-  const activeTab = logTabs.find((tab) => tab.value === logType);
+  const isSuperAdmin = location.pathname.startsWith("/superadmin/");
+  const logsBasePath = isSuperAdmin ? "/superadmin/logs" : "/admin/logs";
+  const visibleTabs = isSuperAdmin ? [...logTabs, pipelineTab] : logTabs;
+  const activeTab = visibleTabs.find((tab) => tab.value === logType);
 
   if (!activeTab) {
     return <Navigate to={`${logsBasePath}/audit`} replace />;
@@ -248,7 +334,7 @@ export const LogsPage = () => {
     <div className="space-y-5">
       <div className="border-b border-border">
         <nav className="-mb-px flex gap-2" aria-label="Log categories">
-          {logTabs.map((tab) => (
+          {visibleTabs.map((tab) => (
             <NavLink
               key={tab.value}
               to={`${logsBasePath}/${tab.value}`}
@@ -265,7 +351,7 @@ export const LogsPage = () => {
           ))}
         </nav>
       </div>
-      {logType === "audit" ? <AuditTable /> : logType === "login" ? <LoginTable /> : <IngestionTable />}
+      {logType === "audit" ? <AuditTable /> : logType === "login" ? <LoginTable /> : logType === "pipeline" ? <PipelineHealthPanel /> : <IngestionTable />}
     </div>
   );
 };

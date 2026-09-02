@@ -24,6 +24,7 @@ import {
 } from "./news/api";
 import { getContentSource, getContentSources } from "./sources/api";
 import { getMapEvents } from "./map/api";
+import { getPipelineHealth } from "./logs/api";
 
 vi.mock("../lib/apiClient", () => ({
   apiClient: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn(), patch: vi.fn() },
@@ -58,6 +59,12 @@ describe("frontend API contracts", () => {
     vi.mocked(client.get).mockResolvedValue({ data: [] });
     await getVillages();
     expect(client.get).toHaveBeenCalledWith("/villages");
+  });
+
+  it("reads pipeline health from the super-admin endpoint", async () => {
+    vi.mocked(client.get).mockResolvedValue({ data: { stages: [], cursor_gap: {}, latency: {} } });
+    await getPipelineHealth();
+    expect(client.get).toHaveBeenCalledWith("/pipeline/health");
   });
 
   it("loads the unified map with repeated event-type filters", async () => {

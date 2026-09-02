@@ -71,3 +71,36 @@ export type IngestionLogPage = {
   page: number;
   page_size: number;
 };
+
+export type PipelineStageQueueDepth = {
+  stage_name: string;
+  queue_depth: number;
+  oldest_waiting_seconds: number | null;
+};
+
+export type PipelineCursorGap = {
+  sweep_name: string;
+  last_processed_id: number;
+  max_raw_message_id: number | null;
+  gap: number;
+  unhealthy: boolean;
+};
+
+export type PipelineLatencyCohort = {
+  p50_seconds: number | null;
+  p95_seconds: number | null;
+  p99_seconds: number | null;
+  sample_size: number;
+};
+
+export type PipelineLatencySummary = {
+  window_hours: number;
+  materialized: PipelineLatencyCohort;
+  terminal_non_materialized: PipelineLatencyCohort;
+};
+
+export type PipelineHealth = {
+  stages: PipelineStageQueueDepth[];
+  cursor_gap: PipelineCursorGap;
+  latency: PipelineLatencySummary;
+};

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getAuditLogs, getIngestionLog, getIngestionLogs, getLoginLogs, getLogs, retryIngestion } from "./api";
+import { getAuditLogs, getIngestionLog, getIngestionLogs, getLoginLogs, getLogs, getPipelineHealth, retryIngestion } from "./api";
 import type { AuditLogFilters, IngestionLogFilters, LoginLogFilters } from "./types";
 
 export const useLogs = () =>
@@ -32,6 +32,16 @@ export const useIngestionLogQuery = (logId: number | null) =>
     queryFn: () => getIngestionLog(logId as number),
     enabled: logId !== null,
     refetchInterval: (query) => query.state.data?.status === "running" ? 3000 : false,
+  });
+
+export const usePipelineHealthQuery = () =>
+  useQuery({
+    queryKey: ["logs", "pipeline-health"],
+    queryFn: getPipelineHealth,
+    // Manual refresh only - no polling / auto-refresh.
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
   });
 
 export const useRetryIngestionMutation = () => {

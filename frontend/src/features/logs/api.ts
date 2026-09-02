@@ -1,5 +1,5 @@
 import { apiClient } from "../../lib/apiClient";
-import type { AuditLogFilters, AuditLogPage, IngestionLog, IngestionLogFilters, IngestionLogPage, LoginLogFilters, LoginLogPage } from "./types";
+import type { AuditLogFilters, AuditLogPage, IngestionLog, IngestionLogFilters, IngestionLogPage, LoginLogFilters, LoginLogPage, PipelineHealth } from "./types";
 
 export type ModerationLog = {
   id: string;
@@ -54,5 +54,10 @@ export const getIngestionLog = async (logId: number): Promise<IngestionLog> => {
 
 export const retryIngestion = async (logId: number): Promise<IngestionLog> => {
   const response = await apiClient.post<IngestionLog>(`/logs/ingestion/${logId}/retry`);
+  return response.data;
+};
+
+export const getPipelineHealth = async (): Promise<PipelineHealth> => {
+  const response = await apiClient.get<PipelineHealth>("/pipeline/health");
   return response.data;
 };
