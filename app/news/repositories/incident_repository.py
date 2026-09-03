@@ -641,37 +641,45 @@ class IncidentRepository(IncidentRepositoryInterface):
         new_candidate_data: dict[str, Any],
         raw_message_id: int,
     ) -> None:
-        old_values = self._snapshot_merge_fields(existing)
+        raw_message = self.db.get(RawMessage, raw_message_id)
+        source_label = self._merge_source_label(raw_message)
+        detail = self.db.scalar(
+            select(IncidentDetail).where(IncidentDetail.incident_id == existing.id)
+        )
+        old_values = self._snapshot_merge_audit(existing, detail)
 
-        existing.deaths = self._max_preserving_empty(
-            existing.deaths,
-            new_candidate_data.get("deaths"),
-        )
-        existing.injuries = self._max_preserving_empty(
-            existing.injuries,
-            new_candidate_data.get("injuries"),
-        )
-        existing.total_deaths = self._max_preserving_empty(
-            existing.total_deaths,
-            new_candidate_data.get("total_deaths", new_candidate_data.get("deaths")),
-        )
-        existing.total_injuries = self._max_preserving_empty(
-            existing.total_injuries,
-            new_candidate_data.get(
-                "total_injuries",
-                new_candidate_data.get("injuries"),
-            ),
-        )
+        suppressed: dict[str, Any] = {}
+        for field, incoming_key in (
+            ("deaths", "deaths"),
+            ("injuries", "injuries"),
+            ("total_deaths", "total_deaths"),
+            ("total_injuries", "total_injuries"),
+        ):
+            incoming_value = new_candidate_data.get(incoming_key)
+            if field.startswith("total_") and incoming_value is None:
+                fallback_key = "deaths" if field == "total_deaths" else "injuries"
+                incoming_value = new_candidate_data.get(fallback_key)
+            current_value = getattr(existing, field)
+            merged_value = self._max_preserving_empty(current_value, incoming_value)
+            if (
+                isinstance(incoming_value, int)
+                and merged_value != incoming_value
+            ):
+                suppressed[f"{field}_suppressed"] = {
+                    "value": incoming_value,
+                    "raw_message_id": raw_message_id,
+                    "channel": source_label,
+                }
+            setattr(existing, field, merged_value)
 
         mapped_fields = new_candidate_data.get("mapped_fields") or {}
         if mapped_fields:
-            detail = self.db.scalar(
-                select(IncidentDetail).where(IncidentDetail.incident_id == existing.id)
-            )
             if detail is None:
                 detail = IncidentDetail(incident_id=existing.id)
                 self.db.add(detail)
                 self.db.flush()
+            if self._merge_introduces_new_presence_categories(detail, mapped_fields):
+                existing.details_pending = True
             merge_incident_detail_fields(detail, mapped_fields)
             self.db.add(detail)
 
@@ -679,7 +687,9 @@ class IncidentRepository(IncidentRepositoryInterface):
         if khabar:
             existing.note = self._append_note(existing.note, khabar, raw_message_id)
 
-        new_values = self._snapshot_merge_fields(existing)
+        new_values = self._snapshot_merge_audit(existing, detail)
+        if suppressed:
+            new_values = {**new_values, **suppressed}
         if old_values != new_values:
             self.db.add(
                 IncidentUpdate(
@@ -1053,7 +1063,36 @@ class IncidentRepository(IncidentRepositoryInterface):
             "injuries": incident.injuries,
             "total_injuries": incident.total_injuries,
             "note": incident.note,
+            "details_pending": incident.details_pending,
         }
+
+    @classmethod
+    def _snapshot_merge_audit(
+        cls,
+        incident: Incident,
+        detail: IncidentDetail | None,
+    ) -> dict[str, Any]:
+        snapshot = cls._snapshot_merge_fields(incident)
+        if detail is None:
+            return snapshot
+        for key in detail.__table__.columns.keys():
+            if key == "incident_id":
+                continue
+            snapshot[f"detail.{key}"] = getattr(detail, key)
+        return snapshot
+
+    @staticmethod
+    def _merge_source_label(raw_message: RawMessage | None) -> str | None:
+        if raw_message is None:
+            return None
+        for candidate in (
+            raw_message.source_name,
+            raw_message.origin_account,
+            raw_message.source_platform,
+        ):
+            if candidate:
+                return str(candidate)
+        return None
 
     @staticmethod
     def _source_reference_expression() -> object:
