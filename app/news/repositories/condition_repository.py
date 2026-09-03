@@ -41,6 +41,19 @@ class ConditionRepository(ConditionRepositoryInterface):
             for action_ar, aliases in CONDITION_ALIASES.items()
             for alias in aliases
         ]
+        alias_coverage_scores = [
+            case(
+                (
+                    Condition.action_ar == action_ar,
+                    func.word_similarity(
+                        normalized_text, normalize_arabic_sql(literal(alias.text))
+                    ),
+                ),
+                else_=0.0,
+            )
+            for action_ar, aliases in CONDITION_ALIASES.items()
+            for alias in aliases
+        ]
         score = func.greatest(
             func.word_similarity(normalized_action_ar, normalized_text),
             func.word_similarity(normalized_action_en, func.lower(normalized_text)),
@@ -51,6 +64,7 @@ class ConditionRepository(ConditionRepositoryInterface):
             * func.greatest(
                 func.word_similarity(normalized_text, normalized_action_ar),
                 func.word_similarity(func.lower(normalized_text), normalized_action_en),
+                *alias_coverage_scores,
             )
         ).label("coverage_rank")
         rows = self.db.execute(

@@ -18,6 +18,7 @@ from app.llm.dtos import ExtractionResult
 from app.news.dtos import MatchResultStatus
 from app.news.models import Condition
 from app.news.repositories.condition_repository import ConditionRepository
+from app.news.services.condition_aliases import CONDITION_ALIASES
 
 
 class _ResultStub:
@@ -78,7 +79,12 @@ def test_condition_query_includes_evidence_backed_aliases() -> None:
     ConditionRepository(db).find_similar("تنفيذ عملية تفجير")
 
     sql = str(db.statement.compile(dialect=postgresql.dialect()))
-    assert "CASE" in sql
+    # Alias similarity must affect both score and bidirectional coverage ranking.
+    # SQL repeats score inside coverage_rank, so each alias appears three times:
+    # selected score, the score factor in coverage_rank, and alias coverage.
+    assert sql.count("CASE") == 3 * sum(
+        len(aliases) for aliases in CONDITION_ALIASES.values()
+    )
 
 
 def test_real_verbose_airstrike_prefers_warplane_over_artillery() -> None:
