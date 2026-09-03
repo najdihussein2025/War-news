@@ -34,7 +34,7 @@ def test_fill_for_raw_message_merges_details_and_clears_pending() -> None:
         id=7,
         raw_text="خبر",
         extraction_result=extraction.model_dump(mode="json"),
-        content_embedding=None,
+        content_embedding=[0.1, 0.2],
         tier2_completed_at=None,
     )
     incident = SimpleNamespace(
@@ -80,6 +80,8 @@ def test_fill_for_raw_message_merges_details_and_clears_pending() -> None:
     assert updated == 1
     assert incident.details_pending is False
     assert incident.khabar_embedding == [0.1, 0.2]
+    assert raw_message.content_embedding == [0.1, 0.2]
+    embedding_service.generate.assert_not_called()
     assert raw_message.extraction_result["extraction_tier"] == 2
     assert raw_message.tier2_completed_at is not None
     db.commit.assert_called_once()

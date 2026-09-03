@@ -102,6 +102,7 @@ async def test_stage_exception_does_not_block_later_stages(monkeypatch, caplog) 
     assert "matching" in calls
     assert "fast_path" in calls
     assert "materialization" in calls
+    assert calls.index("embedding") < calls.index("tier1_extraction")
     assert result.partial_failure is True
     assert result.skipped is False
     failed = {stage.stage: stage.failed for stage in result.stages}
@@ -186,6 +187,7 @@ async def test_auth_abort_stops_remaining_stages(monkeypatch, caplog) -> None:
     assert [stage.stage for stage in result.stages] == [
         "relevance_filter",
         "pre_extraction_dedup",
+        "embedding",
         "tier1_extraction",
     ]
     assert any(

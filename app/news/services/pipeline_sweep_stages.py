@@ -411,7 +411,6 @@ def sweep_embedding_generation(
                 select(RawMessage.id)
                 .where(
                     RawMessage.id > last_seen_id,
-                    RawMessage.status == MessageStatus.parsed,
                     RawMessage.content_embedding.is_(None),
                 )
                 .order_by(RawMessage.id.asc())

@@ -668,6 +668,17 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
         )
         stages.append(
             _finish_stage(
+                _run_sync_stage(
+                    "embedding",
+                    sweep_embedding_generation,
+                    cutoff_raw_message_id=cutoff_raw_message_id,
+                    max_rows=STAGE_MAX_ROWS_PER_PASS,
+                ),
+                cutoff_raw_message_id=cutoff_raw_message_id,
+            )
+        )
+        stages.append(
+            _finish_stage(
                 await _run_async_stage(
                     "tier1_extraction",
                     sweep_extraction_concurrent,
@@ -714,17 +725,6 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
         )
         if stages[-1].aborted:
             return stages
-        stages.append(
-            _finish_stage(
-                _run_sync_stage(
-                    "embedding",
-                    sweep_embedding_generation,
-                    cutoff_raw_message_id=cutoff_raw_message_id,
-                    max_rows=STAGE_MAX_ROWS_PER_PASS,
-                ),
-                cutoff_raw_message_id=cutoff_raw_message_id,
-            )
-        )
         stages.append(
             _finish_stage(
                 _run_sync_stage(

@@ -232,6 +232,17 @@ async def run_full_pipeline_sweep(
                 runner=lambda: sweep_pre_dedup_concurrent(max_rows=max_rows),
                 record=_record_stage,
             )
+            embed_db = SessionLocal()
+            try:
+                await _run_isolated_stage(
+                    stage_name="embedding",
+                    runner=lambda: sweep_embedding_generation(
+                        embed_db, max_rows=max_rows
+                    ),
+                    record=_record_stage,
+                )
+            finally:
+                embed_db.close()
             await _run_isolated_stage(
                 stage_name="tier1_extraction",
                 runner=lambda: sweep_extraction_concurrent(max_rows=max_rows),
@@ -272,7 +283,6 @@ async def run_full_pipeline_sweep(
                 )
 
             for stage_name, sweep_fn in (
-                ("embedding", sweep_embedding_generation),
                 ("clustering", sweep_clustering),
                 ("materialization", sweep_materialization),
             ):

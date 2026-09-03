@@ -109,10 +109,6 @@ class Tier2DetailFillService:
         )
 
         embedding = raw_message.content_embedding
-        if embedding is None:
-            embedding = self.embedding_service.generate(raw_message.raw_text or "")
-            raw_message.content_embedding = embedding
-            self.db.add(raw_message)
 
         updated = 0
         for incident in incidents:
@@ -158,11 +154,11 @@ class Tier2DetailFillService:
     def _apply_dedup_backstop(
         self,
         incident: Incident,
-        embedding: list[float],
+        embedding: list[float] | None,
         raw_message_id: int,
         mapped_fields: dict,
     ) -> None:
-        if self.dedup_service is None:
+        if self.dedup_service is None or embedding is None:
             return
 
         existing, score = self.dedup_service.find_best_match(

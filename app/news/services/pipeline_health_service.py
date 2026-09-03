@@ -155,12 +155,11 @@ class PipelineHealthService:
                 "embedding",
                 now=now,
                 filters=[
-                    RawMessage.status == MessageStatus.parsed,
                     RawMessage.content_embedding.is_(None),
                 ],
                 waiting_since=func.coalesce(
-                    RawMessage.matched_at,
-                    RawMessage.extracted_at,
+                    RawMessage.dedup_checked_at,
+                    RawMessage.relevance_filtered_at,
                     RawMessage.received_at,
                 ),
             ),
