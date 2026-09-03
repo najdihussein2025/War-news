@@ -42,6 +42,12 @@ export const RejectedNewsPage = () => {
   });
 
   const columns: Array<DataTableColumn<RejectedNewsItem>> = [
+    {
+      key: "id",
+      header: "ID",
+      className: "w-24 tabular-nums text-text-muted",
+      render: (row) => offset + (list.data?.items ?? []).indexOf(row) + 1,
+    },
     { key: "summary", header: "News summary", headerClassName: "min-w-[24rem]", render: (row) => <p className="max-w-2xl whitespace-normal text-small leading-6" dir="auto">{row.summary}</p> },
     { key: "event", header: "Date and time", render: (row) => <span className="whitespace-nowrap">{formatDateTime(row.message_datetime ?? row.received_at)}</span> },
     { key: "reason", header: "Rejection", render: (row) => <div className="space-y-2"><StatusBadge label={reasonLabel(row.rejection_type)} variant={row.rejection_type === "duplicate" ? "neutral" : "warning"} /><p className="max-w-xs text-caption text-text-muted">{row.rejection_reason_en}</p><p className="max-w-xs text-caption text-text-muted text-right" dir="rtl">{row.rejection_reason_ar}</p></div> },

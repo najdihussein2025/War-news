@@ -6,7 +6,7 @@ from app.news.models import MessageStatus
 
 def test_rejection_reason_reports_duplicate_target() -> None:
     message = SimpleNamespace(status=MessageStatus.duplicate, duplicate_of_id=42)
-    assert _reason(message) == ("duplicate", "الخبر مكرر ومطابق للخبر الخام #42.")
+    assert _reason(message) == ("duplicate", "الخبر مكرر ومطابق للخبر الخام 42.")
 
 
 def test_rejection_reason_reports_not_relevant_explanation() -> None:

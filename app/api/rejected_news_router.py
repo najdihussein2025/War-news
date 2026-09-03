@@ -125,7 +125,7 @@ def _news_summary(message: RawMessage) -> str:
 
 def _reason_details(message: RawMessage) -> tuple[str, str, str]:
     if message.status == MessageStatus.duplicate:
-        target = f" #{message.duplicate_of_id}" if message.duplicate_of_id else ""
+        target = f" {message.duplicate_of_id}" if message.duplicate_of_id else ""
         english = f"Duplicate of raw message{target}."
         arabic = f"الخبر مكرر ومطابق للخبر الخام{target}."
         return "duplicate", english, arabic
