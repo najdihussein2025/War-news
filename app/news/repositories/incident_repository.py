@@ -859,6 +859,10 @@ class IncidentRepository(IncidentRepositoryInterface):
                 }
         if needs_review:
             existing.duplicate_flag = True
+        else:
+            # A successful automatic merge resolves its duplicate decision.
+            # Keep the flag only for an explicit casualty-transition conflict.
+            existing.duplicate_flag = False
         sync_transition_totals(existing, transition_fields)
 
         suppressed: dict[str, Any] = {}
