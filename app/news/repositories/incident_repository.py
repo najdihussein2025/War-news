@@ -45,6 +45,10 @@ from app.news.services.incident_detail_edit_service import (
     IncidentDetailEditError,
     apply_incident_detail_edits,
 )
+from app.news.services.casualty_transition_merge import (
+    apply_casualty_transitions,
+    sync_transition_totals,
+)
 from app.news.services.incident_detail_merge import merge_incident_detail_fields
 from app.sources.models import Source, SourceType
 
@@ -821,6 +825,23 @@ class IncidentRepository(IncidentRepositoryInterface):
         )
         old_values = self._snapshot_merge_audit(existing, detail)
 
+        transition_fields, transition_provenance, needs_review = (
+            apply_casualty_transitions(
+                existing,
+                new_candidate_data.get("casualty_transitions"),
+            )
+        )
+        if transition_provenance:
+            for key in list(transition_provenance.keys()):
+                transition_provenance[key] = {
+                    **transition_provenance[key],
+                    "raw_message_id": raw_message_id,
+                    "channel": source_label,
+                }
+        if needs_review:
+            existing.duplicate_flag = True
+        sync_transition_totals(existing, transition_fields)
+
         suppressed: dict[str, Any] = {}
         for field, incoming_key in (
             ("deaths", "deaths"),
@@ -828,6 +849,8 @@ class IncidentRepository(IncidentRepositoryInterface):
             ("total_deaths", "total_deaths"),
             ("total_injuries", "total_injuries"),
         ):
+            if field in transition_fields:
+                continue
             incoming_value = new_candidate_data.get(incoming_key)
             if field.startswith("total_") and incoming_value is None:
                 fallback_key = "deaths" if field == "total_deaths" else "injuries"
@@ -861,6 +884,8 @@ class IncidentRepository(IncidentRepositoryInterface):
             existing.note = self._append_note(existing.note, khabar, raw_message_id)
 
         new_values = self._snapshot_merge_audit(existing, detail)
+        if transition_provenance:
+            new_values = {**new_values, **transition_provenance}
         if suppressed:
             new_values = {**new_values, **suppressed}
         if old_values != new_values:

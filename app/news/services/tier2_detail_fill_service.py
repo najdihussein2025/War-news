@@ -132,6 +132,10 @@ class Tier2DetailFillService:
                 embedding,
                 raw_message_id,
                 mapped_fields,
+                [
+                    item.model_dump(mode="json")
+                    for item in extraction.casualty_transitions
+                ],
             )
             self.db.add(incident)
             self.db.add(detail)
@@ -157,6 +161,7 @@ class Tier2DetailFillService:
         embedding: list[float] | None,
         raw_message_id: int,
         mapped_fields: dict,
+        casualty_transitions: list[dict],
     ) -> None:
         if self.dedup_service is None or embedding is None:
             return
@@ -181,6 +186,7 @@ class Tier2DetailFillService:
                     "total_injuries": incident.total_injuries,
                     "khabar": incident.khabar,
                     "mapped_fields": mapped_fields,
+                    "casualty_transitions": casualty_transitions,
                 },
                 raw_message_id=raw_message_id,
             )

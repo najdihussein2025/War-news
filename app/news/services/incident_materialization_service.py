@@ -193,6 +193,10 @@ class IncidentMaterializationService:
                                     "total_injuries": total_injuries,
                                     "khabar": representative.raw_text or "",
                                     "mapped_fields": mapped_fields,
+                                    "casualty_transitions": [
+                                        item.model_dump(mode="json")
+                                        for item in extraction.casualty_transitions
+                                    ],
                                 },
                                 raw_message_id=representative.id,
                             )
@@ -544,6 +548,10 @@ class IncidentMaterializationService:
                                 "total_injuries": total_injuries,
                                 "khabar": representative.raw_text or "",
                                 "mapped_fields": mapped_fields,
+                                "casualty_transitions": [
+                                    item.model_dump(mode="json")
+                                    for item in extraction.casualty_transitions
+                                ],
                             },
                             raw_message_id=representative.id,
                         )
