@@ -2,6 +2,8 @@ from enum import Enum
 
 from pydantic import BaseModel, ConfigDict
 
+from app.llm.dtos import VillageRole
+
 
 class MatchResultStatus(str, Enum):
     matched = "matched"
@@ -17,6 +19,7 @@ class VillageMatchResult(BaseModel):
     village_match_status: MatchResultStatus
     village_review_required: bool
     raw_village_text: str | None
+    village_role: VillageRole = VillageRole.target
 
 
 class MatchResultDTO(BaseModel):

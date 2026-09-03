@@ -35,6 +35,7 @@ FAST_PATH_MATERIALIZABLE_SQL = """
         WHERE village.value->>'village_match_status' IN (
           'matched', 'matched_low_confidence'
         )
+          AND COALESCE(village.value->>'village_role', 'target') = 'target'
           AND (village.value->>'matched_village_id') ~ '^[0-9]+$'
       )
     )
@@ -76,6 +77,8 @@ def _normalized_village_matches(match_result: dict[str, Any]) -> list[dict[str, 
 
 def has_materializable_village(match_result: dict[str, Any]) -> bool:
     for village in _normalized_village_matches(match_result):
+        if village.get("village_role", "target") != "target":
+            continue
         if village.get("village_match_status") not in ELIGIBLE_MATCH_STATUSES:
             continue
         if _optional_int(village.get("matched_village_id")) is None:
