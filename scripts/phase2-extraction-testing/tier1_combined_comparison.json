@@ -1,0 +1,154 @@
+{
+  "sample_count": 5,
+  "baseline": {
+    "mode": "baseline",
+    "llm_calls_per_message": 2,
+    "samples": 5,
+    "presence": {
+      "correct": 0,
+      "missed": 6,
+      "false_added": 0
+    },
+    "casualties": {
+      "exact": 0,
+      "mismatch": 2
+    },
+    "per_sample": [
+      {
+        "sample_id": 2,
+        "expected_categories": [
+          "government_building",
+          "hospital",
+          "warning_classification"
+        ],
+        "got_categories": [],
+        "missed": [
+          "government_building",
+          "hospital",
+          "warning_classification"
+        ],
+        "false_added": []
+      },
+      {
+        "sample_id": 3,
+        "expected_categories": [
+          "crossings_other",
+          "health_center",
+          "warning_classification"
+        ],
+        "got_categories": [],
+        "missed": [
+          "crossings_other",
+          "health_center",
+          "warning_classification"
+        ],
+        "false_added": []
+      },
+      {
+        "sample_id": 4,
+        "expected_categories": [],
+        "got_categories": [],
+        "missed": [],
+        "false_added": []
+      },
+      {
+        "sample_id": 5,
+        "expected_categories": [],
+        "got_categories": [],
+        "missed": [],
+        "false_added": []
+      },
+      {
+        "sample_id": 6,
+        "expected_categories": [],
+        "got_categories": [],
+        "missed": [],
+        "false_added": []
+      }
+    ]
+  },
+  "combined": {
+    "mode": "combined",
+    "llm_calls_per_message": 1,
+    "samples": 5,
+    "presence": {
+      "correct": 0,
+      "missed": 6,
+      "false_added": 4
+    },
+    "casualties": {
+      "exact": 0,
+      "mismatch": 2
+    },
+    "per_sample": [
+      {
+        "sample_id": 2,
+        "expected_categories": [
+          "government_building",
+          "hospital",
+          "warning_classification"
+        ],
+        "got_categories": [],
+        "missed": [
+          "government_building",
+          "hospital",
+          "warning_classification"
+        ],
+        "false_added": []
+      },
+      {
+        "sample_id": 3,
+        "expected_categories": [
+          "crossings_other",
+          "health_center",
+          "warning_classification"
+        ],
+        "got_categories": [
+          "lebanese_army"
+        ],
+        "missed": [
+          "crossings_other",
+          "health_center",
+          "warning_classification"
+        ],
+        "false_added": [
+          "lebanese_army"
+        ]
+      },
+      {
+        "sample_id": 4,
+        "expected_categories": [],
+        "got_categories": [
+          "road_bridge"
+        ],
+        "missed": [],
+        "false_added": [
+          "road_bridge"
+        ]
+      },
+      {
+        "sample_id": 5,
+        "expected_categories": [],
+        "got_categories": [
+          "road_bridge"
+        ],
+        "missed": [],
+        "false_added": [
+          "road_bridge"
+        ]
+      },
+      {
+        "sample_id": 6,
+        "expected_categories": [],
+        "got_categories": [
+          "vehicles"
+        ],
+        "missed": [],
+        "false_added": [
+          "vehicles"
+        ]
+      }
+    ]
+  },
+  "call_count_reduction_pct": 50.0
+}

@@ -1,0 +1,22 @@
+{
+  "samples_with_categories": 2,
+  "avg_categories_per_sample": 3.0,
+  "baseline_llm_calls": 6,
+  "batched_llm_calls": 2,
+  "field_level_agreement": "6/6",
+  "field_level_agreement_pct": 100.0,
+  "per_sample": [
+    {
+      "sample_id": 2,
+      "category_count": 3,
+      "baseline_categories": {},
+      "batched_categories": {}
+    },
+    {
+      "sample_id": 3,
+      "category_count": 3,
+      "baseline_categories": {},
+      "batched_categories": {}
+    }
+  ]
+}
