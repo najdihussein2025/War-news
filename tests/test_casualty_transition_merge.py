@@ -172,6 +172,7 @@ def test_transition_clamps_at_zero_and_flags_review() -> None:
     assert existing.injuries == 0
     assert existing.deaths == 1
     assert existing.duplicate_flag is True
+    assert existing.verification_status == "needs_verification"
     update = next(item for item in db.added if isinstance(item, IncidentUpdate))
     assert update.action == UpdateAction.pipeline_merge
     assert update.new_values["deaths_transitioned_from_injuries"]["requested_count"] == 2

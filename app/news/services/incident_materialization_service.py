@@ -33,8 +33,23 @@ from app.news.services.fast_path_eligibility import (
 )
 
 
-def _initial_verification_status(match_result: dict | None) -> str:
+def _initial_verification_status(
+    match_result: dict | None,
+    *,
+    duplicate_flag: bool = False,
+    relevance_needs_review: bool = False,
+    insufficient_score: bool = False,
+    possible_missed_casualty_transition: bool = False,
+) -> str:
+    """Return the initial review state from materialization-time uncertainty signals."""
     result = match_result or {}
+    if (
+        duplicate_flag
+        or relevance_needs_review
+        or insufficient_score
+        or possible_missed_casualty_transition
+    ):
+        return "needs_verification"
     if result.get("condition_match_status") != "matched":
         return "needs_verification"
     villages = [
@@ -45,6 +60,13 @@ def _initial_verification_status(match_result: dict | None) -> str:
     if any(v.get("village_match_status") != "matched" for v in villages):
         return "needs_verification"
     return "auto_processed"
+
+
+def _relevance_needs_review(representative: RawMessage) -> bool:
+    filter_result = getattr(representative, "filter_result", None) or {}
+    return bool(getattr(representative, "low_confidence_relevance", False)) or bool(
+        filter_result.get("needs_review")
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -407,7 +429,14 @@ class IncidentMaterializationService:
             exact_hash=exact_hash,
             duplicate_flag=duplicate_flag,
             details_pending=True,
-            verification_status=_initial_verification_status(representative.match_result),
+            verification_status=_initial_verification_status(
+                representative.match_result,
+                duplicate_flag=duplicate_flag,
+                relevance_needs_review=_relevance_needs_review(representative),
+                # An insufficient-score duplicate is always created with the
+                # duplicate flag, before its audit record is persisted.
+                insufficient_score=duplicate_flag,
+            ),
             created_by=None,
         )
 
@@ -634,7 +663,11 @@ class IncidentMaterializationService:
                 duplicate_flag=duplicate_flag,
                 duplicate_level=duplicate_level,
                 duplicate_similarity_score=duplicate_score,
-                verification_status=_initial_verification_status(representative.match_result),
+                verification_status=_initial_verification_status(
+                    representative.match_result,
+                    duplicate_flag=duplicate_flag,
+                    relevance_needs_review=_relevance_needs_review(representative),
+                ),
                 created_by=None,
             )
 

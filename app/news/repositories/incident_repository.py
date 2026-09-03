@@ -851,7 +851,9 @@ class IncidentRepository(IncidentRepositoryInterface):
             new_candidate_data.get("casualty_transitions")
         )
         backstop = detect_casualty_transition_backstop(
-            raw_message.raw_text if raw_message is not None else new_candidate_data.get("khabar")
+            getattr(raw_message, "raw_text", None)
+            if raw_message is not None
+            else new_candidate_data.get("khabar")
         )
 
         transition_fields, transition_provenance, needs_review = (
