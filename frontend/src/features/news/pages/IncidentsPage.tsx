@@ -27,7 +27,7 @@ const twoLineClampClass =
   "overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]";
 
 const preMaterializationStatus = (
-  rawStatus: string,
+  rawStatus: string | null,
   incidentId: string | null,
 ) => {
   if (incidentId) {

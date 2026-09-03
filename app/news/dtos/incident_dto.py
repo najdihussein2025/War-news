@@ -9,8 +9,8 @@ class IncidentListItemDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True, frozen=True)
 
     id: UUID | None
-    raw_message_id: int
-    raw_status: str
+    raw_message_id: int | None
+    raw_status: str | None
     village: str | None
     condition: str | None
     event_date: date

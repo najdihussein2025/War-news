@@ -184,9 +184,9 @@ class Tier2DetailFillService:
                 },
                 raw_message_id=raw_message_id,
             )
-            incident.is_deleted = True
+            incident.duplicate_flag = True
             logger.info(
-                "tier2 dedup merged incident_id=%s into incident_id=%s score=%.3f",
+                "tier2 dedup linked incident_id=%s to incident_id=%s score=%.3f",
                 incident.id,
                 existing.id,
                 score,

@@ -215,13 +215,23 @@ INCIDENT_DETAIL_FIELD_MAP: dict[str, str] = {
     "Apart": "apart",
 }
 
+OPTIONAL_HEADERS: frozenset[str] = frozenset(
+    {
+        "Injuries__2",
+        "Links__2",
+        "Martyrs",
+        "Note",
+        "Note__2",
+    }
+)
+
 REQUIRED_HEADERS: frozenset[str] = frozenset(
     set(LOOKUP_ONLY_HEADERS)
     | set(INCIDENT_FIELD_MAP)
     | set(INCIDENT_INT_FIELD_MAP)
     | {"Time", "Date"}
     | set(INCIDENT_DETAIL_FIELD_MAP)
-)
+) - OPTIONAL_HEADERS
 
 
 class IncidentWorkbookService:

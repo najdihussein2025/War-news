@@ -119,14 +119,8 @@ class IncidentRepository(IncidentRepositoryInterface):
                 Incident.locked_by_user_id,
                 Incident.edit_lock_expires_at,
             )
-            .select_from(RawMessage)
-            .outerjoin(
-                Incident,
-                and_(
-                    Incident.raw_message_id == RawMessage.id,
-                    Incident.is_deleted.is_(False),
-                ),
-            )
+            .select_from(Incident)
+            .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
             .outerjoin(Village, Village.id == Incident.village_id)
             .outerjoin(Condition, Condition.id == Incident.condition_id)
             .outerjoin(Source, Source.id == Incident.source_id)
@@ -151,15 +145,9 @@ class IncidentRepository(IncidentRepositoryInterface):
         has_next_page = len(rows) > params.limit
         page_rows = rows[:params.limit]
         total = self.db.scalar(
-            select(func.count(RawMessage.id))
-            .select_from(RawMessage)
-            .outerjoin(
-                Incident,
-                and_(
-                    Incident.raw_message_id == RawMessage.id,
-                    Incident.is_deleted.is_(False),
-                ),
-            )
+            select(func.count(Incident.id))
+            .select_from(Incident)
+            .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
             .outerjoin(Village, Village.id == Incident.village_id)
             .outerjoin(Condition, Condition.id == Incident.condition_id)
             .outerjoin(Source, Source.id == Incident.source_id)
@@ -174,14 +162,8 @@ class IncidentRepository(IncidentRepositoryInterface):
                     )
                 )
             )
-            .select_from(RawMessage)
-            .outerjoin(
-                Incident,
-                and_(
-                    Incident.raw_message_id == RawMessage.id,
-                    Incident.is_deleted.is_(False),
-                ),
-            )
+            .select_from(Incident)
+            .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
             .outerjoin(Village, Village.id == Incident.village_id)
             .outerjoin(Condition, Condition.id == Incident.condition_id)
             .outerjoin(Source, Source.id == Incident.source_id)
@@ -196,17 +178,14 @@ class IncidentRepository(IncidentRepositoryInterface):
                 .filter(Incident.duplicate_flag.is_(True))
                 .label("duplicate_count"),
             )
-            .select_from(RawMessage)
-            .outerjoin(
-                Incident,
-                and_(
-                    Incident.raw_message_id == RawMessage.id,
-                    Incident.is_deleted.is_(False),
-                ),
-            )
+            .select_from(Incident)
+            .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
             .where(
-                Incident.id.is_not(None),
-                ~RawMessage.raw_payload.op("?")("ocr_text"),
+                Incident.is_deleted.is_(False),
+                or_(
+                    RawMessage.id.is_(None),
+                    ~RawMessage.raw_payload.op("?")("ocr_text"),
+                ),
             )
         ).one()
 
@@ -964,7 +943,6 @@ class IncidentRepository(IncidentRepositoryInterface):
             ).all()
         )
         for incident in incidents:
-            incident.is_deleted = True
             self.db.add(incident)
             if representative_raw_message_id is not None:
                 representative_incident = self.find_active_incident_for_raw_message_village(
@@ -1003,7 +981,6 @@ class IncidentRepository(IncidentRepositoryInterface):
             matched_incident = self.db.get(Incident, matched_incident_id)
 
         for incident in incidents:
-            incident.is_deleted = True
             self.db.add(incident)
             if matched_incident is not None:
                 self.create_duplicate_match(
@@ -1034,12 +1011,11 @@ class IncidentRepository(IncidentRepositoryInterface):
     @classmethod
     def _list_filters(cls, params: IncidentListParams) -> list[object]:
         filters: list[object] = [
-            ~RawMessage.raw_payload.op("?")("ocr_text"),
-            # Once an incident exists, later pipeline failures on its source
-            # message must not make the incident disappear from the workspace
-            # or its totals. Incident deletion is governed by is_deleted on the
-            # join; raw-message status belongs to pipeline monitoring.
-            Incident.id.is_not(None),
+            Incident.is_deleted.is_(False),
+            or_(
+                RawMessage.id.is_(None),
+                ~RawMessage.raw_payload.op("?")("ocr_text"),
+            ),
         ]
         if params.village:
             village_pattern = f"%{params.village}%"
@@ -1091,19 +1067,20 @@ class IncidentRepository(IncidentRepositoryInterface):
             func.date(event_datetime),
         )
         created_at = func.coalesce(Incident.created_at, RawMessage.received_at)
+        raw_message_sort_id = func.coalesce(RawMessage.id, 0)
         if params.sort_order == "oldest":
             return (
                 created_at.asc(),
                 event_date.asc(),
                 Incident.event_time.asc().nullslast(),
-                RawMessage.id.asc(),
+                raw_message_sort_id.asc(),
                 Incident.id.asc().nullslast(),
             )
         return (
             created_at.desc(),
             event_date.desc(),
             Incident.event_time.desc().nullslast(),
-            RawMessage.id.desc(),
+            raw_message_sort_id.desc(),
             Incident.id.desc().nullslast(),
         )
 
@@ -1124,12 +1101,15 @@ class IncidentRepository(IncidentRepositoryInterface):
                 else time.fromisoformat(payload["sort_event_time"])
             )
             incident_id = payload["incident_id"]
+            raw_message_id = payload["raw_message_id"]
             return {
                 "sort_created_at": created_at,
                 "sort_event_date": event_date,
                 "sort_event_time_is_null": event_time_is_null,
                 "sort_event_time": event_time,
-                "raw_message_id": int(payload["raw_message_id"]),
+                "raw_message_id": (
+                    int(raw_message_id) if raw_message_id is not None else None
+                ),
                 "incident_id": UUID(incident_id) if incident_id is not None else None,
             }
         except (KeyError, TypeError, ValueError, UnicodeDecodeError) as exc:
@@ -1161,6 +1141,8 @@ class IncidentRepository(IncidentRepositoryInterface):
         event_date_value = cursor["sort_event_date"]
         event_time_value = cursor["sort_event_time"]
         raw_message_id = cursor["raw_message_id"]
+        raw_message_sort_id = func.coalesce(RawMessage.id, 0)
+        raw_message_sort_value = raw_message_id if raw_message_id is not None else 0
         incident_id = cursor["incident_id"]
         before = params.sort_order == "newest"
         comparison = (lambda column, value: column < value) if before else (lambda column, value: column > value)
@@ -1193,7 +1175,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                     if event_time_value is None
                     else Incident.event_time.is_not(None)
                 ),
-                comparison(RawMessage.id, raw_message_id),
+                comparison(raw_message_sort_id, raw_message_sort_value),
             ),
             and_(
                 created_equal,
@@ -1203,7 +1185,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                     if event_time_value is None
                     else Incident.event_time.is_not(None)
                 ),
-                RawMessage.id == raw_message_id,
+                raw_message_sort_id == raw_message_sort_value,
                 incident_after,
             ),
         )

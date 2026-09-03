@@ -193,6 +193,35 @@ def test_import_workbook_leaves_lookup_fields_null_when_unmatched() -> None:
     assert incident.source_id is None
 
 
+def test_import_workbook_allows_missing_optional_legacy_columns() -> None:
+    optional_headers = {"Injuries__2", "Links__2", "Martyrs", "Note", "Note__2"}
+    headers = IncidentWorkbookService._make_unique_headers(_legacy_headers())
+    headers = [header for header in headers if header not in optional_headers]
+    row = [None] * len(headers)
+    row[headers.index("Khabar")] = "Workbook incident"
+    row[headers.index("Date")] = date(2026, 8, 21)
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.append(headers)
+    sheet.append(row)
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
+
+    session = _FakeSession()
+    summary = IncidentWorkbookService(session).import_workbook(output)
+
+    incident = next(item for item in session.added if isinstance(item, Incident))
+    assert summary.succeeded == 1
+    assert summary.failed == 0
+    assert incident.injuries_extra is None
+    assert incident.source_link_2 is None
+    assert incident.martyrs is None
+    assert incident.note_extra is None
+    assert incident.note_extra_2 is None
+
+
 def test_import_workbook_requires_note_extra_2_schema_column(monkeypatch) -> None:
     headers = _legacy_headers()
     row = [None] * len(headers)

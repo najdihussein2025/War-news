@@ -9,8 +9,8 @@ export type IncidentSource =
 
 export type Incident = {
   id: string | null;
-  raw_message_id: number;
-  raw_status: string;
+  raw_message_id: number | null;
+  raw_status: string | null;
   village: string | null;
   condition: string | null;
   event_date: string;

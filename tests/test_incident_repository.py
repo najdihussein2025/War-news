@@ -33,7 +33,7 @@ class _SessionStub:
         self.flush_calls += 1
 
 
-def test_soft_delete_for_raw_message_id_stages_live_incidents() -> None:
+def test_pipeline_duplicate_for_raw_message_id_preserves_incident() -> None:
     incident = Incident()
     incident.id = uuid4()
     incident.is_deleted = False
@@ -42,12 +42,12 @@ def test_soft_delete_for_raw_message_id_stages_live_incidents() -> None:
     deleted_ids = IncidentRepository(db).soft_delete_for_raw_message_id(42)  # type: ignore[arg-type]
 
     assert deleted_ids == [incident.id]
-    assert incident.is_deleted is True
+    assert incident.is_deleted is False
     assert db.added == [incident]
     assert db.flush_calls == 1
 
 
-def test_soft_delete_for_raw_message_id_is_idempotent() -> None:
+def test_pipeline_duplicate_for_raw_message_id_is_idempotent() -> None:
     db = _SessionStub([])
 
     deleted_ids = IncidentRepository(db).soft_delete_for_raw_message_id(42)  # type: ignore[arg-type]
@@ -102,7 +102,7 @@ def test_list_all_defaults_to_newest_created_first() -> None:
     )
 
 
-def test_list_all_requires_an_incident_but_not_a_successful_raw_message_status() -> None:
+def test_list_all_starts_from_incidents_and_raw_message_is_optional() -> None:
     db = _ListSessionStub()
 
     IncidentRepository(db).list_all(IncidentListParams())  # type: ignore[arg-type]
@@ -110,9 +110,10 @@ def test_list_all_requires_an_incident_but_not_a_successful_raw_message_status()
     compiled = str(
         db.statements[0].compile(compile_kwargs={"literal_binds": True})
     ).lower()
-    assert "from raw_messages" in compiled
+    assert "from incidents left outer join raw_messages" in compiled
     assert "raw_messages.status in" not in compiled
-    assert "incidents.id is not null" in compiled
+    assert "incidents.is_deleted is false" in compiled
+    assert "raw_messages.id is null" in compiled
 
 
 def test_list_all_excludes_ocr_payload_rows() -> None:
@@ -126,7 +127,7 @@ def test_list_all_excludes_ocr_payload_rows() -> None:
     assert "not (raw_messages.raw_payload ? 'ocr_text')" in compiled
 
 
-def test_list_all_incident_scoped_filters_require_materialized_incident() -> None:
+def test_list_all_incident_scoped_filters_require_active_incident() -> None:
     db = _ListSessionStub()
 
     IncidentRepository(db).list_all(  # type: ignore[arg-type]
@@ -136,7 +137,7 @@ def test_list_all_incident_scoped_filters_require_materialized_incident() -> Non
     compiled = str(
         db.statements[0].compile(compile_kwargs={"literal_binds": True})
     ).lower()
-    assert "incidents.id is not null" in compiled
+    assert "incidents.is_deleted is false" in compiled
 
 
 def test_list_all_uses_keyset_filter_without_offset() -> None:
@@ -158,8 +159,29 @@ def test_list_all_uses_keyset_filter_without_offset() -> None:
         db.statements[0].compile(compile_kwargs={"literal_binds": True})
     ).lower()
     assert "offset" not in compiled
-    assert "raw_messages.id < 42" in compiled
-    assert "raw_messages.id desc, incidents.id desc nulls last" in compiled
+    assert "coalesce(raw_messages.id, 0) < 42" in compiled
+    assert "coalesce(raw_messages.id, 0) desc, incidents.id desc nulls last" in compiled
+
+
+def test_list_all_cursor_supports_excel_incident_without_raw_message() -> None:
+    db = _ListSessionStub()
+    repository = IncidentRepository(db)  # type: ignore[arg-type]
+    cursor = repository._encode_list_cursor(
+        {
+            "created_at": datetime(2026, 9, 3, 6, 24, tzinfo=timezone.utc),
+            "event_date": date(2026, 8, 14),
+            "event_time": None,
+            "raw_message_id": None,
+            "id": uuid4(),
+        }
+    )
+
+    repository.list_all(IncidentListParams(cursor=cursor))
+
+    compiled = str(
+        db.statements[0].compile(compile_kwargs={"literal_binds": True})
+    ).lower()
+    assert "coalesce(raw_messages.id, 0)" in compiled
 
 
 def test_incident_list_item_accepts_pre_materialization_row() -> None:
@@ -188,6 +210,33 @@ def test_incident_list_item_accepts_pre_materialization_row() -> None:
     assert item.id is None
     assert item.raw_message_id == 42
     assert item.raw_status == "parsed"
+
+
+def test_incident_list_item_accepts_excel_import_without_raw_message() -> None:
+    item = IncidentListItemDTO.model_validate(
+        {
+            "id": uuid4(),
+            "raw_message_id": None,
+            "raw_status": None,
+            "village": "Kfar Chouba",
+            "condition": "Artillery Shelling",
+            "event_date": date(2026, 8, 14),
+            "event_time": None,
+            "khabar": "Imported workbook incident",
+            "source": None,
+            "source_reference": None,
+            "matched": True,
+            "duplicate_flag": "none",
+            "details_pending": False,
+            "created_at": datetime(2026, 9, 3, 6, 24, tzinfo=timezone.utc),
+            "version": 1,
+            "locked_by_user_id": None,
+            "edit_lock_expires_at": None,
+        }
+    )
+
+    assert item.raw_message_id is None
+    assert item.raw_status is None
 
 
 def test_list_item_text_sanitization_preserves_arabic_text() -> None:
