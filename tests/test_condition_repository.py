@@ -58,6 +58,21 @@ def test_condition_query_uses_word_similarity() -> None:
     assert result[0][1] == pytest.approx(0.466667)
 
 
+def test_compact_sql_normalization_removes_internal_spaces() -> None:
+    sql = str(
+        select(normalize_arabic_sql(literal("دير ميماس"), compact=True)).compile(
+            dialect=postgresql.dialect(),
+            compile_kwargs={"literal_binds": True},
+        )
+    )
+
+    assert "replace" in sql
+
+
+def test_compact_arabic_normalization_handles_final_ya() -> None:
+    assert normalize_arabic_text("على", compact=True) == "علي"
+
+
 def test_real_verbose_airstrike_prefers_warplane_over_artillery() -> None:
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:

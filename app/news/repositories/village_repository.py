@@ -47,15 +47,21 @@ class VillageRepository(VillageRepositoryInterface):
         # Seeded ACS names are often Latin transliterations, while ref_name_ar
         # contains the Arabic display name. Score both so Arabic extraction
         # mentions still match while retaining the requested ACS-name lookup.
-        acs_score = func.similarity(
-            normalize_arabic_sql(Village.acs_name),
-            literal(text),
-        )
-        ref_name_ar_score = func.similarity(
-            normalize_arabic_sql(Village.ref_name_ar),
-            literal(text),
-        )
-        score = func.greatest(acs_score, ref_name_ar_score).label("score")
+        normalized_text = normalize_arabic_sql(literal(text))
+        compact_text = normalize_arabic_sql(literal(text), compact=True)
+        # Retain the original token-aware score and add a compact-key score.
+        # This fixes spacing variants without penalizing a correct partial name
+        # whose reference value carries a meaningful suffix.
+        score = func.greatest(
+            func.similarity(normalize_arabic_sql(Village.acs_name), normalized_text),
+            func.similarity(normalize_arabic_sql(Village.ref_name_ar), normalized_text),
+            func.similarity(
+                normalize_arabic_sql(Village.acs_name, compact=True), compact_text
+            ),
+            func.similarity(
+                normalize_arabic_sql(Village.ref_name_ar, compact=True), compact_text
+            ),
+        ).label("score")
         rows = self.db.execute(
             select(Village, score)
             .where(
