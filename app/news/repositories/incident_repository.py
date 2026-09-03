@@ -812,6 +812,25 @@ class IncidentRepository(IncidentRepositoryInterface):
         )
         self.db.flush()
 
+    def redirect_pending_duplicate_matches(
+        self,
+        *,
+        retired_incident: Incident,
+        canonical_incident: Incident | None,
+    ) -> int:
+        """Keep pending review links pointed at an active canonical incident."""
+        if canonical_incident is None or canonical_incident.id == retired_incident.id:
+            return 0
+        result = self.db.execute(
+            sa_update(DuplicateMatch)
+            .where(
+                DuplicateMatch.matched_incident_id == retired_incident.id,
+                DuplicateMatch.status == MatchStatus.pending,
+            )
+            .values(matched_incident_id=canonical_incident.id)
+        )
+        return int(result.rowcount or 0)
+
     def merge_existing(
         self,
         existing: Incident,
@@ -968,18 +987,26 @@ class IncidentRepository(IncidentRepositoryInterface):
             ).all()
         )
         for incident in incidents:
-            self.db.add(incident)
+            representative_incident: Incident | None = None
             if representative_raw_message_id is not None:
                 representative_incident = self.find_active_incident_for_raw_message_village(
                     representative_raw_message_id,
                     incident.village_id,
                 )
-                if representative_incident is not None:
-                    self.create_duplicate_match(
-                        incident=incident,
-                        matched_incident=representative_incident,
-                        similarity_score=similarity_score or 0.0,
-                    )
+            # Duplicate incident records are preserved (not soft-deleted) per
+            # "Show imported incidents and preserve duplicate records"; still
+            # repoint any pending review link onto the active canonical.
+            self.redirect_pending_duplicate_matches(
+                retired_incident=incident,
+                canonical_incident=representative_incident,
+            )
+            self.db.add(incident)
+            if representative_incident is not None:
+                self.create_duplicate_match(
+                    incident=incident,
+                    matched_incident=representative_incident,
+                    similarity_score=similarity_score or 0.0,
+                )
         self.db.flush()
         return [incident.id for incident in incidents]
 
@@ -1006,6 +1033,10 @@ class IncidentRepository(IncidentRepositoryInterface):
             matched_incident = self.db.get(Incident, matched_incident_id)
 
         for incident in incidents:
+            self.redirect_pending_duplicate_matches(
+                retired_incident=incident,
+                canonical_incident=matched_incident,
+            )
             self.db.add(incident)
             if matched_incident is not None:
                 self.create_duplicate_match(

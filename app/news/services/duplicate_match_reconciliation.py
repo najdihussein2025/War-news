@@ -5,7 +5,7 @@ import logging
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.news.models import DuplicateMatch, Incident, MessageStatus, RawMessage
+from app.news.models import DuplicateMatch, Incident, MatchStatus, MessageStatus, RawMessage
 from app.news.repositories.incident_repository import IncidentRepository
 
 logger = logging.getLogger(__name__)
@@ -69,6 +69,33 @@ def reconcile_orphaned_soft_deleted_incidents(db: Session) -> int:
     )
 
     backfilled = 0
+    redirected = 0
+
+    dangling_matches = list(
+        db.scalars(
+            select(DuplicateMatch)
+            .join(Incident, Incident.id == DuplicateMatch.matched_incident_id)
+            .where(
+                DuplicateMatch.status == MatchStatus.pending,
+                Incident.is_deleted.is_(True),
+            )
+        ).all()
+    )
+    for match in dangling_matches:
+        retired_target = db.get(Incident, match.matched_incident_id)
+        if retired_target is None:
+            continue
+        representative = _find_representative_incident(
+            db,
+            incident_repo,
+            soft_deleted=retired_target,
+        )
+        if representative is None:
+            continue
+        redirected += incident_repo.redirect_pending_duplicate_matches(
+            retired_incident=retired_target,
+            canonical_incident=representative,
+        )
     for incident in orphans:
         representative = _find_representative_incident(
             db,
@@ -93,7 +120,7 @@ def reconcile_orphaned_soft_deleted_incidents(db: Session) -> int:
             incident.village_id,
         )
 
-    if backfilled:
+    if backfilled or redirected:
         db.commit()
 
-    return backfilled
+    return backfilled + redirected

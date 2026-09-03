@@ -224,18 +224,6 @@ class IncidentMaterializationService:
                             self.db.commit()
                         continue
 
-                    try:
-                        fast_dedup.incidents.create_fast_path_duplicate_match(
-                            canonical_incident=merge_target,
-                            raw_message_id=representative.id,
-                            status=MatchStatus.insufficient_score,
-                            similarity_score=score,
-                        )
-                        self.db.commit()
-                    except Exception:
-                        self.db.rollback()
-                        raise
-
                     incident = self._insert_fast_incident(
                         representative=representative,
                         extraction=extraction,
@@ -245,6 +233,14 @@ class IncidentMaterializationService:
                         duplicate_flag=score >= settings.dedup_low_threshold,
                     )
                     if incident is not None:
+                        # The review belongs to the newly materialized incident;
+                        # linking it to the canonical row leaves the reviewer with
+                        # no candidate to load.
+                        fast_dedup.incidents.create_duplicate_match(
+                            incident=incident,
+                            matched_incident=merge_target,
+                            similarity_score=score,
+                        )
                         created.append(incident)
                     logger.info(
                         "raw_message_id=%s village_id=%s fast_path insufficient_score "

@@ -696,7 +696,7 @@ def test_fast_path_confident_duplicate_insufficient_score_materializes() -> None
         representative,
         SimpleNamespace(
             incidents=SimpleNamespace(
-                create_fast_path_duplicate_match=lambda **kwargs: duplicate_matches.append(
+                create_duplicate_match=lambda **kwargs: duplicate_matches.append(
                     kwargs
                 )
             ),
@@ -716,7 +716,8 @@ def test_fast_path_confident_duplicate_insufficient_score_materializes() -> None
     incident = next(value for value in db.committed if isinstance(value, Incident))
     assert incident.duplicate_flag is True
     assert len(duplicate_matches) == 1
-    assert duplicate_matches[0]["status"].value == "insufficient_score"
+    assert duplicate_matches[0]["incident"] is incident
+    assert duplicate_matches[0]["matched_incident"] is existing
     assert duplicate_matches[0]["similarity_score"] == 0.65
 
 
