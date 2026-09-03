@@ -14,7 +14,7 @@ from app.core.config import settings
 from app.core.text_sanitizer import strip_emoji_and_pictographs
 from app.llm.dtos import ExtractionResult
 from app.news.interfaces import DedupMatchingInterface
-from app.news.models import Incident, IncidentDetail, MessageStatus, RawMessage
+from app.news.models import Incident, IncidentDetail, MatchStatus, MessageStatus, RawMessage
 from app.news.services.category_mapper import compute_rollups, map_categories
 from app.news.services.fast_path_dedup import (
     MATERIALIZE_MATCH_STATUSES,
@@ -145,14 +145,112 @@ class IncidentMaterializationService:
             materializable_villages += 1
 
             if decision.outcome == FastPathDedupOutcome.confident_duplicate:
-                confident_duplicate_villages += 1
-                self.fast_stats.skipped_confident_duplicate += 1
+                materializable_villages += 1
+                canonical_incident = decision.canonical_incident
                 if decision.representative_raw_message_id is not None:
                     representative_raw_message_id = decision.representative_raw_message_id
-                try:
-                    if decision.canonical_incident is not None:
+
+                khabar_embedding = representative.content_embedding
+                if (
+                    self.dedup_service is not None
+                    and khabar_embedding is not None
+                    and village_id is not None
+                    and canonical_incident is not None
+                ):
+                    existing, score = self.dedup_service.find_best_match(
+                        village_id=village_id,
+                        condition_id=condition_id,
+                        event_date=event_datetime.date(),
+                        khabar_embedding=khabar_embedding,
+                        exclude_raw_message_id=representative.id,
+                    )
+                    merge_target = existing or canonical_incident
+                    mapped_fields = map_categories(extraction.categories)
+                    casualties = extraction.casualties
+                    total_deaths, total_injuries = compute_rollups(
+                        mapped_fields,
+                        casualties,
+                    )
+
+                    if score >= settings.dedup_high_threshold:
+                        try:
+                            self.dedup_service.merge_into_incident(
+                                existing=merge_target,
+                                new_candidate_data={
+                                    "deaths": casualties.deaths,
+                                    "injuries": casualties.injuries,
+                                    "total_deaths": total_deaths,
+                                    "total_injuries": total_injuries,
+                                    "khabar": representative.raw_text or "",
+                                    "mapped_fields": mapped_fields,
+                                },
+                                raw_message_id=representative.id,
+                            )
+                            fast_dedup.incidents.create_fast_path_duplicate_match(
+                                canonical_incident=merge_target,
+                                raw_message_id=representative.id,
+                                status=MatchStatus.confirmed_duplicate,
+                                similarity_score=score,
+                            )
+                            self._mark_materialized(representative, fast_path=True)
+                            self.db.commit()
+                            created.append(merge_target)
+                            logger.info(
+                                "raw_message_id=%s village_id=%s fast_path merged into "
+                                "incident_id=%s score=%.3f",
+                                representative.id,
+                                village_id,
+                                merge_target.id,
+                                score,
+                            )
+                        except Exception:
+                            self.db.rollback()
+                            raise
+                        if holds_village_lock:
+                            self.db.commit()
+                        continue
+
+                    try:
                         fast_dedup.incidents.create_fast_path_duplicate_match(
-                            canonical_incident=decision.canonical_incident,
+                            canonical_incident=merge_target,
+                            raw_message_id=representative.id,
+                            status=MatchStatus.insufficient_score,
+                            similarity_score=score,
+                        )
+                        self.db.commit()
+                    except Exception:
+                        self.db.rollback()
+                        raise
+
+                    incident = self._insert_fast_incident(
+                        representative=representative,
+                        extraction=extraction,
+                        village_id=village_id,
+                        condition_id=condition_id,
+                        event_datetime=event_datetime,
+                        duplicate_flag=score >= settings.dedup_low_threshold,
+                    )
+                    if incident is not None:
+                        created.append(incident)
+                    logger.info(
+                        "raw_message_id=%s village_id=%s fast_path insufficient_score "
+                        "score=%.3f duplicate_flag=%s incident_id=%s",
+                        representative.id,
+                        village_id,
+                        score,
+                        score >= settings.dedup_low_threshold,
+                        incident.id if incident is not None else None,
+                    )
+                    if holds_village_lock:
+                        self.db.commit()
+                    continue
+
+                confident_duplicate_villages += 1
+                self.fast_stats.skipped_confident_duplicate += 1
+                try:
+                    if canonical_incident is not None:
+                        fast_dedup.incidents.create_fast_path_duplicate_match(
+                            canonical_incident=canonical_incident,
                             raw_message_id=representative.id,
                         )
                     representative.fast_path_completed_at = datetime.now(timezone.utc)
@@ -163,12 +261,12 @@ class IncidentMaterializationService:
                 logger.info(
                     "raw_message_id=%s village_id=%s fast_path confident_duplicate "
                     "canonical_incident_id=%s representative_raw_message_id=%s "
-                    "duplicate_match_written=%s",
+                    "duplicate_match_written=%s (no embedding score)",
                     representative.id,
                     village_id,
                     decision.canonical_incident_id,
                     decision.representative_raw_message_id,
-                    decision.canonical_incident is not None,
+                    canonical_incident is not None,
                 )
                 continue
 
@@ -247,6 +345,7 @@ class IncidentMaterializationService:
         village_id: int | None,
         condition_id: int,
         event_datetime: datetime,
+        duplicate_flag: bool = False,
     ) -> Incident | None:
         if village_id is None:
             self.fast_stats.skipped_ineligible += 1
@@ -277,7 +376,7 @@ class IncidentMaterializationService:
             deaths=casualties.deaths,
             injuries=casualties.injuries,
             exact_hash=exact_hash,
-            duplicate_flag=False,
+            duplicate_flag=duplicate_flag,
             details_pending=True,
             created_by=None,
         )

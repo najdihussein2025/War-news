@@ -619,16 +619,18 @@ class IncidentRepository(IncidentRepositoryInterface):
         *,
         canonical_incident: Incident,
         raw_message_id: int,
+        status: MatchStatus = MatchStatus.pending,
+        similarity_score: float | None = None,
     ) -> None:
-        """Record a window-match skip that never created a second incident row."""
+        """Record a fast-path duplicate evaluation against an existing incident."""
         self.db.add(
             DuplicateMatch(
                 incident_id=canonical_incident.id,
                 matched_incident_id=None,
                 raw_message_id=raw_message_id,
                 match_type=MatchType.exact,
-                similarity_score=None,
-                status=MatchStatus.pending,
+                similarity_score=similarity_score,
+                status=status,
             )
         )
         self.db.flush()

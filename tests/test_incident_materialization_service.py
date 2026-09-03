@@ -618,29 +618,76 @@ def test_fast_path_insert_sets_both_timestamps() -> None:
     assert representative.materialized_at is not None
 
 
-def test_fast_path_confident_duplicate_sets_fast_path_completed_at_only() -> None:
-    """A fast-path duplicate link stamps fast_path_completed_at, not materialized_at."""
+def test_fast_path_confident_duplicate_merges_when_score_high() -> None:
+    """High-score fast-path duplicate merges into the canonical incident."""
+    existing = SimpleNamespace(id=uuid4(), raw_message_id=999)
+    dedup = _DedupServiceStub(existing=existing, score=0.85)  # type: ignore[arg-type]
+    duplicate_matches: list[dict] = []
     db = _SessionStub()
-    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    service = IncidentMaterializationService(db, dedup_service=dedup)  # type: ignore[arg-type]
     representative = _representative()
 
     service.process_fast_path(
         representative,
         SimpleNamespace(
             incidents=SimpleNamespace(
-                create_fast_path_duplicate_match=lambda **_kwargs: None
+                create_fast_path_duplicate_match=lambda **kwargs: duplicate_matches.append(
+                    kwargs
+                )
             ),
             decide_for_village=lambda **_kwargs: SimpleNamespace(
                 outcome=FastPathDedupOutcome.confident_duplicate,
                 representative_raw_message_id=999,
-                canonical_incident_id=uuid4(),
-                canonical_incident=SimpleNamespace(id=uuid4(), raw_message_id=999),
+                canonical_incident_id=existing.id,
+                canonical_incident=existing,
             ),
         ),
     )
 
+    assert len(dedup.merge_calls) == 1
+    assert representative.status == MessageStatus.materialized
+    assert representative.materialized_at is not None
     assert representative.fast_path_completed_at is not None
-    assert representative.materialized_at is None
+    assert len(duplicate_matches) == 1
+    assert duplicate_matches[0]["status"].value == "confirmed_duplicate"
+    assert duplicate_matches[0]["similarity_score"] == 0.85
+
+
+def test_fast_path_confident_duplicate_insufficient_score_materializes() -> None:
+    """Sub-threshold score keeps a separate incident with insufficient_score audit."""
+    existing = SimpleNamespace(id=uuid4(), raw_message_id=999)
+    dedup = _DedupServiceStub(existing=existing, score=0.65)  # type: ignore[arg-type]
+    duplicate_matches: list[dict] = []
+    db = _SessionStub()
+    service = IncidentMaterializationService(db, dedup_service=dedup)  # type: ignore[arg-type]
+    representative = _representative()
+
+    service.process_fast_path(
+        representative,
+        SimpleNamespace(
+            incidents=SimpleNamespace(
+                create_fast_path_duplicate_match=lambda **kwargs: duplicate_matches.append(
+                    kwargs
+                )
+            ),
+            decide_for_village=lambda **_kwargs: SimpleNamespace(
+                outcome=FastPathDedupOutcome.confident_duplicate,
+                representative_raw_message_id=999,
+                canonical_incident_id=existing.id,
+                canonical_incident=existing,
+            ),
+        ),
+    )
+
+    assert dedup.merge_calls == []
+    assert representative.status == MessageStatus.materialized
+    assert representative.materialized_at is not None
+    assert representative.fast_path_completed_at is not None
+    incident = next(value for value in db.committed if isinstance(value, Incident))
+    assert incident.duplicate_flag is True
+    assert len(duplicate_matches) == 1
+    assert duplicate_matches[0]["status"].value == "insufficient_score"
+    assert duplicate_matches[0]["similarity_score"] == 0.65
 
 
 def test_terminalized_message_leaves_stage_timestamps_null() -> None:

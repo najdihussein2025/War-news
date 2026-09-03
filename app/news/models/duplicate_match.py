@@ -22,6 +22,7 @@ class MatchStatus(str, Enum):
     pending = "pending"
     confirmed_duplicate = "confirmed_duplicate"
     false_positive = "false_positive"
+    insufficient_score = "insufficient_score"
 
 
 class DuplicateMatch(Base):

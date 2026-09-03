@@ -26,6 +26,7 @@ from app.news.models import Incident, MessageStatus, RawMessage
 from app.news.repositories.incident_repository import IncidentRepository
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
 from app.news.repositories.raw_message_repository import RawMessageRepository
+from app.news.services.dedup_matching_service import DedupMatchingService
 from app.news.services.fast_path_dedup import FastPathDedupService
 from app.news.services.incident_materialization_service import (
     IncidentMaterializationService,
@@ -485,7 +486,10 @@ async def _fast_path_worker(
                 continue
 
             incident_repo = IncidentRepository(db)
-            service = IncidentMaterializationService(db)
+            service = IncidentMaterializationService(
+                db,
+                dedup_service=DedupMatchingService(incident_repo),
+            )
             fast_dedup = FastPathDedupService(incident_repo)
             try:
                 service.process_fast_path(message, fast_dedup)
