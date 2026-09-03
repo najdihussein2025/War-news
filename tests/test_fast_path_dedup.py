@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import pytest
 
+from app.core.config import settings
 from app.news.services.fast_path_dedup import (
     FastPathDedupOutcome,
     FastPathDedupService,
@@ -45,7 +46,7 @@ def test_confident_duplicate_when_high_confidence_match_in_window() -> None:
         "village_id": 42,
         "condition_id": 7,
         "message_datetime": datetime(2026, 8, 18, 11, 0, tzinfo=timezone.utc),
-        "window_minutes": 120,
+        "window_days": settings.dedup_time_window_days,
         "exclude_raw_message_id": 200,
     }
 

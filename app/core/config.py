@@ -71,8 +71,6 @@ class Settings(BaseSettings):
     cluster_require_condition_match: bool = True
     # Hard cap on clustering candidate rows per pass (memory/CPU safety).
     clustering_max_rows_per_pass: int = 100
-    # Fast-path materialization dedup: exact village_id + condition_id match window.
-    fast_dedup_time_window_minutes: int = 120
     pre_dedup_similarity_threshold: float = 0.92
     # Look-back window for pre-extraction dedup comparisons (hours).
     pre_dedup_window_hours: int = 48
@@ -84,8 +82,8 @@ class Settings(BaseSettings):
     # Max pre-dedup rows processed per full sweep before tier1 starts.
     # Prevents multi-minute "frozen" sweeps on large backlogs.
     pre_dedup_sweep_row_cap: int = 100
-    # Incident-level dedup thresholds and look-back window.
-    # Tune after reviewing real duplicate decisions; env vars override these.
+    # Incident-level dedup look-back window (fast path + full materialization).
+    # Embedding score >= dedup_high_threshold is required before auto-merge.
     dedup_time_window_days: int = 3
     dedup_high_threshold: float = 0.80
     dedup_low_threshold: float = 0.50

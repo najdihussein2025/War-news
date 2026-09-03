@@ -61,7 +61,7 @@ class FastPathDedupService:
                 village_id=village_id,
                 condition_id=condition_id,
                 message_datetime=message_datetime,
-                window_minutes=settings.fast_dedup_time_window_minutes,
+                window_days=settings.dedup_time_window_days,
                 exclude_raw_message_id=exclude_raw_message_id,
             )
             if existing is not None:

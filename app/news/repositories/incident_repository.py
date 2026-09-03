@@ -720,27 +720,25 @@ class IncidentRepository(IncidentRepositoryInterface):
         village_id: int,
         condition_id: int,
         message_datetime: datetime,
-        window_minutes: int,
+        window_days: int,
         exclude_raw_message_id: int | None = None,
     ) -> Incident | None:
-        window = timedelta(minutes=window_minutes)
-        start = message_datetime - window
-        end = message_datetime + window
+        event_date = message_datetime.date()
+        start_date = event_date - timedelta(days=window_days)
+        end_date = event_date + timedelta(days=window_days)
 
         filters = [
             Incident.village_id == village_id,
             Incident.condition_id == condition_id,
             Incident.is_deleted.is_(False),
-            RawMessage.message_datetime.is_not(None),
-            RawMessage.message_datetime >= start,
-            RawMessage.message_datetime <= end,
+            Incident.event_date >= start_date,
+            Incident.event_date <= end_date,
         ]
         if exclude_raw_message_id is not None:
             filters.append(Incident.raw_message_id != exclude_raw_message_id)
 
         return self.db.scalar(
             select(Incident)
-            .join(RawMessage, RawMessage.id == Incident.raw_message_id)
             .where(*filters)
             .order_by(Incident.created_at.asc())
             .limit(1)
