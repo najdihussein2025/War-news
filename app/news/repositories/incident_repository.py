@@ -1082,6 +1082,21 @@ class IncidentRepository(IncidentRepositoryInterface):
         return snapshot
 
     @staticmethod
+    def _merge_introduces_new_presence_categories(
+        detail: IncidentDetail,
+        mapped_fields: dict[str, Any],
+    ) -> bool:
+        for key, value in mapped_fields.items():
+            if value is not True:
+                continue
+            column = IncidentDetail.__table__.columns.get(key)
+            if column is None or column.type.python_type is not bool:
+                continue
+            if getattr(detail, key) is not True:
+                return True
+        return False
+
+    @staticmethod
     def _merge_source_label(raw_message: RawMessage | None) -> str | None:
         if raw_message is None:
             return None

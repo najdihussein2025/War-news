@@ -81,3 +81,36 @@ def test_merge_keeps_higher_count_and_records_suppressed_incoming() -> None:
         "raw_message_id": 42,
         "channel": "CNRS Webhook",
     }
+
+
+def test_merge_reopens_details_pending_for_new_presence_category() -> None:
+    incident_id = uuid4()
+    existing = Incident(id=incident_id, details_pending=False)
+    detail = IncidentDetail(incident_id=incident_id, la=None)
+    db = _MergeSessionStub(raw_message=None, detail=detail)
+    repo = IncidentRepository(db)  # type: ignore[arg-type]
+
+    repo.merge_existing(
+        existing,
+        {"mapped_fields": {"la": True, "la_did": "D"}},
+        raw_message_id=7,
+    )
+
+    assert existing.details_pending is True
+    assert detail.la is True
+
+
+def test_merge_does_not_reopen_details_pending_for_existing_category() -> None:
+    incident_id = uuid4()
+    existing = Incident(id=incident_id, details_pending=False)
+    detail = IncidentDetail(incident_id=incident_id, la=True, la_did="D")
+    db = _MergeSessionStub(raw_message=None, detail=detail)
+    repo = IncidentRepository(db)  # type: ignore[arg-type]
+
+    repo.merge_existing(
+        existing,
+        {"mapped_fields": {"la": True, "la_did": "D"}},
+        raw_message_id=7,
+    )
+
+    assert existing.details_pending is False
