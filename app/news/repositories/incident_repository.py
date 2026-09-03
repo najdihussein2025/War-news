@@ -34,7 +34,6 @@ from app.news.models import (
     IncidentUpdate,
     MatchStatus,
     MatchType,
-    MessageStatus,
     RawMessage,
     UpdateAction,
     Village,
@@ -206,9 +205,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                 ),
             )
             .where(
-                RawMessage.status.in_(
-                    [MessageStatus.parsed, MessageStatus.materialized]
-                ),
+                Incident.id.is_not(None),
                 ~RawMessage.raw_payload.op("?")("ocr_text"),
             )
         ).one()
@@ -1037,16 +1034,13 @@ class IncidentRepository(IncidentRepositoryInterface):
     @classmethod
     def _list_filters(cls, params: IncidentListParams) -> list[object]:
         filters: list[object] = [
-            RawMessage.status.in_(
-                [
-                    MessageStatus.parsed,
-                    MessageStatus.materialized,
-                ]
-            ),
             ~RawMessage.raw_payload.op("?")("ocr_text"),
+            # Once an incident exists, later pipeline failures on its source
+            # message must not make the incident disappear from the workspace
+            # or its totals. Incident deletion is governed by is_deleted on the
+            # join; raw-message status belongs to pipeline monitoring.
+            Incident.id.is_not(None),
         ]
-        if cls._has_incident_scoped_filters(params):
-            filters.append(Incident.id.is_not(None))
         if params.village:
             village_pattern = f"%{params.village}%"
             filters.append(
