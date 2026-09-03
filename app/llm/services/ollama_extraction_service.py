@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from app.core.config import settings
 from app.core.ollama_client import JsonObject, OllamaChatClient, OllamaChatMessage
 from app.llm.dtos import (
+    CasualtyTransition,
     ExtractionCasualties,
     ExtractionCategory,
     ExtractionCategoryKey,
@@ -49,6 +50,12 @@ GENERAL_EXTRACTION_PROMPT = """أنت مساعد لاستخراج الحقول �
 - village: مصفوفة من أسماء البلدات أو الأماكن المذكورة في الخبر. إذا ورد اسم مكان واحد أرجع مصفوفة بعنصر واحد. إذا وردت أسماء أماكن متعددة أرجعها جميعاً في المصفوفة. إذا لم يظهر أي اسم مكان في النص أرجع null. لا تُرجع سلسلة نصية واحدة بل دائماً مصفوفة أو null.
 - action_description: وصف نوع العمل أو الحادث من النص فقط.
 - casualties: أعداد الضحايا العامة غير المنسوبة إلى فئة محددة، فقط إذا ذُكرت حرفياً.
+- casualty_transitions: انتقالات حالة بين جرحى ووفيات في *متابعات* لنفس الحادث. استخدمها عندما يذكر النص أن جرحى سابقين توفوا أو «بقي X جرحى وتوفي Y» أو «توفى واحد من الجرحى» دون إعادة عدّ كل الجرحى. لا تستخدمها للأخبار الأولية ولا للإضافات البسيطة مثل «5 جرحى جدد».
+
+أمثلة على casualty_transitions:
+1) «توفى أحد الجرحى جراء إصابته» → [{"from_status":"injured","to_status":"deceased","count":1}] و casualties.deaths=1 (اختياري).
+2) «بقي 3 جرحى وتوفي واحد» → [{"from_status":"injured","to_status":"deceased","count":1}] — لا حاجة لذكر injuries=3 في casualties.
+3) «أصيب 5 جرحى إضافيين» → casualty_transitions=[] (إضافة فقط، بدون انتقال).
 
 قواعد الأعداد:
 - استخرج الرقم فقط عندما يكون مكتوباً بشكل مباشر في النص.
@@ -72,7 +79,8 @@ Schema الإخراج الوحيد المسموح:
     "female_injuries": null,
     "children_deaths": null,
     "children_injuries": null
-  }
+  },
+  "casualty_transitions": []
 }
 
 لا تضف categories في هذا الإخراج."""
@@ -100,8 +108,33 @@ GENERAL_EXTRACTION_RESPONSE_SCHEMA: JsonObject = {
                 "children_injuries": {"type": ["integer", "null"]},
             },
         },
+        "casualty_transitions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "from_status": {
+                        "type": "string",
+                        "enum": ["injured", "deceased"],
+                    },
+                    "to_status": {
+                        "type": "string",
+                        "enum": ["injured", "deceased"],
+                    },
+                    "count": {"type": "integer", "minimum": 1},
+                },
+                "required": ["from_status", "to_status", "count"],
+            },
+        },
     },
-    "required": ["is_relevant", "village", "action_description", "casualties"],
+    "required": [
+        "is_relevant",
+        "village",
+        "action_description",
+        "casualties",
+        "casualty_transitions",
+    ],
 }
 
 COMBINED_TIER1_PROMPT_PATH = (
@@ -122,6 +155,7 @@ COMBINED_TIER1_RESPONSE_SCHEMA: JsonObject = {
         "village": {"type": ["array", "null"], "items": {"type": "string"}},
         "action_description": {"type": ["string", "null"]},
         "casualties": GENERAL_EXTRACTION_RESPONSE_SCHEMA["properties"]["casualties"],  # type: ignore[index]
+        "casualty_transitions": GENERAL_EXTRACTION_RESPONSE_SCHEMA["properties"]["casualty_transitions"],  # type: ignore[index]
     },
     "required": [
         "categories_present",
@@ -130,6 +164,7 @@ COMBINED_TIER1_RESPONSE_SCHEMA: JsonObject = {
         "village",
         "action_description",
         "casualties",
+        "casualty_transitions",
     ],
 }
 
@@ -142,6 +177,7 @@ class _RawExtractionResponse(BaseModel):
     village: list[str] | str | None = None
     action_description: str | None = None
     casualties: ExtractionCasualties = Field(default_factory=ExtractionCasualties)
+    casualty_transitions: list[CasualtyTransition] = Field(default_factory=list)
 
 
 class OllamaExtractionService(ExtractionClassifierInterface):
@@ -217,6 +253,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 "village",
                 "action_description",
                 "casualties",
+                "casualty_transitions",
             )
         }
         general_response = self._parse_general_response(
@@ -255,6 +292,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             ),
             categories=categories,
             casualties=general_response.casualties,
+            casualty_transitions=list(general_response.casualty_transitions),
             presence_category_keys=list(categories_present),
             extraction_tier=1,
             model=self.client.model,
@@ -491,6 +529,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             ),
             categories=categories,
             casualties=general_response.casualties,
+            casualty_transitions=list(general_response.casualty_transitions),
             presence_category_keys=list(categories_present),
             extraction_tier=2,
             model=self.client.model,

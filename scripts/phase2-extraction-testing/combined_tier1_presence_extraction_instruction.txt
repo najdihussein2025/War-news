@@ -23,6 +23,12 @@ General field rules:
 - village: array of place names mentioned, or null. Never a single string.
 - action_description: incident action type from the text only (Arabic).
 - casualties: only explicitly stated numbers in the text; never infer from generic wording.
+- casualty_transitions: status changes on follow-ups to the same incident (injured person died, "3 remain injured and 1 died", "one of the injured later died"). Do NOT require restating the remaining injury count — emit the transition only. Leave [] for first reports and plain additive updates ("5 more injured").
+
+Examples:
+1) "one of the injured later died" → casualty_transitions=[{"from_status":"injured","to_status":"deceased","count":1}]
+2) Arabic «بقي 3 جرحى وتوفي واحد» → same transition with count=1 (casualties.injuries may stay null)
+3) "5 additional injuries" → casualty_transitions=[]
 
 Output rules:
 - Return exactly one valid JSON object.
@@ -48,7 +54,8 @@ Required schema:
     "female_injuries": null,
     "children_deaths": null,
     "children_injuries": null
-  }
+  },
+  "casualty_transitions": []
 }
 
 If no category qualifies, use empty arrays for categories_present/category_evidence.
