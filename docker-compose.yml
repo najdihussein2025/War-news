@@ -134,7 +134,7 @@ services:
       PIPELINE_ROLE: cnrs-poll-worker
     volumes:
       - .:/app
-    command: sh -c "while true; do python -m scripts.cnrs_poll_worker --hours 6; sleep 300; done"
+    command: sh -c "while true; do python -m scripts.cnrs_poll_worker --hours 72; sleep 300; done"
     restart: unless-stopped
     networks:
       - appnet

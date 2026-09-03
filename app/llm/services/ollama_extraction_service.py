@@ -15,6 +15,7 @@ from app.llm.dtos import (
     ExtractionCategory,
     ExtractionCategoryKey,
     ExtractionResult,
+    VillageRoleEntry,
 )
 from app.llm.interfaces import ExtractionClassifierInterface
 from app.llm.services.ollama_category_detail_service import OllamaCategoryDetailService
@@ -34,7 +35,7 @@ ALLOWED_EXTRACTION_CATEGORY_KEYS = frozenset(
 
 GENERAL_EXTRACTION_PROMPT = """أنت مساعد لاستخراج الحقول العامة فقط من خبر عربي واحد عن حادث أمني أو عسكري في لبنان.
 
-مهمتك الوحيدة: استخرج is_relevant و village و action_description و casualties العامة فقط. لا تستخرج categories ولا تحكم على أي فئة في هذه المرحلة.
+مهمتك الوحيدة: استخرج is_relevant و village و village_roles و action_description و casualties العامة فقط. لا تستخرج categories ولا تحكم على أي فئة في هذه المرحلة.
 
 قواعد الإخراج الصارمة:
 - أرجع كائن JSON واحداً صالحاً فقط.
@@ -48,14 +49,25 @@ GENERAL_EXTRACTION_PROMPT = """أنت مساعد لاستخراج الحقول �
 
 إذا كان النص ذا صلة:
 - village: مصفوفة من أسماء البلدات أو الأماكن المذكورة في الخبر. إذا ورد اسم مكان واحد أرجع مصفوفة بعنصر واحد. إذا وردت أسماء أماكن متعددة أرجعها جميعاً في المصفوفة. إذا لم يظهر أي اسم مكان في النص أرجع null. لا تُرجع سلسلة نصية واحدة بل دائماً مصفوفة أو null.
+- village_roles: مصفوفة اختيارية من كائنات بالشكل {"village":"اسم البلدة","role":"origin|target"} لتمييز دور كل بلدة عندما يفرق النص بين مكان انطلاق/تمركز جهة الهجوم ومكان الاستهداف الفعلي. استخدم role="origin" فقط لموضع المنصة أو الدبابة أو موقع الإطلاق أو نقطة التمركز. استخدم role="target" لمكان القصف/الضربة/الضرر الفعلي. إذا ذُكرت بلدة واحدة فقط أو لم يميز النص بين الأدوار، اجعل role="target". إذا لم تحتج هذا التفصيل أرجع [].
 - action_description: وصف نوع العمل أو الحادث من النص فقط.
 - casualties: أعداد الضحايا العامة غير المنسوبة إلى فئة محددة، فقط إذا ذُكرت حرفياً.
 - casualty_transitions: انتقالات حالة بين جرحى ووفيات في *متابعات* لنفس الحادث. استخدمها عندما يذكر النص أن جرحى سابقين توفوا أو «بقي X جرحى وتوفي Y» أو «توفى واحد من الجرحى» دون إعادة عدّ كل الجرحى. لا تستخدمها للأخبار الأولية ولا للإضافات البسيطة مثل «5 جرحى جدد».
+- قاعدة إلزامية: إذا قال النص صراحة إن مصاباً أو جريحاً سابقاً توفي، فأرجع دائماً [{"from_status":"injured","to_status":"deceased","count":1}] حتى لو ذكر النص أيضاً حصيلة جديدة أو عدداً متبقياً للجرحى.
+- يشمل ذلك على الأقل الصيغ: «استشهاد أحد جريحي/الجرحى»، «وفاة أحد المصابين متأثراً بجراحه»، و«فارق أحد الجرحى الحياة».
+- قد تأتي عبارة الانتقال وعبارة الحصيلة أو العدد المتبقي في شقين مختلفين من الجملة نفسها أو في جملة طويلة متعددة الفواصل؛ اربطهما كتحديث واحد لنفس الحادث ولا تعتبر الحصيلة خبراً منفصلاً.
 
 أمثلة على casualty_transitions:
 1) «توفى أحد الجرحى جراء إصابته» → [{"from_status":"injured","to_status":"deceased","count":1}] و casualties.deaths=1 (اختياري).
 2) «بقي 3 جرحى وتوفي واحد» → [{"from_status":"injured","to_status":"deceased","count":1}] — لا حاجة لذكر injuries=3 في casualties.
-3) «أصيب 5 جرحى إضافيين» → casualty_transitions=[] (إضافة فقط، بدون انتقال).
+3) «أعلنت وزارة الصحة وفاة أحد المصابين متأثراً بجراحه» → [{"from_status":"injured","to_status":"deceased","count":1}]
+4) «أحد جريحي الانفجار استشهد... لتصبح الحصيلة 3 شهداء وجريح واحد» → [{"from_status":"injured","to_status":"deceased","count":1}] حتى لو جاءت الحصيلة في شق لاحق من الجملة.
+5) «أصيب 5 جرحى إضافيين» → casualty_transitions=[] (إضافة فقط، بدون انتقال).
+
+أمثلة على village_roles:
+1) «دبابة متمركزة في البياض تقصف المنصوري» → village=["البياض","المنصوري"] و village_roles=[{"village":"البياض","role":"origin"},{"village":"المنصوري","role":"target"}]
+2) «غارة على عيتا الشعب» → village=["عيتا الشعب"] و village_roles=[{"village":"عيتا الشعب","role":"target"}]
+3) «قصف استهدف المنصوري ومجدل زون» → village=["المنصوري","مجدل زون"] و village_roles=[{"village":"المنصوري","role":"target"},{"village":"مجدل زون","role":"target"}]
 
 قواعد الأعداد:
 - استخرج الرقم فقط عندما يكون مكتوباً بشكل مباشر في النص.
@@ -67,6 +79,7 @@ Schema الإخراج الوحيد المسموح:
 {
   "is_relevant": true,
   "village": null,
+  "village_roles": [],
   "action_description": null,
   "casualties": {
     "total_deaths": null,
@@ -91,6 +104,21 @@ GENERAL_EXTRACTION_RESPONSE_SCHEMA: JsonObject = {
     "properties": {
         "is_relevant": {"type": "boolean"},
         "village": {"type": ["array", "null"], "items": {"type": "string"}},
+        "village_roles": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "village": {"type": "string"},
+                    "role": {
+                        "type": "string",
+                        "enum": ["origin", "target"],
+                    },
+                },
+                "required": ["village", "role"],
+            },
+        },
         "action_description": {"type": ["string", "null"]},
         "casualties": {
             "type": "object",
@@ -131,6 +159,7 @@ GENERAL_EXTRACTION_RESPONSE_SCHEMA: JsonObject = {
     "required": [
         "is_relevant",
         "village",
+        "village_roles",
         "action_description",
         "casualties",
         "casualty_transitions",
@@ -153,6 +182,7 @@ COMBINED_TIER1_RESPONSE_SCHEMA: JsonObject = {
         "category_evidence": PRESENCE_GATE_RESPONSE_SCHEMA["properties"]["category_evidence"],  # type: ignore[index]
         "is_relevant": {"type": "boolean"},
         "village": {"type": ["array", "null"], "items": {"type": "string"}},
+        "village_roles": GENERAL_EXTRACTION_RESPONSE_SCHEMA["properties"]["village_roles"],  # type: ignore[index]
         "action_description": {"type": ["string", "null"]},
         "casualties": GENERAL_EXTRACTION_RESPONSE_SCHEMA["properties"]["casualties"],  # type: ignore[index]
         "casualty_transitions": GENERAL_EXTRACTION_RESPONSE_SCHEMA["properties"]["casualty_transitions"],  # type: ignore[index]
@@ -162,6 +192,7 @@ COMBINED_TIER1_RESPONSE_SCHEMA: JsonObject = {
         "category_evidence",
         "is_relevant",
         "village",
+        "village_roles",
         "action_description",
         "casualties",
         "casualty_transitions",
@@ -175,6 +206,7 @@ class _RawExtractionResponse(BaseModel):
     is_relevant: bool = True
     # Accept both old single-string responses and new array responses.
     village: list[str] | str | None = None
+    village_roles: list[VillageRoleEntry] = Field(default_factory=list)
     action_description: str | None = None
     casualties: ExtractionCasualties = Field(default_factory=ExtractionCasualties)
     casualty_transitions: list[CasualtyTransition] = Field(default_factory=list)
@@ -251,6 +283,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             for key in (
                 "is_relevant",
                 "village",
+                "village_roles",
                 "action_description",
                 "casualties",
                 "casualty_transitions",
@@ -283,6 +316,10 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             is_relevant=general_response.is_relevant,
             village=self._validated_village_list(
                 general_response.village,
+                raw_message_id=raw_message_id,
+            ),
+            village_roles=self._validated_village_roles(
+                general_response.village_roles,
                 raw_message_id=raw_message_id,
             ),
             action_description=self._validated_text(
@@ -522,6 +559,10 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 general_response.village,
                 raw_message_id=raw_message_id,
             ),
+            village_roles=self._validated_village_roles(
+                general_response.village_roles,
+                raw_message_id=raw_message_id,
+            ),
             action_description=self._validated_text(
                 general_response.action_description,
                 field_name="action_description",
@@ -675,6 +716,29 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                     entry,
                 )
         return validated if validated else None
+
+    def _validated_village_roles(
+        self,
+        village_roles: list[VillageRoleEntry],
+        raw_message_id: int | None,
+    ) -> list[VillageRoleEntry]:
+        validated: list[VillageRoleEntry] = []
+        for entry in village_roles:
+            if is_valid_reason_text(entry.village):
+                validated.append(entry)
+            else:
+                logger.warning(
+                    "Invalid village_roles.village text from model=%s for raw_message_id=%s",
+                    self.client.model,
+                    raw_message_id,
+                )
+                logger.debug(
+                    "Rejected village_roles entry from model=%s for raw_message_id=%s: %r",
+                    self.client.model,
+                    raw_message_id,
+                    entry.model_dump(mode="json"),
+                )
+        return validated
 
     def _validated_text(
         self,

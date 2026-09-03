@@ -345,6 +345,42 @@ async def run_full_pipeline_sweep(
             lock_db.close()
 
 
+def pipeline_pass_is_idle(result: PipelineSweepResult) -> bool:
+    """True when a completed pass found no eligible work in any stage."""
+    if result.skipped:
+        return False
+    return all(stage.processed == 0 for stage in result.stages)
+
+
+async def drain_pipeline_sweeps(
+    *,
+    max_rows: int | None = None,
+    use_advisory_lock: bool = False,
+) -> int:
+    """Keep running full sweeps until one pass finds no eligible rows."""
+    pass_number = 0
+    while True:
+        pass_number += 1
+        result = await run_full_pipeline_sweep(
+            max_rows=max_rows,
+            use_advisory_lock=use_advisory_lock,
+        )
+        if result.skipped:
+            logger.info(
+                "Pipeline drain stopped: %s passes=%s",
+                result.skip_reason,
+                pass_number,
+            )
+            return pass_number
+        if pipeline_pass_is_idle(result):
+            logger.info("Pipeline drain complete passes=%s", pass_number)
+            return pass_number
+        logger.info(
+            "Pipeline drain pass=%s still had work; running another pass",
+            pass_number,
+        )
+
+
 def run_full_pipeline_sweep_sync(
     *,
     max_rows: int | None = None,
@@ -353,6 +389,20 @@ def run_full_pipeline_sweep_sync(
     """Run the sweep synchronously. Used by the dedicated pipeline-worker process."""
     asyncio.run(
         run_full_pipeline_sweep(
+            max_rows=max_rows,
+            use_advisory_lock=use_advisory_lock,
+        )
+    )
+
+
+def drain_pipeline_sweeps_sync(
+    *,
+    max_rows: int | None = None,
+    use_advisory_lock: bool = False,
+) -> int:
+    """Drain the pipeline synchronously until idle."""
+    return asyncio.run(
+        drain_pipeline_sweeps(
             max_rows=max_rows,
             use_advisory_lock=use_advisory_lock,
         )

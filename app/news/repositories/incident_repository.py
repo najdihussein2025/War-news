@@ -880,6 +880,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                 }
         if needs_review:
             existing.duplicate_flag = True
+            existing.verification_status = "needs_verification"
         else:
             # A successful automatic merge resolves its duplicate decision.
             # Keep the flag only for an explicit casualty-transition conflict.
@@ -922,6 +923,10 @@ class IncidentRepository(IncidentRepositoryInterface):
                 existing.details_pending = True
             merge_incident_detail_fields(detail, mapped_fields)
             self.db.add(detail)
+
+        origin_note = self._origin_village_note(new_candidate_data.get("origin_villages"))
+        if origin_note:
+            existing.note = self._append_unique_note(existing.note, origin_note)
 
         khabar = new_candidate_data.get("khabar")
         if khabar:
@@ -1310,6 +1315,31 @@ class IncidentRepository(IncidentRepositoryInterface):
         if not existing_note:
             return appended
         return f"{existing_note}\n\n{appended}"
+
+    @staticmethod
+    def _append_unique_note(existing_note: str | None, note_text: str) -> str:
+        if not existing_note:
+            return note_text
+        if note_text in existing_note:
+            return existing_note
+        return f"{existing_note}\n\n{note_text}"
+
+    @staticmethod
+    def _origin_village_note(origin_villages: Any) -> str | None:
+        if not isinstance(origin_villages, list):
+            return None
+        normalized: list[str] = []
+        for item in origin_villages:
+            if not isinstance(item, str):
+                continue
+            value = item.strip()
+            if value and value not in normalized:
+                normalized.append(value)
+        if not normalized:
+            return None
+        if len(normalized) == 1:
+            return f"Origin village: {normalized[0]}"
+        return f"Origin villages: {', '.join(normalized)}"
 
     @staticmethod
     def _snapshot_merge_fields(incident: Incident) -> dict[str, Any]:

@@ -2,7 +2,7 @@ You are a precision extractor for one Arabic news message about a security or mi
 
 Return exactly one JSON object with BOTH:
 1) presence-category detection (which allowed categories are affected incident subjects/targets), and
-2) general Tier-1 extraction fields (relevance, villages, action description, root casualties).
+2) general Tier-1 extraction fields (relevance, villages, village_roles, action description, root casualties).
 
 Do not extract per-category did/name/detail fields here — only presence flags plus general fields.
 
@@ -21,14 +21,21 @@ Presence rules (same precision as the standalone presence gate):
 General field rules:
 - If the text is not about a security/military incident in Lebanon: is_relevant=false and set village/action_description null and casualties numeric fields null.
 - village: array of place names mentioned, or null. Never a single string.
+- village_roles: optional array of objects shaped like `{"village":"name","role":"origin|target"}`. Use `origin` only for the attacking position / launch site / tank position / staging point. Use `target` for the place actually struck or damaged. If the text mentions only one village or does not distinguish roles, default that village to `target`. If no extra role detail is needed, use `[]`.
 - action_description: incident action type from the text only (Arabic).
 - casualties: only explicitly stated numbers in the text; never infer from generic wording.
 - casualty_transitions: status changes on follow-ups to the same incident (injured person died, "3 remain injured and 1 died", "one of the injured later died"). Do NOT require restating the remaining injury count — emit the transition only. Leave [] for first reports and plain additive updates ("5 more injured").
+- Mandatory rule: when the text explicitly says a previously injured person died, always emit `[{"from_status":"injured","to_status":"deceased","count":1}]` even if the sentence also restates a new total or the remaining injured count.
+- This includes at minimum Arabic forms such as `استشهاد أحد جريحي/الجرحى`, `وفاة أحد المصابين متأثراً بجراحه`, and `فارق أحد الجرحى الحياة`.
+- The transition trigger and the refreshed tally may appear in separate clauses of the same long sentence; connect them as one update to the same incident rather than treating the tally as a disconnected snapshot.
 
 Examples:
 1) "one of the injured later died" → casualty_transitions=[{"from_status":"injured","to_status":"deceased","count":1}]
 2) Arabic «بقي 3 جرحى وتوفي واحد» → same transition with count=1 (casualties.injuries may stay null)
 3) "5 additional injuries" → casualty_transitions=[]
+4) "tank stationed in Biyad shells Mansouri" → village=["Biyad","Mansouri"], village_roles=[{"village":"Biyad","role":"origin"},{"village":"Mansouri","role":"target"}]
+5) "airstrike on Aita al-Shaab" → village=["Aita al-Shaab"], village_roles=[{"village":"Aita al-Shaab","role":"target"}]
+6) "shelling hit Mansouri and Majdal Zoun" → village=["Mansouri","Majdal Zoun"], village_roles=[{"village":"Mansouri","role":"target"},{"village":"Majdal Zoun","role":"target"}]
 
 Output rules:
 - Return exactly one valid JSON object.
@@ -42,6 +49,7 @@ Required schema:
   ],
   "is_relevant": true,
   "village": null,
+  "village_roles": [],
   "action_description": null,
   "casualties": {
     "total_deaths": null,

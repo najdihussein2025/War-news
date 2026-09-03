@@ -10,7 +10,10 @@ from app.core.database import SessionLocal
 from app.core.logging_config import configure_logging
 from app.news.dtos.pipeline_dto import PipelineSweepResult, StageSweepResult
 from app.news.services.pipeline_jobs import enqueue_pipeline_sweep
-from app.news.services.pipeline_orchestrator import run_full_pipeline_sweep
+from app.news.services.pipeline_orchestrator import (
+    pipeline_pass_is_idle,
+    run_full_pipeline_sweep,
+)
 
 
 def _print_stage(result: StageSweepResult) -> None:
@@ -20,13 +23,6 @@ def _print_stage(result: StageSweepResult) -> None:
         f"elapsed_seconds={result.elapsed_seconds:.2f}",
         flush=True,
     )
-
-
-def pipeline_pass_is_idle(result: PipelineSweepResult) -> bool:
-    """True when a completed pass found no eligible work in any stage."""
-    if result.skipped:
-        return False
-    return all(stage.processed == 0 for stage in result.stages)
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
@@ -136,9 +132,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Pipeline sweep enqueued job_id={job_id} max_rows={args.limit}", flush=True)
         if drain:
             print(
-                "note: --drain is a foreground CLI loop; enqueued jobs are still "
-                "one pass each. Run the CLI in pipeline-worker without --enqueue "
-                "to drain the backlog.",
+                "note: enqueued jobs are drained automatically by pipeline-worker "
+                "until the backlog is idle.",
                 flush=True,
             )
         return 0
