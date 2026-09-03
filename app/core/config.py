@@ -94,11 +94,11 @@ class Settings(BaseSettings):
     pipeline_worker_poll_seconds: float = 2.0
     pipeline_claim_lease_seconds: int = 240
     # Live-sweep cursor health (GET /api/pipeline/health -> cursor_gap).
-    # unhealthy when the cursor trails MAX(raw_messages.id) by more than
-    # this many rows...
+    # unhealthy when relevance-eligible rows (pending, no filter_result) newer
+    # than the cursor exceed this count...
     pipeline_cursor_gap_row_threshold: int = 500
-    # ...OR the cursor has not advanced in this many minutes while newer
-    # rows exist.
+    # ...OR the cursor has not advanced in this many minutes while such a
+    # backlog exists (pre-classified CNRS rows do not count).
     pipeline_cursor_stale_minutes: int = 30
     extraction_max_retries: int = 5
     matching_max_retries: int = 5

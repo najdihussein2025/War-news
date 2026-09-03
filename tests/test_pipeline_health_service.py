@@ -75,15 +75,22 @@ def test_age_seconds_treats_naive_timestamp_as_utc() -> None:
 
 
 class _CursorStubSession:
-    def __init__(self, *, cursor, max_id) -> None:
+    def __init__(self, *, cursor, max_id, relevance_backlog: int = 0) -> None:
         self._cursor = cursor
         self._max_id = max_id
+        self._relevance_backlog = relevance_backlog
 
     def get(self, _model, _pk):
         return self._cursor
 
     def execute(self, _stmt):
-        return SimpleNamespace(scalar_one=lambda: self._max_id)
+        # First call: MAX(id); second: relevance-eligible backlog count.
+        if not hasattr(self, "_execute_calls"):
+            self._execute_calls = 0
+        self._execute_calls += 1
+        if self._execute_calls == 1:
+            return SimpleNamespace(scalar_one=lambda: self._max_id)
+        return SimpleNamespace(scalar_one=lambda: self._relevance_backlog)
 
 
 def test_cursor_gap_healthy_when_within_thresholds() -> None:
@@ -92,7 +99,7 @@ def test_cursor_gap_healthy_when_within_thresholds() -> None:
         updated_at=datetime.now(timezone.utc) - timedelta(minutes=1),
     )
     service = PipelineHealthService(
-        _CursorStubSession(cursor=cursor, max_id=2550)  # type: ignore[arg-type]
+        _CursorStubSession(cursor=cursor, max_id=2550, relevance_backlog=50)  # type: ignore[arg-type]
     )
 
     gap = service.cursor_gap()
@@ -109,9 +116,9 @@ def test_cursor_gap_unhealthy_when_row_gap_exceeds_threshold() -> None:
         last_processed_id=10,
         updated_at=datetime.now(timezone.utc),
     )
-    max_id = 10 + settings.pipeline_cursor_gap_row_threshold + 1
+    backlog = settings.pipeline_cursor_gap_row_threshold + 1
     service = PipelineHealthService(
-        _CursorStubSession(cursor=cursor, max_id=max_id)  # type: ignore[arg-type]
+        _CursorStubSession(cursor=cursor, max_id=9999, relevance_backlog=backlog)  # type: ignore[arg-type]
     )
 
     gap = service.cursor_gap()
@@ -120,21 +127,37 @@ def test_cursor_gap_unhealthy_when_row_gap_exceeds_threshold() -> None:
     assert gap.unhealthy is True
 
 
-def test_cursor_gap_unhealthy_when_stalled_with_newer_rows() -> None:
+def test_cursor_gap_unhealthy_when_stalled_with_relevance_backlog() -> None:
     stale_minutes = settings.pipeline_cursor_stale_minutes + 5
     cursor = SimpleNamespace(
         last_processed_id=2500,
         updated_at=datetime.now(timezone.utc) - timedelta(minutes=stale_minutes),
     )
-    # Small row gap (below threshold) but the cursor has not advanced in a while.
     service = PipelineHealthService(
-        _CursorStubSession(cursor=cursor, max_id=2505)  # type: ignore[arg-type]
+        _CursorStubSession(cursor=cursor, max_id=2505, relevance_backlog=3)  # type: ignore[arg-type]
     )
 
     gap = service.cursor_gap()
 
-    assert gap.gap == 5
+    assert gap.gap == 3
     assert gap.unhealthy is True
+
+
+def test_cursor_gap_not_stale_when_preclassified_traffic_only() -> None:
+    stale_minutes = settings.pipeline_cursor_stale_minutes + 5
+    cursor = SimpleNamespace(
+        last_processed_id=2500,
+        updated_at=datetime.now(timezone.utc) - timedelta(minutes=stale_minutes),
+    )
+    # Large ID gap but zero relevance-eligible backlog (CNRS-style traffic).
+    service = PipelineHealthService(
+        _CursorStubSession(cursor=cursor, max_id=3500, relevance_backlog=0)  # type: ignore[arg-type]
+    )
+
+    gap = service.cursor_gap()
+
+    assert gap.gap == 0
+    assert gap.unhealthy is False
 
 
 def test_cursor_gap_not_stale_flagged_when_no_newer_rows() -> None:
@@ -154,13 +177,13 @@ def test_cursor_gap_not_stale_flagged_when_no_newer_rows() -> None:
 
 def test_cursor_gap_handles_missing_cursor_row() -> None:
     service = PipelineHealthService(
-        _CursorStubSession(cursor=None, max_id=42)  # type: ignore[arg-type]
+        _CursorStubSession(cursor=None, max_id=42, relevance_backlog=0)  # type: ignore[arg-type]
     )
 
     gap = service.cursor_gap()
 
     assert gap.last_processed_id == 0
-    assert gap.gap == 42
+    assert gap.gap == 0
     assert gap.unhealthy is False
 
 

@@ -197,14 +197,19 @@ class PipelineHealthService:
         )
 
     def cursor_gap(self) -> CursorGap:
-        """Live-sweep watermark vs MAX(raw_messages.id).
+        """Live-sweep relevance watermark vs rows still awaiting relevance filter.
 
         ``unhealthy`` is a data field, never a status code: the endpoint
-        returns 200 regardless. It flips true when the cursor trails the
-        newest raw_message by more than
-        ``settings.pipeline_cursor_gap_row_threshold`` rows, OR the cursor
-        has not advanced in ``settings.pipeline_cursor_stale_minutes``
-        minutes while newer rows exist.
+        returns 200 regardless. It flips true when the count of
+        relevance-eligible rows (``pending`` with no ``filter_result``) newer
+        than the cursor exceeds
+        ``settings.pipeline_cursor_gap_row_threshold``, OR the cursor has not
+        advanced in ``settings.pipeline_cursor_stale_minutes`` minutes while
+        such a backlog exists.
+
+        Pre-classified ingestion (e.g. CNRS webhook rows that arrive already
+        ``parsed`` with a ``filter_result``) never enters this backlog, so
+        they do not inflate the gap or trigger staleness on their own.
         """
         now = datetime.now(timezone.utc)
         cursor = self.db.get(SweepCursor, LIVE_SWEEP_NAME)
@@ -215,13 +220,22 @@ class PipelineHealthService:
             select(func.max(RawMessage.id))
         ).scalar_one()
 
-        gap = max(0, (max_raw_message_id or 0) - last_processed_id)
-        newer_rows_exist = gap > 0
+        gap = int(
+            self.db.execute(
+                select(func.count()).where(
+                    RawMessage.id > last_processed_id,
+                    RawMessage.status == MessageStatus.pending,
+                    RawMessage.filter_result.is_(None),
+                )
+            ).scalar_one()
+            or 0
+        )
+        relevance_backlog_exists = gap > 0
 
         unhealthy_by_gap = gap > settings.pipeline_cursor_gap_row_threshold
 
         unhealthy_by_staleness = False
-        if newer_rows_exist and cursor_updated_at is not None:
+        if relevance_backlog_exists and cursor_updated_at is not None:
             if cursor_updated_at.tzinfo is None:
                 cursor_updated_at = cursor_updated_at.replace(tzinfo=timezone.utc)
             stale_after = timedelta(minutes=settings.pipeline_cursor_stale_minutes)
