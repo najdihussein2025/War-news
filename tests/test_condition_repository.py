@@ -73,6 +73,14 @@ def test_compact_arabic_normalization_handles_final_ya() -> None:
     assert normalize_arabic_text("على", compact=True) == "علي"
 
 
+def test_condition_query_includes_evidence_backed_aliases() -> None:
+    db = _SessionStub()
+    ConditionRepository(db).find_similar("تنفيذ عملية تفجير")
+
+    sql = str(db.statement.compile(dialect=postgresql.dialect()))
+    assert "CASE" in sql
+
+
 def test_real_verbose_airstrike_prefers_warplane_over_artillery() -> None:
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:

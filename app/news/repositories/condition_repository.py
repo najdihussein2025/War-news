@@ -1,9 +1,10 @@
-from sqlalchemy import desc, func, literal, select
+from sqlalchemy import case, desc, func, literal, select
 from sqlalchemy.orm import Session
 
 from app.core.text_normalization import normalize_arabic_sql
 from app.news.interfaces import ConditionRepositoryInterface
 from app.news.models import Condition
+from app.news.services.condition_aliases import CONDITION_ALIASES
 
 
 class ConditionRepository(ConditionRepositoryInterface):
@@ -27,9 +28,23 @@ class ConditionRepository(ConditionRepositoryInterface):
         normalized_action_ar = normalize_arabic_sql(Condition.action_ar)
         normalized_action_en = func.lower(func.trim(Condition.action_en))
         normalized_text = normalize_arabic_sql(literal(text))
+        alias_scores = [
+            case(
+                (
+                    Condition.action_ar == action_ar,
+                    func.word_similarity(
+                        normalize_arabic_sql(literal(alias.text)), normalized_text
+                    ),
+                ),
+                else_=0.0,
+            )
+            for action_ar, aliases in CONDITION_ALIASES.items()
+            for alias in aliases
+        ]
         score = func.greatest(
             func.word_similarity(normalized_action_ar, normalized_text),
             func.word_similarity(normalized_action_en, func.lower(normalized_text)),
+            *alias_scores,
         ).label("score")
         coverage_rank = (
             score
