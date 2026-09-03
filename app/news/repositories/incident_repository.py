@@ -100,7 +100,9 @@ class IncidentRepository(IncidentRepositoryInterface):
                     (low_confidence, False),
                     else_=True,
                 ).label("matched"),
-                Incident.verification_status,
+                func.coalesce(
+                    Incident.verification_status, "auto_processed"
+                ).label("verification_status"),
                 Incident.verification_reason,
                 Incident.verified_by_user_id,
                 Incident.verified_at,
