@@ -20,6 +20,7 @@ class _MergeSessionStub:
             source_name="CNRS Webhook",
             origin_account=None,
             source_platform=None,
+            raw_text="بقي 3 جرحى وتوفي واحد من جرحى الغارة السابقة",
         )
         self.added: list[object] = []
 
@@ -175,3 +176,46 @@ def test_transition_clamps_at_zero_and_flags_review() -> None:
     assert update.action == UpdateAction.pipeline_merge
     assert update.new_values["deaths_transitioned_from_injuries"]["requested_count"] == 2
     assert update.new_values["deaths_transitioned_from_injuries"]["count"] == 1
+
+
+def test_backstop_flags_possible_missed_transition_for_review() -> None:
+    existing = Incident(
+        id=uuid4(),
+        deaths=0,
+        injuries=2,
+        total_deaths=0,
+        total_injuries=2,
+        duplicate_flag=False,
+        details_pending=False,
+    )
+    db = _MergeSessionStub(
+        raw_message=SimpleNamespace(
+            source_name="CNRS Webhook",
+            origin_account=None,
+            source_platform=None,
+            raw_text="أعلنت وزارة الصحة وفاة أحد المصابين في قصف حولا متأثراً بجراحه.",
+        )
+    )
+    repo = IncidentRepository(db)  # type: ignore[arg-type]
+
+    repo.merge_existing(
+        existing,
+        _followup_candidate_data(
+            deaths=1,
+            injuries=None,
+            casualty_transitions=[],
+        ),
+        raw_message_id=9005,
+    )
+
+    assert existing.duplicate_flag is True
+    update = next(item for item in db.added if isinstance(item, IncidentUpdate))
+    assert update.action == UpdateAction.pipeline_merge
+    assert (
+        update.new_values["possible_missed_casualty_transition"]["note"]
+        == "possible casualty transition detected in text but not extracted - needs verification"
+    )
+    assert (
+        "وفاة أحد المصابين متأثراً بجراحه"
+        in update.new_values["possible_missed_casualty_transition"]["matched_keywords"]
+    )

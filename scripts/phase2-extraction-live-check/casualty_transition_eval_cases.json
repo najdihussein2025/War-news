@@ -1,0 +1,139 @@
+[
+  {
+    "case_id": "real_transition_restate_mifdoun_425",
+    "category": "transition_plus_restated",
+    "origin": "real",
+    "raw_message_id": 425,
+    "source_name": "alakhbar_news",
+    "received_at": "2026-08-26T09:07:23.741025+03:00",
+    "raw_text": "«الوكالة الوطنية»: استشهاد أحد جريحي انفجار تشريكة العبوات الناسفة التي وضعها العدو الإسرائيلي قرب الساتر الترابي بين ميفدون وزوطر الشرقية لتصبح الحصيلة 3 شهداء وجريح واحد",
+    "expected_transitions": [
+      {
+        "from_status": "injured",
+        "to_status": "deceased",
+        "count": 1
+      }
+    ],
+    "notes": "Real follow-up with both transition wording and a restated remaining-injured count."
+  },
+  {
+    "case_id": "supp_transition_restate_ainata",
+    "category": "transition_plus_restated",
+    "origin": "supplemented",
+    "raw_text": "أفادت وزارة الصحة أن أحد الجرحى في غارة عيناثا فارق الحياة ليرتفع عدد الشهداء إلى 2 ويبقى 4 جرحى في المستشفيات.",
+    "expected_transitions": [
+      {
+        "from_status": "injured",
+        "to_status": "deceased",
+        "count": 1
+      }
+    ],
+    "notes": "Supplemented realistic follow-up in ministry/register style: death from prior injuries plus explicit remaining count."
+  },
+  {
+    "case_id": "supp_transition_restate_khiam",
+    "category": "transition_plus_restated",
+    "origin": "supplemented",
+    "raw_text": "متابعة لغارة الخيام: توفي جريح ثانٍ متأثراً بإصابته، وباتت الحصيلة 3 شهداء وجرحان.",
+    "expected_transitions": [
+      {
+        "from_status": "injured",
+        "to_status": "deceased",
+        "count": 1
+      }
+    ],
+    "notes": "Supplemented realistic newsroom follow-up with updated total and restated remaining injured."
+  },
+  {
+    "case_id": "supp_transition_death_only_aaita",
+    "category": "transition_only_death_followup",
+    "origin": "supplemented",
+    "raw_text": "توفي أحد الجرحى جراء إصابته في الغارة على عيتا الشعب.",
+    "expected_transitions": [
+      {
+        "from_status": "injured",
+        "to_status": "deceased",
+        "count": 1
+      }
+    ],
+    "notes": "Supplemented pure death-only follow-up with no restated remaining injuries."
+  },
+  {
+    "case_id": "supp_transition_death_only_houla",
+    "category": "transition_only_death_followup",
+    "origin": "supplemented",
+    "raw_text": "أعلنت وزارة الصحة وفاة أحد المصابين في قصف حولا متأثراً بجراحه.",
+    "expected_transitions": [
+      {
+        "from_status": "injured",
+        "to_status": "deceased",
+        "count": 1
+      }
+    ],
+    "notes": "Supplemented ministry-style death-only follow-up; no refreshed injury total is stated."
+  },
+  {
+    "case_id": "supp_transition_death_only_bintjbeil",
+    "category": "transition_only_death_followup",
+    "origin": "supplemented",
+    "raw_text": "فارق أحد الجرحى الحياة بعد ساعات من الغارة على بنت جبيل.",
+    "expected_transitions": [
+      {
+        "from_status": "injured",
+        "to_status": "deceased",
+        "count": 1
+      }
+    ],
+    "notes": "Supplemented concise channel-style death-only follow-up."
+  },
+  {
+    "case_id": "real_additive_arabsalim_2413",
+    "category": "additive_no_transition",
+    "origin": "real",
+    "raw_message_id": 2413,
+    "source_name": "mehwaralmokawma",
+    "received_at": "2026-08-28T09:26:50.278811+03:00",
+    "raw_text": "شهيدة و6 جرحى من بينهم طفلة في عربصاليم\n\nصدر عن مركز عمليات طوارئ الصحة التابع لوزارة الصحة العامة بيان أعلن أن الحصيلة النهائية لغارة العدو الإسرائيلي على بلدة عربصاليم قضاء النبطية أدت إلى شهيدة و6 جرجى من بينهم طفلة وسيدة ومسنان.",
+    "expected_transitions": [],
+    "notes": "Real casualty report with a final tally, but no injury-to-death follow-up wording."
+  },
+  {
+    "case_id": "real_additive_roueiss_3077",
+    "category": "additive_no_transition",
+    "origin": "real",
+    "raw_message_id": 3077,
+    "source_name": "nabatiehchannel",
+    "received_at": "2026-09-03T09:13:41.833083+03:00",
+    "raw_text": "شهيد و جريح جراء غارة من مسيره استهدفت فجراً حي الرويس في النبطيه",
+    "expected_transitions": [],
+    "notes": "Real initial casualty mention: one dead and one injured in the same report, not a follow-up transition."
+  },
+  {
+    "case_id": "real_additive_shebaa_791",
+    "category": "additive_no_transition",
+    "origin": "real",
+    "raw_message_id": 791,
+    "source_name": "bintjbeilnews",
+    "received_at": "2026-08-26T09:07:28.434424+03:00",
+    "raw_text": "وقوع إصابة بعدما ألقت محلقة قنبلة صوتية باتجاه أحد رعاة المواشي في بلدة شبعا\n\nAn injury occurred after a drone dropped a sound bomb towards a livestock herder in the town of Shebaa.",
+    "expected_transitions": [],
+    "notes": "Real plain injury report with no death and no follow-up wording."
+  },
+  {
+    "case_id": "real_ambiguous_habboush_2698",
+    "category": "ambiguous_borderline",
+    "origin": "real",
+    "raw_message_id": 2698,
+    "source_name": "ALJADEED_NEWS",
+    "received_at": "2026-09-02T13:58:45.587367+03:00",
+    "raw_text": "مأساة في حبوش.. شهيد وفتى جريحأفاد مراسل \"الجديد\" باستشهاد الطفل محمد علي إبراهيم متأثرًا بجراحه التي أُصيب بها عصر اليوم، إثر انفجار قنبلة من مخلفات العدوان الإسرائيلي في حي العريض في بلدة حبوش كما أُصيب فتى آخر في الحادثة#اخبار_الجديد #لبنان #جنوب_لبنان https://t.co/99n1tgyxgP\n https://x.com/ALJADEEDNEWS/status/2094470871679123674\nAugust 31, 2026 at 07:02PM",
+    "expected_transitions": [
+      {
+        "from_status": "injured",
+        "to_status": "deceased",
+        "count": 1
+      }
+    ],
+    "notes": "Real borderline case: the text says the child died of wounds sustained earlier the same day, which semantically implies an injury-to-death transition but not with the canonical phrase."
+  }
+]

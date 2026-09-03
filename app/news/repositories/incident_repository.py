@@ -47,7 +47,11 @@ from app.news.services.incident_detail_edit_service import (
 )
 from app.news.services.casualty_transition_merge import (
     apply_casualty_transitions,
+    parse_casualty_transitions,
     sync_transition_totals,
+)
+from app.news.services.casualty_transition_backstop import (
+    detect_casualty_transition_backstop,
 )
 from app.news.services.incident_detail_merge import merge_incident_detail_fields
 from app.sources.models import Source, SourceType
@@ -843,13 +847,28 @@ class IncidentRepository(IncidentRepositoryInterface):
             select(IncidentDetail).where(IncidentDetail.incident_id == existing.id)
         )
         old_values = self._snapshot_merge_audit(existing, detail)
+        parsed_transitions = parse_casualty_transitions(
+            new_candidate_data.get("casualty_transitions")
+        )
+        backstop = detect_casualty_transition_backstop(
+            raw_message.raw_text if raw_message is not None else new_candidate_data.get("khabar")
+        )
 
         transition_fields, transition_provenance, needs_review = (
             apply_casualty_transitions(
                 existing,
-                new_candidate_data.get("casualty_transitions"),
+                parsed_transitions,
             )
         )
+        if backstop.plausible and not parsed_transitions:
+            needs_review = True
+            transition_provenance["possible_missed_casualty_transition"] = {
+                "matched_keywords": list(backstop.matched_keywords),
+                "note": (
+                    "possible casualty transition detected in text but not "
+                    "extracted - needs verification"
+                ),
+            }
         if transition_provenance:
             for key in list(transition_provenance.keys()):
                 transition_provenance[key] = {
