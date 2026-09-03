@@ -15,6 +15,8 @@ from app.llm.dtos.extraction_dto import (
     ExtractionCategoryKey,
     ExtractionResult,
     ExtractionVehicleDetails,
+    VillageRole,
+    VillageRoleEntry,
 )
 from app.llm.dtos.relevance_filter_dto import (
     FilterBatchSummary,
@@ -44,4 +46,6 @@ __all__ = [
     "RelevanceClassificationResult",
     "RelevancePolicyResult",
     "RelevancePolicyVerdict",
+    "VillageRole",
+    "VillageRoleEntry",
 ]

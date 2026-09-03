@@ -7,7 +7,7 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from app.llm.dtos import CasualtyTransition, ExtractionResult
+from app.llm.dtos import CasualtyTransition, ExtractionResult, VillageRole, VillageRoleEntry
 from app.llm.services.ollama_extraction_service import _RawExtractionResponse
 
 
@@ -92,6 +92,41 @@ def test_extraction_result_round_trip_includes_transitions() -> None:
         to_status="deceased",
         count=1,
     )
+
+
+def test_extraction_result_round_trip_includes_village_roles() -> None:
+    payload = {
+        "is_relevant": True,
+        "village": ["البياض", "المنصوري"],
+        "village_roles": [
+            {"village": "البياض", "role": "origin"},
+            {"village": "المنصوري", "role": "target"},
+        ],
+        "action_description": "قصف",
+        "casualties": {},
+        "casualty_transitions": [],
+        "model": "test",
+        "extracted_at": "2026-09-03T06:00:00+00:00",
+    }
+    result = ExtractionResult.model_validate(payload)
+    assert result.village_roles == [
+        VillageRoleEntry(village="البياض", role=VillageRole.origin),
+        VillageRoleEntry(village="المنصوري", role=VillageRole.target),
+    ]
+
+
+def test_legacy_payload_without_village_roles_defaults_empty() -> None:
+    response = ExtractionResult.model_validate(
+        {
+            "is_relevant": True,
+            "village": ["بلدة"],
+            "action_description": "قصف",
+            "casualties": {"injuries": 2},
+            "model": "test",
+            "extracted_at": "2026-09-03T06:00:00+00:00",
+        }
+    )
+    assert response.village_roles == []
 
 
 def test_invalid_transition_rejected_by_schema() -> None:

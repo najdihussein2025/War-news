@@ -32,6 +32,18 @@ class CasualtyTransitionStatus(str, Enum):
     deceased = "deceased"
 
 
+class VillageRole(str, Enum):
+    origin = "origin"
+    target = "target"
+
+
+class VillageRoleEntry(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    village: str
+    role: VillageRole
+
+
 class CasualtyTransition(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -86,6 +98,7 @@ class ExtractionResult(BaseModel):
 
     is_relevant: bool
     village: list[str] | None = None
+    village_roles: list[VillageRoleEntry] = Field(default_factory=list)
     action_description: str | None = None
 
     @field_validator("village", mode="before")
@@ -121,6 +134,8 @@ class ExtractionResult(BaseModel):
         categories = data.get("categories") or {}
         inferred_tier = 2 if categories else 1
         normalized = {**data, "extraction_tier": inferred_tier}
+        if normalized.get("village_roles") is None:
+            normalized["village_roles"] = []
         if normalized.get("casualty_transitions") is None:
             normalized["casualty_transitions"] = []
         return normalized
