@@ -19,7 +19,13 @@ export type Incident = {
   source: IncidentSource | null;
   source_reference: string | null;
   matched: boolean;
+  verification_status: "auto_processed" | "needs_verification" | "verified" | "rejected";
+  verification_reason: string | null;
+  verified_by_user_id: string | null;
+  verified_at: string | null;
   duplicate_flag: "none" | "possible";
+  duplicate_level?: "low" | "medium" | "high" | null;
+  duplicate_similarity_score?: number | null;
   details_pending: boolean;
   created_at: string;
   version: number;
@@ -46,7 +52,7 @@ export type IncidentFilters = {
   eventDateFrom?: string;
   eventDateTo?: string;
   flaggedOnly?: boolean;
-  verificationStatus?: "matched" | "needs_verification";
+  verificationStatus?: "auto_processed" | "needs_verification" | "verified" | "rejected";
   duplicateOnly?: boolean;
   sortOrder?: "newest" | "oldest";
 };
@@ -145,4 +151,56 @@ export type IncidentCreatePayload = {
   khabar: string;
   note: string | null;
   source_link: string | null;
+};
+
+export type RejectedNewsItem = {
+  id: number;
+  khabar: string;
+  summary: string;
+  message_datetime: string | null;
+  received_at: string;
+  source_name: string | null;
+  source_platform: string | null;
+  external_message_id: string | null;
+  rejection_type: "not_relevant" | "uncertain" | "duplicate" | "rejected";
+  rejection_reason: string;
+  rejection_reason_en: string;
+  rejection_reason_ar: string;
+  duplicate_of_id: number | null;
+};
+
+export type RejectedNewsListResponse = {
+  items: RejectedNewsItem[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type DuplicateCandidateIncident = {
+  id: string;
+  village: string | null;
+  condition: string | null;
+  event_date: string;
+  event_time: string | null;
+  khabar: string;
+  source: IncidentSource | null;
+  source_reference: string | null;
+  total_deaths: number | null;
+  total_injuries: number | null;
+};
+
+export type IncidentDuplicateCandidate = {
+  match_id: number;
+  similarity_score: number;
+  level: "medium";
+  status: "pending";
+  candidate: DuplicateCandidateIncident;
+};
+
+export type IncidentDuplicateDecision = "confirmed_duplicate" | "false_positive";
+
+export type IncidentDuplicateResolutionResult = {
+  decision: IncidentDuplicateDecision;
+  incident_id: string;
+  canonical_incident_id: string;
 };

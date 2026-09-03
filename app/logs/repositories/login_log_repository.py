@@ -47,6 +47,8 @@ class LoginLogRepository(LoginLogRepositoryInterface):
                 LoginLog.created_at
                 >= datetime.combine(filters.date_from, time.min, tzinfo=timezone.utc)
             )
+        if filters.created_after:
+            conditions.append(LoginLog.created_at >= filters.created_after)
         if filters.date_to:
             conditions.append(
                 LoginLog.created_at

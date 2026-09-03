@@ -9,6 +9,10 @@ from app.news.dtos.air_violation_dto import (
 from app.news.dtos.condition_dto import ConditionOptionDTO
 from app.news.dtos.incident_dto import (
     CasualtyDemographicsDTO,
+    DuplicateCandidateIncidentDTO,
+    IncidentDuplicateCandidateDTO,
+    IncidentDuplicateResolutionDTO,
+    IncidentDuplicateResolutionResultDTO,
     IncidentDetailDTO,
     IncidentCreateDTO,
     IncidentVillageDetailDTO,
@@ -17,6 +21,7 @@ from app.news.dtos.incident_dto import (
     IncidentListParams,
     IncidentListResponse,
     IncidentUpdateDTO,
+    IncidentVerificationDTO,
 )
 from app.news.dtos.import_dto import WorkbookImportRowErrorDTO, WorkbookImportSummaryDTO
 from app.news.dtos.match_result_dto import MatchResultDTO, MatchResultStatus, VillageMatchResult
@@ -31,6 +36,10 @@ __all__ = [
     "AirViolationUpdateDTO",
     "ConditionOptionDTO",
     "CasualtyDemographicsDTO",
+    "DuplicateCandidateIncidentDTO",
+    "IncidentDuplicateCandidateDTO",
+    "IncidentDuplicateResolutionDTO",
+    "IncidentDuplicateResolutionResultDTO",
     "IncidentDetailDTO",
     "IncidentCreateDTO",
     "IncidentVillageDetailDTO",
@@ -39,6 +48,7 @@ __all__ = [
     "IncidentListResponse",
     "IncidentDetailsPatchDTO",
     "IncidentUpdateDTO",
+    "IncidentVerificationDTO",
     "WorkbookImportRowErrorDTO",
     "WorkbookImportSummaryDTO",
     "MatchResultDTO",

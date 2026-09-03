@@ -16,7 +16,11 @@ from app.core.logging_config import configure_logging
 from app.news.dtos.pipeline_dto import StageSweepResult
 from app.news.models import Incident, MessageStatus, RawMessage
 from app.news.models.sweep_cursor import LIVE_SWEEP_NAME
-from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
+from app.news.repositories.pipeline_claim_repository import (
+    CLAIM_STAGE_EXTRACTION,
+    CLAIM_STAGE_MATCHING,
+    PipelineClaimRepository,
+)
 from app.news.repositories.raw_message_repository import RawMessageRepository
 from app.news.repositories.sweep_cursor_repository import SweepCursorRepository
 from app.news.services import pipeline_concurrent_sweeps as concurrent_sweeps
@@ -190,11 +194,14 @@ def _get_pending_unfiltered_batch_filtered(
 def _get_pending_extraction_batch_filtered(
     self: RawMessageRepository,
     limit: int,
+    *,
+    cutoff_raw_message_id: int,
 ) -> list[RawMessage]:
     return list(
         self.db.scalars(
             select(RawMessage)
             .where(
+                _id_above_cutoff(cutoff_raw_message_id),
                 RawMessage.status == MessageStatus.parsed,
                 RawMessage.extraction_result.is_(None),
                 RawMessage.duplicate_of_id.is_(None),
@@ -209,6 +216,8 @@ def _get_pending_extraction_batch_filtered(
 def _reset_retryable_extraction_errors_filtered(
     self: RawMessageRepository,
     limit: int = 200,
+    *,
+    cutoff_raw_message_id: int,
     max_retries: int | None = None,
 ) -> tuple[int, int]:
     retry_limit = (
@@ -221,6 +230,7 @@ def _reset_retryable_extraction_errors_filtered(
         self.db.scalars(
             select(RawMessage)
             .where(
+                _id_above_cutoff(cutoff_raw_message_id),
                 _retryable_extraction_error_clause(),
             )
             .order_by(RawMessage.id.asc())
@@ -261,10 +271,13 @@ def _reset_retryable_extraction_errors_filtered(
 
 def _claim_pending_pre_dedup_filtered(
     self: PipelineClaimRepository,
+    *,
+    cutoff_raw_message_id: int,
 ) -> RawMessage | None:
     return self.db.scalar(
         select(RawMessage)
         .where(
+            _id_above_cutoff(cutoff_raw_message_id),
             RawMessage.status == MessageStatus.parsed,
             RawMessage.extraction_result.is_(None),
             RawMessage.duplicate_of_id.is_(None),
@@ -275,8 +288,55 @@ def _claim_pending_pre_dedup_filtered(
     )
 
 
+def _claim_pending_extraction_filtered(
+    self: PipelineClaimRepository,
+    *,
+    cutoff_raw_message_id: int,
+) -> RawMessage | None:
+    message = self.db.scalar(
+        self._claimable_raw_messages()
+        .where(
+            _id_above_cutoff(cutoff_raw_message_id),
+            RawMessage.status == MessageStatus.parsed,
+            RawMessage.extraction_result.is_(None),
+            RawMessage.duplicate_of_id.is_(None),
+        )
+        .order_by(RawMessage.id.asc())
+        .limit(1)
+        .with_for_update(skip_locked=True)
+    )
+    if message is None:
+        return None
+    return self._mark_claimed(message, stage=CLAIM_STAGE_EXTRACTION)
+
+
+def _claim_pending_match_filtered(
+    self: PipelineClaimRepository,
+    *,
+    cutoff_raw_message_id: int,
+) -> RawMessage | None:
+    message = self.db.scalar(
+        select(RawMessage)
+        .where(
+            _id_above_cutoff(cutoff_raw_message_id),
+            RawMessage.status == MessageStatus.parsed,
+            RawMessage.extraction_result.is_not(None),
+            RawMessage.match_result.is_(None),
+            RawMessage.duplicate_of_id.is_(None),
+        )
+        .order_by(RawMessage.id.asc())
+        .limit(1)
+        .with_for_update(skip_locked=True)
+    )
+    if message is None:
+        return None
+    return self._mark_claimed(message, stage=CLAIM_STAGE_MATCHING)
+
+
 def _claim_pending_fast_path_filtered(
     self: PipelineClaimRepository,
+    *,
+    cutoff_raw_message_id: int,
 ) -> RawMessage | None:
     has_active_incident = (
         select(Incident.id)
@@ -289,6 +349,7 @@ def _claim_pending_fast_path_filtered(
     return self.db.scalar(
         select(RawMessage)
         .where(
+            _id_above_cutoff(cutoff_raw_message_id),
             RawMessage.status == MessageStatus.parsed,
             RawMessage.duplicate_of_id.is_(None),
             RawMessage.match_result.is_not(None),
@@ -304,11 +365,14 @@ def _claim_pending_fast_path_filtered(
 
 def _claim_pending_tier2_detail_fill_filtered(
     self: PipelineClaimRepository,
+    *,
+    cutoff_raw_message_id: int,
 ) -> Incident | None:
     return self.db.scalar(
         select(Incident)
         .join(RawMessage, RawMessage.id == Incident.raw_message_id)
         .where(
+            RawMessage.id > cutoff_raw_message_id,
             Incident.details_pending.is_(True),
             Incident.is_deleted.is_(False),
         )
@@ -320,6 +384,8 @@ def _claim_pending_tier2_detail_fill_filtered(
 
 def _terminalize_ineligible_fast_path_filtered(
     self: PipelineClaimRepository,
+    *,
+    cutoff_raw_message_id: int,
 ) -> int:
     has_active_incident = (
         select(Incident.id)
@@ -333,6 +399,7 @@ def _terminalize_ineligible_fast_path_filtered(
         self.db.scalars(
             select(RawMessage)
             .where(
+                _id_above_cutoff(cutoff_raw_message_id),
                 RawMessage.status == MessageStatus.parsed,
                 RawMessage.duplicate_of_id.is_(None),
                 RawMessage.match_result.is_not(None),
@@ -365,11 +432,12 @@ def _terminalize_ineligible_fast_path_filtered(
     return updated
 
 
-def _count_pending_extraction_rows_filtered() -> int:
+def _count_pending_extraction_rows_filtered(cutoff_raw_message_id: int) -> int:
     with SessionLocal() as db:
         return int(
             db.scalar(
                 select(func.count(RawMessage.id)).where(
+                    _id_above_cutoff(cutoff_raw_message_id),
                     RawMessage.status == MessageStatus.parsed,
                     RawMessage.extraction_result.is_(None),
                     RawMessage.duplicate_of_id.is_(None),
@@ -379,13 +447,14 @@ def _count_pending_extraction_rows_filtered() -> int:
         )
 
 
-def _count_pending_tier2_rows_filtered() -> int:
+def _count_pending_tier2_rows_filtered(cutoff_raw_message_id: int) -> int:
     with SessionLocal() as db:
         return int(
             db.scalar(
                 select(func.count(Incident.id))
                 .join(RawMessage, RawMessage.id == Incident.raw_message_id)
                 .where(
+                    RawMessage.id > cutoff_raw_message_id,
                     Incident.details_pending.is_(True),
                     Incident.is_deleted.is_(False),
                 )
@@ -422,14 +491,16 @@ def _apply_relevance_filter_patches(
     return stack
 
 
-def _apply_downstream_stage_patches() -> ExitStack:
+def _apply_downstream_stage_patches(*, cutoff_raw_message_id: int) -> ExitStack:
     stack = ExitStack()
 
     def get_pending_extraction_batch(
         self: RawMessageRepository,
         limit: int,
     ) -> list[RawMessage]:
-        return _get_pending_extraction_batch_filtered(self, limit)
+        return _get_pending_extraction_batch_filtered(
+            self, limit, cutoff_raw_message_id=cutoff_raw_message_id
+        )
 
     def reset_retryable_extraction_errors(
         self: RawMessageRepository,
@@ -440,26 +511,49 @@ def _apply_downstream_stage_patches() -> ExitStack:
         return _reset_retryable_extraction_errors_filtered(
             self,
             limit,
+            cutoff_raw_message_id=cutoff_raw_message_id,
             max_retries=max_retries,
         )
 
     def claim_pending_pre_dedup(
         self: PipelineClaimRepository,
     ) -> RawMessage | None:
-        return _claim_pending_pre_dedup_filtered(self)
+        return _claim_pending_pre_dedup_filtered(
+            self, cutoff_raw_message_id=cutoff_raw_message_id
+        )
+
+    def claim_pending_extraction(
+        self: PipelineClaimRepository,
+    ) -> RawMessage | None:
+        return _claim_pending_extraction_filtered(
+            self, cutoff_raw_message_id=cutoff_raw_message_id
+        )
+
+    def claim_pending_match(
+        self: PipelineClaimRepository,
+    ) -> RawMessage | None:
+        return _claim_pending_match_filtered(
+            self, cutoff_raw_message_id=cutoff_raw_message_id
+        )
 
     def claim_pending_fast_path(
         self: PipelineClaimRepository,
     ) -> RawMessage | None:
-        return _claim_pending_fast_path_filtered(self)
+        return _claim_pending_fast_path_filtered(
+            self, cutoff_raw_message_id=cutoff_raw_message_id
+        )
 
     def claim_pending_tier2_detail_fill(
         self: PipelineClaimRepository,
     ) -> Incident | None:
-        return _claim_pending_tier2_detail_fill_filtered(self)
+        return _claim_pending_tier2_detail_fill_filtered(
+            self, cutoff_raw_message_id=cutoff_raw_message_id
+        )
 
     def terminalize_ineligible_fast_path(self: PipelineClaimRepository) -> int:
-        return _terminalize_ineligible_fast_path_filtered(self)
+        return _terminalize_ineligible_fast_path_filtered(
+            self, cutoff_raw_message_id=cutoff_raw_message_id
+        )
 
     stack.enter_context(
         patch.object(
@@ -480,6 +574,20 @@ def _apply_downstream_stage_patches() -> ExitStack:
             PipelineClaimRepository,
             "claim_pending_pre_dedup",
             claim_pending_pre_dedup,
+        )
+    )
+    stack.enter_context(
+        patch.object(
+            PipelineClaimRepository,
+            "claim_pending_extraction",
+            claim_pending_extraction,
+        )
+    )
+    stack.enter_context(
+        patch.object(
+            PipelineClaimRepository,
+            "claim_pending_match",
+            claim_pending_match,
         )
     )
     stack.enter_context(
@@ -507,14 +615,14 @@ def _apply_downstream_stage_patches() -> ExitStack:
         patch.object(
             concurrent_sweeps,
             "_count_pending_extraction_rows",
-            _count_pending_extraction_rows_filtered,
+            lambda: _count_pending_extraction_rows_filtered(cutoff_raw_message_id),
         )
     )
     stack.enter_context(
         patch.object(
             concurrent_sweeps,
             "_count_pending_tier2_rows",
-            _count_pending_tier2_rows_filtered,
+            lambda: _count_pending_tier2_rows_filtered(cutoff_raw_message_id),
         )
     )
     return stack
@@ -633,6 +741,7 @@ async def _run_relevance_stage(
             "relevance_filter",
             sweep_relevance_filter,
             cutoff_raw_message_id=cutoff_raw_message_id,
+            max_rows=STAGE_MAX_ROWS_PER_PASS,
         )
     return result, max(processed_ids) if processed_ids else None
 
@@ -655,7 +764,9 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
         max_processed_id=max_relevance_id,
     )
 
-    with _apply_downstream_stage_patches():
+    with _apply_downstream_stage_patches(
+        cutoff_raw_message_id=cutoff_raw_message_id
+    ):
         stages.append(
             _finish_stage(
                 await _run_async_stage(

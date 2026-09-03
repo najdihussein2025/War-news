@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+import uuid
 from datetime import date, datetime, time
 from typing import TYPE_CHECKING
-from uuid import UUID
 
 from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Text, func
-from sqlalchemy.dialects.postgresql import UUID as PgUUID
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -49,8 +51,8 @@ class AirViolation(Base):
     note_1: Mapped[str | None] = mapped_column(Text, nullable=True)
     note_2: Mapped[str | None] = mapped_column(Text, nullable=True)
     source_link: Mapped[str | None] = mapped_column(Text, nullable=True)
-    locked_by_user_id: Mapped[UUID | None] = mapped_column(
-        PgUUID(as_uuid=True),
+    locked_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        postgresql.UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )

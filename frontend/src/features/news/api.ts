@@ -4,10 +4,29 @@ import type {
   IncidentDetail,
   IncidentCreatePayload,
   IncidentFilters,
+  IncidentDuplicateCandidate,
+  IncidentDuplicateDecision,
+  IncidentDuplicateResolutionResult,
   IncidentListResponse,
   IncidentUpdatePayload,
   VillageOption,
+  RejectedNewsItem,
+  RejectedNewsListResponse,
 } from "./types";
+
+export const getRejectedNews = async (limit: number, offset: number, search: string): Promise<RejectedNewsListResponse> => {
+  const response = await apiClient.get<RejectedNewsListResponse>("/rejected-news", { params: { limit, offset, search: search || undefined } });
+  return response.data;
+};
+
+export const getRejectedNewsById = async (id: number): Promise<RejectedNewsItem> => {
+  const response = await apiClient.get<RejectedNewsItem>(`/rejected-news/${id}`);
+  return response.data;
+};
+
+export const restoreRejectedNews = async (id: number): Promise<void> => {
+  await apiClient.post(`/rejected-news/${id}/restore`);
+};
 
 export type WorkbookImportSummary = {
   processed: number;
@@ -81,6 +100,28 @@ export const getIncidentById = async (
   return response.data;
 };
 
+export const getIncidentDuplicateCandidate = async (
+  incidentId: string,
+): Promise<IncidentDuplicateCandidate> => {
+  const response = await apiClient.get<IncidentDuplicateCandidate>(
+    `/incidents/${incidentId}/duplicate-candidate`,
+  );
+  return response.data;
+};
+
+export const resolveIncidentDuplicate = async (
+  incidentId: string,
+  matchId: number,
+  decision: IncidentDuplicateDecision,
+  version: number,
+): Promise<IncidentDuplicateResolutionResult> => {
+  const response = await apiClient.post<IncidentDuplicateResolutionResult>(
+    `/incidents/${incidentId}/duplicate-resolution`,
+    { match_id: matchId, decision, version },
+  );
+  return response.data;
+};
+
 export const createIncident = async (payload: IncidentCreatePayload): Promise<IncidentDetail> => {
   const response = await apiClient.post<IncidentDetail>("/incidents", payload);
   return response.data;
@@ -120,5 +161,19 @@ export const importIncidents = async (file: File): Promise<WorkbookImportSummary
   const form = new FormData();
   form.append("file", file);
   const response = await apiClient.post<WorkbookImportSummary>("/incidents/import", form);
+  return response.data;
+};
+
+export const reviewIncident = async (
+  incidentId: string,
+  status: "verified" | "rejected",
+  reason: string | null,
+  version: number,
+): Promise<IncidentDetail> => {
+  const response = await apiClient.post<IncidentDetail>(`/incidents/${incidentId}/verification`, {
+    status,
+    reason,
+    version,
+  });
   return response.data;
 };

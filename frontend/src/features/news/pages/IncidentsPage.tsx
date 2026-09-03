@@ -19,7 +19,7 @@ import { getBeirutDate } from "../../../lib/localDate";
 import { roleBaseFromPath } from "../../../lib/rolePath";
 import { ConditionSelect } from "../components/ConditionSelect";
 import { useConditionsQuery, useIncidentsQuery, useVillagesQuery } from "../hooks";
-import { createIncident } from "../api";
+import { createIncident, reviewIncident } from "../api";
 import type { Incident } from "../types";
 
 const DEFAULT_PAGE_SIZE = 150;
@@ -70,12 +70,15 @@ export const IncidentsPage = () => {
   const [createError, setCreateError] = useState("");
   const [cursorHistory, setCursorHistory] = useState<string[]>([]);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [reviewRow, setReviewRow] = useState<Incident | null>(null);
+  const [reviewError, setReviewError] = useState("");
+  const [isReviewing, setIsReviewing] = useState(false);
   const cursor = cursorHistory.at(-1);
   const page = cursorHistory.length + 1;
   const village = params.get("village") ?? "";
   const condition = params.get("condition") ?? "";
   const sourceType = params.get("source_type") ?? "";
-  const verificationStatus = params.get("verification_status") as "matched" | "needs_verification" | "";
+  const verificationStatus = params.get("verification_status") as Incident["verification_status"] | "";
   const eventDateFrom = params.get("event_date_from") ?? "";
   const eventDateTo = params.get("event_date_to") ?? "";
   const sortOrder = (params.get("sort_order") as "newest" | "oldest" | null) ?? "newest";
@@ -148,8 +151,16 @@ export const IncidentsPage = () => {
   const duplicateCount = data?.duplicate_count ?? 0;
   const verificationOptions: SelectOption[] = [
     { value: "needs_verification", label: "Needs verification" },
-    { value: "matched", label: "Matched" },
+    { value: "auto_processed", label: "Automatically processed" },
+    { value: "verified", label: "Verified" },
+    { value: "rejected", label: "Rejected" },
   ];
+  const verificationBadge = (row: Incident) => {
+    if (row.verification_status === "verified") return { label: "Verified", variant: "success" as const };
+    if (row.verification_status === "rejected") return { label: "Rejected", variant: "danger" as const };
+    if (row.verification_status === "needs_verification") return { label: "Needs verification", variant: "warning" as const };
+    return { label: "Automatically processed", variant: "neutral" as const };
+  };
   const sourceOptions: SelectOption[] = [
     { value: "telegram", label: "Telegram" },
     { value: "twitter", label: "Twitter" },
@@ -202,6 +213,18 @@ export const IncidentsPage = () => {
             {row.duplicate_flag === "possible" ? (
               <StatusBadge label="Possible duplicate" variant="warning" />
             ) : null}
+            {row.duplicate_level === "low" ? (
+              <StatusBadge
+                label={`Low similarity${row.duplicate_similarity_score == null ? "" : ` — ${Math.round(row.duplicate_similarity_score * 100)}%`}`}
+                variant="neutral"
+              />
+            ) : null}
+            {row.duplicate_level === "high" ? (
+              <StatusBadge
+                label={`Automatically merged${row.duplicate_similarity_score == null ? "" : ` — ${Math.round(row.duplicate_similarity_score * 100)}%`}`}
+                variant="success"
+              />
+            ) : null}
             {row.details_pending ? (
               <StatusBadge label="Details pending" variant="neutral" />
             ) : null}
@@ -238,10 +261,10 @@ export const IncidentsPage = () => {
       headerClassName: "w-[9.5rem] whitespace-nowrap",
       cellClassName: "w-[9.5rem]",
       render: (row) => (
-        <StatusBadge
-          label={row.matched ? "Matched" : "Needs verification"}
-          variant={row.matched ? "success" : "warning"}
-        />
+        <div className="space-y-1">
+          <StatusBadge {...verificationBadge(row)} />
+          {row.verification_reason ? <p className="text-caption text-text-muted">{row.verification_reason}</p> : null}
+        </div>
       ),
     },
     {
@@ -505,10 +528,16 @@ export const IncidentsPage = () => {
             />
           }
           actions={(row) => (
+            <div className="flex flex-nowrap justify-end gap-2">
+            {row.id && row.verification_status !== "verified" && row.verification_status !== "rejected" ? <Button
+              type="button"
+              className="h-9"
+              onClick={() => { setReviewError(""); setReviewRow(row); }}
+            >Review</Button> : null}
             <Button
               type="button"
               variant="secondary"
-              className="h-9 w-full sm:w-auto"
+              className="h-9 whitespace-nowrap"
               disabled={!row.id}
               onClick={() => {
                 if (row.id) {
@@ -518,6 +547,7 @@ export const IncidentsPage = () => {
             >
               View details
             </Button>
+            </div>
           )}
         />
       </section>
@@ -624,6 +654,29 @@ export const IncidentsPage = () => {
               <Button type="button" variant="secondary" disabled={isCreating} onClick={() => setIsCreateOpen(false)}>Cancel</Button>
               <Button type="submit" isLoading={isCreating} loadingText="Creating">Create</Button>
             </div>
+          </form>
+        </Dialog>
+      ) : null}
+
+      {reviewRow ? (
+        <Dialog title="Review incident" eyebrow="Human verification" onClose={() => !isReviewing && setReviewRow(null)}>
+          <form className="space-y-4" onSubmit={async (event) => {
+            event.preventDefault();
+            const form = new FormData(event.currentTarget);
+            const decision = String(form.get("decision")) as "verified" | "rejected";
+            const reason = String(form.get("reason") ?? "").trim() || null;
+            if (decision === "rejected" && !reason) { setReviewError("A rejection reason is required."); return; }
+            if (!reviewRow.id) return;
+            setIsReviewing(true); setReviewError("");
+            try { await reviewIncident(reviewRow.id, decision, reason, reviewRow.version); setReviewRow(null); await refetch(); }
+            catch (error) { setReviewError(isAxiosError(error) && typeof error.response?.data?.detail === "string" ? error.response.data.detail : "Could not save this review."); }
+            finally { setIsReviewing(false); }
+          }}>
+            <p className="text-small text-text-muted" dir="auto">{reviewRow.khabar}</p>
+            <div className="space-y-2"><Label htmlFor="review-decision">Decision</Label><Select id="review-decision" name="decision" defaultValue="verified" placeholder="Select decision" options={[{ value: "verified", label: "Verify" }, { value: "rejected", label: "Reject" }]} /></div>
+            <div className="space-y-2"><Label htmlFor="review-reason">Review note / rejection reason</Label><textarea id="review-reason" name="reason" className="min-h-24 w-full rounded-md border border-input-border bg-input-bg px-3 py-2" placeholder="Explain the decision (required for rejection)" /></div>
+            {reviewError ? <p className="text-small text-danger">{reviewError}</p> : null}
+            <div className="flex justify-end gap-2"><Button type="button" variant="secondary" disabled={isReviewing} onClick={() => setReviewRow(null)}>Cancel</Button><Button type="submit" isLoading={isReviewing}>Save review</Button></div>
           </form>
         </Dialog>
       ) : null}

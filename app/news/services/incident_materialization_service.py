@@ -31,6 +31,16 @@ from app.news.services.fast_path_eligibility import (
     permanent_ineligibility_reason,
 )
 
+
+def _initial_verification_status(match_result: dict | None) -> str:
+    result = match_result or {}
+    if result.get("condition_match_status") != "matched":
+        return "needs_verification"
+    villages = result.get("village_matches") or []
+    if any(v.get("village_match_status") != "matched" for v in villages):
+        return "needs_verification"
+    return "auto_processed"
+
 logger = logging.getLogger(__name__)
 
 EXACT_HASH_CONSTRAINT = "uq_incidents_exact_hash_active"
@@ -378,6 +388,7 @@ class IncidentMaterializationService:
             exact_hash=exact_hash,
             duplicate_flag=duplicate_flag,
             details_pending=True,
+            verification_status=_initial_verification_status(representative.match_result),
             created_by=None,
         )
 
@@ -509,6 +520,9 @@ class IncidentMaterializationService:
             # inserting a new one, if the dedup service is configured.
             khabar_embedding = representative.content_embedding
             duplicate_flag = False
+            duplicate_candidate: Incident | None = None
+            duplicate_score: float | None = None
+            duplicate_level: str | None = None
             if self.dedup_service is not None and khabar_embedding is not None:
                 existing, score = self.dedup_service.find_best_match(
                     village_id=village_id,
@@ -519,6 +533,8 @@ class IncidentMaterializationService:
                 )
                 if existing is not None and score >= settings.dedup_high_threshold:
                     try:
+                        existing.duplicate_level = "high"
+                        existing.duplicate_similarity_score = score
                         self.dedup_service.merge_into_incident(
                             existing=existing,
                             new_candidate_data={
@@ -552,6 +568,9 @@ class IncidentMaterializationService:
                     and score >= settings.dedup_low_threshold
                 ):
                     duplicate_flag = True
+                    duplicate_level = "medium"
+                    duplicate_candidate = existing
+                    duplicate_score = score
                     logger.info(
                         "raw_message_id=%s village_id=%s dedup_flag: score=%.3f "
                         "possible_duplicate_of_incident_id=%s",
@@ -560,6 +579,9 @@ class IncidentMaterializationService:
                         score,
                         existing.id,
                     )
+                elif existing is not None:
+                    duplicate_level = "low"
+                    duplicate_score = score
 
             incident = Incident(
                 raw_message_id=representative.id,
@@ -576,12 +598,25 @@ class IncidentMaterializationService:
                 injuries=casualties.injuries,
                 exact_hash=exact_hash,
                 duplicate_flag=duplicate_flag,
+                duplicate_level=duplicate_level,
+                duplicate_similarity_score=duplicate_score,
+                verification_status=_initial_verification_status(representative.match_result),
                 created_by=None,
             )
 
             try:
                 self.db.add(incident)
                 self.db.flush()
+                if (
+                    self.dedup_service is not None
+                    and duplicate_candidate is not None
+                    and duplicate_score is not None
+                ):
+                    self.dedup_service.record_possible_duplicate(
+                        incident=incident,
+                        matched_incident=duplicate_candidate,
+                        similarity_score=duplicate_score,
+                    )
                 self.db.add(
                     IncidentDetail(
                         incident_id=incident.id,

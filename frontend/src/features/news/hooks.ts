@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { liveListQueryOptions } from "../../lib/liveListPolling";
-import { getConditions, getIncidentById, getIncidents, getVillages } from "./api";
+import { getConditions, getIncidentById, getIncidentDuplicateCandidate, getIncidents, getVillages } from "./api";
 import type { IncidentFilters } from "./types";
 
 export const incidentKeys = {
@@ -8,6 +8,7 @@ export const incidentKeys = {
   villages: ["incidents", "villages"] as const,
   list: (filters: IncidentFilters) => ["incidents", filters] as const,
   detail: (incidentId: string) => ["incidents", "detail", incidentId] as const,
+  duplicateCandidate: (incidentId: string) => ["incidents", "duplicate-candidate", incidentId] as const,
 };
 
 export const useConditionsQuery = () =>
@@ -38,4 +39,14 @@ export const useIncidentQuery = (incidentId: string | undefined) =>
     enabled: Boolean(incidentId),
     refetchInterval: 5_000,
     refetchIntervalInBackground: true,
+  });
+
+export const useIncidentDuplicateCandidateQuery = (
+  incidentId: string | undefined,
+  enabled: boolean,
+) =>
+  useQuery({
+    queryKey: incidentKeys.duplicateCandidate(incidentId ?? ""),
+    queryFn: () => getIncidentDuplicateCandidate(incidentId as string),
+    enabled: Boolean(incidentId) && enabled,
   });

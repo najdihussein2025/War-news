@@ -75,6 +75,18 @@ class DedupMatchingService(DedupMatchingInterface):
             raw_message_id=raw_message_id,
         )
 
+    def record_possible_duplicate(
+        self,
+        incident: Incident,
+        matched_incident: Incident,
+        similarity_score: float,
+    ) -> None:
+        self.incident_repository.create_duplicate_match(
+            incident=incident,
+            matched_incident=matched_incident,
+            similarity_score=similarity_score,
+        )
+
     @staticmethod
     def _score_candidate(
         incident: Incident,

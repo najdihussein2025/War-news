@@ -7,6 +7,8 @@ from uuid import UUID
 from app.llm.dtos import ExtractedCandidate
 from app.news.dtos import (
     IncidentDetailDTO,
+    IncidentDuplicateCandidateDTO,
+    IncidentDuplicateResolutionResultDTO,
     IncidentCreateDTO,
     IncidentListParams,
     IncidentListResponse,
@@ -49,6 +51,27 @@ class IncidentRepositoryInterface(ABC):
 
     @abstractmethod
     def release_edit_lock(self, incident_id: UUID, user_id: UUID) -> bool:
+        pass
+
+    @abstractmethod
+    def set_verification(self, incident_id: UUID, status: str, reason: str | None, version: int, user_id: UUID) -> IncidentDetailDTO | None:
+        pass
+
+    @abstractmethod
+    def get_pending_duplicate_candidate(
+        self, incident_id: UUID
+    ) -> IncidentDuplicateCandidateDTO | None:
+        pass
+
+    @abstractmethod
+    def resolve_duplicate(
+        self,
+        incident_id: UUID,
+        match_id: int,
+        decision: str,
+        version: int,
+        user_id: UUID,
+    ) -> IncidentDuplicateResolutionResultDTO | None:
         pass
 
     @abstractmethod

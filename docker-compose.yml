@@ -81,9 +81,9 @@ services:
       - appnet
 
   live-sweep-worker:
-    build:
-      context: .
-      dockerfile: app/Dockerfile
+    # Reuse the backend runtime: both services execute the same bind-mounted
+    # application and dependency set. This also avoids a separate worker build.
+    image: war-news-backend
     depends_on:
       db:
         condition: service_healthy

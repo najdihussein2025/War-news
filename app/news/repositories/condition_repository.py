@@ -24,14 +24,19 @@ class ConditionRepository(ConditionRepositoryInterface):
         text: str,
         limit: int = 5,
     ) -> list[tuple[Condition, float]]:
-        normalized_action = normalize_arabic_sql(Condition.action_ar)
+        normalized_action_ar = normalize_arabic_sql(Condition.action_ar)
+        normalized_action_en = func.lower(func.trim(Condition.action_en))
         normalized_text = literal(text)
-        score = func.word_similarity(
-            normalized_action,
-            normalized_text,
+        score = func.greatest(
+            func.word_similarity(normalized_action_ar, normalized_text),
+            func.word_similarity(normalized_action_en, func.lower(normalized_text)),
         ).label("score")
         coverage_rank = (
-            score * func.word_similarity(normalized_text, normalized_action)
+            score
+            * func.greatest(
+                func.word_similarity(normalized_text, normalized_action_ar),
+                func.word_similarity(func.lower(normalized_text), normalized_action_en),
+            )
         ).label("coverage_rank")
         rows = self.db.execute(
             select(Condition, score)

@@ -14,7 +14,10 @@ from app.core.text_sanitizer import strip_emoji_and_pictographs
 from app.llm.dtos import ExtractedCandidate
 from app.news.dtos import (
     CasualtyDemographicsDTO,
+    DuplicateCandidateIncidentDTO,
     IncidentDetailDTO,
+    IncidentDuplicateCandidateDTO,
+    IncidentDuplicateResolutionResultDTO,
     IncidentCreateDTO,
     IncidentVillageDetailDTO,
     IncidentListItemDTO,
@@ -97,10 +100,16 @@ class IncidentRepository(IncidentRepositoryInterface):
                     (low_confidence, False),
                     else_=True,
                 ).label("matched"),
+                Incident.verification_status,
+                Incident.verification_reason,
+                Incident.verified_by_user_id,
+                Incident.verified_at,
                 case(
                     (Incident.duplicate_flag.is_(True), "possible"),
                     else_="none",
                 ).label("duplicate_flag"),
+                Incident.duplicate_level,
+                Incident.duplicate_similarity_score,
                 func.coalesce(Incident.details_pending, true()).label(
                     "details_pending"
                 ),
@@ -309,7 +318,11 @@ class IncidentRepository(IncidentRepositoryInterface):
             "locked_by_user_id": incident.locked_by_user_id,
             "edit_lock_expires_at": incident.edit_lock_expires_at,
             "matched": row.matched,
+            "verification_status": incident.verification_status,
+            "verification_reason": incident.verification_reason,
             "duplicate_flag": row.duplicate_flag,
+            "duplicate_level": incident.duplicate_level,
+            "duplicate_similarity_score": incident.duplicate_similarity_score,
             "casualty_demographics": CasualtyDemographicsDTO(
                 male_d=detail.male_d if detail is not None else None,
                 male_i=detail.male_i if detail is not None else None,
@@ -500,6 +513,188 @@ class IncidentRepository(IncidentRepositoryInterface):
             raise StaleDataError("Incident is being edited by another administrator.")
         self.db.commit()
         return self.get_by_id(incident_id)
+
+    def set_verification(
+        self,
+        incident_id: UUID,
+        status: str,
+        reason: str | None,
+        version: int,
+        user_id: UUID,
+    ) -> IncidentDetailDTO | None:
+        incident = self.db.scalar(
+            select(Incident).where(
+                Incident.id == incident_id,
+                Incident.is_deleted.is_(False),
+                Incident.version == version,
+            ).with_for_update()
+        )
+        if incident is None:
+            self.db.rollback()
+            if self.db.scalar(select(Incident.id).where(Incident.id == incident_id, Incident.is_deleted.is_(False))) is None:
+                return None
+            raise StaleDataError("Incident verification version is stale.")
+        old_values = {
+            "verification_status": incident.verification_status,
+            "verification_reason": incident.verification_reason,
+            "verified_by_user_id": str(incident.verified_by_user_id) if incident.verified_by_user_id else None,
+        }
+        incident.verification_status = status
+        incident.verification_reason = reason
+        incident.verified_by_user_id = user_id
+        incident.verified_at = datetime.now(timezone.utc)
+        self.db.add(IncidentUpdate(
+            incident_id=incident.id,
+            action=UpdateAction.status_change,
+            old_values=old_values,
+            new_values={"verification_status": status, "verification_reason": reason, "verified_by_user_id": str(user_id)},
+            performed_by=user_id,
+        ))
+        self.db.commit()
+        return self.get_by_id(incident_id)
+
+    def get_pending_duplicate_candidate(
+        self, incident_id: UUID
+    ) -> IncidentDuplicateCandidateDTO | None:
+        match = self.db.scalar(
+            select(DuplicateMatch)
+            .where(
+                DuplicateMatch.incident_id == incident_id,
+                DuplicateMatch.status == MatchStatus.pending,
+                DuplicateMatch.matched_incident_id.is_not(None),
+            )
+            .order_by(DuplicateMatch.similarity_score.desc().nullslast())
+        )
+        if match is None or match.matched_incident_id is None:
+            return None
+        candidate = self.get_by_id(match.matched_incident_id)
+        if candidate is None:
+            return None
+        return IncidentDuplicateCandidateDTO(
+            match_id=match.id,
+            similarity_score=float(match.similarity_score or 0.0),
+            candidate=DuplicateCandidateIncidentDTO(
+                id=candidate.id,
+                village=candidate.village,
+                condition=candidate.condition,
+                event_date=candidate.event_date,
+                event_time=candidate.event_time,
+                khabar=candidate.khabar,
+                source=candidate.source,
+                source_reference=candidate.source_reference,
+                total_deaths=candidate.total_deaths,
+                total_injuries=candidate.total_injuries,
+            ),
+        )
+
+    def resolve_duplicate(
+        self,
+        incident_id: UUID,
+        match_id: int,
+        decision: str,
+        version: int,
+        user_id: UUID,
+    ) -> IncidentDuplicateResolutionResultDTO | None:
+        incident = self.db.scalar(
+            select(Incident).where(
+                Incident.id == incident_id,
+                Incident.is_deleted.is_(False),
+                Incident.version == version,
+                Incident.locked_by_user_id == user_id,
+            ).with_for_update()
+        )
+        if incident is None:
+            self.db.rollback()
+            if self.db.scalar(select(Incident.id).where(Incident.id == incident_id, Incident.is_deleted.is_(False))) is None:
+                return None
+            raise StaleDataError("Incident version or edit lock is stale.")
+
+        match = self.db.scalar(
+            select(DuplicateMatch).where(
+                DuplicateMatch.id == match_id,
+                DuplicateMatch.incident_id == incident_id,
+                DuplicateMatch.status == MatchStatus.pending,
+                DuplicateMatch.matched_incident_id.is_not(None),
+            ).with_for_update()
+        )
+        if match is None or match.matched_incident_id is None:
+            self.db.rollback()
+            raise StaleDataError("Duplicate match is missing or already resolved.")
+
+        canonical_id = match.matched_incident_id
+        if decision == MatchStatus.false_positive.value:
+            incident.duplicate_flag = False
+            match.status = MatchStatus.false_positive
+        elif decision == MatchStatus.confirmed_duplicate.value:
+            canonical = self.db.scalar(
+                select(Incident).where(
+                    Incident.id == canonical_id,
+                    Incident.is_deleted.is_(False),
+                ).with_for_update()
+            )
+            if canonical is None:
+                self.db.rollback()
+                raise StaleDataError("The suggested main incident is no longer available.")
+
+            old_values = self._snapshot_merge_fields(canonical)
+            for field in ("deaths", "injuries", "total_deaths", "total_injuries"):
+                setattr(canonical, field, self._max_preserving_empty(getattr(canonical, field), getattr(incident, field)))
+            if incident.khabar:
+                addition = f"[Confirmed duplicate {incident.id}] {incident.khabar}"
+                canonical.note = f"{canonical.note.rstrip()}\n\n{addition}" if canonical.note else addition
+            if canonical.source_link is None:
+                canonical.source_link = incident.source_link
+            if canonical.source_link_2 is None:
+                canonical.source_link_2 = incident.source_link_2 or incident.source_link
+
+            duplicate_detail = self.db.scalar(select(IncidentDetail).where(IncidentDetail.incident_id == incident.id))
+            if duplicate_detail is not None:
+                canonical_detail = self.db.scalar(select(IncidentDetail).where(IncidentDetail.incident_id == canonical.id))
+                if canonical_detail is None:
+                    canonical_detail = IncidentDetail(incident_id=canonical.id)
+                    self.db.add(canonical_detail)
+                    self.db.flush()
+                excluded = {"id", "incident_id", "created_at", "updated_at"}
+                merge_incident_detail_fields(
+                    canonical_detail,
+                    {
+                        column.name: getattr(duplicate_detail, column.name)
+                        for column in IncidentDetail.__table__.columns
+                        if column.name not in excluded
+                    },
+                )
+
+            new_values = self._snapshot_merge_fields(canonical)
+            self.db.add(IncidentUpdate(
+                incident_id=canonical.id,
+                action=UpdateAction.pipeline_merge,
+                old_values=old_values,
+                new_values=new_values,
+                performed_by=user_id,
+            ))
+            incident.is_deleted = True
+            incident.duplicate_flag = False
+            match.status = MatchStatus.confirmed_duplicate
+        else:
+            self.db.rollback()
+            raise ValueError("Unsupported duplicate resolution decision.")
+
+        match.resolved_by = user_id
+        incident.locked_by_user_id = None
+        incident.edit_lock_expires_at = None
+        self.db.add(IncidentUpdate(
+            incident_id=incident.id,
+            action=UpdateAction.status_change,
+            old_values={"duplicate_flag": True, "duplicate_status": "pending"},
+            new_values={"duplicate_flag": False, "duplicate_status": decision},
+            performed_by=user_id,
+        ))
+        self.db.commit()
+        return IncidentDuplicateResolutionResultDTO(
+            decision=decision,
+            incident_id=incident_id,
+            canonical_incident_id=canonical_id if decision == MatchStatus.confirmed_duplicate.value else incident_id,
+        )
 
     def release_edit_lock(self, incident_id: UUID, user_id: UUID) -> bool:
         result = self.db.execute(
@@ -883,6 +1078,8 @@ class IncidentRepository(IncidentRepositoryInterface):
             filters.append(func.coalesce(cls._low_confidence_match(), False).is_(True))
         elif params.verification_status == "matched":
             filters.append(func.coalesce(cls._low_confidence_match(), False).is_(False))
+        elif params.verification_status is not None:
+            filters.append(Incident.verification_status == params.verification_status)
         if params.duplicate_only:
             filters.append(Incident.duplicate_flag.is_(True))
         return filters

@@ -92,6 +92,8 @@ class Incident(Base):
         default=False,
         server_default=text("false"),
     )
+    duplicate_level: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    duplicate_similarity_score: Mapped[float | None] = mapped_column(nullable=True)
     details_pending: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
@@ -109,6 +111,14 @@ class Incident(Base):
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
+    verification_status: Mapped[str] = mapped_column(
+        String(24), nullable=False, default="auto_processed", server_default="auto_processed"
+    )
+    verification_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    verified_by_user_id: Mapped[UUID | None] = mapped_column(
+        PgUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     locked_by_user_id: Mapped[UUID | None] = mapped_column(
         PgUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
@@ -132,6 +142,7 @@ class Incident(Base):
     condition: Mapped["Condition | None"] = relationship("Condition")
     source: Mapped["Source | None"] = relationship("Source")
     creator: Mapped["User | None"] = relationship("User", foreign_keys=[created_by])
+    verifier: Mapped["User | None"] = relationship("User", foreign_keys=[verified_by_user_id])
     details: Mapped["IncidentDetail | None"] = relationship(
         "IncidentDetail",
         back_populates="incident",

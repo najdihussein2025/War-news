@@ -94,8 +94,9 @@ def build_extraction_classifier() -> ExtractionClassifierInterface:
     from app.core.config import settings
     from app.core.ollama_client import OllamaChatClient
     from app.llm.services.ollama_extraction_service import OllamaExtractionService
+    from app.llm.services.cnrs_extraction_fallback import CnrsExtractionFallback
 
-    return OllamaExtractionService(
+    return CnrsExtractionFallback(OllamaExtractionService(
         OllamaChatClient(
             base_url=settings.ollama_base_url,
             api_key=settings.ollama_api_key,
@@ -104,7 +105,7 @@ def build_extraction_classifier() -> ExtractionClassifierInterface:
             max_request_retries=settings.extraction_llm_request_retries,
             retry_backoff_seconds=settings.extraction_llm_retry_backoff_seconds,
         )
-    )
+    ))
 
 
 def build_extract_incidents_action(

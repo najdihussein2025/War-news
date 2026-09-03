@@ -3,11 +3,15 @@ from sqlalchemy.orm.exc import StaleDataError
 
 from app.news.dtos import (
     IncidentDetailDTO,
+    IncidentDuplicateCandidateDTO,
+    IncidentDuplicateResolutionDTO,
+    IncidentDuplicateResolutionResultDTO,
     IncidentCreateDTO,
     IncidentDetailsPatchDTO,
     IncidentListParams,
     IncidentListResponse,
     IncidentUpdateDTO,
+    IncidentVerificationDTO,
 )
 from app.news.interfaces import IncidentRepositoryInterface
 
@@ -85,3 +89,42 @@ class IncidentService:
 
     def release_edit_lock(self, incident_id: UUID, user_id: UUID) -> None:
         self.incidents.release_edit_lock(incident_id, user_id)
+
+    def set_verification(self, incident_id: UUID, payload: IncidentVerificationDTO, user_id: UUID) -> IncidentDetailDTO:
+        try:
+            incident = self.incidents.set_verification(incident_id, payload.status, payload.reason, payload.version, user_id)
+        except StaleDataError as exc:
+            raise IncidentConflictError("This incident verification was changed by another administrator.") from exc
+        if incident is None:
+            raise IncidentNotFoundError("Incident not found.")
+        return incident
+
+    def get_duplicate_candidate(
+        self, incident_id: UUID
+    ) -> IncidentDuplicateCandidateDTO:
+        candidate = self.incidents.get_pending_duplicate_candidate(incident_id)
+        if candidate is None:
+            raise IncidentNotFoundError("Pending duplicate candidate not found.")
+        return candidate
+
+    def resolve_duplicate(
+        self,
+        incident_id: UUID,
+        payload: IncidentDuplicateResolutionDTO,
+        user_id: UUID,
+    ) -> IncidentDuplicateResolutionResultDTO:
+        try:
+            result = self.incidents.resolve_duplicate(
+                incident_id,
+                payload.match_id,
+                payload.decision,
+                payload.version,
+                user_id,
+            )
+        except StaleDataError as exc:
+            raise IncidentConflictError(
+                "This duplicate review was changed, resolved, or locked by another administrator."
+            ) from exc
+        if result is None:
+            raise IncidentNotFoundError("Incident not found.")
+        return result

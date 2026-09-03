@@ -35,7 +35,7 @@ class RedAlertAirViolationService:
         village_match = self.match_village(text, villages)
         if village_match is None:
             self.air_violations.discard_for_message(message)
-            self._reject(message, "No canonical village matched")
+            self._reject(message, self._missing_village_reason(message))
             return False
 
         village, raw_location = village_match
@@ -56,6 +56,15 @@ class RedAlertAirViolationService:
         message.status = MessageStatus.routed_air_violation
         message.error_message = "red_alert: routed to air_violations; not an incident"
         return wrote_air_violation
+
+    @staticmethod
+    def _missing_village_reason(message: RawMessage) -> str:
+        text = (message.raw_text or "").casefold()
+        if ("آخر تحديث" in text or "اخر تحديث" in text) and "لبنان" in text:
+            return "General multi-area alert; no single village applies"
+        if (message.raw_payload or {}).get("ocr_text"):
+            return "Location could not be identified reliably from the alert image"
+        return "No locality was specified in the Red Alert notice"
 
     @staticmethod
     def _match_result(

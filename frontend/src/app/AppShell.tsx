@@ -136,6 +136,7 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
+  // Operational workspaces are kept as direct navigation destinations.
   {
     label: "Dashboard",
     path: "dashboard",
@@ -152,6 +153,12 @@ const navItems: NavItem[] = [
     label: "Air Violations",
     path: "air-violations",
     icon: AirViolationsIcon,
+    hiddenFrom: [],
+  },
+  {
+    label: "Rejected News",
+    path: "rejected-news",
+    icon: IncidentsIcon,
     hiddenFrom: [],
   },
   {
@@ -184,6 +191,7 @@ const pageMeta = [
   { match: (pathname: string) => pathname.endsWith("/dashboard"), title: "Dashboard" },
   { match: (pathname: string) => pathname.includes("/air-violations"), title: "Air Violations" },
   { match: (pathname: string) => pathname.includes("/incidents"), title: "Incidents" },
+  { match: (pathname: string) => pathname.includes("/rejected-news"), title: "Rejected News" },
   { match: (pathname: string) => pathname.includes("/sources"), title: "Sources" },
   { match: (pathname: string) => pathname.includes("/logs"), title: "Logs" },
   { match: (pathname: string) => pathname.includes("/settings"), title: "Settings" },

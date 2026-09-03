@@ -65,18 +65,20 @@ def test_relevance_query_uses_persisted_cursor_not_hardcoded_cutoff() -> None:
     assert "695974" not in sql
 
 
-def test_downstream_claim_queries_do_not_use_cutoff() -> None:
+def test_downstream_claim_queries_use_runtime_cutoff() -> None:
     repo = MagicMock()
     repo.db.scalars.return_value.all.return_value = []
     repo.db.scalar.return_value = None
 
-    live_sweep._claim_pending_pre_dedup_filtered(repo)
+    live_sweep._claim_pending_pre_dedup_filtered(
+        repo, cutoff_raw_message_id=42
+    )
     pre_dedup_stmt = repo.db.scalar.call_args.args[0]
     params = _bound_ids(pre_dedup_stmt)
     sql = str(pre_dedup_stmt.compile())
-    assert 42 not in params
+    assert 42 in params
     assert 695974 not in params
-    assert "raw_messages.id >" not in sql
+    assert "raw_messages.id >" in sql
 
 
 def test_filtered_session_uses_runtime_cursor() -> None:
@@ -312,6 +314,29 @@ def test_stage_max_rows_per_pass_is_a_positive_batch_bound() -> None:
 
 
 @pytest.mark.asyncio
+async def test_relevance_stage_is_bounded_to_prevent_first_run_backlog_starvation(
+    monkeypatch,
+) -> None:
+    seen: dict[str, int | None] = {}
+
+    async def fake_run(
+        stage_name,
+        sweep_fn,
+        *,
+        cutoff_raw_message_id,
+        max_rows,
+    ) -> StageSweepResult:
+        seen[stage_name] = max_rows
+        return _stage(stage_name)
+
+    monkeypatch.setattr(live_sweep, "_run_async_stage_with_db", fake_run)
+
+    await live_sweep._run_relevance_stage(cutoff_raw_message_id=10)
+
+    assert seen["relevance_filter"] == live_sweep.STAGE_MAX_ROWS_PER_PASS
+
+
+@pytest.mark.asyncio
 async def test_run_async_stage_forwards_explicit_max_rows_and_defaults_to_module() -> None:
     seen: list[int | None] = []
 
@@ -411,22 +436,43 @@ async def test_run_stages_caps_claim_until_empty_stages_and_reaches_matching(
     assert seen_max_rows["pre_extraction_dedup"] is live_sweep.MAX_ROWS
 
 
-def test_downstream_stage_patches_leave_parsed_rows_visible_below_new_cutoff() -> None:
+def test_downstream_stage_patches_exclude_parsed_rows_below_new_cutoff() -> None:
     raw_repo = MagicMock()
     raw_repo.db.scalars.return_value.all.return_value = []
     original_claim_pending_extraction = live_sweep.PipelineClaimRepository.claim_pending_extraction
     original_claim_pending_match = live_sweep.PipelineClaimRepository.claim_pending_match
 
-    with live_sweep._apply_downstream_stage_patches():
+    with live_sweep._apply_downstream_stage_patches(cutoff_raw_message_id=1630):
         live_sweep.RawMessageRepository.get_pending_extraction_batch(raw_repo, 10)
-        assert live_sweep.PipelineClaimRepository.claim_pending_extraction is original_claim_pending_extraction
-        assert live_sweep.PipelineClaimRepository.claim_pending_match is original_claim_pending_match
+        assert live_sweep.PipelineClaimRepository.claim_pending_extraction is not original_claim_pending_extraction
+        assert live_sweep.PipelineClaimRepository.claim_pending_match is not original_claim_pending_match
+
+        extraction_claim_repo = MagicMock()
+        extraction_claim_repo._claimable_raw_messages.return_value = select(RawMessage)
+        extraction_claim_repo.db.scalar.return_value = None
+        live_sweep.PipelineClaimRepository.claim_pending_extraction(
+            extraction_claim_repo
+        )
+        extraction_stmt = extraction_claim_repo.db.scalar.call_args.args[0]
+        extraction_params = _bound_ids(extraction_stmt)
+        extraction_sql = str(extraction_stmt.compile())
+        assert 1630 in extraction_params
+        assert "raw_messages.id >" in extraction_sql
+
+        claim_repo = MagicMock()
+        claim_repo.db.scalar.return_value = None
+        live_sweep.PipelineClaimRepository.claim_pending_match(claim_repo)
+        match_stmt = claim_repo.db.scalar.call_args.args[0]
+        match_params = _bound_ids(match_stmt)
+        match_sql = str(match_stmt.compile())
+        assert 1630 in match_params
+        assert "raw_messages.id >" in match_sql
 
     batch_stmt = raw_repo.db.scalars.call_args.args[0]
     params = _bound_ids(batch_stmt)
     sql = str(batch_stmt.compile())
-    assert 1630 not in params
-    assert "raw_messages.id >" not in sql
+    assert 1630 in params
+    assert "raw_messages.id >" in sql
     assert "status" in sql.lower()
 
 
@@ -439,7 +485,9 @@ def test_terminalize_ineligible_fast_path_filtered_preserves_air_violation_statu
     repo = MagicMock()
     repo.db.scalars.return_value.all.return_value = [message]
 
-    updated = live_sweep._terminalize_ineligible_fast_path_filtered(repo)
+    updated = live_sweep._terminalize_ineligible_fast_path_filtered(
+        repo, cutoff_raw_message_id=0
+    )
 
     assert updated == 1
     assert message.status == MessageStatus.routed_air_violation
