@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.text_sanitizer import strip_emoji_and_pictographs
 from app.llm.dtos import ExtractionResult
+from app.llm.dtos import VillageRole
 from app.news.interfaces import DedupMatchingInterface
 from app.news.models import Incident, IncidentDetail, MatchStatus, MessageStatus, RawMessage
 from app.news.services.category_mapper import compute_rollups, map_categories
@@ -33,14 +34,40 @@ from app.news.services.fast_path_eligibility import (
 )
 
 
-def _initial_verification_status(match_result: dict | None) -> str:
+def _initial_verification_status(
+    match_result: dict | None,
+    *,
+    duplicate_flag: bool = False,
+    relevance_needs_review: bool = False,
+    insufficient_score: bool = False,
+    possible_missed_casualty_transition: bool = False,
+) -> str:
+    """Return the initial review state from materialization-time uncertainty signals."""
     result = match_result or {}
+    if (
+        duplicate_flag
+        or relevance_needs_review
+        or insufficient_score
+        or possible_missed_casualty_transition
+    ):
+        return "needs_verification"
     if result.get("condition_match_status") != "matched":
         return "needs_verification"
-    villages = result.get("village_matches") or []
+    villages = [
+        village
+        for village in (result.get("village_matches") or [])
+        if village.get("village_role", "target") == "target"
+    ]
     if any(v.get("village_match_status") != "matched" for v in villages):
         return "needs_verification"
     return "auto_processed"
+
+
+def _relevance_needs_review(representative: RawMessage) -> bool:
+    filter_result = getattr(representative, "filter_result", None) or {}
+    return bool(getattr(representative, "low_confidence_relevance", False)) or bool(
+        filter_result.get("needs_review")
+    )
 
 logger = logging.getLogger(__name__)
 BEIRUT_TIMEZONE = ZoneInfo("Asia/Beirut")
@@ -125,6 +152,7 @@ class IncidentMaterializationService:
         event_datetime = _incident_event_datetime(message_datetime)
 
         village_matches: list[dict[str, Any]] = match_result.get("village_matches", [])
+        origin_villages = self._origin_village_names(village_matches)
 
         created: list[Incident] = []
         confident_duplicate_villages = 0
@@ -132,6 +160,14 @@ class IncidentMaterializationService:
         representative_raw_message_id: int | None = None
 
         for village_match in village_matches:
+            if not self._materializes_village_match(village_match):
+                logger.info(
+                    "raw_message_id=%s village suppressed from materialization: role=%r text=%r",
+                    representative.id,
+                    village_match.get("village_role"),
+                    village_match.get("raw_village_text"),
+                )
+                continue
             village_status = village_match.get("village_match_status")
             village_id = self._optional_int(village_match.get("matched_village_id"))
             holds_village_lock = (
@@ -201,7 +237,12 @@ class IncidentMaterializationService:
                                     "total_deaths": total_deaths,
                                     "total_injuries": total_injuries,
                                     "khabar": representative.raw_text or "",
+                                    "origin_villages": origin_villages,
                                     "mapped_fields": mapped_fields,
+                                    "casualty_transitions": [
+                                        item.model_dump(mode="json")
+                                        for item in extraction.casualty_transitions
+                                    ],
                                 },
                                 raw_message_id=representative.id,
                             )
@@ -229,27 +270,24 @@ class IncidentMaterializationService:
                             self.db.commit()
                         continue
 
-                    try:
-                        fast_dedup.incidents.create_fast_path_duplicate_match(
-                            canonical_incident=merge_target,
-                            raw_message_id=representative.id,
-                            status=MatchStatus.insufficient_score,
-                            similarity_score=score,
-                        )
-                        self.db.commit()
-                    except Exception:
-                        self.db.rollback()
-                        raise
-
                     incident = self._insert_fast_incident(
                         representative=representative,
                         extraction=extraction,
                         village_id=village_id,
                         condition_id=condition_id,
                         event_datetime=event_datetime,
+                        origin_villages=origin_villages,
                         duplicate_flag=score >= settings.dedup_low_threshold,
                     )
                     if incident is not None:
+                        # The review belongs to the newly materialized incident;
+                        # linking it to the canonical row leaves the reviewer with
+                        # no candidate to load.
+                        fast_dedup.incidents.create_duplicate_match(
+                            incident=incident,
+                            matched_incident=merge_target,
+                            similarity_score=score,
+                        )
                         created.append(incident)
                     logger.info(
                         "raw_message_id=%s village_id=%s fast_path insufficient_score "
@@ -295,6 +333,7 @@ class IncidentMaterializationService:
                 village_id=village_id,
                 condition_id=condition_id,
                 event_datetime=event_datetime,
+                origin_villages=origin_villages,
             )
             if incident is not None:
                 created.append(incident)
@@ -364,6 +403,7 @@ class IncidentMaterializationService:
         village_id: int | None,
         condition_id: int,
         event_datetime: datetime,
+        origin_villages: list[str],
         duplicate_flag: bool = False,
     ) -> Incident | None:
         if village_id is None:
@@ -390,6 +430,7 @@ class IncidentMaterializationService:
             event_time=event_datetime.time(),
             khabar=sanitized_khabar,
             khabar_embedding=None,
+            note=self._origin_village_note(origin_villages),
             total_deaths=total_deaths,
             total_injuries=total_injuries,
             deaths=casualties.deaths,
@@ -397,7 +438,14 @@ class IncidentMaterializationService:
             exact_hash=exact_hash,
             duplicate_flag=duplicate_flag,
             details_pending=True,
-            verification_status=_initial_verification_status(representative.match_result),
+            verification_status=_initial_verification_status(
+                representative.match_result,
+                duplicate_flag=duplicate_flag,
+                relevance_needs_review=_relevance_needs_review(representative),
+                # An insufficient-score duplicate is always created with the
+                # duplicate flag, before its audit record is persisted.
+                insufficient_score=duplicate_flag,
+            ),
             created_by=None,
         )
 
@@ -485,6 +533,7 @@ class IncidentMaterializationService:
         created: list[Incident] = []
 
         village_matches: list[dict[str, Any]] = match_result.get("village_matches", [])
+        origin_villages = self._origin_village_names(village_matches)
         if not village_matches:
             self.stats.skipped_ineligible += 1
             self._mark_unmaterializable(representative, ERROR_NO_VILLAGE)
@@ -496,6 +545,14 @@ class IncidentMaterializationService:
             return []
 
         for village_match in village_matches:
+            if not self._materializes_village_match(village_match):
+                logger.info(
+                    "raw_message_id=%s village suppressed from materialization: role=%r text=%r",
+                    representative.id,
+                    village_match.get("village_role"),
+                    village_match.get("raw_village_text"),
+                )
+                continue
             village_status = village_match.get("village_match_status")
             village_id = self._optional_int(village_match.get("matched_village_id"))
 
@@ -553,7 +610,12 @@ class IncidentMaterializationService:
                                 "total_deaths": total_deaths,
                                 "total_injuries": total_injuries,
                                 "khabar": representative.raw_text or "",
+                                "origin_villages": origin_villages,
                                 "mapped_fields": mapped_fields,
+                                "casualty_transitions": [
+                                    item.model_dump(mode="json")
+                                    for item in extraction.casualty_transitions
+                                ],
                             },
                             raw_message_id=representative.id,
                         )
@@ -602,6 +664,7 @@ class IncidentMaterializationService:
                 event_time=event_datetime.time(),
                 khabar=sanitized_khabar,
                 khabar_embedding=khabar_embedding,
+                note=self._origin_village_note(origin_villages),
                 total_deaths=total_deaths,
                 total_injuries=total_injuries,
                 deaths=casualties.deaths,
@@ -610,7 +673,11 @@ class IncidentMaterializationService:
                 duplicate_flag=duplicate_flag,
                 duplicate_level=duplicate_level,
                 duplicate_similarity_score=duplicate_score,
-                verification_status=_initial_verification_status(representative.match_result),
+                verification_status=_initial_verification_status(
+                    representative.match_result,
+                    duplicate_flag=duplicate_flag,
+                    relevance_needs_review=_relevance_needs_review(representative),
+                ),
                 created_by=None,
             )
 
@@ -689,6 +756,7 @@ class IncidentMaterializationService:
             "village_match_status": match_result.get("village_match_status", "unmatched"),
             "village_review_required": match_result.get("village_review_required", True),
             "raw_village_text": match_result.get("raw_village_text"),
+            "village_role": match_result.get("village_role", VillageRole.target.value),
         }
         return {**match_result, "village_matches": [village_match]}
 
@@ -704,6 +772,33 @@ class IncidentMaterializationService:
         if isinstance(value, bool) or not isinstance(value, int):
             return None
         return value
+
+    @staticmethod
+    def _materializes_village_match(village_match: dict[str, Any]) -> bool:
+        return village_match.get("village_role", VillageRole.target.value) == VillageRole.target.value
+
+    @staticmethod
+    def _origin_village_names(village_matches: list[dict[str, Any]]) -> list[str]:
+        origin_villages: list[str] = []
+        for village_match in village_matches:
+            if village_match.get("village_role") != VillageRole.origin.value:
+                continue
+            raw_text = village_match.get("raw_village_text")
+            if not isinstance(raw_text, str):
+                continue
+            normalized = raw_text.strip()
+            if normalized and normalized not in origin_villages:
+                origin_villages.append(normalized)
+        return origin_villages
+
+    @staticmethod
+    def _origin_village_note(origin_villages: list[str]) -> str | None:
+        if not origin_villages:
+            return None
+        if len(origin_villages) == 1:
+            return f"Origin village: {origin_villages[0]}"
+        joined = ", ".join(origin_villages)
+        return f"Origin villages: {joined}"
 
     @staticmethod
     def _build_exact_hash(

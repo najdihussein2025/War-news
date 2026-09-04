@@ -13,23 +13,30 @@ from app.news.services.pipeline_advisory_lock import (
 from app.news.services.pipeline_jobs import (
     claim_next_pipeline_sweep_job,
     finish_pipeline_sweep_job,
+    reclaim_orphaned_pipeline_sweep_jobs,
 )
-from app.news.services.pipeline_orchestrator import run_full_pipeline_sweep_sync
+from app.news.services.pipeline_orchestrator import drain_pipeline_sweeps_sync
 
 logger = logging.getLogger(__name__)
 
 
-def _reclaim_stale_locks() -> None:
+def _reclaim_stale_state() -> None:
     with SessionLocal() as db:
         terminated = reclaim_stale_pipeline_advisory_locks(
             db,
             worker_application_name=PIPELINE_WORKER_APPLICATION_NAME,
             reclaim_other_workers=True,
         )
+        reclaimed_jobs = reclaim_orphaned_pipeline_sweep_jobs(db)
         if terminated:
             logger.warning(
                 "Reclaimed %s stale pipeline advisory lock connection(s) on worker start",
                 terminated,
+            )
+        if reclaimed_jobs:
+            logger.warning(
+                "Reclaimed %s orphaned pipeline sweep job(s) on worker start",
+                reclaimed_jobs,
             )
 
 
@@ -40,7 +47,7 @@ def run_worker_forever() -> None:
         settings.pg_application_name,
         settings.pipeline_worker_poll_seconds,
     )
-    _reclaim_stale_locks()
+    _reclaim_stale_state()
 
     while True:
         with SessionLocal() as db:
@@ -60,9 +67,14 @@ def run_worker_forever() -> None:
         )
         status = "succeeded"
         try:
-            run_full_pipeline_sweep_sync(
+            passes = drain_pipeline_sweeps_sync(
                 max_rows=int(max_rows) if max_rows is not None else None,
                 use_advisory_lock=use_advisory_lock,
+            )
+            logger.info(
+                "Pipeline worker job_id=%s drain complete passes=%s",
+                job_id,
+                passes,
             )
         except Exception:
             status = "failed"

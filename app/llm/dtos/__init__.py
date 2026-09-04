@@ -4,6 +4,8 @@ from app.llm.dtos.classification_result_dto import (
 )
 from app.llm.dtos.extraction_dto import (
     CandidateExtractionResult,
+    CasualtyTransition,
+    CasualtyTransitionStatus,
     DidValue,
     ExtractPendingMessagesData,
     ExtractedCandidate,
@@ -13,6 +15,8 @@ from app.llm.dtos.extraction_dto import (
     ExtractionCategoryKey,
     ExtractionResult,
     ExtractionVehicleDetails,
+    VillageRole,
+    VillageRoleEntry,
 )
 from app.llm.dtos.relevance_filter_dto import (
     FilterBatchSummary,
@@ -24,6 +28,8 @@ from app.llm.dtos.relevance_filter_dto import (
 
 __all__ = [
     "CandidateExtractionResult",
+    "CasualtyTransition",
+    "CasualtyTransitionStatus",
     "ClassificationResultDTO",
     "ClassificationVerdict",
     "DidValue",
@@ -40,4 +46,6 @@ __all__ = [
     "RelevanceClassificationResult",
     "RelevancePolicyResult",
     "RelevancePolicyVerdict",
+    "VillageRole",
+    "VillageRoleEntry",
 ]

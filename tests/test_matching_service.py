@@ -3,8 +3,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from app.llm.dtos import ExtractionResult, VillageRole, VillageRoleEntry
 from app.news.actions.match_incident_action import MatchIncidentAction
-from app.llm.dtos import ExtractionResult
 from app.news.dtos import (
     MatchResultDTO,
     MatchResultStatus,
@@ -29,12 +29,14 @@ class _SimilarRepositoryStub:
 def _extraction(
     village: list[str] | None = None,
     action: str | None = "غارة جوية",
+    village_roles: list[VillageRoleEntry] | None = None,
 ) -> ExtractionResult:
     if village is None:
-        village = ["أَيْتَا الشَّعْب"]
+        village = ["أيتا الشعب"]
     return ExtractionResult(
         is_relevant=True,
         village=village,
+        village_roles=village_roles or [],
         action_description=action,
         model="test",
         extracted_at=datetime.now(timezone.utc),
@@ -67,6 +69,7 @@ def test_classifies_village_thresholds(
     assert vm.village_confidence == score
     assert vm.village_match_status == status
     assert vm.village_review_required is review_required
+    assert vm.village_role == VillageRole.target
     assert villages.calls == [("ايتا الشعب", 5)]
 
 
@@ -74,7 +77,7 @@ def test_matches_condition_and_preserves_raw_mentions() -> None:
     villages = _SimilarRepositoryStub(None, None)
     conditions = _SimilarRepositoryStub(22, 0.81)
     service = MatchingService(villages, conditions)
-    extraction = _extraction(village=None, action="غارة جوية")
+    extraction = _extraction(village=[], action="غارة جوية")
 
     result = service.match(extraction)
 
@@ -87,7 +90,6 @@ def test_matches_condition_and_preserves_raw_mentions() -> None:
 
 
 def test_multi_village_produces_two_match_entries() -> None:
-    """Extraction with two village strings produces two VillageMatchResult entries."""
     villages = _SimilarRepositoryStub(11, 0.75)
     conditions = _SimilarRepositoryStub(None, None)
     service = MatchingService(villages, conditions)
@@ -104,11 +106,37 @@ def test_multi_village_produces_two_match_entries() -> None:
     assert result.village_matches[1].raw_village_text == "حرش عيتا الجبل"
     assert result.village_matches[0].matched_village_id == 11
     assert result.village_matches[1].matched_village_id == 11
+    assert all(item.village_role == VillageRole.target for item in result.village_matches)
+
+
+def test_village_roles_are_preserved_in_match_entries() -> None:
+    villages = _SimilarRepositoryStub(11, 0.75)
+    conditions = _SimilarRepositoryStub(None, None)
+    service = MatchingService(villages, conditions)
+
+    result = service.match(
+        _extraction(
+            village=["البياض", "المنصوري"],
+            action=None,
+            village_roles=[
+                VillageRoleEntry(village="البياض", role=VillageRole.origin),
+                VillageRoleEntry(village="المنصوري", role=VillageRole.target),
+            ],
+        )
+    )
+
+    assert [item.village_role for item in result.village_matches] == [
+        VillageRole.origin,
+        VillageRole.target,
+    ]
+    assert [item.raw_village_text for item in result.village_matches] == [
+        "البياض",
+        "المنصوري",
+    ]
 
 
 def test_any_village_low_confidence_flag_set_correctly() -> None:
-    """any_village_low_confidence is True iff at least one village is low-confidence."""
-    villages_lc = _SimilarRepositoryStub(11, 0.40)  # matched_low_confidence
+    villages_lc = _SimilarRepositoryStub(11, 0.40)
     conditions = _SimilarRepositoryStub(None, None)
     service = MatchingService(villages_lc, conditions)
 
@@ -116,15 +144,13 @@ def test_any_village_low_confidence_flag_set_correctly() -> None:
 
     assert result.any_village_low_confidence is True
 
-    villages_full = _SimilarRepositoryStub(11, 0.85)  # matched
+    villages_full = _SimilarRepositoryStub(11, 0.85)
     service2 = MatchingService(villages_full, conditions)
     result2 = service2.match(_extraction(village=["بنت جبيل"], action=None))
     assert result2.any_village_low_confidence is False
 
 
-def test_generic_strike_does_not_match_warning_or_feigned_without_distinguishing_words() -> (
-    None
-):
+def test_generic_strike_does_not_match_warning_or_feigned_without_distinguishing_words() -> None:
     villages = _SimilarRepositoryStub(None, None)
     warning_conditions = _SimilarRepositoryStub(2, 0.4615)
     service = MatchingService(villages, warning_conditions)
@@ -169,9 +195,7 @@ def test_feigned_attacks_still_matches_when_distinguishing_word_present() -> Non
     assert result.condition_match_status == MatchResultStatus.matched
 
 
-def test_verbose_airstrike_uses_word_similarity_score_without_matching_artillery() -> (
-    None
-):
+def test_verbose_airstrike_uses_word_similarity_score_without_matching_artillery() -> None:
     verbose_airstrike = (
         "الطيران الحربي الإسرائيلي أغار مستهدفًا بلدة المنصوري بغارتين"
     )

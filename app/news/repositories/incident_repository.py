@@ -45,6 +45,14 @@ from app.news.services.incident_detail_edit_service import (
     IncidentDetailEditError,
     apply_incident_detail_edits,
 )
+from app.news.services.casualty_transition_merge import (
+    apply_casualty_transitions,
+    parse_casualty_transitions,
+    sync_transition_totals,
+)
+from app.news.services.casualty_transition_backstop import (
+    detect_casualty_transition_backstop,
+)
 from app.news.services.incident_detail_merge import merge_incident_detail_fields
 from app.sources.models import Source, SourceType
 
@@ -808,6 +816,25 @@ class IncidentRepository(IncidentRepositoryInterface):
         )
         self.db.flush()
 
+    def redirect_pending_duplicate_matches(
+        self,
+        *,
+        retired_incident: Incident,
+        canonical_incident: Incident | None,
+    ) -> int:
+        """Keep pending review links pointed at an active canonical incident."""
+        if canonical_incident is None or canonical_incident.id == retired_incident.id:
+            return 0
+        result = self.db.execute(
+            sa_update(DuplicateMatch)
+            .where(
+                DuplicateMatch.matched_incident_id == retired_incident.id,
+                DuplicateMatch.status == MatchStatus.pending,
+            )
+            .values(matched_incident_id=canonical_incident.id)
+        )
+        return int(result.rowcount or 0)
+
     def merge_existing(
         self,
         existing: Incident,
@@ -820,6 +847,45 @@ class IncidentRepository(IncidentRepositoryInterface):
             select(IncidentDetail).where(IncidentDetail.incident_id == existing.id)
         )
         old_values = self._snapshot_merge_audit(existing, detail)
+        parsed_transitions = parse_casualty_transitions(
+            new_candidate_data.get("casualty_transitions")
+        )
+        backstop = detect_casualty_transition_backstop(
+            getattr(raw_message, "raw_text", None)
+            if raw_message is not None
+            else new_candidate_data.get("khabar")
+        )
+
+        transition_fields, transition_provenance, needs_review = (
+            apply_casualty_transitions(
+                existing,
+                parsed_transitions,
+            )
+        )
+        if backstop.plausible and not parsed_transitions:
+            needs_review = True
+            transition_provenance["possible_missed_casualty_transition"] = {
+                "matched_keywords": list(backstop.matched_keywords),
+                "note": (
+                    "possible casualty transition detected in text but not "
+                    "extracted - needs verification"
+                ),
+            }
+        if transition_provenance:
+            for key in list(transition_provenance.keys()):
+                transition_provenance[key] = {
+                    **transition_provenance[key],
+                    "raw_message_id": raw_message_id,
+                    "channel": source_label,
+                }
+        if needs_review:
+            existing.duplicate_flag = True
+            existing.verification_status = "needs_verification"
+        else:
+            # A successful automatic merge resolves its duplicate decision.
+            # Keep the flag only for an explicit casualty-transition conflict.
+            existing.duplicate_flag = False
+        sync_transition_totals(existing, transition_fields)
 
         suppressed: dict[str, Any] = {}
         for field, incoming_key in (
@@ -828,6 +894,8 @@ class IncidentRepository(IncidentRepositoryInterface):
             ("total_deaths", "total_deaths"),
             ("total_injuries", "total_injuries"),
         ):
+            if field in transition_fields:
+                continue
             incoming_value = new_candidate_data.get(incoming_key)
             if field.startswith("total_") and incoming_value is None:
                 fallback_key = "deaths" if field == "total_deaths" else "injuries"
@@ -856,11 +924,17 @@ class IncidentRepository(IncidentRepositoryInterface):
             merge_incident_detail_fields(detail, mapped_fields)
             self.db.add(detail)
 
+        origin_note = self._origin_village_note(new_candidate_data.get("origin_villages"))
+        if origin_note:
+            existing.note = self._append_unique_note(existing.note, origin_note)
+
         khabar = new_candidate_data.get("khabar")
         if khabar:
             existing.note = self._append_note(existing.note, khabar, raw_message_id)
 
         new_values = self._snapshot_merge_audit(existing, detail)
+        if transition_provenance:
+            new_values = {**new_values, **transition_provenance}
         if suppressed:
             new_values = {**new_values, **suppressed}
         if old_values != new_values:
@@ -943,18 +1017,26 @@ class IncidentRepository(IncidentRepositoryInterface):
             ).all()
         )
         for incident in incidents:
-            self.db.add(incident)
+            representative_incident: Incident | None = None
             if representative_raw_message_id is not None:
                 representative_incident = self.find_active_incident_for_raw_message_village(
                     representative_raw_message_id,
                     incident.village_id,
                 )
-                if representative_incident is not None:
-                    self.create_duplicate_match(
-                        incident=incident,
-                        matched_incident=representative_incident,
-                        similarity_score=similarity_score or 0.0,
-                    )
+            # Duplicate incident records are preserved (not soft-deleted) per
+            # "Show imported incidents and preserve duplicate records"; still
+            # repoint any pending review link onto the active canonical.
+            self.redirect_pending_duplicate_matches(
+                retired_incident=incident,
+                canonical_incident=representative_incident,
+            )
+            self.db.add(incident)
+            if representative_incident is not None:
+                self.create_duplicate_match(
+                    incident=incident,
+                    matched_incident=representative_incident,
+                    similarity_score=similarity_score or 0.0,
+                )
         self.db.flush()
         return [incident.id for incident in incidents]
 
@@ -981,6 +1063,10 @@ class IncidentRepository(IncidentRepositoryInterface):
             matched_incident = self.db.get(Incident, matched_incident_id)
 
         for incident in incidents:
+            self.redirect_pending_duplicate_matches(
+                retired_incident=incident,
+                canonical_incident=matched_incident,
+            )
             self.db.add(incident)
             if matched_incident is not None:
                 self.create_duplicate_match(
@@ -1230,6 +1316,31 @@ class IncidentRepository(IncidentRepositoryInterface):
         if not existing_note:
             return appended
         return f"{existing_note}\n\n{appended}"
+
+    @staticmethod
+    def _append_unique_note(existing_note: str | None, note_text: str) -> str:
+        if not existing_note:
+            return note_text
+        if note_text in existing_note:
+            return existing_note
+        return f"{existing_note}\n\n{note_text}"
+
+    @staticmethod
+    def _origin_village_note(origin_villages: Any) -> str | None:
+        if not isinstance(origin_villages, list):
+            return None
+        normalized: list[str] = []
+        for item in origin_villages:
+            if not isinstance(item, str):
+                continue
+            value = item.strip()
+            if value and value not in normalized:
+                normalized.append(value)
+        if not normalized:
+            return None
+        if len(normalized) == 1:
+            return f"Origin village: {normalized[0]}"
+        return f"Origin villages: {', '.join(normalized)}"
 
     @staticmethod
     def _snapshot_merge_fields(incident: Incident) -> dict[str, Any]:

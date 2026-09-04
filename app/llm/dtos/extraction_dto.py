@@ -27,6 +27,31 @@ class DidValue(str, Enum):
     indirect = "ID"
 
 
+class CasualtyTransitionStatus(str, Enum):
+    injured = "injured"
+    deceased = "deceased"
+
+
+class VillageRole(str, Enum):
+    origin = "origin"
+    target = "target"
+
+
+class VillageRoleEntry(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    village: str
+    role: VillageRole
+
+
+class CasualtyTransition(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    from_status: CasualtyTransitionStatus
+    to_status: CasualtyTransitionStatus
+    count: int = Field(ge=1)
+
+
 class ExtractionCasualties(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -73,6 +98,7 @@ class ExtractionResult(BaseModel):
 
     is_relevant: bool
     village: list[str] | None = None
+    village_roles: list[VillageRoleEntry] = Field(default_factory=list)
     action_description: str | None = None
 
     @field_validator("village", mode="before")
@@ -89,6 +115,7 @@ class ExtractionResult(BaseModel):
         default_factory=dict
     )
     casualties: ExtractionCasualties = Field(default_factory=ExtractionCasualties)
+    casualty_transitions: list[CasualtyTransition] = Field(default_factory=list)
     # Tier 1 stores presence-gate keys here; category detail fills `categories` in Tier 2.
     presence_category_keys: list[ExtractionCategoryKey] = Field(default_factory=list)
     # 1 = fast path (general fields only); 2 = full category detail complete.
@@ -106,7 +133,12 @@ class ExtractionResult(BaseModel):
             return data
         categories = data.get("categories") or {}
         inferred_tier = 2 if categories else 1
-        return {**data, "extraction_tier": inferred_tier}
+        normalized = {**data, "extraction_tier": inferred_tier}
+        if normalized.get("village_roles") is None:
+            normalized["village_roles"] = []
+        if normalized.get("casualty_transitions") is None:
+            normalized["casualty_transitions"] = []
+        return normalized
 
 
 class ExtractedCandidate(BaseModel):

@@ -15,6 +15,7 @@ from collections.abc import Callable
 
 from app.core.text_normalization import normalize_arabic_text
 from app.llm.dtos import ExtractionResult
+from app.llm.dtos import VillageRole, VillageRoleEntry
 from app.news.dtos import (
     MatchResultDTO,
     MatchResultStatus,
@@ -59,9 +60,10 @@ class MatchingService(MatchingServiceInterface):
         self.candidate_limit = candidate_limit
 
     def match(self, extraction_result: ExtractionResult) -> MatchResultDTO:
-        village_list = extraction_result.village or []
+        village_mentions = self._village_mentions(extraction_result)
         village_matches: list[VillageMatchResult] = []
-        for village_text in village_list:
+        for village_mention in village_mentions:
+            village_text = village_mention.village
             classified = self._match_mention(village_text, self.villages.find_similar)
             village_matches.append(
                 VillageMatchResult(
@@ -70,6 +72,7 @@ class MatchingService(MatchingServiceInterface):
                     village_match_status=classified.status,
                     village_review_required=classified.status != MatchResultStatus.matched,
                     raw_village_text=village_text,
+                    village_role=village_mention.role,
                 )
             )
 
@@ -91,6 +94,17 @@ class MatchingService(MatchingServiceInterface):
             condition_review_required=condition.status != MatchResultStatus.matched,
             raw_condition_text=extraction_result.action_description,
         )
+
+    @staticmethod
+    def _village_mentions(
+        extraction_result: ExtractionResult,
+    ) -> list[VillageRoleEntry]:
+        if extraction_result.village_roles:
+            return list(extraction_result.village_roles)
+        return [
+            VillageRoleEntry(village=village_text, role=VillageRole.target)
+            for village_text in (extraction_result.village or [])
+        ]
 
     def _match_mention(
         self,

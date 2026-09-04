@@ -31,7 +31,27 @@ def enqueue_pipeline_sweep(
     max_rows: int | None = None,
     use_advisory_lock: bool = True,
 ) -> int:
+    """Queue a pipeline drain. Coalesces with an existing pending/running job."""
     ensure_pipeline_jobs_table(db)
+    existing_job_id = db.execute(
+        text(
+            """
+            SELECT id
+            FROM pipeline_sweep_jobs
+            WHERE status IN ('pending', 'running')
+            ORDER BY id ASC
+            LIMIT 1
+            """
+        )
+    ).scalar_one_or_none()
+    if existing_job_id is not None:
+        logger.info(
+            "Pipeline sweep already queued job_id=%s; skipping duplicate enqueue",
+            existing_job_id,
+        )
+        db.commit()
+        return int(existing_job_id)
+
     job_id = db.execute(
         text(
             """
@@ -50,6 +70,59 @@ def enqueue_pipeline_sweep(
         use_advisory_lock,
     )
     return int(job_id)
+
+
+def reclaim_orphaned_pipeline_sweep_jobs(db: Session) -> int:
+    """Reset all running jobs to pending. Call only at worker startup."""
+    ensure_pipeline_jobs_table(db)
+    reclaimed_ids = db.execute(
+        text(
+            """
+            UPDATE pipeline_sweep_jobs
+            SET status = 'pending', claimed_at = NULL
+            WHERE status = 'running'
+            RETURNING id
+            """
+        )
+    ).scalars().all()
+    db.commit()
+    if reclaimed_ids:
+        logger.warning(
+            "Reclaimed orphaned pipeline sweep jobs count=%s job_ids=%s",
+            len(reclaimed_ids),
+            list(reclaimed_ids),
+        )
+    return len(reclaimed_ids)
+
+
+def reclaim_stale_pipeline_sweep_jobs(
+    db: Session,
+    *,
+    max_age_minutes: int = 60,
+) -> int:
+    """Reset running jobs whose worker died mid-drain back to pending."""
+    ensure_pipeline_jobs_table(db)
+    reclaimed_ids = db.execute(
+        text(
+            """
+            UPDATE pipeline_sweep_jobs
+            SET status = 'pending', claimed_at = NULL
+            WHERE status = 'running'
+              AND claimed_at IS NOT NULL
+              AND claimed_at < now() - make_interval(mins => :max_age_minutes)
+            RETURNING id
+            """
+        ),
+        {"max_age_minutes": max_age_minutes},
+    ).scalars().all()
+    db.commit()
+    if reclaimed_ids:
+        logger.warning(
+            "Reclaimed stale pipeline sweep jobs count=%s job_ids=%s",
+            len(reclaimed_ids),
+            list(reclaimed_ids),
+        )
+    return len(reclaimed_ids)
 
 
 def claim_next_pipeline_sweep_job(db: Session) -> dict[str, object] | None:

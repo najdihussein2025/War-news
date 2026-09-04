@@ -21,6 +21,7 @@ from app.news.services.fast_path_eligibility import (
 from app.news.services.incident_materialization_service import (
     EXACT_HASH_CONSTRAINT,
     IncidentMaterializationService,
+    _initial_verification_status,
 )
 
 
@@ -71,6 +72,35 @@ class _SessionStub:
 
     def execute(self, _statement, _params=None):
         return None
+
+
+def test_initial_verification_status_auto_processes_clean_exact_matches() -> None:
+    assert _initial_verification_status(_match_result()) == "auto_processed"
+
+
+@pytest.mark.parametrize(
+    "signal",
+    [
+        "duplicate_flag",
+        "relevance_needs_review",
+        "insufficient_score",
+        "possible_missed_casualty_transition",
+    ],
+)
+def test_initial_verification_status_flags_each_uncertainty_signal(signal: str) -> None:
+    assert (
+        _initial_verification_status(_match_result(), **{signal: True})
+        == "needs_verification"
+    )
+
+
+def test_initial_verification_status_flags_low_confidence_match() -> None:
+    assert (
+        _initial_verification_status(
+            _match_result(village_status="matched_low_confidence")
+        )
+        == "needs_verification"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -486,6 +516,7 @@ def test_dedup_mid_score_creates_incident_with_duplicate_flag() -> None:
 
     assert len(result) == 1
     assert result[0].duplicate_flag is True
+    assert result[0].verification_status == "needs_verification"
     assert result[0].duplicate_level == "medium"
     assert result[0].duplicate_similarity_score == 0.65
     assert service.stats.inserted == 1
@@ -511,6 +542,7 @@ def test_dedup_low_score_creates_incident_without_duplicate_flag() -> None:
 
     assert len(result) == 1
     assert result[0].duplicate_flag is False
+    assert result[0].verification_status == "auto_processed"
     assert result[0].duplicate_level == "low"
     assert result[0].duplicate_similarity_score == 0.30
     assert service.stats.inserted == 1
@@ -696,7 +728,7 @@ def test_fast_path_confident_duplicate_insufficient_score_materializes() -> None
         representative,
         SimpleNamespace(
             incidents=SimpleNamespace(
-                create_fast_path_duplicate_match=lambda **kwargs: duplicate_matches.append(
+                create_duplicate_match=lambda **kwargs: duplicate_matches.append(
                     kwargs
                 )
             ),
@@ -716,7 +748,8 @@ def test_fast_path_confident_duplicate_insufficient_score_materializes() -> None
     incident = next(value for value in db.committed if isinstance(value, Incident))
     assert incident.duplicate_flag is True
     assert len(duplicate_matches) == 1
-    assert duplicate_matches[0]["status"].value == "insufficient_score"
+    assert duplicate_matches[0]["incident"] is incident
+    assert duplicate_matches[0]["matched_incident"] is existing
     assert duplicate_matches[0]["similarity_score"] == 0.65
 
 

@@ -18,6 +18,7 @@ from app.llm.dtos import ExtractionResult
 from app.news.dtos import MatchResultStatus
 from app.news.models import Condition
 from app.news.repositories.condition_repository import ConditionRepository
+from app.news.services.condition_aliases import CONDITION_ALIASES
 
 
 class _ResultStub:
@@ -56,6 +57,34 @@ def test_condition_query_uses_word_similarity() -> None:
     assert "word_similarity" in sql
     assert result[0][0].id == 35
     assert result[0][1] == pytest.approx(0.466667)
+
+
+def test_compact_sql_normalization_removes_internal_spaces() -> None:
+    sql = str(
+        select(normalize_arabic_sql(literal("دير ميماس"), compact=True)).compile(
+            dialect=postgresql.dialect(),
+            compile_kwargs={"literal_binds": True},
+        )
+    )
+
+    assert "replace" in sql
+
+
+def test_compact_arabic_normalization_handles_final_ya() -> None:
+    assert normalize_arabic_text("على", compact=True) == "علي"
+
+
+def test_condition_query_includes_evidence_backed_aliases() -> None:
+    db = _SessionStub()
+    ConditionRepository(db).find_similar("تنفيذ عملية تفجير")
+
+    sql = str(db.statement.compile(dialect=postgresql.dialect()))
+    # Alias similarity must affect both score and bidirectional coverage ranking.
+    # SQL repeats score inside coverage_rank, so each alias appears three times:
+    # selected score, the score factor in coverage_rank, and alias coverage.
+    assert sql.count("CASE") == 3 * sum(
+        len(aliases) for aliases in CONDITION_ALIASES.values()
+    )
 
 
 def test_real_verbose_airstrike_prefers_warplane_over_artillery() -> None:

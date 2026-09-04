@@ -32,9 +32,11 @@ class _ReconciliationSession:
         self.partial_lookup = partial_lookup
         self.duplicate_matches: list[tuple[object, object]] = []
         self.committed = 0
+        self.scalar_calls = 0
 
     def scalars(self, stmt) -> _ScalarResult:
-        return _ScalarResult(self.orphans)
+        self.scalar_calls += 1
+        return _ScalarResult(self.orphans if self.scalar_calls == 1 else [])
 
     def get(self, model, pk):
         return self.raw_messages.get(pk)

@@ -114,3 +114,16 @@ def test_merge_does_not_reopen_details_pending_for_existing_category() -> None:
     )
 
     assert existing.details_pending is False
+
+
+def test_merge_clears_stale_duplicate_flag_without_transition_conflict() -> None:
+    existing = Incident(id=uuid4(), duplicate_flag=True)
+    db = _MergeSessionStub(raw_message=None)
+
+    IncidentRepository(db).merge_existing(  # type: ignore[arg-type]
+        existing,
+        {"khabar": "same event follow-up"},
+        raw_message_id=7,
+    )
+
+    assert existing.duplicate_flag is False
