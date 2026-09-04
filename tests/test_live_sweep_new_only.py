@@ -262,7 +262,7 @@ async def test_run_stages_stops_after_aborted_relevance(monkeypatch) -> None:
         return _aborted_stage("relevance_filter"), None
 
     run_async = MagicMock()
-    run_sync = MagicMock()
+    run_sync = MagicMock(side_effect=lambda stage_name, *args, **kwargs: _stage(stage_name))
     persist = MagicMock()
     monkeypatch.setattr(live_sweep, "_persist_cursor", persist)
     monkeypatch.setattr(live_sweep, "_run_relevance_stage", fake_relevance_stage)
@@ -290,7 +290,9 @@ async def test_run_stages_stops_after_aborted_tier1(monkeypatch) -> None:
             return _aborted_stage("tier1_extraction")
         return _stage(stage_name)
 
-    run_sync = MagicMock()
+    run_sync = MagicMock(
+        side_effect=lambda stage_name, *args, **kwargs: _stage(stage_name)
+    )
     monkeypatch.setattr(live_sweep, "_run_relevance_stage", fake_relevance_stage)
     monkeypatch.setattr(live_sweep, "_run_async_stage", fake_async_stage)
     monkeypatch.setattr(live_sweep, "_run_sync_stage", run_sync)
@@ -301,9 +303,10 @@ async def test_run_stages_stops_after_aborted_tier1(monkeypatch) -> None:
     assert [stage.stage for stage in stages] == [
         "relevance_filter",
         "pre_extraction_dedup",
+        "embedding",
         "tier1_extraction",
     ]
-    run_sync.assert_not_called()
+    run_sync.assert_called_once()
 
 
 def test_stage_max_rows_per_pass_is_a_positive_batch_bound() -> None:
@@ -411,11 +414,11 @@ async def test_run_stages_caps_claim_until_empty_stages_and_reaches_matching(
     assert [stage.stage for stage in stages] == [
         "relevance_filter",
         "pre_extraction_dedup",
+        "embedding",
         "tier1_extraction",
         "matching",
         "fast_path",
         "tier2_detail_fill",
-        "embedding",
         "clustering",
         "materialization",
     ]

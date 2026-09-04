@@ -323,7 +323,7 @@ export const LogsPage = () => {
   const location = useLocation();
   const isSuperAdmin = location.pathname.startsWith("/superadmin/");
   const logsBasePath = isSuperAdmin ? "/superadmin/logs" : "/admin/logs";
-  const visibleTabs = isSuperAdmin ? [...logTabs, pipelineTab] : logTabs;
+const visibleTabs = logTabs;
   const activeTab = visibleTabs.find((tab) => tab.value === logType);
 
   if (!activeTab) {

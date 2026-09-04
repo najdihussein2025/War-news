@@ -1070,16 +1070,16 @@ class IncidentRepository(IncidentRepositoryInterface):
         raw_message_sort_id = func.coalesce(RawMessage.id, 0)
         if params.sort_order == "oldest":
             return (
-                created_at.asc(),
                 event_date.asc(),
                 Incident.event_time.asc().nullslast(),
+                created_at.asc(),
                 raw_message_sort_id.asc(),
                 Incident.id.asc().nullslast(),
             )
         return (
-            created_at.desc(),
             event_date.desc(),
             Incident.event_time.desc().nullslast(),
+            created_at.desc(),
             raw_message_sort_id.desc(),
             Incident.id.desc().nullslast(),
         )
@@ -1148,6 +1148,11 @@ class IncidentRepository(IncidentRepositoryInterface):
         comparison = (lambda column, value: column < value) if before else (lambda column, value: column > value)
         created_equal = created_at == created_value
         event_date_equal = event_date == event_date_value
+        event_time_equal = (
+            Incident.event_time.is_(None)
+            if event_time_value is None
+            else Incident.event_time == event_time_value
+        )
         event_time_after = (
             Incident.event_time.is_(None)
             if event_time_value is not None
@@ -1164,27 +1169,23 @@ class IncidentRepository(IncidentRepositoryInterface):
             else false()
         )
         return or_(
-            comparison(created_at, created_value),
-            and_(created_equal, comparison(event_date, event_date_value)),
-            and_(created_equal, event_date_equal, event_time_after),
+            comparison(event_date, event_date_value),
+            and_(event_date_equal, event_time_after),
             and_(
-                created_equal,
                 event_date_equal,
-                (
-                    Incident.event_time.is_(None)
-                    if event_time_value is None
-                    else Incident.event_time.is_not(None)
-                ),
+                event_time_equal,
+                comparison(created_at, created_value),
+            ),
+            and_(
+                event_date_equal,
+                event_time_equal,
+                created_equal,
                 comparison(raw_message_sort_id, raw_message_sort_value),
             ),
             and_(
-                created_equal,
                 event_date_equal,
-                (
-                    Incident.event_time.is_(None)
-                    if event_time_value is None
-                    else Incident.event_time.is_not(None)
-                ),
+                event_time_equal,
+                created_equal,
                 raw_message_sort_id == raw_message_sort_value,
                 incident_after,
             ),

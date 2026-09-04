@@ -4,6 +4,7 @@ import hashlib
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from typing import Any
 
 from sqlalchemy import select
@@ -42,6 +43,14 @@ def _initial_verification_status(match_result: dict | None) -> str:
     return "auto_processed"
 
 logger = logging.getLogger(__name__)
+BEIRUT_TIMEZONE = ZoneInfo("Asia/Beirut")
+
+
+def _incident_event_datetime(value: datetime) -> datetime:
+    """Return the source timestamp in the project's local calendar/time."""
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(BEIRUT_TIMEZONE)
 
 EXACT_HASH_CONSTRAINT = "uq_incidents_exact_hash_active"
 
@@ -108,11 +117,12 @@ class IncidentMaterializationService:
             )
         extraction = ExtractionResult.model_validate(representative.extraction_result)
 
-        event_datetime = representative.message_datetime
-        if event_datetime is None:
+        message_datetime = representative.message_datetime
+        if message_datetime is None:
             raise ValueError(
                 f"raw_message id={representative.id} has no message_datetime"
             )
+        event_datetime = _incident_event_datetime(message_datetime)
 
         village_matches: list[dict[str, Any]] = match_result.get("village_matches", [])
 
@@ -155,7 +165,6 @@ class IncidentMaterializationService:
             materializable_villages += 1
 
             if decision.outcome == FastPathDedupOutcome.confident_duplicate:
-                materializable_villages += 1
                 canonical_incident = decision.canonical_incident
                 if decision.representative_raw_message_id is not None:
                     representative_raw_message_id = decision.representative_raw_message_id
@@ -463,11 +472,12 @@ class IncidentMaterializationService:
             )
         extraction = ExtractionResult.model_validate(representative.extraction_result)
 
-        event_datetime = representative.message_datetime
-        if event_datetime is None:
+        message_datetime = representative.message_datetime
+        if message_datetime is None:
             raise ValueError(
                 f"raw_message id={representative.id} has no message_datetime"
             )
+        event_datetime = _incident_event_datetime(message_datetime)
 
         casualties = extraction.casualties
         mapped_fields = map_categories(extraction.categories)

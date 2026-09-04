@@ -203,7 +203,7 @@ def test_eligible_representative_inserts_incident_and_detail() -> None:
     assert incident.condition_id == 5
     assert incident.source_id == 9
     assert incident.event_date.isoformat() == "2026-08-17"
-    assert incident.event_time.hour == 12
+    assert incident.event_time.hour == 15
     assert incident.khabar == "  خبر   عاجل "
     assert incident.khabar_embedding == [0.1, 0.2, 0.3]
     assert incident.created_by is None

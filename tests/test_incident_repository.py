@@ -81,7 +81,7 @@ class _ListSessionStub:
         return 0
 
 
-def test_list_all_defaults_to_newest_created_first() -> None:
+def test_list_all_defaults_to_newest_event_first() -> None:
     db = _ListSessionStub()
 
     IncidentRepository(db).list_all(IncidentListParams())  # type: ignore[arg-type]
@@ -95,11 +95,8 @@ def test_list_all_defaults_to_newest_created_first() -> None:
         order_at,
     )
     event_date_at = compiled.index("incidents.event_date", order_at)
-    assert created_at < event_date_at
-    assert (
-        "coalesce(incidents.created_at, raw_messages.received_at) desc"
-        in compiled
-    )
+    assert event_date_at < created_at
+    assert "coalesce(incidents.event_date" in compiled
 
 
 def test_list_all_starts_from_incidents_and_raw_message_is_optional() -> None:

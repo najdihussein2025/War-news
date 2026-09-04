@@ -206,7 +206,7 @@ def _get_pending_extraction_batch_filtered(
                 RawMessage.extraction_result.is_(None),
                 RawMessage.duplicate_of_id.is_(None),
             )
-            .order_by(RawMessage.id.asc())
+            .order_by(RawMessage.id.desc())
             .limit(limit)
             .with_for_update(skip_locked=True)
         ).all()
@@ -233,7 +233,7 @@ def _reset_retryable_extraction_errors_filtered(
                 _id_above_cutoff(cutoff_raw_message_id),
                 _retryable_extraction_error_clause(),
             )
-            .order_by(RawMessage.id.asc())
+            .order_by(RawMessage.id.desc())
             .limit(limit)
         ).all()
     )
@@ -282,7 +282,7 @@ def _claim_pending_pre_dedup_filtered(
             RawMessage.extraction_result.is_(None),
             RawMessage.duplicate_of_id.is_(None),
         )
-        .order_by(RawMessage.id.asc())
+        .order_by(RawMessage.id.desc())
         .limit(1)
         .with_for_update(skip_locked=True)
     )
@@ -301,7 +301,7 @@ def _claim_pending_extraction_filtered(
             RawMessage.extraction_result.is_(None),
             RawMessage.duplicate_of_id.is_(None),
         )
-        .order_by(RawMessage.id.asc())
+        .order_by(RawMessage.id.desc())
         .limit(1)
         .with_for_update(skip_locked=True)
     )
@@ -324,7 +324,7 @@ def _claim_pending_match_filtered(
             RawMessage.match_result.is_(None),
             RawMessage.duplicate_of_id.is_(None),
         )
-        .order_by(RawMessage.id.asc())
+        .order_by(RawMessage.id.desc())
         .limit(1)
         .with_for_update(skip_locked=True)
     )
@@ -357,7 +357,7 @@ def _claim_pending_fast_path_filtered(
             ~has_active_incident,
             fast_path_materializable_clause(),
         )
-        .order_by(RawMessage.id.asc())
+        .order_by(RawMessage.id.desc())
         .limit(1)
         .with_for_update(skip_locked=True)
     )
@@ -406,7 +406,7 @@ def _terminalize_ineligible_fast_path_filtered(
                 RawMessage.extraction_result.is_not(None),
                 ~has_active_incident,
             )
-            .order_by(RawMessage.id.asc())
+            .order_by(RawMessage.id.desc())
         ).all()
     )
     if not messages:
