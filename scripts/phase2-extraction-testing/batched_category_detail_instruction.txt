@@ -50,4 +50,6 @@ Required output shape:
 
 When category_key is vehicles, also include vehicles with car/moto/con_veh/excavator/bulldozer/camion/bobcat/tracteur and moto_d/moto_i/con_d/con_i as in the single-category prompt.
 
+When a demographic phrase such as «من بينهم» follows an injury count, attach the following children/women/men counts to injuries. Arabic سيدة/سيدات/امرأة/نساء always denotes female; never discard its explicit number. Required example: «4 شهداء و33 جريحا من بينهم 6 أطفال و4 سيدات» means deaths=4, injuries=33, children_injuries=6, female_injuries=4, children_deaths=null, and female_deaths=null.
+
 Extract details for the requested category_keys only.

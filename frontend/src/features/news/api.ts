@@ -31,6 +31,7 @@ export const restoreRejectedNews = async (id: number): Promise<void> => {
 export type WorkbookImportSummary = {
   processed: number;
   succeeded: number;
+  skipped: number;
   failed: number;
   row_errors: Array<{
     row: number;

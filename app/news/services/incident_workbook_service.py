@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from datetime import date, datetime, time
 from typing import Any, BinaryIO
-from uuid import UUID
+from uuid import UUID, uuid4
+from zoneinfo import ZoneInfo
 
 from openpyxl import load_workbook
 from sqlalchemy import inspect
@@ -11,8 +12,18 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.sqltypes import Boolean, Enum, Integer
 
 from app.news.dtos import WorkbookImportRowErrorDTO, WorkbookImportSummaryDTO
-from app.news.models import Condition, Incident, IncidentDetail, Village
-from app.sources.models import Source
+from app.news.models import (
+    Condition,
+    Incident,
+    IncidentDetail,
+    MessageStatus,
+    RawMessage,
+    Village,
+)
+from app.sources.models import Source, SourceType
+
+EXCEL_IMPORT_SOURCE_NAME = "Excel Incident Import"
+BEIRUT_TIMEZONE = ZoneInfo("Asia/Beirut")
 
 LOOKUP_ONLY_HEADERS: tuple[str, ...] = (
     "Column_1",
@@ -215,6 +226,10 @@ INCIDENT_DETAIL_FIELD_MAP: dict[str, str] = {
     "Apart": "apart",
 }
 
+CASUALTY_DEMOGRAPHIC_HEADERS: frozenset[str] = frozenset(
+    {"Male_D", "Male_I", "female_D", "female_I", "Children_D", "Children_I"}
+)
+
 OPTIONAL_HEADERS: frozenset[str] = frozenset(
     {
         "Injuries__2",
@@ -237,6 +252,7 @@ REQUIRED_HEADERS: frozenset[str] = frozenset(
 class IncidentWorkbookService:
     def __init__(self, db: Session) -> None:
         self.db = db
+        self.queued_raw_message_ids: list[int] = []
 
     def import_workbook(
         self,
@@ -264,9 +280,16 @@ class IncidentWorkbookService:
         }
         conditions_by_action = self._conditions_by_action()
         sources_by_name = self._sources_by_name()
+        import_source = self._get_or_create_import_source()
+        existing_news = {
+            self._duplicate_key(incident.event_date, incident.khabar)
+            for incident in self.db.scalars(select(Incident)).all()
+            if not incident.is_deleted
+        }
 
         processed = 0
         succeeded = 0
+        skipped = 0
         row_errors: list[WorkbookImportRowErrorDTO] = []
 
         for row_number, row in enumerate(rows, start=2):
@@ -276,15 +299,48 @@ class IncidentWorkbookService:
 
             processed += 1
             try:
+                event_date = self._date(row_data.get("Date"))
+                event_time = self._time(row_data.get("Time"))
+                khabar = self._required_string(row_data.get("Khabar"), "Khabar")
+                duplicate_key = self._duplicate_key(event_date, khabar)
+                if duplicate_key in existing_news:
+                    skipped += 1
+                    continue
+                source_id = self._resolve_source_id(row_data, sources_by_name)
+                extraction_text = self._extraction_text(row_data, khabar)
+                raw_message = RawMessage(
+                    source_id=source_id or import_source.id,
+                    external_message_id=f"excel:{uuid4()}",
+                    source_platform="excel",
+                    source_name=self._optional_string(row_data.get("Source"))
+                    or EXCEL_IMPORT_SOURCE_NAME,
+                    raw_text=extraction_text,
+                    raw_payload={
+                        "origin": "incident_excel_import",
+                        "worksheet_row": row_number,
+                    },
+                    filter_result={
+                        "backend": "excel_import",
+                        "verdict": "relevant",
+                        "confidence": 1.0,
+                        "needs_review": False,
+                        "reasoning": "Imported incident row queued for automatic extraction.",
+                    },
+                    message_datetime=self._event_datetime(event_date, event_time),
+                    status=MessageStatus.parsed,
+                )
+                self.db.add(raw_message)
+                self.db.flush()
+
                 incident = Incident(
-                    raw_message_id=None,
+                    raw_message_id=raw_message.id,
                     village_id=self._resolve_village_id(row_data, villages_by_code),
                     condition_id=self._resolve_condition_id(row_data, conditions_by_action),
-                    source_id=self._resolve_source_id(row_data, sources_by_name),
+                    source_id=source_id,
                     event_month=self._optional_string(row_data.get("Month")),
-                    event_date=self._date(row_data.get("Date")),
-                    event_time=self._time(row_data.get("Time")),
-                    khabar=self._required_string(row_data.get("Khabar"), "Khabar"),
+                    event_date=event_date,
+                    event_time=event_time,
+                    khabar=khabar,
                     moh=self._optional_string(row_data.get("MOH")),
                     martyrs=self._optional_string(row_data.get("Martyrs")),
                     worker_name=self._optional_string(row_data.get("Worker Name")),
@@ -293,10 +349,15 @@ class IncidentWorkbookService:
                     note=self._optional_string(row_data.get("NOTE")),
                     note_extra=self._optional_string(row_data.get("Note")),
                     note_extra_2=self._optional_string(row_data.get("Note__2")),
+                    details_pending=True,
                     created_by=created_by,
                 )
                 for header, field_name in INCIDENT_INT_FIELD_MAP.items():
-                    setattr(incident, field_name, self._optional_int(row_data.get(header)))
+                    value = self._optional_int(row_data.get(header))
+                    # Legacy workbooks use zero as an unfilled casualty value.
+                    # Positive counts are evidence; zero remains unknown until
+                    # an explicit source or LLM extraction supplies it.
+                    setattr(incident, field_name, None if value == 0 else value)
 
                 self.db.add(incident)
                 self.db.flush()
@@ -304,6 +365,9 @@ class IncidentWorkbookService:
                 detail_values = self._build_detail_values(row_data)
                 self.db.add(IncidentDetail(incident_id=incident.id, **detail_values))
                 self.db.commit()
+                if raw_message.id is not None:
+                    self.queued_raw_message_ids.append(raw_message.id)
+                existing_news.add(duplicate_key)
                 succeeded += 1
             except Exception as exc:
                 self.db.rollback()
@@ -314,9 +378,29 @@ class IncidentWorkbookService:
         return WorkbookImportSummaryDTO(
             processed=processed,
             succeeded=succeeded,
+            skipped=skipped,
             failed=len(row_errors),
             row_errors=row_errors,
         )
+
+    @staticmethod
+    def _duplicate_key(event_date: date, khabar: str) -> tuple[date, str]:
+        return event_date, " ".join(khabar.split()).casefold()
+
+    @classmethod
+    def _extraction_text(cls, row_data: dict[str, Any], khabar: str) -> str:
+        sections = [("Khabar", khabar)]
+        for label, header in (
+            ("NOTE", "NOTE"),
+            ("MOH", "MOH"),
+            ("Martyrs", "Martyrs"),
+            ("Note", "Note"),
+            ("Note 2", "Note__2"),
+        ):
+            value = cls._optional_string(row_data.get(header))
+            if value:
+                sections.append((label, value))
+        return "\n\n".join(f"{label}: {value}" for label, value in sections)
 
     def _ensure_schema_compatible(self) -> None:
         bind_getter = getattr(self.db, "get_bind", None)
@@ -356,6 +440,20 @@ class IncidentWorkbookService:
                 sources_by_name[key] = source.id
         return sources_by_name
 
+    def _get_or_create_import_source(self) -> Source:
+        for source in self.db.scalars(select(Source)).all():
+            if source.name == EXCEL_IMPORT_SOURCE_NAME:
+                return source
+        source = Source(
+            type=SourceType.manual,
+            name=EXCEL_IMPORT_SOURCE_NAME,
+            external_id="incident-excel-import",
+            config={"automatic_extraction": True},
+        )
+        self.db.add(source)
+        self.db.flush()
+        return source
+
     def _resolve_village_id(self, row_data: dict[str, Any], villages_by_code: dict[int, int]) -> int | None:
         acs_code = self._optional_int(row_data.get("ACS_Code"))
         if acs_code is None:
@@ -378,7 +476,13 @@ class IncidentWorkbookService:
         values: dict[str, Any] = {}
         for header, field_name in INCIDENT_DETAIL_FIELD_MAP.items():
             column = IncidentDetail.__table__.columns[field_name]
-            values[field_name] = self._coerce_detail_value(column.type, row_data.get(header), header)
+            value = self._coerce_detail_value(column.type, row_data.get(header), header)
+            # Legacy workbooks use 0 as an empty placeholder in demographic
+            # columns. Treat it as unknown so the UI does not claim the source
+            # explicitly confirmed zero; positive evidence remains unchanged.
+            if header in CASUALTY_DEMOGRAPHIC_HEADERS and value == 0:
+                value = None
+            values[field_name] = value
         return values
 
     @staticmethod
@@ -464,6 +568,14 @@ class IncidentWorkbookService:
         if text is None:
             return None
         return time.fromisoformat(text)
+
+    @staticmethod
+    def _event_datetime(event_date: date, event_time: time | None) -> datetime:
+        return datetime.combine(
+            event_date,
+            event_time or time.min,
+            tzinfo=BEIRUT_TIMEZONE,
+        )
 
     @staticmethod
     def _normalized_lookup(value: Any) -> str:

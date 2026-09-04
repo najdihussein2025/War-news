@@ -11,7 +11,7 @@ from app.llm.dtos import (
     ExtractionCategoryKey,
     ExtractionResult,
 )
-from app.news.models import IncidentDetail
+from app.news.models import IncidentDetail, MessageStatus
 from app.news.services.tier2_detail_fill_service import Tier2DetailFillService
 
 
@@ -24,7 +24,7 @@ def test_fill_for_raw_message_merges_details_and_clears_pending() -> None:
     extraction = ExtractionResult(
         is_relevant=True,
         village=["كفركلا"],
-        casualties=ExtractionCasualties(deaths=1),
+        casualties=ExtractionCasualties(deaths=1, injuries=3),
         presence_category_keys=[ExtractionCategoryKey.lebanese_army],
         extraction_tier=1,
         model="test",
@@ -36,6 +36,7 @@ def test_fill_for_raw_message_merges_details_and_clears_pending() -> None:
         extraction_result=extraction.model_dump(mode="json"),
         content_embedding=[0.1, 0.2],
         tier2_completed_at=None,
+        match_result=None,
     )
     incident = SimpleNamespace(
         id="incident-1",
@@ -44,9 +45,9 @@ def test_fill_for_raw_message_merges_details_and_clears_pending() -> None:
         condition_id=2,
         event_date=datetime(2026, 8, 18).date(),
         deaths=1,
-        injuries=None,
-        total_deaths=None,
-        total_injuries=None,
+        injuries=0,
+        total_deaths=0,
+        total_injuries=0,
         khabar="خبر",
         khabar_embedding=None,
         details_pending=True,
@@ -79,6 +80,11 @@ def test_fill_for_raw_message_merges_details_and_clears_pending() -> None:
 
     assert updated == 1
     assert incident.details_pending is False
+    assert incident.deaths == 1
+    assert incident.injuries == 3
+    assert incident.total_deaths == 2
+    assert incident.total_injuries == 3
+    assert raw_message.status == MessageStatus.materialized
     assert incident.khabar_embedding == [0.1, 0.2]
     assert raw_message.content_embedding == [0.1, 0.2]
     embedding_service.generate.assert_not_called()

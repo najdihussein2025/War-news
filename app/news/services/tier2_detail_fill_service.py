@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.llm.dtos import ExtractionCategory, ExtractionCategoryKey, ExtractionResult
 from app.llm.services.ollama_extraction_service import OllamaExtractionService
-from app.news.models import Incident, IncidentDetail, RawMessage
+from app.news.models import Incident, IncidentDetail, MessageStatus, RawMessage
 from app.news.services.category_mapper import compute_rollups, map_categories
 from app.news.services.dedup_matching_service import DedupMatchingService
 from app.news.services.embedding_service import EmbeddingService
@@ -122,9 +122,31 @@ class Tier2DetailFillService:
                 self.db.add(detail)
                 self.db.flush()
 
-            merge_incident_detail_fields(detail, mapped_fields)
-            incident.total_deaths = total_deaths
-            incident.total_injuries = total_injuries
+            root = extraction.casualties
+            merge_incident_detail_fields(
+                detail,
+                {
+                    **mapped_fields,
+                    "male_d": root.male_deaths,
+                    "male_i": root.male_injuries,
+                    "female_d": root.female_deaths,
+                    "female_i": root.female_injuries,
+                    "children_d": root.children_deaths,
+                    "children_i": root.children_injuries,
+                },
+            )
+            if incident.deaths in (None, 0) and root.deaths is not None:
+                incident.deaths = root.deaths
+            if incident.injuries in (None, 0) and root.injuries is not None:
+                incident.injuries = root.injuries
+            if incident.total_deaths in (None, 0) and total_deaths is not None:
+                incident.total_deaths = total_deaths
+            if incident.total_injuries in (None, 0) and total_injuries is not None:
+                incident.total_injuries = total_injuries
+            self._fill_missing_matches(
+                incident,
+                getattr(raw_message, "match_result", None),
+            )
             incident.khabar_embedding = embedding
             incident.details_pending = False
             self._apply_dedup_backstop(
@@ -145,6 +167,9 @@ class Tier2DetailFillService:
         # commit that flips details_pending to false above. Only reached when
         # at least one details_pending incident actually needed filling.
         raw_message.tier2_completed_at = datetime.now(timezone.utc)
+        raw_message.materialized_at = datetime.now(timezone.utc)
+        raw_message.status = MessageStatus.materialized
+        raw_message.error_message = None
         self.db.add(raw_message)
         self.db.commit()
         logger.info(
@@ -154,6 +179,32 @@ class Tier2DetailFillService:
             len(extraction.categories),
         )
         return updated
+
+    @staticmethod
+    def _fill_missing_matches(
+        incident: Incident,
+        match_result: dict | None,
+    ) -> None:
+        if not match_result:
+            return
+        if incident.condition_id is None:
+            condition_id = match_result.get("matched_condition_id")
+            if isinstance(condition_id, int):
+                incident.condition_id = condition_id
+        if incident.village_id is not None:
+            return
+        for village in match_result.get("village_matches") or []:
+            if village.get("village_role", "target") != "target":
+                continue
+            if village.get("village_match_status") not in {
+                "matched",
+                "matched_low_confidence",
+            }:
+                continue
+            village_id = village.get("matched_village_id")
+            if isinstance(village_id, int):
+                incident.village_id = village_id
+                return
 
     def _apply_dedup_backstop(
         self,

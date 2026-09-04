@@ -147,6 +147,14 @@ def process_pre_dedup_message(
     if msg.raw_text is None:
         return False
 
+    # Every workbook row is deliberately preserved as its own incident. It may
+    # still be enriched by the extraction pipeline, but pre-extraction dedup
+    # must never prevent that enrichment.
+    if (getattr(msg, "raw_payload", None) or {}).get("origin") == "incident_excel_import":
+        msg.dedup_checked_at = datetime.now(timezone.utc)
+        db.commit()
+        return False
+
     msg.dedup_checked_at = datetime.now(timezone.utc)
 
     best = find_pre_dedup_match(

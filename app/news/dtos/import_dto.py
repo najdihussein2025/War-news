@@ -13,5 +13,6 @@ class WorkbookImportSummaryDTO(BaseModel):
 
     processed: int = Field(ge=0)
     succeeded: int = Field(ge=0)
+    skipped: int = Field(default=0, ge=0)
     failed: int = Field(ge=0)
     row_errors: list[WorkbookImportRowErrorDTO]

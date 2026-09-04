@@ -2,7 +2,7 @@ from datetime import date
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.accounts.models import User
@@ -23,6 +23,7 @@ from app.news.dtos import (
 )
 from app.news.repositories import IncidentRepository
 from app.news.services import IncidentConflictError, IncidentNotFoundError, IncidentService, IncidentWorkbookService
+from app.news.services.imported_incident_enrichment import enrich_imported_incidents
 from app.sources.models import SourceType
 
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])
@@ -89,6 +90,7 @@ def verify_incident(
 
 @router.post("/import", response_model=WorkbookImportSummaryDTO)
 def import_incidents(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_super_admin),
@@ -100,10 +102,17 @@ def import_incidents(
         )
 
     try:
-        return IncidentWorkbookService(db).import_workbook(
+        workbook_service = IncidentWorkbookService(db)
+        summary = workbook_service.import_workbook(
             file.file,
             created_by=current_user.id,
         )
+        queued_ids = list(
+            getattr(workbook_service, "queued_raw_message_ids", [])
+        )
+        if queued_ids:
+            background_tasks.add_task(enrich_imported_incidents, queued_ids)
+        return summary
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

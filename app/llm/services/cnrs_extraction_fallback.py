@@ -3,7 +3,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from app.core.database import SessionLocal
-from app.llm.dtos import ExtractionResult
+from app.llm.dtos import (
+    ExtractionCasualties,
+    ExtractionCategory,
+    ExtractionCategoryKey,
+    ExtractionResult,
+)
 from app.llm.interfaces import ExtractionClassifierInterface
 from app.news.models import RawMessage
 
@@ -28,6 +33,23 @@ class CnrsExtractionFallback(ExtractionClassifierInterface):
     def extract(self, post_text: str, raw_message_id: int | None = None) -> ExtractionResult:
         structured = self._structured_result(raw_message_id)
         return structured or self.fallback.extract(post_text, raw_message_id)
+
+    def extract_tier2_details(
+        self,
+        *,
+        post_text: str,
+        presence_category_keys: list[ExtractionCategoryKey],
+        root_casualties: ExtractionCasualties,
+        raw_message_id: int | None = None,
+    ) -> dict[ExtractionCategoryKey, ExtractionCategory]:
+        """Tier 2 is always delegated to the full extraction classifier."""
+        method = getattr(self.fallback, "extract_tier2_details")
+        return method(
+            post_text=post_text,
+            presence_category_keys=presence_category_keys,
+            root_casualties=root_casualties,
+            raw_message_id=raw_message_id,
+        )
 
     @staticmethod
     def _structured_result(raw_message_id: int | None) -> ExtractionResult | None:

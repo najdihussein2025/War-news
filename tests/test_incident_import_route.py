@@ -52,6 +52,7 @@ def test_incident_import_endpoint_returns_summary(
     assert response.json() == {
         "processed": 2,
         "succeeded": 1,
+        "skipped": 0,
         "failed": 1,
         "row_errors": [{"row": 4, "error": "ValueError: bad row"}],
     }

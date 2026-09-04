@@ -13,6 +13,7 @@ from app.llm.services.ollama_auth_failures import coerce_ollama_auth_failure
 from app.news.models import MessageStatus
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
 from app.news.repositories.raw_message_repository import RawMessageRepository
+from app.news.services.condition_evidence_override import apply_condition_evidence_override
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,14 @@ def run_tier1_extraction_for_message(raw_message_id: int) -> None:
         result = classifier.extract_tier1(
             post_text=post_text,
             raw_message_id=raw_message_id,
+        )
+        result = result.model_copy(
+            update={
+                "action_description": apply_condition_evidence_override(
+                    post_text,
+                    result.action_description,
+                )
+            }
         )
     except Exception as exc:
         auth_failure = coerce_ollama_auth_failure(

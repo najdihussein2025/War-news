@@ -373,10 +373,11 @@ def _claim_pending_tier2_detail_fill_filtered(
         .join(RawMessage, RawMessage.id == Incident.raw_message_id)
         .where(
             RawMessage.id > cutoff_raw_message_id,
+            RawMessage.extraction_result.is_not(None),
             Incident.details_pending.is_(True),
             Incident.is_deleted.is_(False),
         )
-        .order_by(Incident.created_at.asc())
+        .order_by(Incident.created_at.desc())
         .limit(1)
         .with_for_update(skip_locked=True)
     )

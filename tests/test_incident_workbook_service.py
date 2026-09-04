@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from openpyxl import Workbook, load_workbook
 
-from app.news.models import Condition, Incident, IncidentDetail, Village
+from app.news.models import Condition, Incident, IncidentDetail, MessageStatus, RawMessage, Village
 from app.news.services.incident_workbook_service import IncidentWorkbookService
 from app.sources.models import Source, SourceType
 
@@ -36,6 +36,10 @@ class _FakeSession:
         return _ScalarResult(self._tables.get(entity, []))
 
     def add(self, obj):
+        if isinstance(obj, RawMessage) and obj.id is None:
+            obj.id = 900001 + len(
+                [item for item in self.added if isinstance(item, RawMessage)]
+            )
         if isinstance(obj, Incident) and obj.id is None:
             obj.id = uuid4()
         self.added.append(obj)
@@ -133,6 +137,7 @@ def test_import_workbook_maps_legacy_row_fields() -> None:
 
     incidents = [item for item in session.added if isinstance(item, Incident)]
     details = [item for item in session.added if isinstance(item, IncidentDetail)]
+    raw_messages = [item for item in session.added if isinstance(item, RawMessage)]
 
     assert summary.processed == 1
     assert summary.succeeded == 1
@@ -141,9 +146,23 @@ def test_import_workbook_maps_legacy_row_fields() -> None:
     assert session.commits == 1
     assert len(incidents) == 1
     assert len(details) == 1
+    assert len(raw_messages) == 1
 
     incident = incidents[0]
     detail = details[0]
+    raw_message = raw_messages[0]
+    assert incident.raw_message_id == raw_message.id
+    assert raw_message.status == MessageStatus.parsed
+    assert raw_message.raw_text == (
+        "Khabar: Workbook incident\n\n"
+        "NOTE: Primary note\n\n"
+        "MOH: MOH value\n\n"
+        "Martyrs: 1 martyr\n\n"
+        "Note: Secondary note\n\n"
+        "Note 2: Tertiary note"
+    )
+    assert raw_message.raw_payload["origin"] == "incident_excel_import"
+    assert incident.details_pending is True
     assert incident.village_id == 11
     assert incident.condition_id == 22
     assert incident.source_id == 33
@@ -191,6 +210,54 @@ def test_import_workbook_leaves_lookup_fields_null_when_unmatched() -> None:
     assert incident.village_id is None
     assert incident.condition_id is None
     assert incident.source_id is None
+
+
+def test_import_workbook_skips_existing_news_on_same_event_date() -> None:
+    headers = _legacy_headers()
+    row = [None] * len(headers)
+    _set_header_value(row, headers, "Khabar", "  Same   workbook news ")
+    _set_header_value(row, headers, "Date", date(2026, 8, 21))
+    existing = Incident(
+        event_date=date(2026, 8, 21),
+        khabar="Same workbook news",
+        is_deleted=False,
+    )
+    session = _FakeSession()
+    session._tables[Incident] = [existing]
+
+    summary = IncidentWorkbookService(session).import_workbook(_build_workbook(row))
+
+    assert summary.processed == 1
+    assert summary.succeeded == 0
+    assert summary.skipped == 1
+    assert summary.failed == 0
+    assert not any(isinstance(item, RawMessage) for item in session.added)
+
+
+def test_import_workbook_treats_zero_demographics_as_unknown() -> None:
+    headers = _legacy_headers()
+    row = [None] * len(headers)
+    _set_header_value(row, headers, "Khabar", "Casualty report")
+    _set_header_value(row, headers, "Date", date(2026, 8, 21))
+    for header in ("Male_D", "Male_I", "female_D", "female_I", "Children_D", "Children_I"):
+        _set_header_value(row, headers, header, 0)
+    session = _FakeSession()
+
+    summary = IncidentWorkbookService(session).import_workbook(_build_workbook(row))
+
+    detail = next(item for item in session.added if isinstance(item, IncidentDetail))
+    incident = next(item for item in session.added if isinstance(item, Incident))
+    assert summary.succeeded == 1
+    assert incident.total_deaths is None
+    assert incident.total_injuries is None
+    assert incident.deaths is None
+    assert incident.injuries is None
+    assert detail.male_d is None
+    assert detail.male_i is None
+    assert detail.female_d is None
+    assert detail.female_i is None
+    assert detail.children_d is None
+    assert detail.children_i is None
 
 
 def test_import_workbook_allows_missing_optional_legacy_columns() -> None:

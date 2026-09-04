@@ -15,9 +15,6 @@ const logTabs = [
   { label: "Ingestion", value: "ingestion" },
 ];
 
-// Pipeline health is a super-admin-only endpoint; only show the tab there.
-const pipelineTab = { label: "Pipeline", value: "pipeline" };
-
 const auditTextValue = (values: Record<string, unknown> | null, key: string) => {
   const value = values?.[key];
   return typeof value === "string" && value.trim() ? value.trim() : null;
@@ -323,7 +320,7 @@ export const LogsPage = () => {
   const location = useLocation();
   const isSuperAdmin = location.pathname.startsWith("/superadmin/");
   const logsBasePath = isSuperAdmin ? "/superadmin/logs" : "/admin/logs";
-const visibleTabs = logTabs;
+  const visibleTabs = logTabs;
   const activeTab = visibleTabs.find((tab) => tab.value === logType);
 
   if (!activeTab) {

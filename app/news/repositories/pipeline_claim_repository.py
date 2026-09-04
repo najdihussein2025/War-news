@@ -179,11 +179,13 @@ class PipelineClaimRepository:
     def claim_pending_tier2_detail_fill(self) -> Incident | None:
         return self.db.scalar(
             select(Incident)
+            .join(RawMessage, RawMessage.id == Incident.raw_message_id)
             .where(
                 Incident.details_pending.is_(True),
                 Incident.is_deleted.is_(False),
+                RawMessage.extraction_result.is_not(None),
             )
-            .order_by(Incident.created_at.asc())
+            .order_by(Incident.created_at.desc())
             .limit(1)
             .with_for_update(skip_locked=True)
         )

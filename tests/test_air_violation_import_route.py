@@ -51,6 +51,7 @@ def test_air_violation_import_endpoint_returns_summary(
     assert response.json() == {
         "processed": 1,
         "succeeded": 1,
+        "skipped": 0,
         "failed": 0,
         "row_errors": [],
     }

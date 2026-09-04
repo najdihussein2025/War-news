@@ -96,6 +96,8 @@ Schema الإخراج الوحيد المسموح:
   "casualty_transitions": []
 }
 
+قاعدة ربط الفئات الديموغرافية: عندما تأتي عبارة «من بينهم/من بين الجرحى» بعد عدد الجرحى مباشرة، انسب أعداد الأطفال والنساء والرجال التالية إلى injuries لا إلى deaths. الكلمات «سيدة/سيدات/امرأة/نساء» تعني female ويجب عدم تجاهل رقمها. مثال إلزامي: «4 شهداء و33 جريحا من بينهم 6 أطفال و4 سيدات» يعني deaths=4 وinjuries=33 وchildren_injuries=6 وfemale_injuries=4، مع إبقاء children_deaths وfemale_deaths null.
+
 لا تضف categories في هذا الإخراج."""
 
 GENERAL_EXTRACTION_RESPONSE_SCHEMA: JsonObject = {

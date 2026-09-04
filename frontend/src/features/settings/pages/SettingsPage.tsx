@@ -249,8 +249,8 @@ export const SettingsPage = () => {
       const label = kind === "incidents" ? "Incident import" : "Air violation import";
       const toastMessage =
         summary.failed > 0
-          ? `${label} finished: ${summary.succeeded} succeeded, ${summary.failed} failed.`
-          : `${label} completed successfully: ${summary.succeeded} rows imported.`;
+          ? `${label} finished: ${summary.succeeded} imported, ${summary.skipped} duplicates skipped, ${summary.failed} failed.`
+          : `${label} completed: ${summary.succeeded} imported, ${summary.skipped} duplicates skipped.`;
       shell?.showToast(
         toastMessage,
       );
@@ -361,7 +361,7 @@ export const SettingsPage = () => {
             <ImportPanel
               id="settings-import-incidents"
               label="Import incidents"
-              description="Bulk-create incident records from the legacy workbook without duplicate checks."
+              description="Create every incident row, then automatically extract missing details from the news text."
               buttonLabel="Import incidents"
               state={incidentImport}
               onChange={handleFileChange("incidents")}
