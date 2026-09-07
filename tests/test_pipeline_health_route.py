@@ -10,7 +10,7 @@ import app.api.pipeline_router as pipeline_router_module
 from app.api.deps import require_super_admin
 from app.core.database import get_db
 from app.main import app
-from app.news.services.pipeline_health_service import (
+from app.news.services.pipeline.pipeline_health_service import (
     CursorGap,
     LatencyCohort,
     LatencySummary,

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 from app.core.config import settings
-from app.news.services.pipeline_health_service import PipelineHealthService
+from app.news.services.pipeline.pipeline_health_service import PipelineHealthService
 
 _STAGE_ORDER = [
     "relevance_filter",

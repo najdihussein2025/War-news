@@ -465,7 +465,7 @@ def test_sweep_clustering_partial_subsumption() -> None:
     matches the representative → the incident for village A is soft-deleted;
     the incident for village B is left alone; duplicate_of_id is NOT set.
     """
-    from app.news.services.pipeline_sweep_stages import sweep_clustering  # noqa: F401
+    from app.news.services.pipeline.pipeline_sweep_stages import sweep_clustering  # noqa: F401
     # We test the logic directly through village_ids_from_match_result and the
     # intersection calculation — no DB session needed for the unit test.
 

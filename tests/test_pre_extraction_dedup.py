@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 
 from app.news.models import MessageStatus
 from app.news.services.dedup.pre_extraction_dedup import find_pre_dedup_match
-from app.news.services.pipeline_sweep_stages import sweep_pre_extraction_dedup
+from app.news.services.pipeline.pipeline_sweep_stages import sweep_pre_extraction_dedup
 
 
 # ---------------------------------------------------------------------------

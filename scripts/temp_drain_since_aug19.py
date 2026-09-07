@@ -22,14 +22,14 @@ from app.news.services.dedup.fast_path_eligibility import (
     fast_path_materializable_clause,
     permanent_ineligibility_reason,
 )
-from app.news.services.pipeline_concurrent_sweeps import (
+from app.news.services.pipeline.pipeline_concurrent_sweeps import (
     sweep_extraction_concurrent,
     sweep_fast_path_concurrent,
     sweep_matching_concurrent,
     sweep_pre_dedup_concurrent,
     sweep_tier2_detail_fill_concurrent,
 )
-from app.news.services.pipeline_sweep_stages import (
+from app.news.services.pipeline.pipeline_sweep_stages import (
     sweep_clustering,
     sweep_embedding_generation,
     sweep_materialization,

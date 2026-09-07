@@ -12,7 +12,7 @@ import app.accounts.models  # noqa: F401
 import app.logs.models  # noqa: F401
 import app.sources.models  # noqa: F401
 from app.core.database import SessionLocal
-from app.news.services.pipeline_sweep_stages import sweep_matching
+from app.news.services.pipeline.pipeline_sweep_stages import sweep_matching
 
 
 def _parse_args() -> argparse.Namespace:

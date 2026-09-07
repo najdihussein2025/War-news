@@ -1,7 +1,7 @@
 from sqlalchemy import text
 
 from app.core.database import SessionLocal
-from app.news.services.pipeline_jobs import (
+from app.news.services.pipeline.pipeline_jobs import (
     enqueue_pipeline_sweep,
     ensure_pipeline_jobs_table,
     reclaim_orphaned_pipeline_sweep_jobs,

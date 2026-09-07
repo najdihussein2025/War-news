@@ -32,7 +32,7 @@ from app.news.services.materialization.incident_materialization_service import (
     IncidentMaterializationService,
 )
 from app.llm.services.transient_llm_errors import ExtractionRetryCappedError
-from app.news.services.pipeline_llm_workers import (
+from app.news.services.pipeline.pipeline_llm_workers import (
     run_tier1_extraction_for_message,
     run_tier2_detail_fill_for_message,
 )

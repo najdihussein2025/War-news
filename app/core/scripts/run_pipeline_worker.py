@@ -6,16 +6,16 @@ import time
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.logging_config import configure_logging
-from app.news.services.pipeline_advisory_lock import (
+from app.news.services.pipeline.pipeline_advisory_lock import (
     PIPELINE_WORKER_APPLICATION_NAME,
     reclaim_stale_pipeline_advisory_locks,
 )
-from app.news.services.pipeline_jobs import (
+from app.news.services.pipeline.pipeline_jobs import (
     claim_next_pipeline_sweep_job,
     finish_pipeline_sweep_job,
     reclaim_orphaned_pipeline_sweep_jobs,
 )
-from app.news.services.pipeline_orchestrator import drain_pipeline_sweeps_sync
+from app.news.services.pipeline.pipeline_orchestrator import drain_pipeline_sweeps_sync
 
 logger = logging.getLogger(__name__)
 

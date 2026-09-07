@@ -11,8 +11,8 @@ from app.news.dtos.pipeline_dto import (
     PipelineHealthResponse,
     StageQueueDepthResponse,
 )
-from app.news.services.pipeline_health_service import PipelineHealthService
-from app.news.services.pipeline_jobs import enqueue_pipeline_sweep
+from app.news.services.pipeline.pipeline_health_service import PipelineHealthService
+from app.news.services.pipeline.pipeline_jobs import enqueue_pipeline_sweep
 
 router = APIRouter(prefix="/api/pipeline", tags=["pipeline"])
 

@@ -19,7 +19,7 @@ def test_configure_logging_routes_info_to_stdout(monkeypatch) -> None:
 
     try:
         configure_logging()
-        logging.getLogger("app.news.services.pipeline_orchestrator").info(
+        logging.getLogger("app.news.services.pipeline.pipeline_orchestrator").info(
             "Pipeline sweep triggered max_rows=%s",
             1,
         )
@@ -33,4 +33,4 @@ def test_configure_logging_routes_info_to_stdout(monkeypatch) -> None:
         logging_config._CONFIGURED = False
 
     assert "Pipeline sweep triggered max_rows=1" in output
-    assert "app.news.services.pipeline_orchestrator" in output
+    assert "app.news.services.pipeline.pipeline_orchestrator" in output

@@ -20,7 +20,7 @@ import logging
 from app.core.database import SessionLocal
 from app.core.logging_config import configure_logging
 from app.news.dtos.pipeline_dto import StageSweepResult
-from app.news.services.pipeline_sweep_stages import sweep_relevance_filter
+from app.news.services.pipeline.pipeline_sweep_stages import sweep_relevance_filter
 
 logger = logging.getLogger(__name__)
 

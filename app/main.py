@@ -54,7 +54,7 @@ async def startup() -> None:
     db = SessionLocal()
     try:
         ensure_super_admin(db)
-        from app.news.services.pipeline_advisory_lock import (
+        from app.news.services.pipeline.pipeline_advisory_lock import (
             reclaim_stale_pipeline_advisory_locks,
         )
 

@@ -14,7 +14,7 @@ import app.logs.models  # noqa: F401
 import app.sources.models  # noqa: F401
 from app.core.database import SessionLocal
 from app.llm.dtos import ExtractPendingMessagesData
-from app.news.services.pipeline_sweep_stages import sweep_embedding_generation
+from app.news.services.pipeline.pipeline_sweep_stages import sweep_embedding_generation
 
 DEFAULT_BATCH_SIZE = ExtractPendingMessagesData().batch_size
 

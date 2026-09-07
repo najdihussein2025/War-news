@@ -30,7 +30,7 @@ from app.news.services.dedup.fast_path_dedup import (
     FastPathDedupOutcome,
     FastPathDedupService,
 )
-from app.news.services.pipeline_advisory_lock import acquire_fast_path_village_lock
+from app.news.services.pipeline.pipeline_advisory_lock import acquire_fast_path_village_lock
 from app.news.services.dedup.fast_path_eligibility import (
     ELIGIBLE_MATCH_STATUSES,
     ERROR_AIR_VIOLATION,

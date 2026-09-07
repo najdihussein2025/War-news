@@ -1,4 +1,4 @@
-from app.news.services.pipeline_advisory_lock import (
+from app.news.services.pipeline.pipeline_advisory_lock import (
     AdvisoryLockHolder,
     is_stale_pipeline_lock_holder,
 )

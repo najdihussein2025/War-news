@@ -9,8 +9,8 @@ from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.logging_config import configure_logging
 from app.news.dtos.pipeline_dto import PipelineSweepResult, StageSweepResult
-from app.news.services.pipeline_jobs import enqueue_pipeline_sweep
-from app.news.services.pipeline_orchestrator import (
+from app.news.services.pipeline.pipeline_jobs import enqueue_pipeline_sweep
+from app.news.services.pipeline.pipeline_orchestrator import (
     pipeline_pass_is_idle,
     run_full_pipeline_sweep,
 )

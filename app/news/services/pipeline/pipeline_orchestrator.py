@@ -15,21 +15,21 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.news.dtos.pipeline_dto import PipelineSweepResult, StageSweepResult
-from app.news.services.pipeline_advisory_lock import PIPELINE_SWEEP_ADVISORY_LOCK_KEY
-from app.news.services.pipeline_concurrent_sweeps import (
+from app.news.services.pipeline.pipeline_advisory_lock import PIPELINE_SWEEP_ADVISORY_LOCK_KEY
+from app.news.services.pipeline.pipeline_concurrent_sweeps import (
     sweep_extraction_concurrent,
     sweep_fast_path_concurrent,
     sweep_matching_concurrent,
     sweep_pre_dedup_concurrent,
     sweep_tier2_detail_fill_concurrent,
 )
-from app.news.services.pipeline_sweep_stages import (
+from app.news.services.pipeline.pipeline_sweep_stages import (
     sweep_clustering,
     sweep_embedding_generation,
     sweep_materialization,
     sweep_relevance_filter,
 )
-from app.news.services.pipeline_stage_run_service import record_stage_run
+from app.news.services.pipeline.pipeline_stage_run_service import record_stage_run
 
 logger = logging.getLogger(__name__)
 

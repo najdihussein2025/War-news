@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 
 from app.news.models import MessageStatus, RawMessage
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
-from app.news.services.pipeline_concurrent_sweeps import _WorkerStats
+from app.news.services.pipeline.pipeline_concurrent_sweeps import _WorkerStats
 
 
 def test_pre_dedup_claim_excludes_already_checked_messages() -> None:

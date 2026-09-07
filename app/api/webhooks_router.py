@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.sources.actions import ReceiveCnrsWebhookAction
 from app.core.database import get_db
-from app.news.services.pipeline_jobs import enqueue_pipeline_sweep
+from app.news.services.pipeline.pipeline_jobs import enqueue_pipeline_sweep
 from app.news.dtos import AirViolationCreateDTO, AirViolationDTO
 from app.news.repositories import AirViolationRepository
 from app.news.services import AirViolationService

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from app.news.dtos.pipeline_dto import StageSweepResult
-from app.news.services import pipeline_orchestrator as orchestrator
+from app.news.services.pipeline import pipeline_orchestrator as orchestrator
 
 
 def _ok(stage: str, *, failed: int = 0) -> StageSweepResult:
