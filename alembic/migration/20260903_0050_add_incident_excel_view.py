@@ -6,7 +6,7 @@ Revises: 20260903_0049
 
 from alembic import op
 
-from app.news.services.incident_workbook_service import (
+from app.news.services.incidents.incident_workbook_service import (
     INCIDENT_DETAIL_FIELD_MAP,
     INCIDENT_FIELD_MAP,
     INCIDENT_INT_FIELD_MAP,
