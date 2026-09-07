@@ -1,0 +1,50 @@
+[
+  {
+    "name_ar": "الدفاع المدني اللبناني",
+    "name_en": "Lebanese Civil Defense",
+    "org_type": "civil_defense",
+    "aliases": []
+  },
+  {
+    "name_ar": "الصليب الأحمر اللبناني",
+    "name_en": "Lebanese Red Cross",
+    "org_type": "health",
+    "aliases": []
+  },
+  {
+    "name_ar": "مركز عمليات طوارئ الصحة العامة",
+    "name_en": "Public Health Emergency Operations Center",
+    "org_type": "health",
+    "aliases": []
+  },
+  {
+    "name_ar": "الهيئة الصحية الإسلامية",
+    "name_en": "Islamic Health Society",
+    "org_type": "health",
+    "aliases": []
+  },
+  {
+    "name_ar": "كشافة الرسالة الإسلامية",
+    "name_en": "Islamic Message Scouts",
+    "org_type": "scout_paramedic",
+    "aliases": []
+  },
+  {
+    "name_ar": "جمعية الرسالة للإسعاف الصحي",
+    "name_en": "Al-Risala Health Ambulance Association",
+    "org_type": "scout_paramedic",
+    "aliases": []
+  },
+  {
+    "name_ar": "فرقة إسعاف غير محددة",
+    "name_en": "Unspecified Emergency Unit",
+    "org_type": "generic",
+    "aliases": [
+      "فرق الإسعاف",
+      "سيارة إسعاف",
+      "سيارات إسعاف",
+      "فرق الإنقاذ",
+      "مسعفون"
+    ]
+  }
+]

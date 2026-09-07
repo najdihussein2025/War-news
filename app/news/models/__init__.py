@@ -3,6 +3,7 @@ from app.news.models.air_violation import AirViolation
 from app.news.models.channel_trust_tier import ChannelTrustTier, TrustTier
 from app.news.models.condition import Condition
 from app.news.models.duplicate_match import DuplicateMatch, MatchStatus, MatchType
+from app.news.models.emergency_organization import EmergencyOrganization
 from app.news.models.incident import Incident
 from app.news.models.incident_detail import DidValue, IncidentDetail
 from app.news.models.incident_update import IncidentUpdate, UpdateAction
@@ -17,6 +18,7 @@ __all__ = [
     "Condition",
     "DidValue",
     "DuplicateMatch",
+    "EmergencyOrganization",
     "Incident",
     "IncidentDetail",
     "IncidentUpdate",
