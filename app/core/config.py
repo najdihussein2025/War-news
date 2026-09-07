@@ -71,6 +71,10 @@ class Settings(BaseSettings):
     cluster_require_condition_match: bool = True
     # Hard cap on clustering candidate rows per pass (memory/CPU safety).
     clustering_max_rows_per_pass: int = 100
+    # Pre-extraction raw_text word_similarity gate. Kept at 0.92 after the
+    # 2026-09-07 reassessment (Docs/recon/pre-dedup-threshold-reassessment.md):
+    # lowering toward 0.85 recovers almost no Nabatiyeh true pairs while
+    # colliding with many different-condition bulletin templates.
     pre_dedup_similarity_threshold: float = 0.92
     # Look-back window for pre-extraction dedup comparisons (hours).
     pre_dedup_window_hours: int = 48
