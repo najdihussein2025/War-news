@@ -4,7 +4,7 @@ from app.news.services.air_violations.air_violation_service import (
     AirViolationService,
 )
 from app.news.services.air_violations.air_violation_workbook_service import AirViolationWorkbookService
-from app.news.services.condition_resolution_service import ConditionResolutionService
+from app.news.services.matching.condition_resolution_service import ConditionResolutionService
 from app.news.services.dedup_matching_service import (
     DEDUP_HIGH_THRESHOLD,
     DEDUP_LOW_THRESHOLD,
@@ -16,9 +16,9 @@ from app.news.services.incidents.incident_service import (
     IncidentService,
 )
 from app.news.services.incidents.incident_workbook_service import IncidentWorkbookService
-from app.news.services.matching_service import MatchingService
+from app.news.services.matching.matching_service import MatchingService
 from app.news.services.air_violations.red_alert_air_violation_service import RedAlertAirViolationService
-from app.news.services.village_matching_service import VillageMatchingService
+from app.news.services.matching.village_matching_service import VillageMatchingService
 
 __all__ = [
     "AirViolationNotFoundError",

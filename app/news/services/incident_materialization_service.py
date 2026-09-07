@@ -22,7 +22,7 @@ from app.news.repositories.emergency_organization_repository import (
     EmergencyOrganizationRepository,
 )
 from app.news.services.category_mapper import compute_rollups, map_categories
-from app.news.services.emergency_organization_matching_service import (
+from app.news.services.matching.emergency_organization_matching_service import (
     EmergencyOrganizationMatchingService,
 )
 from app.news.services.fast_path_dedup import (

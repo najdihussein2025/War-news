@@ -59,7 +59,7 @@ from app.news.dtos import MatchResultStatus
 from app.news.models import Incident, RawMessage
 from app.news.repositories.condition_repository import ConditionRepository
 from app.news.repositories.village_repository import VillageRepository
-from app.news.services.matching_service import (
+from app.news.services.matching.matching_service import (
     LOW_CONFIDENCE_THRESHOLD,
     MATCH_THRESHOLD,
     MatchingService,

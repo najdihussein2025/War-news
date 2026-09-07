@@ -15,7 +15,7 @@ from dataclasses import dataclass
 
 from app.core.text_normalization import normalize_arabic_text
 from app.news.interfaces import EmergencyOrganizationRepositoryInterface
-from app.news.services.matching_service import (
+from app.news.services.matching.matching_service import (
     LOW_CONFIDENCE_THRESHOLD,
     MATCH_THRESHOLD,
 )

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.text_normalization import normalize_arabic_sql
 from app.news.interfaces import ConditionRepositoryInterface
 from app.news.models import Condition
-from app.news.services.condition_aliases import CONDITION_ALIASES
+from app.news.services.matching.condition_aliases import CONDITION_ALIASES
 
 
 class ConditionRepository(ConditionRepositoryInterface):

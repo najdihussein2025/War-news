@@ -10,7 +10,7 @@ from app.news.dtos import (
     MatchResultStatus,
 )
 from app.news.dtos.match_result_dto import VillageMatchResult
-from app.news.services.matching_service import MatchingService
+from app.news.services.matching.matching_service import MatchingService
 
 
 class _SimilarRepositoryStub:

@@ -18,7 +18,7 @@ from app.llm.dtos import ExtractionResult
 from app.news.dtos import MatchResultStatus
 from app.news.models import Condition
 from app.news.repositories.condition_repository import ConditionRepository
-from app.news.services.condition_aliases import CONDITION_ALIASES
+from app.news.services.matching.condition_aliases import CONDITION_ALIASES
 
 
 class _ResultStub:
@@ -130,7 +130,7 @@ def test_generic_strike_does_not_match_warning_or_feigned_with_real_repository()
     from sqlalchemy import create_engine
 
     from app.news.repositories.village_repository import VillageRepository
-    from app.news.services.matching_service import MatchingService
+    from app.news.services.matching.matching_service import MatchingService
 
     def _extraction(action: str) -> ExtractionResult:
         return ExtractionResult(

@@ -10,7 +10,7 @@ from app.llm.dtos.extraction_dto import (
     ExtractionVehicleDetails,
 )
 from app.news.services.category_mapper import compute_rollups, map_categories
-from app.news.services.emergency_organization_matching_service import (
+from app.news.services.matching.emergency_organization_matching_service import (
     EmergencyOrganizationMatch,
 )
 

@@ -136,7 +136,7 @@ def build_match_incident_action(db: Session) -> MatchIncidentAction:
         RawMessageRepository,
         VillageRepository,
     )
-    from app.news.services.matching_service import MatchingService
+    from app.news.services.matching.matching_service import MatchingService
 
     return MatchIncidentAction(
         raw_messages=RawMessageRepository(db),

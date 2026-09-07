@@ -1,4 +1,4 @@
-from app.news.services.condition_evidence_override import apply_condition_evidence_override
+from app.news.services.matching.condition_evidence_override import apply_condition_evidence_override
 
 
 def test_tank_firing_at_village_overrides_artillery() -> None:

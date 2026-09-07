@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from app.news.services.emergency_organization_matching_service import (
+from app.news.services.matching.emergency_organization_matching_service import (
     EmergencyOrganizationMatchingService,
 )
-from app.news.services.matching_service import (
+from app.news.services.matching.matching_service import (
     LOW_CONFIDENCE_THRESHOLD,
     MATCH_THRESHOLD,
 )
