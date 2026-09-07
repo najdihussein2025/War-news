@@ -1,0 +1,44 @@
+{
+  "note": "Curated approve/reject from 2026-09-07 review. Threshold discovery is NOT used for apply.",
+  "clusters": [
+    {
+      "label": "cluster1_meiss_intrusion",
+      "canonical": "9f0155ed-e1cc-4ba0-b0aa-a40631f874b4",
+      "merge": [
+        "68dc1ca3-a246-40f1-af10-c59b95b1d3fd",
+        "aacab09b-d1a2-40dc-aea8-350f1d13d4c3"
+      ]
+    },
+    {
+      "label": "cluster6_nabatiyeh_faouka_surround",
+      "canonical": "b6908725-2d7e-43ee-ac4b-7691e37551ec",
+      "merge": [
+        "569fe615-fb85-4624-a2df-6e8a92d23b37"
+      ]
+    },
+    {
+      "label": "nabatiyeh_maslakh",
+      "canonical": "214c9af1-cb2a-4066-a0b4-a5a04271ead8",
+      "merge": [
+        "df0ac8a4-3833-4a53-9ad1-3e1bdadbb603",
+        "a52a7c49-01b4-4f89-a672-0c86c00865bc",
+        "93090c1b-182e-4f59-905e-ce85c530b5cd",
+        "790fa101-c8ed-4e92-b319-a9a7797d838f",
+        "106cc49e-83c1-4d66-965a-bb6b85bca366",
+        "63535728-4c45-4c8c-bf1d-02bf3407ab87",
+        "761441c8-6a80-4bd1-b46e-a156198da670",
+        "62b1abb1-f7c5-44e6-899e-0a4213208602",
+        "110c4546-fbfc-4d0a-b2df-4f07644eda39",
+        "79029a13-23b1-4ed9-9a70-1b56d69113f0"
+      ],
+      "village_id": 1152,
+      "village_note": "Nabatieh Et-Tahta — forced; none of the fan-out rows had the correct seat"
+    }
+  ],
+  "excluded": [
+    {
+      "id": "315feba1-f240-4492-baa8-6cd2ef5eabff",
+      "reason": "rm=8564 El-Faouka compound report — leave for manual review"
+    }
+  ]
+}
