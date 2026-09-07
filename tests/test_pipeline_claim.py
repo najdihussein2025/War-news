@@ -8,6 +8,7 @@ from unittest.mock import MagicMock
 
 from app.news.models import MessageStatus, RawMessage
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
+from app.news.services.pipeline_concurrent_sweeps import _WorkerStats
 
 
 def test_pre_dedup_claim_excludes_already_checked_messages() -> None:
@@ -193,3 +194,14 @@ def test_claim_pending_fast_path_query_requires_materializable_match() -> None:
         )
     )
     assert "SKIP LOCKED" in compiled.upper()
+
+
+def test_worker_stats_reserves_slots_without_overshooting_cap() -> None:
+    stats = _WorkerStats()
+
+    assert stats.reserve_slot(2) is True
+    assert stats.reserve_slot(2) is True
+    assert stats.reserve_slot(2) is False
+
+    stats.release_reserved_slot()
+    assert stats.reserve_slot(2) is True

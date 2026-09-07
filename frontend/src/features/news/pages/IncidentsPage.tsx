@@ -18,7 +18,7 @@ import { formatDate } from "../../../lib/formatters";
 import { getBeirutDate } from "../../../lib/localDate";
 import { roleBaseFromPath } from "../../../lib/rolePath";
 import { ConditionSelect } from "../components/ConditionSelect";
-import { useConditionsQuery, useIncidentsQuery, useVillagesQuery } from "../hooks";
+import { useConditionsQuery, useIncidentStream, useIncidentsQuery, useVillagesQuery } from "../hooks";
 import { createIncident, reviewIncident } from "../api";
 import type { Incident } from "../types";
 
@@ -119,6 +119,7 @@ export const IncidentsPage = () => {
 
   const { data, isLoading, isError, isFetching, refetch } =
     useIncidentsQuery(filters);
+  const { isReconnecting } = useIncidentStream(filters);
   const {
     data: conditions = [],
     isLoading: isConditionsLoading,
@@ -303,7 +304,11 @@ export const IncidentsPage = () => {
               Incidents
             </h1>
           </div>
-          {isFetching ? (
+          {isReconnecting ? (
+            <p className="text-small text-warning">
+              Live feed reconnecting...
+            </p>
+          ) : isFetching ? (
             <p className="text-small text-text-muted">
               Refreshing incident feed...
             </p>

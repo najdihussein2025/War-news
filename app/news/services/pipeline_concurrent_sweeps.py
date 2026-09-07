@@ -50,6 +50,7 @@ def _format_exception(exc: BaseException) -> str:
 
 @dataclass
 class _WorkerStats:
+    claimed: int = 0
     processed: int = 0
     succeeded: int = 0
     failed: int = 0
@@ -79,11 +80,19 @@ class _WorkerStats:
             self.failed += 1
             self.capped += 1
 
-    def should_stop(self, max_rows: int | None) -> bool:
+    def reserve_slot(self, max_rows: int | None) -> bool:
         if max_rows is None:
-            return False
+            return True
         with self.lock:
-            return self.processed >= max_rows
+            if self.claimed >= max_rows:
+                return False
+            self.claimed += 1
+            return True
+
+    def release_reserved_slot(self) -> None:
+        with self.lock:
+            if self.claimed > self.processed:
+                self.claimed -= 1
 
 
 @dataclass
@@ -219,7 +228,7 @@ async def _pre_dedup_worker(
 ) -> None:
     threshold = settings.pre_dedup_similarity_threshold
     while True:
-        if stats.should_stop(max_rows):
+        if not stats.reserve_slot(max_rows):
             return
 
         raw_message_id = await asyncio.to_thread(
@@ -227,6 +236,7 @@ async def _pre_dedup_worker(
             lambda db: PipelineClaimRepository(db).claim_pending_pre_dedup(),
         )
         if raw_message_id is None:
+            stats.release_reserved_slot()
             return
 
         with SessionLocal() as db:
@@ -287,7 +297,7 @@ async def _tier1_extraction_worker(
     while True:
         if abort_state.triggered():
             return
-        if stats.should_stop(max_rows):
+        if not stats.reserve_slot(max_rows):
             return
 
         raw_message_id = await asyncio.to_thread(
@@ -295,6 +305,7 @@ async def _tier1_extraction_worker(
             lambda db: PipelineClaimRepository(db).claim_pending_extraction(),
         )
         if raw_message_id is None:
+            stats.release_reserved_slot()
             return
         if abort_state.triggered():
             await asyncio.to_thread(_release_raw_message_claim, raw_message_id)
@@ -392,7 +403,7 @@ async def _matching_worker(
     max_rows: int | None,
 ) -> None:
     while True:
-        if stats.should_stop(max_rows):
+        if not stats.reserve_slot(max_rows):
             return
 
         raw_message_id = await asyncio.to_thread(
@@ -400,6 +411,7 @@ async def _matching_worker(
             lambda db: PipelineClaimRepository(db).claim_pending_match(),
         )
         if raw_message_id is None:
+            stats.release_reserved_slot()
             return
 
         with SessionLocal() as db:
@@ -470,7 +482,7 @@ async def _fast_path_worker(
     max_rows: int | None,
 ) -> None:
     while True:
-        if stats.should_stop(max_rows):
+        if not stats.reserve_slot(max_rows):
             return
 
         raw_message_id = await asyncio.to_thread(
@@ -478,6 +490,7 @@ async def _fast_path_worker(
             lambda db: PipelineClaimRepository(db).claim_pending_fast_path(),
         )
         if raw_message_id is None:
+            stats.release_reserved_slot()
             return
 
         with SessionLocal() as db:
@@ -561,11 +574,12 @@ async def _tier2_detail_fill_worker(
     while True:
         if abort_state.triggered():
             return
-        if stats.should_stop(max_rows):
+        if not stats.reserve_slot(max_rows):
             return
 
         claimed = await asyncio.to_thread(_claim_tier2_work)
         if claimed is None:
+            stats.release_reserved_slot()
             return
 
         incident_id, raw_message_id = claimed

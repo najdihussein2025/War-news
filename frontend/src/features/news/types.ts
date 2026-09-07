@@ -44,6 +44,11 @@ export type IncidentListResponse = {
   duplicate_count: number;
 };
 
+export type IncidentStreamEvent = Incident & {
+  village_id: number | null;
+  condition_id: number | null;
+};
+
 export type IncidentFilters = {
   limit: number;
   cursor?: string;

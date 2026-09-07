@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+from app.llm.dtos import ExtractionCasualties, ExtractionCategoryKey
 from app.llm.services.cnrs_extraction_fallback import CnrsExtractionFallback
 
 
@@ -52,3 +53,25 @@ def test_unsupported_cnrs_subtype_does_not_block_on_ollama(monkeypatch) -> None:
 
     assert result.is_relevant is False
     ollama.extract_tier1.assert_not_called()
+
+
+def test_tier2_details_delegate_to_wrapped_extractor() -> None:
+    ollama = MagicMock()
+    ollama.extract_tier2_details.return_value = {
+        ExtractionCategoryKey.vehicles: MagicMock()
+    }
+
+    result = CnrsExtractionFallback(ollama).extract_tier2_details(
+        post_text="text",
+        presence_category_keys=[ExtractionCategoryKey.vehicles],
+        root_casualties=ExtractionCasualties(),
+        raw_message_id=42,
+    )
+
+    assert result == ollama.extract_tier2_details.return_value
+    ollama.extract_tier2_details.assert_called_once_with(
+        post_text="text",
+        presence_category_keys=[ExtractionCategoryKey.vehicles],
+        root_casualties=ExtractionCasualties(),
+        raw_message_id=42,
+    )

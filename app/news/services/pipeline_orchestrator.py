@@ -12,6 +12,7 @@ import app.sources.models  # noqa: F401
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import SessionLocal
 from app.news.dtos.pipeline_dto import PipelineSweepResult, StageSweepResult
 from app.news.services.pipeline_advisory_lock import PIPELINE_SWEEP_ADVISORY_LOCK_KEY
@@ -33,6 +34,14 @@ from app.news.services.pipeline_stage_run_service import record_stage_run
 logger = logging.getLogger(__name__)
 
 # Advisory lock for manual/ops-triggered sweeps only (CLI and dedicated worker).
+
+
+def _stage_max_rows(requested_max_rows: int | None, *, llm_backed: bool = False) -> int | None:
+    if requested_max_rows is not None:
+        return requested_max_rows
+    if llm_backed:
+        return settings.pipeline_llm_stage_max_rows_per_pass
+    return settings.pipeline_stage_max_rows_per_pass
 
 
 def _try_acquire_pipeline_lock(db: Session) -> bool:
@@ -211,7 +220,7 @@ async def run_full_pipeline_sweep(
                 await _run_isolated_stage(
                     stage_name="relevance_filter",
                     runner=lambda: sweep_relevance_filter(
-                        sweep_db, max_rows=max_rows
+                        sweep_db, max_rows=_stage_max_rows(max_rows)
                     ),
                     record=_record_stage,
                 )
@@ -229,23 +238,16 @@ async def run_full_pipeline_sweep(
 
             await _run_isolated_stage(
                 stage_name="pre_extraction_dedup",
-                runner=lambda: sweep_pre_dedup_concurrent(max_rows=max_rows),
+                runner=lambda: sweep_pre_dedup_concurrent(
+                    max_rows=_stage_max_rows(max_rows)
+                ),
                 record=_record_stage,
             )
-            embed_db = SessionLocal()
-            try:
-                await _run_isolated_stage(
-                    stage_name="embedding",
-                    runner=lambda: sweep_embedding_generation(
-                        embed_db, max_rows=max_rows
-                    ),
-                    record=_record_stage,
-                )
-            finally:
-                embed_db.close()
             await _run_isolated_stage(
                 stage_name="tier1_extraction",
-                runner=lambda: sweep_extraction_concurrent(max_rows=max_rows),
+                runner=lambda: sweep_extraction_concurrent(
+                    max_rows=_stage_max_rows(max_rows, llm_backed=True)
+                ),
                 record=_record_stage,
             )
             if stages and stages[-1].aborted:
@@ -259,17 +261,23 @@ async def run_full_pipeline_sweep(
                 )
             await _run_isolated_stage(
                 stage_name="matching",
-                runner=lambda: sweep_matching_concurrent(max_rows=max_rows),
+                runner=lambda: sweep_matching_concurrent(
+                    max_rows=_stage_max_rows(max_rows)
+                ),
                 record=_record_stage,
             )
             await _run_isolated_stage(
                 stage_name="fast_path",
-                runner=lambda: sweep_fast_path_concurrent(max_rows=max_rows),
+                runner=lambda: sweep_fast_path_concurrent(
+                    max_rows=_stage_max_rows(max_rows)
+                ),
                 record=_record_stage,
             )
             await _run_isolated_stage(
                 stage_name="tier2_detail_fill",
-                runner=lambda: sweep_tier2_detail_fill_concurrent(max_rows=max_rows),
+                runner=lambda: sweep_tier2_detail_fill_concurrent(
+                    max_rows=_stage_max_rows(max_rows, llm_backed=True)
+                ),
                 record=_record_stage,
             )
             if stages and stages[-1].aborted:
@@ -282,6 +290,18 @@ async def run_full_pipeline_sweep(
                     partial_failure=True,
                 )
 
+            embed_db = SessionLocal()
+            try:
+                await _run_isolated_stage(
+                    stage_name="embedding",
+                    runner=lambda: sweep_embedding_generation(
+                        embed_db, max_rows=_stage_max_rows(max_rows)
+                    ),
+                    record=_record_stage,
+                )
+            finally:
+                embed_db.close()
+
             for stage_name, sweep_fn in (
                 ("clustering", sweep_clustering),
                 ("materialization", sweep_materialization),
@@ -291,7 +311,7 @@ async def run_full_pipeline_sweep(
                     await _run_isolated_stage(
                         stage_name=stage_name,
                         runner=lambda sweep_fn=sweep_fn, post_db=post_db: sweep_fn(
-                            post_db, max_rows=max_rows
+                            post_db, max_rows=_stage_max_rows(max_rows)
                         ),
                         record=_record_stage,
                     )

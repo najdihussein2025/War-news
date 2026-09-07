@@ -2,7 +2,10 @@ from datetime import date
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
+import asyncio
+
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, Request, UploadFile, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.accounts.models import User
@@ -23,6 +26,7 @@ from app.news.dtos import (
 )
 from app.news.repositories import IncidentRepository
 from app.news.services import IncidentConflictError, IncidentNotFoundError, IncidentService, IncidentWorkbookService
+from app.news.services.incident_event_stream import incident_event_stream
 from app.news.services.imported_incident_enrichment import enrich_imported_incidents
 from app.sources.models import SourceType
 
@@ -71,6 +75,33 @@ def list_incidents(
         sort_order=sort_order,
     )
     return IncidentService(IncidentRepository(db)).list_all(params)
+
+
+@router.get("/stream")
+async def stream_incidents(
+    request: Request,
+    current_user: User = Depends(require_admin),
+) -> StreamingResponse:
+    queue = await incident_event_stream.subscribe()
+
+    async def event_generator():
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
+                try:
+                    payload = await asyncio.wait_for(queue.get(), timeout=15)
+                    yield f"data: {payload}\n\n"
+                except asyncio.TimeoutError:
+                    yield ": keep-alive\n\n"
+        finally:
+            await incident_event_stream.unsubscribe(queue)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.post("/{incident_id}/verification", response_model=IncidentDetailDTO)

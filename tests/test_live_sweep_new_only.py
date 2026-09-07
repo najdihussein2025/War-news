@@ -303,10 +303,9 @@ async def test_run_stages_stops_after_aborted_tier1(monkeypatch) -> None:
     assert [stage.stage for stage in stages] == [
         "relevance_filter",
         "pre_extraction_dedup",
-        "embedding",
         "tier1_extraction",
     ]
-    run_sync.assert_called_once()
+    run_sync.assert_not_called()
 
 
 def test_stage_max_rows_per_pass_is_a_positive_batch_bound() -> None:
@@ -314,6 +313,7 @@ def test_stage_max_rows_per_pass_is_a_positive_batch_bound() -> None:
     assert live_sweep.STAGE_MAX_ROWS_PER_PASS > 0
     # Mirrors the existing settings.pre_dedup_sweep_row_cap precedent (=100).
     assert live_sweep.STAGE_MAX_ROWS_PER_PASS == 100
+    assert live_sweep.LLM_STAGE_MAX_ROWS_PER_PASS == 4
 
 
 @pytest.mark.asyncio
@@ -386,11 +386,11 @@ async def test_run_stages_caps_claim_until_empty_stages_and_reaches_matching(
     ) -> StageSweepResult:
         seen_max_rows[stage_name] = max_rows
         if stage_name == "tier1_extraction":
-            # Simulate the extraction queue exceeding the cap: the stage returns
-            # having processed exactly its per-pass bound, not aborted.
+            # Simulate the extraction queue exceeding the LLM cap: the stage
+            # returns having processed exactly its per-pass bound, not aborted.
             return _stage(
                 "tier1_extraction",
-                processed=live_sweep.STAGE_MAX_ROWS_PER_PASS,
+                processed=live_sweep.LLM_STAGE_MAX_ROWS_PER_PASS,
             )
         return _stage(stage_name)
 
@@ -414,11 +414,11 @@ async def test_run_stages_caps_claim_until_empty_stages_and_reaches_matching(
     assert [stage.stage for stage in stages] == [
         "relevance_filter",
         "pre_extraction_dedup",
-        "embedding",
         "tier1_extraction",
         "matching",
         "fast_path",
         "tier2_detail_fill",
+        "embedding",
         "clustering",
         "materialization",
     ]
@@ -428,15 +428,54 @@ async def test_run_stages_caps_claim_until_empty_stages_and_reaches_matching(
     assert matching_stage.failed == 0
 
     cap = live_sweep.STAGE_MAX_ROWS_PER_PASS
-    assert seen_max_rows["tier1_extraction"] == cap
+    assert seen_max_rows["tier1_extraction"] == live_sweep.LLM_STAGE_MAX_ROWS_PER_PASS
     assert seen_max_rows["matching"] == cap
     assert seen_max_rows["fast_path"] == cap
-    assert seen_max_rows["tier2_detail_fill"] == cap
+    assert seen_max_rows["tier2_detail_fill"] == live_sweep.LLM_STAGE_MAX_ROWS_PER_PASS
     assert seen_max_rows["embedding"] == cap
     assert seen_max_rows["clustering"] == cap
     assert seen_max_rows["materialization"] == cap
     # pre_extraction_dedup keeps its own settings-driven cap, not the pass cap.
     assert seen_max_rows["pre_extraction_dedup"] is live_sweep.MAX_ROWS
+
+
+@pytest.mark.asyncio
+async def test_run_stages_persists_live_stage_telemetry(monkeypatch) -> None:
+    recorded: list[tuple[str, str]] = []
+
+    async def fake_relevance_stage(
+        *,
+        cutoff_raw_message_id: int,
+    ) -> tuple[StageSweepResult, int | None]:
+        return _stage("relevance_filter"), None
+
+    async def fake_async_stage(stage_name: str, *args, **kwargs) -> StageSweepResult:
+        return _stage(stage_name)
+
+    def fake_sync_stage(stage_name: str, *args, **kwargs) -> StageSweepResult:
+        return _stage(stage_name)
+
+    def fake_record(result: StageSweepResult, *, sweep_type: str) -> None:
+        recorded.append((result.stage, sweep_type))
+
+    monkeypatch.setattr(live_sweep, "_run_relevance_stage", fake_relevance_stage)
+    monkeypatch.setattr(live_sweep, "_run_async_stage", fake_async_stage)
+    monkeypatch.setattr(live_sweep, "_run_sync_stage", fake_sync_stage)
+    monkeypatch.setattr(live_sweep, "record_stage_run", fake_record)
+
+    await live_sweep._run_stages(cutoff_raw_message_id=201)
+
+    assert recorded == [
+        ("relevance_filter", "live"),
+        ("pre_extraction_dedup", "live"),
+        ("tier1_extraction", "live"),
+        ("matching", "live"),
+        ("fast_path", "live"),
+        ("tier2_detail_fill", "live"),
+        ("embedding", "live"),
+        ("clustering", "live"),
+        ("materialization", "live"),
+    ]
 
 
 def test_downstream_stage_patches_exclude_parsed_rows_below_new_cutoff() -> None:

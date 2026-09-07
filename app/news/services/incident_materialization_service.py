@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -80,6 +81,75 @@ def _incident_event_datetime(value: datetime) -> datetime:
     return value.astimezone(BEIRUT_TIMEZONE)
 
 EXACT_HASH_CONSTRAINT = "uq_incidents_exact_hash_active"
+
+
+def _new_incident_payload(incident: Incident) -> str:
+    village = incident.village
+    condition = incident.condition
+    raw_message = incident.raw_message
+    source = incident.source
+    source_label = None
+    source_reference = None
+    if raw_message is not None:
+        source_label = (
+            raw_message.source_platform.title()
+            if raw_message.source_platform
+            else None
+        )
+        source_reference = (
+            raw_message.origin_account
+            or raw_message.source_name
+            or raw_message.external_message_id
+        )
+    if source_label is None and source is not None:
+        source_label = source.type.value.title()
+
+    payload = {
+        "id": str(incident.id),
+        "raw_message_id": incident.raw_message_id,
+        "raw_status": raw_message.status.value if raw_message is not None else None,
+        "village_id": incident.village_id,
+        "condition_id": incident.condition_id,
+        "village": (
+            village.ref_name_en or village.cad_name if village is not None else None
+        ),
+        "condition": condition.action_en if condition is not None else None,
+        "condition_ar": condition.action_ar if condition is not None else None,
+        "event_date": incident.event_date.isoformat(),
+        "event_time": incident.event_time.isoformat() if incident.event_time else None,
+        "khabar": (incident.khabar or "")[:300],
+        "source": source_label,
+        "source_reference": source_reference,
+        "matched": True,
+        "verification_status": incident.verification_status,
+        "verification_reason": incident.verification_reason,
+        "verified_by_user_id": str(incident.verified_by_user_id) if incident.verified_by_user_id else None,
+        "verified_at": incident.verified_at.isoformat() if incident.verified_at else None,
+        "duplicate_flag": "possible" if incident.duplicate_flag else "none",
+        "duplicate_level": incident.duplicate_level,
+        "duplicate_similarity_score": incident.duplicate_similarity_score,
+        "details_pending": incident.details_pending,
+        "created_at": incident.created_at.isoformat() if incident.created_at else None,
+        "version": incident.version,
+        "locked_by_user_id": str(incident.locked_by_user_id) if incident.locked_by_user_id else None,
+        "edit_lock_expires_at": incident.edit_lock_expires_at.isoformat() if incident.edit_lock_expires_at else None,
+    }
+    return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+
+
+def _notify_new_incident(db: Session, incident: Incident) -> None:
+    try:
+        payload = _new_incident_payload(incident)
+        with db.begin_nested():
+            db.execute(
+                text("SELECT pg_notify('new_incident', :payload)"),
+                {"payload": payload},
+            )
+    except Exception:
+        logger.exception(
+            "Failed to publish new_incident NOTIFY for incident_id=%s",
+            incident.id,
+        )
 
 
 @dataclass
@@ -464,6 +534,7 @@ class IncidentMaterializationService:
                 )
             )
             self._mark_materialized(representative, fast_path=True)
+            _notify_new_incident(self.db, incident)
             self.db.commit()
             self.fast_stats.inserted += 1
             logger.info(
@@ -707,6 +778,7 @@ class IncidentMaterializationService:
                     )
                 )
                 self._mark_materialized(representative, fast_path=False)
+                _notify_new_incident(self.db, incident)
                 self.db.commit()
                 self.stats.inserted += 1
                 created.append(incident)

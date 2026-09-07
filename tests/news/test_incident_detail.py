@@ -5,11 +5,12 @@ from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.orm import Session
 
 import app.api.incidents_router as incidents_router_module
+from app.accounts.models import Role, RoleName, User
 from app.api.deps import require_admin
 from app.core.database import get_db
 from app.main import app
@@ -290,6 +291,19 @@ def test_create_manual_creates_manual_source_when_missing() -> None:
         )
         db.add_all([village, condition])
         db.flush()
+        role = db.scalar(select(Role).where(Role.name == RoleName.super_admin))
+        if role is None:
+            role = Role(name=RoleName.super_admin)
+            db.add(role)
+            db.flush()
+        user = User(
+            username=f"manual-{marker}",
+            password_hash="test",
+            full_name="Manual Test User",
+            role_id=role.id,
+        )
+        db.add(user)
+        db.flush()
 
         repository = IncidentRepository(db)
         result = repository.create_manual(
@@ -302,7 +316,7 @@ def test_create_manual_creates_manual_source_when_missing() -> None:
                 note=None,
                 source_link=None,
             ),
-            created_by=uuid4(),
+            created_by=user.id,
         )
 
         assert result.source == "Manual"

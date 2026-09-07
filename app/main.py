@@ -13,6 +13,7 @@ from app.core.exception_handlers import register_exception_handlers
 from app.core.logging_config import configure_logging
 from app.core.scheduler import start_scheduler, stop_scheduler
 from app.core.seeds.seed_super_admin import ensure_super_admin
+from app.news.services.incident_event_stream import incident_event_stream
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ app.include_router(api_router)
 
 
 @app.on_event("startup")
-def startup() -> None:
+async def startup() -> None:
     db = SessionLocal()
     try:
         ensure_super_admin(db)
@@ -72,10 +73,12 @@ def startup() -> None:
     # collector inside the API duplicates ingestion runs and makes one batch
     # appear as multiple log rows.
     start_scheduler(start_red_alert=False)
+    await incident_event_stream.start()
 
 
 @app.on_event("shutdown")
-def shutdown() -> None:
+async def shutdown() -> None:
+    await incident_event_stream.stop()
     stop_scheduler()
 
 

@@ -42,6 +42,7 @@ from app.news.services.pipeline_sweep_stages import (
     sweep_materialization,
     sweep_relevance_filter,
 )
+from app.news.services.pipeline_stage_run_service import record_stage_run
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,8 @@ MAX_ROWS: int | None = None
 # SELECT ... FOR UPDATE SKIP LOCKED lease claim guarantees each pass advances
 # onto a fresh slice rather than reprocessing the same rows. Mirrors the
 # existing settings.pre_dedup_sweep_row_cap (=100) precedent.
-STAGE_MAX_ROWS_PER_PASS: int = 100
+STAGE_MAX_ROWS_PER_PASS: int = settings.pipeline_stage_max_rows_per_pass
+LLM_STAGE_MAX_ROWS_PER_PASS: int = settings.pipeline_llm_stage_max_rows_per_pass
 
 class FilteredSession:
     """Process-local session wrapper for sync stage eligibility queries."""
@@ -160,7 +162,18 @@ def _finish_stage(
     result: StageSweepResult,
     *,
     cutoff_raw_message_id: int,
+    persist_telemetry: bool = False,
 ) -> StageSweepResult:
+    if persist_telemetry:
+        try:
+            record_stage_run(result, sweep_type="live")
+        except Exception:
+            logger.exception(
+                "Failed to persist live pipeline stage run stage=%s "
+                "cutoff_raw_message_id=%s",
+                result.stage,
+                cutoff_raw_message_id,
+            )
     _emit_stage_result(result, cutoff_raw_message_id=cutoff_raw_message_id)
     return result
 
@@ -756,6 +769,7 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
         _finish_stage(
             relevance_result,
             cutoff_raw_message_id=cutoff_raw_message_id,
+            persist_telemetry=True,
         )
     )
     if relevance_result.aborted:
@@ -776,17 +790,7 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                     cutoff_raw_message_id=cutoff_raw_message_id,
                 ),
                 cutoff_raw_message_id=cutoff_raw_message_id,
-            )
-        )
-        stages.append(
-            _finish_stage(
-                _run_sync_stage(
-                    "embedding",
-                    sweep_embedding_generation,
-                    cutoff_raw_message_id=cutoff_raw_message_id,
-                    max_rows=STAGE_MAX_ROWS_PER_PASS,
-                ),
-                cutoff_raw_message_id=cutoff_raw_message_id,
+                persist_telemetry=True,
             )
         )
         stages.append(
@@ -795,9 +799,10 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                     "tier1_extraction",
                     sweep_extraction_concurrent,
                     cutoff_raw_message_id=cutoff_raw_message_id,
-                    max_rows=STAGE_MAX_ROWS_PER_PASS,
+                    max_rows=LLM_STAGE_MAX_ROWS_PER_PASS,
                 ),
                 cutoff_raw_message_id=cutoff_raw_message_id,
+                persist_telemetry=True,
             )
         )
         if stages[-1].aborted:
@@ -811,6 +816,7 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                     max_rows=STAGE_MAX_ROWS_PER_PASS,
                 ),
                 cutoff_raw_message_id=cutoff_raw_message_id,
+                persist_telemetry=True,
             )
         )
         stages.append(
@@ -822,6 +828,7 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                     max_rows=STAGE_MAX_ROWS_PER_PASS,
                 ),
                 cutoff_raw_message_id=cutoff_raw_message_id,
+                persist_telemetry=True,
             )
         )
         stages.append(
@@ -830,13 +837,26 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                     "tier2_detail_fill",
                     sweep_tier2_detail_fill_concurrent,
                     cutoff_raw_message_id=cutoff_raw_message_id,
-                    max_rows=STAGE_MAX_ROWS_PER_PASS,
+                    max_rows=LLM_STAGE_MAX_ROWS_PER_PASS,
                 ),
                 cutoff_raw_message_id=cutoff_raw_message_id,
+                persist_telemetry=True,
             )
         )
         if stages[-1].aborted:
             return stages
+        stages.append(
+            _finish_stage(
+                _run_sync_stage(
+                    "embedding",
+                    sweep_embedding_generation,
+                    cutoff_raw_message_id=cutoff_raw_message_id,
+                    max_rows=STAGE_MAX_ROWS_PER_PASS,
+                ),
+                cutoff_raw_message_id=cutoff_raw_message_id,
+                persist_telemetry=True,
+            )
+        )
         stages.append(
             _finish_stage(
                 _run_sync_stage(
@@ -846,6 +866,7 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                     max_rows=STAGE_MAX_ROWS_PER_PASS,
                 ),
                 cutoff_raw_message_id=cutoff_raw_message_id,
+                persist_telemetry=True,
             )
         )
         stages.append(
@@ -857,6 +878,7 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
                     max_rows=STAGE_MAX_ROWS_PER_PASS,
                 ),
                 cutoff_raw_message_id=cutoff_raw_message_id,
+                persist_telemetry=True,
             )
         )
     return stages

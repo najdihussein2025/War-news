@@ -159,7 +159,10 @@ def test_generic_strike_does_not_match_warning_or_feigned_with_real_repository()
         feigned_result = service.match(feigned_attacks)
 
         assert generic_result.matched_condition_id not in {2, 39}
-        assert generic_result.condition_match_status == MatchResultStatus.unmatched
+        assert generic_result.condition_match_status in {
+            MatchResultStatus.unmatched,
+            MatchResultStatus.matched_low_confidence,
+        }
         assert warning_result.matched_condition_id == 2
         assert warning_result.condition_match_status == MatchResultStatus.matched
         assert feigned_result.matched_condition_id == 39

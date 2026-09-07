@@ -21,7 +21,7 @@ from app.sources.services.red_alert_collector import (
     parse_public_preview,
     posts_within_window,
 )
-from app.news.models import MessageStatus, RawMessage
+from app.news.models import MessageStatus, RawMessage, Village
 from app.news.models.air_violation import AirViolation
 from app.news.repositories.air_violation_repository import AirViolationRepository
 from app.news.services.red_alert_air_violation_service import RedAlertAirViolationService
@@ -346,6 +346,15 @@ def test_process_persists_air_violation_row_and_routed_status() -> None:
         )
         db.add(source)
         db.flush()
+        village = Village(
+            acs_code=int(marker[:7], 16),
+            ref_name_en=f"Air Village {marker}",
+            ref_name_ar=f"Air Village {marker}",
+            caza_en="Test Caza",
+            caza_ar="Test Caza",
+        )
+        db.add(village)
+        db.flush()
 
         message = RawMessage(
             source_id=source.id,
@@ -365,9 +374,9 @@ def test_process_persists_air_violation_row_and_routed_status() -> None:
         service = RedAlertAirViolationService(
             AirViolationRepository(db),
             classify_condition,
-            match_village,
+            lambda text, villages: (village, village.ref_name_en or ""),
         )
-        wrote = service.process(message, [])
+        wrote = service.process(message, [village])
 
         assert wrote is True
         assert message.status == MessageStatus.routed_air_violation

@@ -127,7 +127,7 @@ def _headers(secret: str = "test-webhook-secret") -> dict[str, str]:
 def _payload(external_message_id: str = "cnrs-1") -> dict[str, str]:
     return {
         "external_message_id": external_message_id,
-        "message_datetime": "2026-08-13T10:20:30+00:00",
+        "message_datetime": "2026-09-07T10:20:30+00:00",
         "raw_text": "Post text",
         "source_platform": "telegram",
         "source_name": "test-channel",
@@ -177,14 +177,20 @@ def test_valid_secret_single_post_returns_202_and_writes_raw_message() -> None:
     )
 
     assert response.status_code == 202
-    assert response.json() == {"received": 1, "saved": 1, "duplicates": 0, "blocked": 0}
+    assert response.json() == {
+        "received": 1,
+        "saved": 1,
+        "duplicates": 0,
+        "blocked": 0,
+        "skipped_before_cutoff": 0,
+    }
     assert len(_WebhookSourceRepository.messages) == 1
     message = _WebhookSourceRepository.messages[0]
     assert message.source_id == 44
     assert message.external_message_id == "cnrs-1"
     assert message.raw_text == "Post text"
     assert message.raw_payload["extra_field"] == "preserved"
-    assert message.message_datetime == datetime(2026, 8, 13, 10, 20, 30, tzinfo=timezone.utc)
+    assert message.message_datetime == datetime(2026, 9, 7, 10, 20, 30, tzinfo=timezone.utc)
 
 
 def test_stale_source_id_falls_back_to_active_cnrs_source() -> None:
@@ -198,7 +204,13 @@ def test_stale_source_id_falls_back_to_active_cnrs_source() -> None:
     )
 
     assert response.status_code == 202
-    assert response.json() == {"received": 1, "saved": 1, "duplicates": 0, "blocked": 0}
+    assert response.json() == {
+        "received": 1,
+        "saved": 1,
+        "duplicates": 0,
+        "blocked": 0,
+        "skipped_before_cutoff": 0,
+    }
     assert _WebhookSourceRepository.messages[0].source_id == 3
 
 
@@ -214,7 +226,13 @@ def test_webhook_writes_one_ingestion_log_with_counts() -> None:
     )
 
     assert response.status_code == 202
-    assert response.json() == {"received": 2, "saved": 2, "duplicates": 0, "blocked": 0}
+    assert response.json() == {
+        "received": 2,
+        "saved": 2,
+        "duplicates": 0,
+        "blocked": 0,
+        "skipped_before_cutoff": 0,
+    }
     assert len(_WebhookSourceRepository.ingestion_logs) == 1
     log = _WebhookSourceRepository.ingestion_logs[0]
     assert log["source_id"] == 44
@@ -246,7 +264,13 @@ def test_valid_secret_array_of_posts_returns_202_and_writes_all_messages() -> No
     )
 
     assert response.status_code == 202
-    assert response.json() == {"received": 2, "saved": 2, "duplicates": 0, "blocked": 0}
+    assert response.json() == {
+        "received": 2,
+        "saved": 2,
+        "duplicates": 0,
+        "blocked": 0,
+        "skipped_before_cutoff": 0,
+    }
     assert [message.external_message_id for message in _WebhookSourceRepository.messages] == [
         "cnrs-1",
         "cnrs-2",
@@ -283,9 +307,21 @@ def test_duplicate_external_message_id_is_noop_not_error() -> None:
     )
 
     assert first.status_code == 202
-    assert first.json() == {"received": 1, "saved": 1, "duplicates": 0, "blocked": 0}
+    assert first.json() == {
+        "received": 1,
+        "saved": 1,
+        "duplicates": 0,
+        "blocked": 0,
+        "skipped_before_cutoff": 0,
+    }
     assert second.status_code == 202
-    assert second.json() == {"received": 1, "saved": 0, "duplicates": 1, "blocked": 0}
+    assert second.json() == {
+        "received": 1,
+        "saved": 0,
+        "duplicates": 1,
+        "blocked": 0,
+        "skipped_before_cutoff": 0,
+    }
     assert len(_WebhookSourceRepository.messages) == 1
     assert len(_WebhookSourceRepository.ingestion_logs) == 1
 
@@ -308,7 +344,13 @@ def test_blocked_content_source_webhook_skips_raw_message_insert() -> None:
     )
 
     assert response.status_code == 202
-    assert response.json() == {"received": 1, "saved": 0, "duplicates": 0, "blocked": 1}
+    assert response.json() == {
+        "received": 1,
+        "saved": 0,
+        "duplicates": 0,
+        "blocked": 1,
+        "skipped_before_cutoff": 0,
+    }
     assert _WebhookSourceRepository.messages == []
     assert _WebhookSourceRepository.ingestion_logs == []
 
@@ -320,7 +362,7 @@ def test_malformed_payload_missing_external_message_id_returns_422() -> None:
         "/webhooks/cnrs-posts?source_id=48",
         headers=_headers(),
         json={
-            "message_datetime": "2026-08-13T10:20:30+00:00",
+            "message_datetime": "2026-09-07T10:20:30+00:00",
             "raw_text": "Post text",
         },
     )
@@ -337,7 +379,7 @@ def test_payload_missing_source_name_returns_422_instead_of_generic_fallback() -
         headers=_headers(),
         json={
             "external_message_id": "telegram:missing-origin",
-            "message_datetime": "2026-08-13T10:20:30+00:00",
+            "message_datetime": "2026-09-07T10:20:30+00:00",
             "raw_text": "Post text",
             "source_platform": "telegram",
         },

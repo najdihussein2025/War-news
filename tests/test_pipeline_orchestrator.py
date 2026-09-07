@@ -91,6 +91,12 @@ def _patch_stages(monkeypatch, *, fail_stage: str | None = None) -> list[str]:
     return calls
 
 
+def test_default_stage_caps_keep_llm_stages_small() -> None:
+    assert orchestrator._stage_max_rows(None) == 100
+    assert orchestrator._stage_max_rows(None, llm_backed=True) == 4
+    assert orchestrator._stage_max_rows(17, llm_backed=True) == 17
+
+
 @pytest.mark.asyncio
 async def test_stage_exception_does_not_block_later_stages(monkeypatch, caplog) -> None:
     calls = _patch_stages(monkeypatch, fail_stage="tier1_extraction")
@@ -102,7 +108,7 @@ async def test_stage_exception_does_not_block_later_stages(monkeypatch, caplog) 
     assert "matching" in calls
     assert "fast_path" in calls
     assert "materialization" in calls
-    assert calls.index("embedding") < calls.index("tier1_extraction")
+    assert calls.index("tier2_detail_fill") < calls.index("embedding")
     assert result.partial_failure is True
     assert result.skipped is False
     failed = {stage.stage: stage.failed for stage in result.stages}
@@ -187,7 +193,6 @@ async def test_auth_abort_stops_remaining_stages(monkeypatch, caplog) -> None:
     assert [stage.stage for stage in result.stages] == [
         "relevance_filter",
         "pre_extraction_dedup",
-        "embedding",
         "tier1_extraction",
     ]
     assert any(

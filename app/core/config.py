@@ -91,6 +91,11 @@ class Settings(BaseSettings):
     pipeline_role: str = "api"
     pipeline_worker_poll_seconds: float = 2.0
     pipeline_claim_lease_seconds: int = 240
+    # Fairness caps for one pipeline pass. LLM-backed stages need a much smaller
+    # slice so a CPU-bound extraction backlog cannot hide matching/materialization
+    # for hours.
+    pipeline_stage_max_rows_per_pass: int = 100
+    pipeline_llm_stage_max_rows_per_pass: int = 4
     # Live-sweep cursor health (GET /api/pipeline/health -> cursor_gap).
     # unhealthy when relevance-eligible rows (pending, no filter_result) newer
     # than the cursor exceed this count...
