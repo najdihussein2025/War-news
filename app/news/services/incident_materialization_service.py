@@ -25,13 +25,13 @@ from app.news.services.incident_details.category_mapper import compute_rollups, 
 from app.news.services.matching.emergency_organization_matching_service import (
     EmergencyOrganizationMatchingService,
 )
-from app.news.services.fast_path_dedup import (
+from app.news.services.dedup.fast_path_dedup import (
     MATERIALIZE_MATCH_STATUSES,
     FastPathDedupOutcome,
     FastPathDedupService,
 )
 from app.news.services.pipeline_advisory_lock import acquire_fast_path_village_lock
-from app.news.services.fast_path_eligibility import (
+from app.news.services.dedup.fast_path_eligibility import (
     ELIGIBLE_MATCH_STATUSES,
     ERROR_AIR_VIOLATION,
     ERROR_EXACT_HASH,

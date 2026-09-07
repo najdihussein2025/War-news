@@ -26,8 +26,8 @@ from app.news.models import Incident, MessageStatus, RawMessage
 from app.news.repositories.incident_repository import IncidentRepository
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
 from app.news.repositories.raw_message_repository import RawMessageRepository
-from app.news.services.dedup_matching_service import DedupMatchingService
-from app.news.services.fast_path_dedup import FastPathDedupService
+from app.news.services.dedup.dedup_matching_service import DedupMatchingService
+from app.news.services.dedup.fast_path_dedup import FastPathDedupService
 from app.news.services.incident_materialization_service import (
     IncidentMaterializationService,
 )
@@ -36,7 +36,7 @@ from app.news.services.pipeline_llm_workers import (
     run_tier1_extraction_for_message,
     run_tier2_detail_fill_for_message,
 )
-from app.news.services.pre_extraction_dedup import process_pre_dedup_message
+from app.news.services.dedup.pre_extraction_dedup import process_pre_dedup_message
 
 logger = logging.getLogger(__name__)
 

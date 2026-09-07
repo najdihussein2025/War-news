@@ -4,7 +4,7 @@ from typing import Any
 from app.core.config import settings
 from app.news.interfaces import DedupMatchingInterface, IncidentRepositoryInterface
 from app.news.models import Incident
-from app.news.services.incident_merge_service import IncidentMergeService
+from app.news.services.dedup.incident_merge_service import IncidentMergeService
 
 # Weights are fixed; tune thresholds via DEDUP_* env vars instead.
 # First estimate; action agreement weight in the total duplicate score.

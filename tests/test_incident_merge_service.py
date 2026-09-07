@@ -3,8 +3,8 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-from app.news.services.dedup_matching_service import DedupMatchingService
-from app.news.services.incident_merge_service import IncidentMergeService
+from app.news.services.dedup.dedup_matching_service import DedupMatchingService
+from app.news.services.dedup.incident_merge_service import IncidentMergeService
 
 
 def test_merge_delegates_to_repository_merge_existing() -> None:

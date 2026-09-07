@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.news.services.duplicate_comparison_service import (
+from app.news.services.dedup.duplicate_comparison_service import (
     DuplicateComparisonConfig,
     DuplicateComparisonService,
 )

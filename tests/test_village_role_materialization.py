@@ -9,8 +9,8 @@ import app.logs.models  # noqa: F401
 import app.sources.models  # noqa: F401
 
 from app.news.models import Incident, MessageStatus
-from app.news.services.fast_path_dedup import FastPathDedupOutcome
-from app.news.services.fast_path_eligibility import has_materializable_village
+from app.news.services.dedup.fast_path_dedup import FastPathDedupOutcome
+from app.news.services.dedup.fast_path_eligibility import has_materializable_village
 from app.news.services.incident_materialization_service import (
     IncidentMaterializationService,
 )

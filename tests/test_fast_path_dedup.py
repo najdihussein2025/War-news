@@ -5,11 +5,11 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 from app.news.repositories.incident_repository import FastDedupCandidate
-from app.news.services.duplicate_comparison_service import (
+from app.news.services.dedup.duplicate_comparison_service import (
     DuplicateComparisonConfig,
     DuplicateComparisonService,
 )
-from app.news.services.fast_path_dedup import (
+from app.news.services.dedup.fast_path_dedup import (
     FastPathDedupOutcome,
     FastPathDedupService,
 )

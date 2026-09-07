@@ -22,14 +22,14 @@ from app.news.repositories.channel_trust_tier_repository import (
 from app.news.repositories.incident_repository import IncidentRepository
 from app.news.repositories.raw_message_repository import RawMessageRepository
 from app.news.services.clustering.clustering_service import ClusteringService, village_ids_from_match_result
-from app.news.services.dedup_matching_service import DedupMatchingService
-from app.news.services.duplicate_match_reconciliation import (
+from app.news.services.dedup.dedup_matching_service import DedupMatchingService
+from app.news.services.dedup.duplicate_match_reconciliation import (
     reconcile_orphaned_soft_deleted_incidents,
 )
 from app.news.services.incident_materialization_service import (
     IncidentMaterializationService,
 )
-from app.news.services.pre_extraction_dedup import process_pre_dedup_message
+from app.news.services.dedup.pre_extraction_dedup import process_pre_dedup_message
 
 logger = logging.getLogger(__name__)
 

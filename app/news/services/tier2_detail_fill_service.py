@@ -15,7 +15,7 @@ from app.news.repositories.emergency_organization_repository import (
 )
 from app.news.services.incident_details.category_mapper import compute_rollups, map_categories
 from app.news.services.incident_details.casualty_demographic_consistency import reconcile_root_demographics
-from app.news.services.dedup_matching_service import DedupMatchingService
+from app.news.services.dedup.dedup_matching_service import DedupMatchingService
 from app.news.services.clustering.embedding_service import EmbeddingService
 from app.news.services.matching.emergency_organization_matching_service import (
     EmergencyOrganizationMatchingService,

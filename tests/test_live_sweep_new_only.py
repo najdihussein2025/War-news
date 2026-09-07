@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from app.news.dtos.pipeline_dto import StageSweepResult
 from app.news.models import MessageStatus, RawMessage
-from app.news.services.fast_path_eligibility import ERROR_AIR_VIOLATION
+from app.news.services.dedup.fast_path_eligibility import ERROR_AIR_VIOLATION
 from scripts import live_sweep_new_only as live_sweep
 
 

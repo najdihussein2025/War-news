@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects import postgresql
 
 from app.news.models import RawMessage
-from app.news.services.fast_path_eligibility import (
+from app.news.services.dedup.fast_path_eligibility import (
     ERROR_AIR_VIOLATION,
     ERROR_NO_VILLAGE,
     ERROR_UNMATCHED_CONDITION,

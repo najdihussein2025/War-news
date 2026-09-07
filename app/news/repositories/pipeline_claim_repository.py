@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.news.models import Incident, MessageStatus, RawMessage
-from app.news.services.fast_path_eligibility import (
+from app.news.services.dedup.fast_path_eligibility import (
     fast_path_materializable_clause,
     ineligible_fast_path_update_sql,
 )

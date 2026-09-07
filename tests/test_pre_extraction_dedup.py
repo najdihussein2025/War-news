@@ -14,7 +14,7 @@ from types import SimpleNamespace
 from datetime import datetime, timezone
 
 from app.news.models import MessageStatus
-from app.news.services.pre_extraction_dedup import find_pre_dedup_match
+from app.news.services.dedup.pre_extraction_dedup import find_pre_dedup_match
 from app.news.services.pipeline_sweep_stages import sweep_pre_extraction_dedup
 
 
@@ -255,7 +255,7 @@ def test_out_of_window_near_duplicate_not_flagged() -> None:
 
 def test_similarity_query_excludes_materialized_rows(monkeypatch) -> None:
     monkeypatch.setattr(
-        "app.news.services.pre_extraction_dedup.settings.pre_dedup_candidate_narrowing",
+        "app.news.services.dedup.pre_extraction_dedup.settings.pre_dedup_candidate_narrowing",
         "none",
     )
     session = _StubSession(

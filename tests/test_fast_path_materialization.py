@@ -8,7 +8,7 @@ import pytest
 
 from app.llm.dtos import ExtractionCasualties, ExtractionResult
 from app.news.models import MessageStatus
-from app.news.services.fast_path_dedup import (
+from app.news.services.dedup.fast_path_dedup import (
     FastPathDedupOutcome,
     FastPathDedupService,
 )

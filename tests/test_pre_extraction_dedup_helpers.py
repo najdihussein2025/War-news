@@ -3,7 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from app.news.models import MessageStatus
-from app.news.services.pre_extraction_dedup import (
+from app.news.services.dedup.pre_extraction_dedup import (
     choose_pre_dedup_original_id,
     is_valid_pre_dedup_original,
 )

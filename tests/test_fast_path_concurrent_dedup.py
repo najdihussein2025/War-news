@@ -9,7 +9,7 @@ from uuid import uuid4
 from app.llm.dtos import ExtractionCasualties, ExtractionResult
 from app.news.models import DuplicateMatch, Incident, MatchType, MessageStatus
 from app.news.repositories.incident_repository import FastDedupCandidate
-from app.news.services.fast_path_dedup import FastPathDedupService
+from app.news.services.dedup.fast_path_dedup import FastPathDedupService
 from app.news.services.incident_materialization_service import (
     IncidentMaterializationService,
 )

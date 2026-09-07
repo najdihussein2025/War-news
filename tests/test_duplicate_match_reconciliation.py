@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 from app.news.models import MessageStatus
-from app.news.services.duplicate_match_reconciliation import (
+from app.news.services.dedup.duplicate_match_reconciliation import (
     reconcile_orphaned_soft_deleted_incidents,
 )
 
@@ -88,11 +88,11 @@ def test_reconcile_backfills_after_representative_exists(monkeypatch) -> None:
             session.duplicate_matches.append((incident, matched_incident))
 
     monkeypatch.setattr(
-        "app.news.services.duplicate_match_reconciliation.IncidentRepository",
+        "app.news.services.dedup.duplicate_match_reconciliation.IncidentRepository",
         lambda db: _RepoStub(),
     )
     monkeypatch.setattr(
-        "app.news.services.duplicate_match_reconciliation._find_representative_incident",
+        "app.news.services.dedup.duplicate_match_reconciliation._find_representative_incident",
         lambda db, repo, *, soft_deleted: representative,
     )
 
@@ -120,14 +120,14 @@ def test_reconcile_skips_when_representative_still_missing(monkeypatch) -> None:
     )
 
     monkeypatch.setattr(
-        "app.news.services.duplicate_match_reconciliation.IncidentRepository",
+        "app.news.services.dedup.duplicate_match_reconciliation.IncidentRepository",
         lambda db: SimpleNamespace(
             find_active_incident_for_raw_message_village=lambda *_args, **_kwargs: None,
             create_duplicate_match=lambda **_kwargs: None,
         ),
     )
     monkeypatch.setattr(
-        "app.news.services.duplicate_match_reconciliation._find_representative_incident",
+        "app.news.services.dedup.duplicate_match_reconciliation._find_representative_incident",
         lambda db, repo, *, soft_deleted: None,
     )
 

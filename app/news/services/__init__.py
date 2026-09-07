@@ -5,7 +5,7 @@ from app.news.services.air_violations.air_violation_service import (
 )
 from app.news.services.air_violations.air_violation_workbook_service import AirViolationWorkbookService
 from app.news.services.matching.condition_resolution_service import ConditionResolutionService
-from app.news.services.dedup_matching_service import (
+from app.news.services.dedup.dedup_matching_service import (
     DEDUP_HIGH_THRESHOLD,
     DEDUP_LOW_THRESHOLD,
     DedupMatchingService,

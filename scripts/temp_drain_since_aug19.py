@@ -18,7 +18,7 @@ from app.news.dtos.pipeline_dto import StageSweepResult
 from app.news.models import Incident, MessageStatus, RawMessage
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
 from app.news.repositories.raw_message_repository import RawMessageRepository
-from app.news.services.fast_path_eligibility import (
+from app.news.services.dedup.fast_path_eligibility import (
     fast_path_materializable_clause,
     permanent_ineligibility_reason,
 )

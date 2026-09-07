@@ -24,7 +24,7 @@ from app.news.repositories.pipeline_claim_repository import (
 from app.news.repositories.raw_message_repository import RawMessageRepository
 from app.news.repositories.sweep_cursor_repository import SweepCursorRepository
 from app.news.services import pipeline_concurrent_sweeps as concurrent_sweeps
-from app.news.services.fast_path_eligibility import (
+from app.news.services.dedup.fast_path_eligibility import (
     ERROR_AIR_VIOLATION,
     fast_path_materializable_clause,
     permanent_ineligibility_reason,

@@ -12,8 +12,8 @@ import app.accounts.models  # noqa: F401
 import app.logs.models  # noqa: F401
 import app.sources.models  # noqa: F401
 from app.news.models import Incident, IncidentDetail, MessageStatus
-from app.news.services.fast_path_dedup import FastPathDedupOutcome
-from app.news.services.fast_path_eligibility import (
+from app.news.services.dedup.fast_path_dedup import FastPathDedupOutcome
+from app.news.services.dedup.fast_path_eligibility import (
     ERROR_AIR_VIOLATION,
     ERROR_NO_VILLAGE,
     ERROR_UNMATCHED_CONDITION,

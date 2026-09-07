@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from app.news.repositories.incident_repository import IncidentRepository
-from app.news.services.duplicate_comparison_service import DuplicateComparisonService
+from app.news.services.dedup.duplicate_comparison_service import DuplicateComparisonService
 
 if TYPE_CHECKING:
     from app.news.models import Incident

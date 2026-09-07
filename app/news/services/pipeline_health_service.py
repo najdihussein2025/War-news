@@ -10,7 +10,7 @@ from app.core.config import settings
 from app.news.models import Incident, MessageStatus, RawMessage
 from app.news.models.sweep_cursor import LIVE_SWEEP_NAME, SweepCursor
 from app.news.repositories.pipeline_claim_repository import claimable_lease_filter
-from app.news.services.fast_path_eligibility import fast_path_materializable_clause
+from app.news.services.dedup.fast_path_eligibility import fast_path_materializable_clause
 
 
 @dataclass(frozen=True)
