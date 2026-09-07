@@ -10,6 +10,8 @@ import { useAirViolationSummaryQuery, useAirViolationsQuery } from "../hooks";
 import { useVillagesQuery } from "../../news/hooks";
 import { acquireAirViolationEditLock, createAirViolation, deleteAirViolation, exportAirViolations, releaseAirViolationEditLock, updateAirViolation } from "../api";
 import type { AirViolation } from "../types";
+import { importAirViolationKhabar } from "../api";
+import type { WorkbookImportSummary } from "../../news/api";
 
 const PAGE_SIZE = 25;
 
@@ -34,6 +36,10 @@ const TextCell = ({ value }: { value: string | null }) => (
 export const AirViolationsPage = () => {
   const [importMessage, setImportMessage] = useState("");
   const [isExporting, setIsExporting] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState("");
+  const [importResult, setImportResult] = useState<WorkbookImportSummary | null>(null);
   const [selectedViolation, setSelectedViolation] = useState<AirViolation | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingViolation, setEditingViolation] = useState<AirViolation | null>(null);
@@ -351,6 +357,9 @@ export const AirViolationsPage = () => {
       </div>
 
       <div className="flex flex-wrap items-center justify-end gap-2 rounded-lg border border-border bg-surface-raised p-4">
+          <Button type="button" variant="secondary" onClick={() => { setImportError(""); setImportResult(null); setIsImportOpen(true); }}>
+            Import Khabar
+          </Button>
           <Button type="button" variant="secondary" isLoading={isExporting} loadingText="Exporting" onClick={async () => { setIsExporting(true); setImportMessage(""); try { await exportAirViolations(); } catch { setImportMessage("Export failed. Check the API connection and try again."); } finally { setIsExporting(false); } }}>
             Export Excel
           </Button>
@@ -364,6 +373,45 @@ export const AirViolationsPage = () => {
           ) : null}
           {importMessage ? <p className="text-small text-text-muted">{importMessage}</p> : null}
       </div>
+
+      {isImportOpen ? (
+        <Dialog title="Import Khabar" onClose={() => { if (!isImporting) setIsImportOpen(false); }}>
+          <p className="mb-4 text-small text-text-muted">Upload Excel with a Khabar column, JSON records, or GeoJSON with Khabar properties. Action, village, and caza are detected from the news text. Unrecognized records are reported below. Dates in the file are preserved; missing dates use the date selected here. Time remains unspecified.</p>
+          <form className="space-y-4" onSubmit={async (event) => {
+            event.preventDefault();
+            const form = new FormData(event.currentTarget);
+            const file = form.get("file");
+            if (!(file instanceof File) || !file.size) return;
+            setIsImporting(true);
+            setImportError("");
+            setImportResult(null);
+            try {
+              const result = await importAirViolationKhabar(file, String(form.get("default_date")));
+              setImportResult(result);
+              if (result.succeeded) {
+                setParams({});
+                setCustomHoursMode(false);
+                await Promise.all([refetch(), summary.refetch()]);
+              }
+            } catch (error) {
+              const detail = axios.isAxiosError(error) ? error.response?.data?.detail : null;
+              setImportError(typeof detail === "string" ? detail : "Import failed. Check the file and try again.");
+            } finally { setIsImporting(false); }
+          }}>
+            <div><Label htmlFor="khabar-file">Data file</Label><Input id="khabar-file" name="file" type="file" accept=".xlsx,.json,.geojson" required disabled={isImporting} /></div>
+            <div><Label htmlFor="khabar-date">Date for records without a date</Label><Input id="khabar-date" name="default_date" type="date" defaultValue={getBeirutDate()} required disabled={isImporting} /></div>
+            {importError ? <p role="alert" className="text-small text-danger">{importError}</p> : null}
+            {importResult ? <div role="status" className="space-y-2 text-small">
+              <p>{importResult.succeeded} imported, {importResult.failed} failed.</p>
+              <ul className="max-h-48 overflow-auto">{importResult.row_errors.map((error) => <li key={error.row}>Row {error.row}: {error.error}</li>)}</ul>
+            </div> : null}
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="secondary" disabled={isImporting} onClick={() => setIsImportOpen(false)}>Close</Button>
+              <Button type="submit" isLoading={isImporting} loadingText="Importing">Import and classify</Button>
+            </div>
+          </form>
+        </Dialog>
+      ) : null}
 
       <DataTable
         columns={columns}

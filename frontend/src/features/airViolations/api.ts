@@ -84,3 +84,11 @@ export const exportAirViolations = async (): Promise<void> => {
   anchor.click();
   URL.revokeObjectURL(url);
 };
+
+export const importAirViolationKhabar = async (file: File, defaultDate: string): Promise<WorkbookImportSummary> => {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("default_date", defaultDate);
+  const response = await apiClient.post<WorkbookImportSummary>("/air-violations/import-khabar", form);
+  return response.data;
+};

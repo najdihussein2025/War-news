@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -18,6 +18,7 @@ from app.news.dtos import (
 )
 from app.accounts.models import User
 from app.news.repositories import AirViolationRepository
+from app.news.services.air_violation_khabar_import import AirViolationKhabarImportService
 from app.news.services import (
     AirViolationConflictError,
     AirViolationNotFoundError,
@@ -184,6 +185,24 @@ def import_air_violations(
         return result
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+
+
+@router.post("/import-khabar", response_model=WorkbookImportSummaryDTO)
+def import_air_violation_khabar(
+    file: UploadFile = File(...),
+    default_date: date = Form(...),
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(require_admin),
+) -> WorkbookImportSummaryDTO:
+    if not file.filename or not file.filename.lower().endswith((".xlsx", ".json", ".geojson")):
+        raise HTTPException(status_code=400, detail="Upload an .xlsx, .json, or .geojson file.")
+    try:
+        result = AirViolationKhabarImportService(db).import_file(file.file, file.filename, default_date)
+        if result.succeeded:
+            increment(AIR_VIOLATION_CACHE_VERSION_KEY)
+        return result
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.get("/export")
