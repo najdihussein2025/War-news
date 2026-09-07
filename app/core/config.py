@@ -82,11 +82,32 @@ class Settings(BaseSettings):
     # Max pre-dedup rows processed per full sweep before tier1 starts.
     # Prevents multi-minute "frozen" sweeps on large backlogs.
     pre_dedup_sweep_row_cap: int = 100
-    # Incident-level dedup look-back window (fast path + full materialization).
-    # Embedding score >= dedup_high_threshold is required before auto-merge.
+    # Incident-level dedup look-back window (full materialization / embedding-weighted
+    # DedupMatchingService only). The fast-path incident-level signal no longer uses
+    # this flat window — it is threshold-driven via DuplicateComparisonService (below)
+    # with dedup_fastpath_lookup_window_days as the outer query bound instead.
     dedup_time_window_days: int = 3
     dedup_high_threshold: float = 0.80
     dedup_low_threshold: float = 0.50
+    # --- Fast-path incident-level duplicate comparison (DuplicateComparisonService) ---
+    # Outer lookup bound: how far back the fast-path query pulls candidate active
+    # incidents. The verdict itself is decided by the time-gap / similarity tiers
+    # below, NOT by this window (kept wide so the 6h service cutoff always has
+    # candidates to evaluate).
+    dedup_fastpath_lookup_window_days: int = 7
+    # Time-gap tier boundaries (seconds): near = "≤ 2 minutes", mid = "≤ 30 minutes",
+    # far = "≤ 6 hours". Beyond `far` the verdict is always `distinct`.
+    dedup_fastpath_gap_near_seconds: int = 120
+    dedup_fastpath_gap_mid_seconds: int = 1800
+    dedup_fastpath_gap_far_seconds: int = 21600
+    # word_similarity() text tiers.
+    dedup_fastpath_text_high: float = 0.80
+    dedup_fastpath_text_mid: float = 0.65
+    dedup_fastpath_text_near: float = 0.38
+    # Embedding-similarity substitution tiers (only applied within the ≤30min tiers;
+    # never used to bypass the 6h cutoff).
+    dedup_fastpath_embedding_high: float = 0.86
+    dedup_fastpath_embedding_possible: float = 0.78
     pg_application_name: str = "war-news"
     pipeline_role: str = "api"
     pipeline_worker_poll_seconds: float = 2.0
