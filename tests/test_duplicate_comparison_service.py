@@ -167,3 +167,28 @@ def test_config_from_settings_matches_approved_defaults() -> None:
     assert cfg.text_high == 0.80
     assert cfg.embedding_possible == 0.78
     assert cfg.embedding_high == 0.86
+    assert cfg.cross_village_text_min == 0.87
+
+
+@pytest.mark.parametrize(
+    ("gap", "text", "expected"),
+    [
+        (90, 0.875, "possible_duplicate"),  # Nabatiyeh recon pair
+        (90, 0.87, "possible_duplicate"),
+        (90, 0.869, "distinct"),
+        (10 * MIN, 0.99, "possible_duplicate"),
+        (30 * MIN + 1, 0.99, "distinct"),  # outside ≤30min
+        (3 * HOUR, 0.99, "distinct"),
+    ],
+)
+def test_cross_village_uncertain_never_high_confidence(
+    service: DuplicateComparisonService, gap: float, text: float, expected: str
+) -> None:
+    result = service.compare(
+        time_gap_seconds=gap,
+        text_similarity=text,
+        embedding_similarity=None,
+        village_match_uncertain=True,
+    )
+    assert result.verdict == expected
+    assert result.verdict != "high_confidence_duplicate"

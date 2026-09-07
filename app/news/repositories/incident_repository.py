@@ -1091,6 +1091,90 @@ class IncidentRepository(IncidentRepositoryInterface):
         candidates.sort(key=lambda c: c.time_gap_seconds)
         return candidates
 
+    def find_cross_village_dedup_candidates(
+        self,
+        *,
+        village_id: int,
+        condition_id: int,
+        message_datetime: datetime,
+        lookup_window_days: int,
+        min_text_similarity: float,
+        candidate_text: str | None = None,
+        candidate_embedding: list[float] | None = None,
+        exclude_raw_message_id: int | None = None,
+    ) -> list[FastDedupCandidate]:
+        """Same-condition, *different*-village candidates for the cross-village
+        possible_duplicate backstop.
+
+        Pre-filters on ``word_similarity >= min_text_similarity`` when text is
+        available so the elevated cross-village threshold is enforced in SQL.
+        """
+        naive_dt = message_datetime.replace(tzinfo=None)
+        event_date = naive_dt.date()
+        start_date = event_date - timedelta(days=lookup_window_days)
+        end_date = event_date + timedelta(days=lookup_window_days)
+
+        columns: list[Any] = [Incident]
+        want_text = bool(candidate_text and candidate_text.strip())
+        want_embedding = candidate_embedding is not None
+        text_sim_col = None
+        if want_text:
+            text_sim_col = func.word_similarity(
+                normalize_arabic_sql(Incident.khabar),
+                normalize_arabic_sql(literal(candidate_text)),
+            ).label("text_similarity")
+            columns.append(text_sim_col)
+        if want_embedding:
+            columns.append(
+                (
+                    1.0
+                    - Incident.khabar_embedding.cosine_distance(candidate_embedding)
+                ).label("embedding_similarity")
+            )
+
+        filters = [
+            Incident.village_id != village_id,
+            Incident.condition_id == condition_id,
+            Incident.is_deleted.is_(False),
+            Incident.event_date >= start_date,
+            Incident.event_date <= end_date,
+        ]
+        if exclude_raw_message_id is not None:
+            filters.append(Incident.raw_message_id != exclude_raw_message_id)
+        if text_sim_col is not None:
+            filters.append(text_sim_col >= min_text_similarity)
+
+        rows = self.db.execute(select(*columns).where(*filters)).all()
+
+        candidates: list[FastDedupCandidate] = []
+        for row in rows:
+            incident = row[0]
+            idx = 1
+            text_similarity: float | None = None
+            if want_text:
+                text_similarity = float(row[idx] or 0.0)
+                idx += 1
+            embedding_similarity: float | None = None
+            if want_embedding:
+                value = row[idx]
+                embedding_similarity = None if value is None else float(value)
+                idx += 1
+            incident_dt = datetime.combine(
+                incident.event_date, incident.event_time or time(0, 0)
+            )
+            gap_seconds = abs((incident_dt - naive_dt).total_seconds())
+            candidates.append(
+                FastDedupCandidate(
+                    incident=incident,
+                    time_gap_seconds=gap_seconds,
+                    text_similarity=text_similarity,
+                    embedding_similarity=embedding_similarity,
+                )
+            )
+
+        candidates.sort(key=lambda c: c.time_gap_seconds)
+        return candidates
+
     def soft_delete_for_raw_message_id(
         self,
         raw_message_id: int,
