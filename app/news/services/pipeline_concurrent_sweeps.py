@@ -28,7 +28,7 @@ from app.news.repositories.pipeline_claim_repository import PipelineClaimReposit
 from app.news.repositories.raw_message_repository import RawMessageRepository
 from app.news.services.dedup.dedup_matching_service import DedupMatchingService
 from app.news.services.dedup.fast_path_dedup import FastPathDedupService
-from app.news.services.incident_materialization_service import (
+from app.news.services.materialization.incident_materialization_service import (
     IncidentMaterializationService,
 )
 from app.llm.services.transient_llm_errors import ExtractionRetryCappedError

@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from app.llm.dtos import ExtractionCasualties, ExtractionResult
-from app.news.services.tier2_detail_fill_service import Tier2DetailFillService
+from app.news.services.extraction.tier2_detail_fill_service import Tier2DetailFillService
 
 
 def test_tier2_failure_preserves_precomputed_embedding() -> None:

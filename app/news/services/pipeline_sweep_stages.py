@@ -26,7 +26,7 @@ from app.news.services.dedup.dedup_matching_service import DedupMatchingService
 from app.news.services.dedup.duplicate_match_reconciliation import (
     reconcile_orphaned_soft_deleted_incidents,
 )
-from app.news.services.incident_materialization_service import (
+from app.news.services.materialization.incident_materialization_service import (
     IncidentMaterializationService,
 )
 from app.news.services.dedup.pre_extraction_dedup import process_pre_dedup_message

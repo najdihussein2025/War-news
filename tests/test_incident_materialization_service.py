@@ -18,7 +18,7 @@ from app.news.services.dedup.fast_path_eligibility import (
     ERROR_NO_VILLAGE,
     ERROR_UNMATCHED_CONDITION,
 )
-from app.news.services.incident_materialization_service import (
+from app.news.services.materialization.incident_materialization_service import (
     EXACT_HASH_CONSTRAINT,
     IncidentMaterializationService,
     _initial_verification_status,

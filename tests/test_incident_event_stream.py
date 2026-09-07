@@ -13,7 +13,7 @@ from sqlalchemy.sql.elements import TextClause
 from app.api.deps import require_admin
 from app.main import app
 from app.news.services.realtime.incident_event_stream import IncidentEventStream
-from app.news.services.incident_materialization_service import _notify_new_incident
+from app.news.services.materialization.incident_materialization_service import _notify_new_incident
 
 
 INCIDENT_ID = UUID("11111111-1111-1111-1111-111111111111")

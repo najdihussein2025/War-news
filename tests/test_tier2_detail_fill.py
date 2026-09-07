@@ -12,7 +12,7 @@ from app.llm.dtos import (
     ExtractionResult,
 )
 from app.news.models import IncidentDetail, MessageStatus
-from app.news.services.tier2_detail_fill_service import Tier2DetailFillService
+from app.news.services.extraction.tier2_detail_fill_service import Tier2DetailFillService
 
 
 def test_fill_for_raw_message_merges_details_and_clears_pending() -> None:

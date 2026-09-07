@@ -121,7 +121,7 @@ def run_tier2_detail_fill_for_message(raw_message_id: int) -> int:
     """Tier2 detail fill with no DB session held during Ollama calls."""
     from app.news.repositories.incident_repository import IncidentRepository
     from app.news.services.dedup.dedup_matching_service import DedupMatchingService
-    from app.news.services.tier2_detail_fill_service import Tier2DetailFillService
+    from app.news.services.extraction.tier2_detail_fill_service import Tier2DetailFillService
 
     with SessionLocal() as db:
         raw_messages = RawMessageRepository(db)
