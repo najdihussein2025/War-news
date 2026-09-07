@@ -15,7 +15,7 @@ from app.llm.services.ollama_presence_gate_service import OllamaPresenceGateServ
 
 # Real message excerpts from live recon (raw_message_ids 691363, 691378, 691430).
 CIVIL_DEFENSE_RECOVERY_TEXT = (
-    "الدفاع المدني في بيان: انتشال جثمان شهيد من أحد المباني في النبطية "
+    "الدفاع المدني في بيان: انتشال جثمان 1 شهيد من أحد المباني في النبطية "
     "كان قد استشهد جراء غارة إسرائيلية سابقة"
 )
 BARE_VILLAGE_SHELLING_TEXT = "قصف مدفعيّ يستهدف بلدة ميس الجبل"
@@ -122,6 +122,12 @@ def test_civil_defense_recovery_populates_casualty_demographics_from_root() -> N
                 "total_deaths": 1,
                 "male_deaths": 1,
             },
+            "casualty_evidence": [
+                {"field": "deaths", "evidence_span": "1 شهيد"},
+                {"field": "total_deaths", "evidence_span": "1 شهيد"},
+                {"field": "male_deaths", "evidence_span": "1 شهيد"},
+            ],
+            "casualty_transitions": [],
         },
         ensure_ascii=False,
     )
@@ -130,6 +136,7 @@ def test_civil_defense_recovery_populates_casualty_demographics_from_root() -> N
             "did": None,
             "name": "الدفاع المدني",
             "casualties": {},
+            "casualty_evidence": [],
         },
         ensure_ascii=False,
     )
@@ -164,6 +171,11 @@ def test_casualty_demographics_injected_even_when_presence_gate_empty() -> None:
             "village": "النبطية",
             "action_description": "انتشال جثمان شهيد",
             "casualties": {"deaths": 1, "total_deaths": 1},
+            "casualty_evidence": [
+                {"field": "deaths", "evidence_span": "1 شهيد"},
+                {"field": "total_deaths", "evidence_span": "1 شهيد"},
+            ],
+            "casualty_transitions": [],
         },
         ensure_ascii=False,
     )

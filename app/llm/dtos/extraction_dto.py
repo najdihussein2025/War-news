@@ -67,6 +67,15 @@ class ExtractionCasualties(BaseModel):
     children_injuries: int | None = None
 
 
+class CasualtyCountEvidence(BaseModel):
+    """Literal source span that justifies one non-null casualty count field."""
+
+    model_config = ConfigDict(frozen=True)
+
+    field: str
+    evidence_span: str
+
+
 class ExtractionVehicleDetails(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -115,6 +124,7 @@ class ExtractionResult(BaseModel):
         default_factory=dict
     )
     casualties: ExtractionCasualties = Field(default_factory=ExtractionCasualties)
+    casualty_evidence: list[CasualtyCountEvidence] = Field(default_factory=list)
     casualty_transitions: list[CasualtyTransition] = Field(default_factory=list)
     # Tier 1 stores presence-gate keys here; category detail fills `categories` in Tier 2.
     presence_category_keys: list[ExtractionCategoryKey] = Field(default_factory=list)
@@ -138,6 +148,8 @@ class ExtractionResult(BaseModel):
             normalized["village_roles"] = []
         if normalized.get("casualty_transitions") is None:
             normalized["casualty_transitions"] = []
+        if normalized.get("casualty_evidence") is None:
+            normalized["casualty_evidence"] = []
         return normalized
 
 

@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.core.ollama_client import JsonObject, OllamaChatClient, OllamaChatMessage
 from app.llm.dtos import (
+    CasualtyCountEvidence,
     DidValue,
     ExtractionCasualties,
     ExtractionCategory,
@@ -16,6 +17,9 @@ from app.llm.dtos import (
 )
 from app.llm.services.ollama_presence_gate_service import LOW_TEMPERATURE
 from app.llm.services.ollama_relevance_classifier_service import is_valid_reason_text
+from app.news.services.incident_details.casualty_count_backstop import (
+    apply_casualty_count_backstop,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +58,30 @@ CATEGORY_DETAIL_RESPONSE_SCHEMA: JsonObject = {
                 "female_injuries": {"type": ["integer", "null"]},
                 "children_deaths": {"type": ["integer", "null"]},
                 "children_injuries": {"type": ["integer", "null"]},
+            },
+        },
+        "casualty_evidence": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "field": {
+                        "type": "string",
+                        "enum": [
+                            "deaths",
+                            "injuries",
+                            "male_deaths",
+                            "male_injuries",
+                            "female_deaths",
+                            "female_injuries",
+                            "children_deaths",
+                            "children_injuries",
+                        ],
+                    },
+                    "evidence_span": {"type": "string"},
+                },
+                "required": ["field", "evidence_span"],
             },
         },
         "vehicles": {
@@ -107,6 +135,7 @@ class _RawCategoryDetailResponse(BaseModel):
     did: DidValue | None = None
     name: str | None = None
     casualties: ExtractionCasualties | None = None
+    casualty_evidence: list[CasualtyCountEvidence] = Field(default_factory=list)
     vehicles: ExtractionVehicleDetails | None = None
 
 
@@ -146,6 +175,7 @@ class OllamaCategoryDetailService:
         )
         return self._parse_response(
             content,
+            post_text=post_text,
             category_key=category_key,
             raw_message_id=raw_message_id,
         )
@@ -176,6 +206,7 @@ class OllamaCategoryDetailService:
         )
         return self._parse_batched_response(
             content,
+            post_text=post_text,
             category_keys=category_keys,
             raw_message_id=raw_message_id,
         )
@@ -184,6 +215,7 @@ class OllamaCategoryDetailService:
         self,
         content: str,
         *,
+        post_text: str,
         category_keys: list[ExtractionCategoryKey],
         raw_message_id: int | None,
     ) -> dict[ExtractionCategoryKey, ExtractionCategory]:
@@ -211,6 +243,14 @@ class OllamaCategoryDetailService:
                 )
                 continue
             category_key = ExtractionCategoryKey(item.category_key)
+            casualties = None
+            if item.casualties is not None:
+                casualties, _ = apply_casualty_count_backstop(
+                    post_text,
+                    item.casualties,
+                    list(item.casualty_evidence),
+                    raw_message_id=raw_message_id,
+                )
             parsed[category_key] = ExtractionCategory(
                 did=item.did,
                 name=self._validated_name(
@@ -218,7 +258,7 @@ class OllamaCategoryDetailService:
                     category_key=category_key,
                     raw_message_id=raw_message_id,
                 ),
-                casualties=item.casualties,
+                casualties=casualties,
                 vehicles=item.vehicles,
             )
         return parsed
@@ -226,6 +266,8 @@ class OllamaCategoryDetailService:
     def _parse_response(
         self,
         content: str,
+        *,
+        post_text: str,
         category_key: ExtractionCategoryKey,
         raw_message_id: int | None,
     ) -> ExtractionCategory:
@@ -243,6 +285,14 @@ class OllamaCategoryDetailService:
             )
             raise RuntimeError("Malformed category detail response.") from exc
 
+        casualties = None
+        if response.casualties is not None:
+            casualties, _ = apply_casualty_count_backstop(
+                post_text,
+                response.casualties,
+                list(response.casualty_evidence),
+                raw_message_id=raw_message_id,
+            )
         return ExtractionCategory(
             did=response.did,
             name=self._validated_name(
@@ -250,7 +300,7 @@ class OllamaCategoryDetailService:
                 category_key=category_key,
                 raw_message_id=raw_message_id,
             ),
-            casualties=response.casualties,
+            casualties=casualties,
             vehicles=response.vehicles,
         )
 

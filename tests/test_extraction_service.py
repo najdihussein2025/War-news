@@ -68,6 +68,7 @@ def _client_for_model_contents(contents: list[str]) -> OllamaChatClient:
 
 
 _GENERAL_RESPONSE_DEFAULT = ["بنت جبيل"]
+_SAMPLE_POST_TEXT = "1 جريح في بنت جبيل"
 _UNSET = object()
 
 
@@ -80,6 +81,10 @@ def _general_response(*, village_value: object = _UNSET) -> str:
             "village": village_value,
             "action_description": "غارة على المدينة",
             "casualties": {"injuries": 1},
+            "casualty_evidence": [
+                {"field": "injuries", "evidence_span": "1 جريح"},
+            ],
+            "casualty_transitions": [],
         },
         ensure_ascii=False,
     )
@@ -96,7 +101,7 @@ def test_extract_tier1_skips_category_detail_calls() -> None:
         category_detail=category_detail,
     )
 
-    result = service.extract_tier1("sample text", raw_message_id=42)
+    result = service.extract_tier1(_SAMPLE_POST_TEXT, raw_message_id=42)
 
     assert presence_gate.calls == 1
     assert category_detail.calls == []
@@ -115,7 +120,7 @@ def test_orchestration_skips_category_detail_when_presence_gate_is_empty() -> No
         category_detail=category_detail,
     )
 
-    result = service.extract("sample text", raw_message_id=42)
+    result = service.extract(_SAMPLE_POST_TEXT, raw_message_id=42)
 
     assert presence_gate.calls == 1
     assert category_detail.calls == []
@@ -127,6 +132,7 @@ def test_orchestration_skips_category_detail_when_presence_gate_is_empty() -> No
             casualties=ExtractionCasualties(injuries=1),
         )
     }
+    assert result.casualty_evidence[0].field == "injuries"
 
 
 def test_orchestration_extracts_detail_once_per_present_category() -> None:
@@ -156,7 +162,7 @@ def test_orchestration_extracts_detail_once_per_present_category() -> None:
         category_detail=category_detail,
     )
 
-    result = service.extract("sample text", raw_message_id=42)
+    result = service.extract(_SAMPLE_POST_TEXT, raw_message_id=42)
 
     assert category_detail.calls == [
         ExtractionCategoryKey.health_center,
@@ -224,8 +230,11 @@ def test_orchestration_isolates_malformed_category_detail(caplog) -> None:
             json.dumps(
                 {
                     "did": "D",
-                    "name": "Ø³ÙŠØ§Ø±Ø©",
+                    "name": "سيارة",
                     "casualties": {"injuries": 1},
+                    "casualty_evidence": [
+                        {"field": "injuries", "evidence_span": "1 جريح"},
+                    ],
                 },
                 ensure_ascii=False,
             ),
@@ -243,7 +252,7 @@ def test_orchestration_isolates_malformed_category_detail(caplog) -> None:
     )
 
     with caplog.at_level(logging.ERROR):
-        result = service.extract("sample text", raw_message_id=42)
+        result = service.extract(_SAMPLE_POST_TEXT, raw_message_id=42)
 
     assert set(result.categories) == {
         ExtractionCategoryKey.vehicles,
@@ -273,7 +282,7 @@ def test_comma_separated_village_string_is_parsed_into_list() -> None:
         category_detail=category_detail,
     )
 
-    result = service.extract("sample text", raw_message_id=99)
+    result = service.extract(_SAMPLE_POST_TEXT, raw_message_id=99)
 
     assert result.village == ["كفرتبنيت", "حرش عيتا الجبل"]
 
@@ -290,7 +299,7 @@ def test_json_array_village_is_used_as_is() -> None:
         category_detail=category_detail,
     )
 
-    result = service.extract("sample text", raw_message_id=99)
+    result = service.extract(_SAMPLE_POST_TEXT, raw_message_id=99)
 
     assert result.village == ["بنت جبيل", "عيترون"]
 
@@ -307,6 +316,6 @@ def test_null_village_from_model_is_preserved_as_none() -> None:
         category_detail=category_detail,
     )
 
-    result = service.extract("sample text", raw_message_id=99)
+    result = service.extract(_SAMPLE_POST_TEXT, raw_message_id=99)
 
     assert result.village is None

@@ -41,6 +41,9 @@ Number rules:
 - Do not infer a number from plural words such as casualties, injuries, martyrs, wounded, or victims.
 - Do not convert plural language into a number.
 - Do not fill any number from outside knowledge or assumptions.
+- The following vague/approximate Arabic quantifiers must never be converted into a number: عشرات، عشرات الجرحى، عشرات الشهداء، مئات، المئات، عدد من، عدد كبير من، كثير من، العديد من، بضعة، بعض. When any of these appears without an accompanying explicit digit, leave the count null — do not invent an approximate number.
+- Do not invent children/women/men sub-counts from phrases like "بينهم أطفال" or "بينهم نساء" unless an explicit digit is written for that specific demographic group. Mentioning a group without a number does not authorize estimating one.
+- For every non-null casualty count field, also return casualty_evidence entries shaped like {"field":"injuries","evidence_span":"literal source span containing the explicit digit"}. If no explicit digit span exists, leave the count null.
 
 Allowed output shape:
 {
@@ -55,7 +58,8 @@ Allowed output shape:
     "female_injuries": null,
     "children_deaths": null,
     "children_injuries": null
-  }
+  },
+  "casualty_evidence": []
 }
 
 When category_key is vehicles, also include a vehicles object describing every vehicle subtype explicitly mentioned and targeted in the text:

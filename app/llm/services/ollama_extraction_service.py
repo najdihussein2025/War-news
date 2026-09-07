@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from app.core.config import settings
 from app.core.ollama_client import JsonObject, OllamaChatClient, OllamaChatMessage
 from app.llm.dtos import (
+    CasualtyCountEvidence,
     CasualtyTransition,
     ExtractionCasualties,
     ExtractionCategory,
@@ -26,7 +27,9 @@ from app.llm.services.ollama_presence_gate_service import (
     OllamaPresenceGateService,
 )
 from app.llm.services.ollama_relevance_classifier_service import is_valid_reason_text
-
+from app.news.services.incident_details.casualty_count_backstop import (
+    apply_casualty_count_backstop,
+)
 logger = logging.getLogger(__name__)
 
 ALLOWED_EXTRACTION_CATEGORY_KEYS = frozenset(
@@ -74,6 +77,9 @@ GENERAL_EXTRACTION_PROMPT = """أنت مساعد لاستخراج الحقول �
 - لا تستنتج العدد من صياغة عامة مثل "ضحايا" أو "إصابات" أو "شهداء" إذا لم يوجد رقم صريح.
 - لا تحوّل الجمع إلى رقم.
 - لا تملأ أي رقم اعتماداً على معرفة خارجية أو افتراضات.
+- الألفاظ التالية تدل على عدد غير محدد ويجب ألا تُترجم إلى رقم: عشرات، عشرات الجرحى، عشرات الشهداء، مئات، المئات، عدد من، عدد كبير من، كثير من، العديد من، بضعة، بعض. عند ورود أي من هذه الألفاظ دون رقم صريح مرافق، اترك الحقل فارغاً (null) ولا تفترض رقماً تقريبياً.
+- لا تستنتج عدد الأطفال أو النساء أو أي تصنيف ديموغرافي فرعي من عبارات مثل "بينهم أطفال" أو "بينهم نساء" ما لم يُذكر رقم صريح لتلك الفئة تحديداً في النص. ذِكر وجود فئة دون رقم لا يعني تقدير عدد لها.
+- لكل حقل عدد غير null في casualties، أضف عنصراً في casualty_evidence بالشكل {"field":"اسم_الحقل","evidence_span":"المقطع الحرفي من النص الذي يحتوي الرقم الصريح"}. إذا لم يوجد مقطع رقمي صريح لا تملأ الحقل.
 
 Schema الإخراج الوحيد المسموح:
 {
@@ -93,6 +99,7 @@ Schema الإخراج الوحيد المسموح:
     "children_deaths": null,
     "children_injuries": null
   },
+  "casualty_evidence": [],
   "casualty_transitions": []
 }
 
@@ -157,6 +164,32 @@ GENERAL_EXTRACTION_RESPONSE_SCHEMA: JsonObject = {
                 "required": ["from_status", "to_status", "count"],
             },
         },
+        "casualty_evidence": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "field": {
+                        "type": "string",
+                        "enum": [
+                            "total_deaths",
+                            "total_injuries",
+                            "deaths",
+                            "injuries",
+                            "male_deaths",
+                            "male_injuries",
+                            "female_deaths",
+                            "female_injuries",
+                            "children_deaths",
+                            "children_injuries",
+                        ],
+                    },
+                    "evidence_span": {"type": "string"},
+                },
+                "required": ["field", "evidence_span"],
+            },
+        },
     },
     "required": [
         "is_relevant",
@@ -165,6 +198,7 @@ GENERAL_EXTRACTION_RESPONSE_SCHEMA: JsonObject = {
         "action_description",
         "casualties",
         "casualty_transitions",
+        "casualty_evidence",
     ],
 }
 
@@ -188,6 +222,7 @@ COMBINED_TIER1_RESPONSE_SCHEMA: JsonObject = {
         "action_description": {"type": ["string", "null"]},
         "casualties": GENERAL_EXTRACTION_RESPONSE_SCHEMA["properties"]["casualties"],  # type: ignore[index]
         "casualty_transitions": GENERAL_EXTRACTION_RESPONSE_SCHEMA["properties"]["casualty_transitions"],  # type: ignore[index]
+        "casualty_evidence": GENERAL_EXTRACTION_RESPONSE_SCHEMA["properties"]["casualty_evidence"],  # type: ignore[index]
     },
     "required": [
         "categories_present",
@@ -198,6 +233,7 @@ COMBINED_TIER1_RESPONSE_SCHEMA: JsonObject = {
         "action_description",
         "casualties",
         "casualty_transitions",
+        "casualty_evidence",
     ],
 }
 
@@ -212,6 +248,7 @@ class _RawExtractionResponse(BaseModel):
     action_description: str | None = None
     casualties: ExtractionCasualties = Field(default_factory=ExtractionCasualties)
     casualty_transitions: list[CasualtyTransition] = Field(default_factory=list)
+    casualty_evidence: list[CasualtyCountEvidence] = Field(default_factory=list)
 
 
 class OllamaExtractionService(ExtractionClassifierInterface):
@@ -245,6 +282,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             raw_message_id=raw_message_id,
         )
         return self._build_tier1_result(
+            post_text=post_text,
             categories_present=categories_present,
             general_response=general_response,
             raw_message_id=raw_message_id,
@@ -289,6 +327,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 "action_description",
                 "casualties",
                 "casualty_transitions",
+                "casualty_evidence",
             )
         }
         general_response = self._parse_general_response(
@@ -296,6 +335,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             raw_message_id=raw_message_id,
         )
         return self._build_tier1_result(
+            post_text=post_text,
             categories_present=presence_result.categories_present,
             general_response=general_response,
             raw_message_id=raw_message_id,
@@ -304,14 +344,21 @@ class OllamaExtractionService(ExtractionClassifierInterface):
     def _build_tier1_result(
         self,
         *,
+        post_text: str,
         categories_present: list[ExtractionCategoryKey],
         general_response: _RawExtractionResponse,
         raw_message_id: int | None,
     ) -> ExtractionResult:
+        casualties, casualty_evidence = apply_casualty_count_backstop(
+            post_text,
+            general_response.casualties,
+            list(general_response.casualty_evidence),
+            raw_message_id=raw_message_id,
+        )
         categories: dict[ExtractionCategoryKey, ExtractionCategory] = {}
         self._inject_casualty_demographics_from_root(
             categories,
-            general_response.casualties,
+            casualties,
         )
 
         return ExtractionResult(
@@ -330,7 +377,8 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 raw_message_id=raw_message_id,
             ),
             categories=categories,
-            casualties=general_response.casualties,
+            casualties=casualties,
+            casualty_evidence=casualty_evidence,
             casualty_transitions=list(general_response.casualty_transitions),
             presence_category_keys=list(categories_present),
             extraction_tier=1,
@@ -550,9 +598,15 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             category_details,
             raw_message_id=raw_message_id,
         )
+        casualties, casualty_evidence = apply_casualty_count_backstop(
+            post_text,
+            general_response.casualties,
+            list(general_response.casualty_evidence),
+            raw_message_id=raw_message_id,
+        )
         self._inject_casualty_demographics_from_root(
             categories,
-            general_response.casualties,
+            casualties,
         )
 
         return ExtractionResult(
@@ -571,7 +625,8 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 raw_message_id=raw_message_id,
             ),
             categories=categories,
-            casualties=general_response.casualties,
+            casualties=casualties,
+            casualty_evidence=casualty_evidence,
             casualty_transitions=list(general_response.casualty_transitions),
             presence_category_keys=list(categories_present),
             extraction_tier=2,

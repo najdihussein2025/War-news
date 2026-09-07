@@ -24,6 +24,8 @@ General field rules:
 - village_roles: optional array of objects shaped like `{"village":"name","role":"origin|target"}`. Use `origin` only for the attacking position / launch site / tank position / staging point. Use `target` for the place actually struck or damaged. If the text mentions only one village or does not distinguish roles, default that village to `target`. If no extra role detail is needed, use `[]`.
 - action_description: incident action type from the text only (Arabic).
 - casualties: only explicitly stated numbers in the text; never infer from generic wording.
+- Vague/approximate Arabic quantifiers (عشرات، عشرات الجرحى، عشرات الشهداء، مئات، المئات، عدد من، عدد كبير من، كثير من، العديد من، بضعة، بعض) must leave counts null when no explicit digit accompanies them. Do not invent children/women sub-counts from "بينهم أطفال" / "بينهم نساء" without an explicit digit for that group.
+- For every non-null casualty count, include a matching casualty_evidence item {"field":"...","evidence_span":"literal digit span from the source"}.
 - casualty_transitions: status changes on follow-ups to the same incident (injured person died, "3 remain injured and 1 died", "one of the injured later died"). Do NOT require restating the remaining injury count — emit the transition only. Leave [] for first reports and plain additive updates ("5 more injured").
 - Mandatory rule: when the text explicitly says a previously injured person died, always emit `[{"from_status":"injured","to_status":"deceased","count":1}]` even if the sentence also restates a new total or the remaining injured count.
 - This includes at minimum Arabic forms such as `استشهاد أحد جريحي/الجرحى`, `وفاة أحد المصابين متأثراً بجراحه`, and `فارق أحد الجرحى الحياة`.
@@ -63,6 +65,7 @@ Required schema:
     "children_deaths": null,
     "children_injuries": null
   },
+  "casualty_evidence": [],
   "casualty_transitions": []
 }
 
