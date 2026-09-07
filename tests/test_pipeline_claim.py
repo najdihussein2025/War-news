@@ -4,9 +4,50 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.dialects import postgresql
+from unittest.mock import MagicMock
 
 from app.news.models import MessageStatus, RawMessage
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
+
+
+def test_pre_dedup_claim_excludes_already_checked_messages() -> None:
+    db = MagicMock()
+    db.scalar.return_value = None
+
+    PipelineClaimRepository(db).claim_pending_pre_dedup()
+
+    statement = db.scalar.call_args.args[0]
+    compiled = str(
+        statement.compile(
+            dialect=postgresql.dialect(),
+            compile_kwargs={"literal_binds": True},
+        )
+    )
+    assert "dedup_checked_at IS NULL" in compiled
+
+
+def test_tier2_claim_marks_raw_message_processing_lease() -> None:
+    message = RawMessage(source_id=1, raw_payload={}, status=MessageStatus.materialized)
+    message.id = 44
+    incident = type("ClaimedIncident", (), {"raw_message_id": 44})()
+
+    class _DBStub:
+        def scalar(self, _statement):
+            return incident
+
+        def get(self, _model, object_id):
+            assert object_id == 44
+            return message
+
+        def add(self, _value):
+            pass
+
+    claimed = PipelineClaimRepository(_DBStub()).claim_pending_tier2_detail_fill()  # type: ignore[arg-type]
+
+    assert claimed is incident
+    assert message.processing_claim_stage == "tier2_detail_fill"
+    assert message.processing_claimed_at is not None
+    assert message.processing_claimed_by
 
 
 def test_claim_pending_extraction_query_uses_skip_locked() -> None:

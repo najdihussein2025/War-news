@@ -14,6 +14,7 @@ from app.news.models import MessageStatus
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
 from app.news.repositories.raw_message_repository import RawMessageRepository
 from app.news.services.condition_evidence_override import apply_condition_evidence_override
+from app.news.services.casualty_gender_evidence import apply_explicit_arabic_gender_evidence
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +51,11 @@ def run_tier1_extraction_for_message(raw_message_id: int) -> None:
                 "action_description": apply_condition_evidence_override(
                     post_text,
                     result.action_description,
-                )
+                ),
+                "casualties": apply_explicit_arabic_gender_evidence(
+                    post_text,
+                    result.casualties,
+                ),
             }
         )
     except Exception as exc:

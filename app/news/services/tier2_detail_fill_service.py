@@ -11,6 +11,7 @@ from app.llm.dtos import ExtractionCategory, ExtractionCategoryKey, ExtractionRe
 from app.llm.services.ollama_extraction_service import OllamaExtractionService
 from app.news.models import Incident, IncidentDetail, MessageStatus, RawMessage
 from app.news.services.category_mapper import compute_rollups, map_categories
+from app.news.services.casualty_demographic_consistency import reconcile_root_demographics
 from app.news.services.dedup_matching_service import DedupMatchingService
 from app.news.services.embedding_service import EmbeddingService
 from app.news.services.incident_detail_merge import merge_incident_detail_fields
@@ -89,18 +90,35 @@ class Tier2DetailFillService:
             return 0
 
         extraction = ExtractionResult.model_validate(raw_message.extraction_result)
+        original_root_casualties = extraction.casualties
         if tier2_categories is not None:
             merged_categories = dict(extraction.categories)
             merged_categories.update(tier2_categories)
+            reconciled_casualties = reconcile_root_demographics(
+                extraction.casualties,
+                merged_categories,
+            )
             extraction = extraction.model_copy(
                 update={
                     "categories": merged_categories,
+                    "casualties": reconciled_casualties,
                     "extraction_tier": 2,
                     "extracted_at": datetime.now(timezone.utc),
                 }
             )
             raw_message.extraction_result = extraction.model_dump(mode="json")
             self.db.add(raw_message)
+        else:
+            reconciled_casualties = reconcile_root_demographics(
+                extraction.casualties,
+                extraction.categories,
+            )
+            if reconciled_casualties != extraction.casualties:
+                extraction = extraction.model_copy(
+                    update={"casualties": reconciled_casualties}
+                )
+                raw_message.extraction_result = extraction.model_dump(mode="json")
+                self.db.add(raw_message)
 
         mapped_fields = map_categories(extraction.categories)
         total_deaths, total_injuries = compute_rollups(
@@ -135,6 +153,20 @@ class Tier2DetailFillService:
                     "children_i": root.children_injuries,
                 },
             )
+            # Reconciliation is allowed to clear a contradictory positive
+            # gender value; the ordinary merge helper intentionally ignores
+            # None and therefore cannot perform this correction itself.
+            demographic_fields = {
+                "male_deaths": "male_d",
+                "male_injuries": "male_i",
+                "female_deaths": "female_d",
+                "female_injuries": "female_i",
+            }
+            for extraction_field, detail_field in demographic_fields.items():
+                before = getattr(original_root_casualties, extraction_field)
+                after = getattr(root, extraction_field)
+                if before != after:
+                    setattr(detail, detail_field, after)
             if incident.deaths in (None, 0) and root.deaths is not None:
                 incident.deaths = root.deaths
             if incident.injuries in (None, 0) and root.injuries is not None:

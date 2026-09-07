@@ -82,6 +82,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                 RawMessage.status.label("raw_status"),
                 func.coalesce(Village.ref_name_en, Village.cad_name).label("village"),
                 Condition.action_en.label("condition"),
+                Condition.action_ar.label("condition_ar"),
                 event_date.label("event_date"),
                 Incident.event_time,
                 func.coalesce(

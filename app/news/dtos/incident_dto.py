@@ -13,6 +13,7 @@ class IncidentListItemDTO(BaseModel):
     raw_status: str | None
     village: str | None
     condition: str | None
+    condition_ar: str | None = None
     event_date: date
     event_time: time | None = None
     khabar: str

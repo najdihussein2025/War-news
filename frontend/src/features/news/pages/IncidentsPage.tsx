@@ -250,9 +250,16 @@ export const IncidentsPage = () => {
       headerClassName: "w-[12rem]",
       cellClassName: "w-[12rem]",
       render: (row) => (
-        <p className={`${twoLineClampClass} text-small leading-6 text-text-primary`}>
-          {row.condition || "No data"}
-        </p>
+        <div className="space-y-1">
+          <p className={`${twoLineClampClass} text-small leading-6 text-text-primary`}>
+            {row.condition || "No data"}
+          </p>
+          {row.condition_ar ? (
+            <p className={`${twoLineClampClass} text-caption leading-6 text-text-muted`} dir="rtl" lang="ar">
+              {row.condition_ar}
+            </p>
+          ) : null}
+        </div>
       ),
     },
     {

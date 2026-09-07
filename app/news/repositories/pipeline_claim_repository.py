@@ -84,6 +84,7 @@ class PipelineClaimRepository:
                 RawMessage.status == MessageStatus.parsed,
                 RawMessage.extraction_result.is_(None),
                 RawMessage.duplicate_of_id.is_(None),
+                RawMessage.dedup_checked_at.is_(None),
             )
             .order_by(RawMessage.id.asc())
             .limit(1)
@@ -177,15 +178,22 @@ class PipelineClaimRepository:
         )
 
     def claim_pending_tier2_detail_fill(self) -> Incident | None:
-        return self.db.scalar(
+        incident = self.db.scalar(
             select(Incident)
             .join(RawMessage, RawMessage.id == Incident.raw_message_id)
             .where(
                 Incident.details_pending.is_(True),
                 Incident.is_deleted.is_(False),
                 RawMessage.extraction_result.is_not(None),
+                claimable_lease_filter(),
             )
             .order_by(Incident.created_at.desc())
             .limit(1)
             .with_for_update(skip_locked=True)
         )
+        if incident is None or incident.raw_message_id is None:
+            return incident
+        message = self.db.get(RawMessage, incident.raw_message_id)
+        if message is not None:
+            self._mark_claimed(message, stage="tier2_detail_fill")
+        return incident

@@ -13,6 +13,7 @@ export type Incident = {
   raw_status: string | null;
   village: string | null;
   condition: string | null;
+  condition_ar: string | null;
   event_date: string;
   event_time: string | null;
   khabar: string;

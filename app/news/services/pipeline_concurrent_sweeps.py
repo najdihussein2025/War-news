@@ -588,6 +588,8 @@ async def _tier2_detail_fill_worker(
                 _format_exception(exc),
             )
             stats.record_failure()
+        finally:
+            await asyncio.to_thread(_release_raw_message_claim, raw_message_id)
 
 
 async def sweep_tier2_detail_fill_concurrent(
