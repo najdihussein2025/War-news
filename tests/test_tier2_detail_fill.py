@@ -128,3 +128,115 @@ def test_tier2_completed_at_left_none_when_no_pending_incidents() -> None:
     assert updated == 0
     assert raw_message.tier2_completed_at is None
     db.commit.assert_not_called()
+
+
+def _incident_stub(**overrides: object) -> SimpleNamespace:
+    base = dict(
+        id=uuid4(),
+        raw_message_id=7,
+        village_id=1,
+        condition_id=2,
+        event_date=datetime(2026, 8, 18).date(),
+        event_time=None,
+        deaths=None,
+        injuries=None,
+        total_deaths=None,
+        total_injuries=None,
+        khabar="خبر",
+        duplicate_flag=False,
+    )
+    base.update(overrides)
+    return SimpleNamespace(**base)
+
+
+def test_tier2_high_score_backstop_records_duplicate_match() -> None:
+    from app.core.config import settings
+
+    dedup = MagicMock()
+    peer = _incident_stub(id=uuid4(), raw_message_id=8)
+    current = _incident_stub()
+    dedup.find_best_match.return_value = (peer, settings.dedup_high_threshold)
+
+    service = Tier2DetailFillService(
+        MagicMock(),
+        MagicMock(),
+        embedding_service=MagicMock(),
+        dedup_service=dedup,
+        emergency_org_matcher=MagicMock(),
+    )
+    service._apply_dedup_backstop(
+        current,
+        embedding=[0.1, 0.2],
+        raw_message_id=7,
+        mapped_fields={},
+        casualty_transitions=[],
+    )
+
+    dedup.merge_into_incident.assert_called_once()
+    dedup.record_possible_duplicate.assert_called_once_with(
+        incident=current,
+        matched_incident=peer,
+        similarity_score=settings.dedup_high_threshold,
+    )
+    assert current.duplicate_flag is True
+
+
+def test_tier2_mid_score_backstop_records_duplicate_match_without_merge() -> None:
+    from app.core.config import settings
+
+    dedup = MagicMock()
+    peer = _incident_stub(id=uuid4(), raw_message_id=8)
+    current = _incident_stub()
+    mid_score = (settings.dedup_low_threshold + settings.dedup_high_threshold) / 2.0
+    dedup.find_best_match.return_value = (peer, mid_score)
+
+    service = Tier2DetailFillService(
+        MagicMock(),
+        MagicMock(),
+        embedding_service=MagicMock(),
+        dedup_service=dedup,
+        emergency_org_matcher=MagicMock(),
+    )
+    service._apply_dedup_backstop(
+        current,
+        embedding=[0.1, 0.2],
+        raw_message_id=7,
+        mapped_fields={},
+        casualty_transitions=[],
+    )
+
+    dedup.merge_into_incident.assert_not_called()
+    dedup.record_possible_duplicate.assert_called_once_with(
+        incident=current,
+        matched_incident=peer,
+        similarity_score=mid_score,
+    )
+    assert current.duplicate_flag is True
+
+
+def test_tier2_below_low_threshold_does_not_flag_or_record_match() -> None:
+    from app.core.config import settings
+
+    dedup = MagicMock()
+    peer = _incident_stub(id=uuid4(), raw_message_id=8)
+    current = _incident_stub()
+    dedup.find_best_match.return_value = (peer, settings.dedup_low_threshold - 0.01)
+
+    service = Tier2DetailFillService(
+        MagicMock(),
+        MagicMock(),
+        embedding_service=MagicMock(),
+        dedup_service=dedup,
+        emergency_org_matcher=MagicMock(),
+    )
+    service._apply_dedup_backstop(
+        current,
+        embedding=[0.1, 0.2],
+        raw_message_id=7,
+        mapped_fields={},
+        casualty_transitions=[],
+    )
+
+    dedup.merge_into_incident.assert_not_called()
+    dedup.record_possible_duplicate.assert_not_called()
+    assert current.duplicate_flag is False

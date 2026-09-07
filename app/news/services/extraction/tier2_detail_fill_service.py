@@ -290,7 +290,15 @@ class Tier2DetailFillService:
                 },
                 raw_message_id=raw_message_id,
             )
+            # Keep both rows (preserve-duplicate policy) but always pair the
+            # reviewer-facing flag with a pending soft match — same bookkeeping
+            # as slow-path mid-score via record_possible_duplicate.
             incident.duplicate_flag = True
+            self.dedup_service.record_possible_duplicate(
+                incident=incident,
+                matched_incident=existing,
+                similarity_score=score,
+            )
             logger.info(
                 "tier2 dedup linked incident_id=%s to incident_id=%s score=%.3f",
                 incident.id,
@@ -301,6 +309,11 @@ class Tier2DetailFillService:
 
         if score >= settings.dedup_low_threshold:
             incident.duplicate_flag = True
+            self.dedup_service.record_possible_duplicate(
+                incident=incident,
+                matched_incident=existing,
+                similarity_score=score,
+            )
             logger.info(
                 "tier2 dedup flagged incident_id=%s possible_duplicate_of=%s score=%.3f",
                 incident.id,
