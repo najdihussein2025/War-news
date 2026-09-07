@@ -68,6 +68,10 @@ When category_key is vehicles, also include a vehicles object describing every v
 Use null/false for subtypes not mentioned. Do not set con_veh or any construction subtype unless the text clearly says that equipment was targeted or destroyed.
 Do not compute total_con — the application sums construction subtypes automatically.
 
+When category_key is emergency_civil_defense:
+- name: the emergency / civil-defense / ambulance / scout-paramedic organization named in the text (e.g. الدفاع المدني اللبناني, الصليب الأحمر اللبناني, كشافة الرسالة الإسلامية). Prefer the organization name as written; do not invent one.
+- Also include a vehicles object when an emergency / ambulance / civil-defense vehicle was hit, targeted, destroyed, or otherwise involved as the subject (e.g. سيارة إسعاف, سيارة مدنية تابعة لـ..., آلية الدفاع المدني). Set car=true in that case. Leave vehicles null when no vehicle language is present for this category.
+
 When a demographic phrase such as «من بينهم» follows an injury count, attach the following children/women/men counts to injuries. Arabic سيدة/سيدات/امرأة/نساء always denotes female; never discard its explicit number. Required example: «4 شهداء و33 جريحا من بينهم 6 أطفال و4 سيدات» means deaths=4, injuries=33, children_injuries=6, female_injuries=4, children_deaths=null, and female_deaths=null.
 
 Extract details for the requested category_key only:

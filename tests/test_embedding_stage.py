@@ -37,6 +37,7 @@ def test_tier2_failure_preserves_precomputed_embedding() -> None:
         classifier,
         embedding_service=embedding_service,
         dedup_service=None,
+        emergency_org_matcher=MagicMock(),
     )
 
     with pytest.raises(RuntimeError, match="tier2 failed"):

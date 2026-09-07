@@ -10,10 +10,16 @@ from app.core.config import settings
 from app.llm.dtos import ExtractionCategory, ExtractionCategoryKey, ExtractionResult
 from app.llm.services.ollama_extraction_service import OllamaExtractionService
 from app.news.models import Incident, IncidentDetail, MessageStatus, RawMessage
+from app.news.repositories.emergency_organization_repository import (
+    EmergencyOrganizationRepository,
+)
 from app.news.services.category_mapper import compute_rollups, map_categories
 from app.news.services.casualty_demographic_consistency import reconcile_root_demographics
 from app.news.services.dedup_matching_service import DedupMatchingService
 from app.news.services.embedding_service import EmbeddingService
+from app.news.services.emergency_organization_matching_service import (
+    EmergencyOrganizationMatchingService,
+)
 from app.news.services.incident_detail_merge import merge_incident_detail_fields
 
 logger = logging.getLogger(__name__)
@@ -27,11 +33,18 @@ class Tier2DetailFillService:
         *,
         embedding_service: EmbeddingService | None = None,
         dedup_service: DedupMatchingService | None = None,
+        emergency_org_matcher: EmergencyOrganizationMatchingService | None = None,
     ) -> None:
         self.db = db
         self.classifier = classifier
         self.embedding_service = embedding_service or EmbeddingService()
         self.dedup_service = dedup_service
+        self.emergency_org_matcher = (
+            emergency_org_matcher
+            or EmergencyOrganizationMatchingService(
+                EmergencyOrganizationRepository(db)
+            )
+        )
 
     def fill_for_raw_message(self, raw_message_id: int) -> int:
         """Fill category details (includes LLM calls when tier2 is incomplete)."""
@@ -120,7 +133,10 @@ class Tier2DetailFillService:
                 raw_message.extraction_result = extraction.model_dump(mode="json")
                 self.db.add(raw_message)
 
-        mapped_fields = map_categories(extraction.categories)
+        mapped_fields = map_categories(
+            extraction.categories,
+            emergency_org_matcher=self.emergency_org_matcher,
+        )
         total_deaths, total_injuries = compute_rollups(
             mapped_fields,
             extraction.casualties,

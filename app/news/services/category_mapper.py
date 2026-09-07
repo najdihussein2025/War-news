@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Protocol
 
 from app.llm.dtos.extraction_dto import (
     ExtractionCasualties,
@@ -11,6 +12,10 @@ from app.llm.dtos.extraction_dto import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class _EmergencyOrgMatcher(Protocol):
+    def match(self, text: str | None) -> Any: ...
 
 # ---------------------------------------------------------------------------
 # Keyword sets for name-based classification
@@ -43,6 +48,17 @@ _WATER_KEYWORDS: frozenset[str] = frozenset({"water", "مياه", "آبار", "�
 _ELECTRIC_KEYWORDS: frozenset[str] = frozenset({"electric", "كهرب", "محطة كهرب"})
 _OLIVE_KEYWORDS: frozenset[str] = frozenset({"olive", "زيتون", "أشجار"})
 _MJNOUB_KEYWORDS: frozenset[str] = frozenset({"mjnoub", "مجنوب"})
+# Vehicle language on emergency-response subjects (ambulance / civil-defense cars).
+_EMERGENCY_VEHICLE_KEYWORDS: tuple[str, ...] = (
+    "سيارة",
+    "سيارات",
+    "آلية إسعاف",
+    "آليات إسعاف",
+)
+_ARABIC_DIGIT_MAP = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+_VEHICLE_COUNT_RE = re.compile(
+    r"(\d+)\s*(?:سيارة|سيارات)|(?:سيارة|سيارات)\s*(\d+)"
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -228,12 +244,85 @@ def _map_car_casualties(cat: ExtractionCategory, out: dict[str, Any]) -> None:
     out["cari"] = _safe_add(c.male_injuries, c.female_injuries)
 
 
-def _map_emergency_civil_defense(cat: ExtractionCategory, out: dict[str, Any]) -> None:
+def _extract_vehicle_count(text: str) -> int | None:
+    """Best-effort count next to سيارة/سيارات; returns None when no numeral found."""
+    normalized = text.translate(_ARABIC_DIGIT_MAP)
+    match = _VEHICLE_COUNT_RE.search(normalized)
+    if match is None:
+        return None
+    raw = match.group(1) or match.group(2)
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return None
+    return value if value > 0 else None
+
+
+def _emergency_vehicle_signals(
+    cat: ExtractionCategory,
+    categories: dict[ExtractionCategoryKey, ExtractionCategory],
+) -> tuple[bool | None, int | None]:
+    """Derive ``e_cars`` / ``car_nbr`` from the emergency category and co-present vehicles."""
+    car_hit = False
+    count: int | None = None
+
+    if cat.vehicles is not None and cat.vehicles.car:
+        car_hit = True
+        count = 1
+
+    vehicles_cat = categories.get(ExtractionCategoryKey.vehicles)
+    if (
+        vehicles_cat is not None
+        and vehicles_cat.vehicles is not None
+        and vehicles_cat.vehicles.car
+    ):
+        car_hit = True
+        if count is None:
+            count = 1
+
+    name = cat.name or ""
+    if any(term in name for term in _EMERGENCY_VEHICLE_KEYWORDS):
+        car_hit = True
+        parsed = _extract_vehicle_count(name)
+        if parsed is not None:
+            count = parsed
+        elif count is None:
+            count = 1
+
+    if not car_hit:
+        return None, None
+    return True, count if count is not None else 1
+
+
+def _map_emergency_civil_defense(
+    cat: ExtractionCategory,
+    out: dict[str, Any],
+    *,
+    categories: dict[ExtractionCategoryKey, ExtractionCategory],
+    org_matcher: _EmergencyOrgMatcher | None,
+) -> None:
     out["emer"] = True
     c = cat.casualties
     if c is not None:
         out["emer_d"] = c.deaths
         out["emer_i"] = c.injuries
+
+    raw_name = (cat.name or "").strip() or None
+    if raw_name:
+        # Always preserve extracted text; overwrite with the canonical Arabic
+        # name only on a confident (>=0.6) controlled-vocabulary match.
+        emer_rela = raw_name
+        if org_matcher is not None:
+            match = org_matcher.match(raw_name)
+            if match.status == "matched" and match.matched_name_ar:
+                emer_rela = match.matched_name_ar
+        out["emer_rela"] = emer_rela
+
+    e_cars, car_nbr = _emergency_vehicle_signals(cat, categories)
+    if e_cars is not None:
+        out["e_cars"] = e_cars
+    if car_nbr is not None:
+        out["car_nbr"] = car_nbr
 
 
 def _map_crossings_other(cat: ExtractionCategory, out: dict[str, Any]) -> None:
@@ -387,7 +476,7 @@ _CATEGORY_HANDLERS: dict[ExtractionCategoryKey, _CategoryHandler] = {
     ExtractionCategoryKey.press: _map_press,
     ExtractionCategoryKey.government_building: _map_government_building,
     ExtractionCategoryKey.vehicles: _map_vehicles,
-    ExtractionCategoryKey.emergency_civil_defense: _map_emergency_civil_defense,
+    # emergency_civil_defense is handled specially in map_categories (needs matcher).
     ExtractionCategoryKey.crossings_other: _map_crossings_other,
     ExtractionCategoryKey.warning_classification: _map_warning_classification,
     ExtractionCategoryKey.school_university: _map_school_university,
@@ -403,14 +492,29 @@ _CATEGORY_HANDLERS: dict[ExtractionCategoryKey, _CategoryHandler] = {
 
 def map_categories(
     categories: dict[ExtractionCategoryKey, ExtractionCategory],
+    *,
+    emergency_org_matcher: _EmergencyOrgMatcher | None = None,
 ) -> dict[str, Any]:
     """Return a flat dict of incident_details column names → values.
 
     Only keys that are present in *categories* produce output entries.
     Absent categories contribute nothing; columns default to NULL in the DB.
+
+    When ``emergency_org_matcher`` is supplied, a confident match replaces the
+    raw ``emergency_civil_defense.name`` with the canonical ``name_ar`` in
+    ``emer_rela``; low-confidence / unmatched names are still written as free
+    text so extracted affiliation is never silently dropped.
     """
     out: dict[str, Any] = {}
     for key, category in categories.items():
+        if key == ExtractionCategoryKey.emergency_civil_defense:
+            _map_emergency_civil_defense(
+                category,
+                out,
+                categories=categories,
+                org_matcher=emergency_org_matcher,
+            )
+            continue
         handler = _CATEGORY_HANDLERS.get(key)
         if handler is not None:
             handler(category, out)

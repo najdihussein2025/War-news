@@ -18,7 +18,13 @@ from app.llm.dtos import ExtractionResult
 from app.llm.dtos import VillageRole
 from app.news.interfaces import DedupMatchingInterface
 from app.news.models import Incident, IncidentDetail, MatchStatus, MessageStatus, RawMessage
+from app.news.repositories.emergency_organization_repository import (
+    EmergencyOrganizationRepository,
+)
 from app.news.services.category_mapper import compute_rollups, map_categories
+from app.news.services.emergency_organization_matching_service import (
+    EmergencyOrganizationMatchingService,
+)
 from app.news.services.fast_path_dedup import (
     MATERIALIZE_MATCH_STATUSES,
     FastPathDedupOutcome,
@@ -177,9 +183,16 @@ class IncidentMaterializationService:
         self,
         db: Session,
         dedup_service: DedupMatchingInterface | None = None,
+        emergency_org_matcher: EmergencyOrganizationMatchingService | None = None,
     ) -> None:
         self.db = db
         self.dedup_service = dedup_service
+        self.emergency_org_matcher = (
+            emergency_org_matcher
+            or EmergencyOrganizationMatchingService(
+                EmergencyOrganizationRepository(db)
+            )
+        )
         self.stats = MaterializationStats()
         self.fast_stats = FastMaterializationStats()
 
@@ -326,7 +339,10 @@ class IncidentMaterializationService:
                         exclude_raw_message_id=representative.id,
                     )
                     merge_target = existing or canonical_incident
-                    mapped_fields = map_categories(extraction.categories)
+                    mapped_fields = map_categories(
+                        extraction.categories,
+                        emergency_org_matcher=self.emergency_org_matcher,
+                    )
                     casualties = extraction.casualties
                     total_deaths, total_injuries = compute_rollups(
                         mapped_fields,
@@ -635,7 +651,10 @@ class IncidentMaterializationService:
         event_datetime = _incident_event_datetime(message_datetime)
 
         casualties = extraction.casualties
-        mapped_fields = map_categories(extraction.categories)
+        mapped_fields = map_categories(
+            extraction.categories,
+            emergency_org_matcher=self.emergency_org_matcher,
+        )
         total_deaths, total_injuries = compute_rollups(mapped_fields, casualties)
         created: list[Incident] = []
 

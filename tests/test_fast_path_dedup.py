@@ -137,3 +137,38 @@ def test_embedding_substitutes_for_missing_text() -> None:
     decision = _decide(_service(repo), candidate_text=None, candidate_embedding=[0.1])
     assert decision.outcome == FastPathDedupOutcome.confident_duplicate
     assert decision.similarity_method == "embedding"
+
+
+def test_nabatiyeh_style_same_village_flags_duplicate_split_village_does_not() -> None:
+    """Nabatiyeh-style set: ~2min gaps + high similarity → duplicate for the four
+    rows sharing matched village_id. The fifth (split-village) row is an expected
+    gap — same village/condition precondition fails across village_id 703 vs 1153,
+    so fast-path never consults the comparison service for cross-id merges.
+    """
+    shared_village_id = 703  # e.g. Nabatiyeh El-Tahta / matched canonical
+    split_village_id = 1153  # Houmine/Nabatiyeh El-Faouka split — do not merge here
+    condition_id = 12
+
+    # Four near-duplicate candidates already materialized under village 703.
+    near_dupe = _candidate(gap=90, text=0.91)
+    repo_same = _IncidentRepoStub([near_dupe])
+    for _ in range(4):
+        decision = _decide(
+            _service(repo_same),
+            village_id=shared_village_id,
+            condition_id=condition_id,
+        )
+        assert decision.outcome == FastPathDedupOutcome.confident_duplicate
+        assert repo_same.last_query["village_id"] == shared_village_id
+
+    # Fifth row resolved to the other half of the split village: lookup is scoped
+    # by village_id, so the 703 incidents are not candidates (assert the gap).
+    repo_split = _IncidentRepoStub([])  # no same-village_id candidates returned
+    decision_split = _decide(
+        _service(repo_split),
+        village_id=split_village_id,
+        condition_id=condition_id,
+    )
+    assert decision_split.outcome == FastPathDedupOutcome.materialize
+    assert repo_split.last_query["village_id"] == split_village_id
+    assert repo_split.last_query["village_id"] != shared_village_id

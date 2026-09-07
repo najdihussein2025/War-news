@@ -72,6 +72,7 @@ def test_fill_for_raw_message_merges_details_and_clears_pending() -> None:
         classifier,
         embedding_service=embedding_service,
         dedup_service=None,
+        emergency_org_matcher=MagicMock(),
     )
     updated = service.apply_tier2_result_for_raw_message(
         7,
@@ -116,7 +117,11 @@ def test_tier2_completed_at_left_none_when_no_pending_incidents() -> None:
     db.scalars.return_value.all.return_value = []
 
     service = Tier2DetailFillService(
-        db, classifier, embedding_service=MagicMock(), dedup_service=None
+        db,
+        classifier,
+        embedding_service=MagicMock(),
+        dedup_service=None,
+        emergency_org_matcher=MagicMock(),
     )
     updated = service.apply_tier2_result_for_raw_message(7, tier2_categories=None)
 

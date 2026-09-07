@@ -10,6 +10,9 @@ from app.llm.dtos.extraction_dto import (
     ExtractionVehicleDetails,
 )
 from app.news.services.category_mapper import compute_rollups, map_categories
+from app.news.services.emergency_organization_matching_service import (
+    EmergencyOrganizationMatch,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -34,6 +37,18 @@ def _cat(
 
 def _cas(**kwargs: int | None) -> ExtractionCasualties:
     return ExtractionCasualties(**kwargs)
+
+
+class _OrgMatcherStub:
+    """Deterministic matcher stub for category-mapper tests (no DB)."""
+
+    def __init__(self, result: EmergencyOrganizationMatch) -> None:
+        self.result = result
+        self.calls: list[str | None] = []
+
+    def match(self, text: str | None) -> EmergencyOrganizationMatch:
+        self.calls.append(text)
+        return self.result
 
 
 # ---------------------------------------------------------------------------
@@ -328,3 +343,121 @@ def test_rollup_none_components_are_skipped_not_treated_as_zero() -> None:
 
     assert td is None
     assert ti == 4
+
+
+# ---------------------------------------------------------------------------
+# emergency_civil_defense (Phase 1: emer_rela / e_cars / car_nbr)
+# ---------------------------------------------------------------------------
+
+
+def test_kfar_roummane_style_emergency_maps_org_vehicle_and_casualties() -> None:
+    """سيارة + كشافة الرسالة الإسلامية + casualties → emer, emer_rela, e_cars, car_nbr, emer_d/i."""
+    matcher = _OrgMatcherStub(
+        EmergencyOrganizationMatch(
+            matched_id=5,
+            matched_name_ar="كشافة الرسالة الإسلامية",
+            matched_name_en="Islamic Message Scouts",
+            matched_org_type="scout_paramedic",
+            confidence=0.91,
+            status="matched",
+            raw_text="كشافة الرسالة الإسلامية",
+        )
+    )
+    categories = {
+        ExtractionCategoryKey.emergency_civil_defense: _cat(
+            name="كشافة الرسالة الإسلامية",
+            casualties=_cas(deaths=1, injuries=2),
+            vehicles=ExtractionVehicleDetails(car=True),
+        )
+    }
+    out = map_categories(categories, emergency_org_matcher=matcher)
+
+    assert out["emer"] is True
+    assert out["emer_rela"] == "كشافة الرسالة الإسلامية"
+    assert out["e_cars"] is True
+    assert out["car_nbr"] == 1
+    assert out["emer_d"] == 1
+    assert out["emer_i"] == 2
+    assert matcher.calls == ["كشافة الرسالة الإسلامية"]
+
+
+def test_emergency_unmatched_org_keeps_raw_emer_rela() -> None:
+    """Org not in the seed list → still populate emer_rela with raw text (no confident claim)."""
+    raw = "فرقة إنقاذ محلية غير مسجلة"
+    matcher = _OrgMatcherStub(
+        EmergencyOrganizationMatch(
+            matched_id=None,
+            matched_name_ar=None,
+            matched_name_en=None,
+            matched_org_type=None,
+            confidence=0.12,
+            status="unmatched",
+            raw_text=raw,
+        )
+    )
+    categories = {
+        ExtractionCategoryKey.emergency_civil_defense: _cat(name=raw)
+    }
+    out = map_categories(categories, emergency_org_matcher=matcher)
+
+    assert out["emer"] is True
+    assert out["emer_rela"] == raw
+    assert "e_cars" not in out
+
+
+def test_emergency_low_confidence_keeps_raw_not_canonical() -> None:
+    matcher = _OrgMatcherStub(
+        EmergencyOrganizationMatch(
+            matched_id=2,
+            matched_name_ar="الصليب الأحمر اللبناني",
+            matched_name_en="Lebanese Red Cross",
+            matched_org_type="health",
+            confidence=0.45,
+            status="matched_low_confidence",
+            raw_text="الصليب",
+        )
+    )
+    categories = {
+        ExtractionCategoryKey.emergency_civil_defense: _cat(name="الصليب")
+    }
+    out = map_categories(categories, emergency_org_matcher=matcher)
+
+    assert out["emer_rela"] == "الصليب"
+
+
+def test_emergency_vehicle_inferred_from_name_keyword() -> None:
+    categories = {
+        ExtractionCategoryKey.emergency_civil_defense: _cat(
+            name="سيارة مدنية تابعة للدفاع المدني",
+        )
+    }
+    out = map_categories(categories)
+    assert out["e_cars"] is True
+    assert out["car_nbr"] == 1
+    assert out["emer_rela"] == "سيارة مدنية تابعة للدفاع المدني"
+
+
+def test_emergency_vehicle_count_parsed_from_name() -> None:
+    categories = {
+        ExtractionCategoryKey.emergency_civil_defense: _cat(
+            name="3 سيارات إسعاف",
+        )
+    }
+    out = map_categories(categories)
+    assert out["e_cars"] is True
+    assert out["car_nbr"] == 3
+
+
+def test_emergency_vehicle_from_co_present_vehicles_category() -> None:
+    categories = {
+        ExtractionCategoryKey.emergency_civil_defense: _cat(
+            name="الدفاع المدني اللبناني",
+        ),
+        ExtractionCategoryKey.vehicles: _cat(
+            vehicles=ExtractionVehicleDetails(car=True),
+        ),
+    }
+    out = map_categories(categories)
+    assert out["emer"] is True
+    assert out["e_cars"] is True
+    assert out["car_nbr"] == 1
