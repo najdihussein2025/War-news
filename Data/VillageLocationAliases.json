@@ -33,5 +33,89 @@
     "note": "Descriptor+name compound seen splitting Houmine vs Douair; pin to El-Faouka.",
     "confidence": "proposed",
     "evidence": "14d scope: identical قصف محيط النبطية الفوقا → Houmine 703 vs Douair 543"
+  },
+  {
+    "alias_text": "دوحة كفررمان",
+    "parent_acs_code": 71133,
+    "note": "Neighborhood/compound of Kfar Roummane (دوحة …).",
+    "confidence": "proposed",
+    "evidence": "89-pair backlog: 21 msgs, matched_low_confidence → 851 at 0.43"
+  },
+  {
+    "alias_text": "وادي زبقين",
+    "parent_acs_code": 62286,
+    "note": "Valley-of-village compound → Zebqine.",
+    "confidence": "proposed",
+    "evidence": "89-pair backlog: 9 msgs, matched_low_confidence → 1523 at 0.55"
+  },
+  {
+    "alias_text": "حرش كونين",
+    "parent_acs_code": 72251,
+    "note": "Grove descriptor + village → Kounine.",
+    "confidence": "proposed",
+    "evidence": "89-pair backlog: 3 msgs; descriptor strip still pending"
+  },
+  {
+    "alias_text": "حرش علي الطاهر",
+    "parent_acs_code": 71115,
+    "note": "Grove descriptor + village → Aali Et-Taher.",
+    "confidence": "proposed",
+    "evidence": "89-pair backlog: 3 msgs"
+  },
+  {
+    "alias_text": "محيط المنصوري",
+    "parent_acs_code": 62296,
+    "note": "Outskirts phrasing → Mansouri Sour (same pattern as محيط النبطية الفوقا).",
+    "confidence": "proposed",
+    "evidence": "89-pair backlog: المنصوري is top non-Nabatiyeh mention (26 msgs); fuzzy محيط المنصوري → 976 at 0.64"
+  },
+  {
+    "alias_text": "أطراف المنصوري",
+    "parent_acs_code": 62296,
+    "note": "Outskirts phrasing → Mansouri Sour.",
+    "confidence": "proposed",
+    "evidence": "common bulletin phrasing paired with المنصوري in daily summaries"
+  },
+  {
+    "alias_text": "محيط علي الطاهر",
+    "parent_acs_code": 71115,
+    "note": "Outskirts phrasing → Aali Et-Taher.",
+    "confidence": "proposed",
+    "evidence": "89-pair backlog: علي الطاهر appears in 10 msgs; same descriptor pattern"
+  },
+  {
+    "alias_text": "أطراف علي الطاهر",
+    "parent_acs_code": 71115,
+    "note": "Outskirts phrasing → Aali Et-Taher.",
+    "confidence": "proposed",
+    "evidence": "common bulletin phrasing with علي الطاهر"
+  },
+  {
+    "alias_text": "القنطرة",
+    "parent_acs_code": 73276,
+    "note": "South-Lebanon قنطرة (Marjayoun), not Akkar Qantarat Aakkar (ref has ال).",
+    "confidence": "proposed",
+    "evidence": "89-pair backlog: 11 msgs matched id=1229 Akkar; ACS 73276 ref=قنطرة caza=مرجعيون"
+  },
+  {
+    "alias_text": "عيناثا",
+    "parent_acs_code": 72119,
+    "note": "South-Lebanon Ainata (Bint Jbeil), not Metn Aaynab (عيناب).",
+    "confidence": "proposed",
+    "evidence": "89-pair backlog: 4 msgs matched_low_confidence → 142 Aaynab; correct ACS 72119 عيناتا بنت جبيل"
+  },
+  {
+    "alias_text": "عيناتا",
+    "parent_acs_code": 72119,
+    "note": "Spelling variant of عيناثا → Aaynata Bent Jbayl (war-news default; Baalbek عيناتا also exists).",
+    "confidence": "proposed",
+    "evidence": "same family as عيناثا; war-news southern usage dominates the 14d backlog"
+  },
+  {
+    "alias_text": "المجيدية",
+    "parent_acs_code": 74177,
+    "note": "Majidiye Hasbaya, not Massaaoudiyé (Akkar).",
+    "confidence": "proposed",
+    "evidence": "89-pair backlog: 2 msgs matched_low_confidence → 998 المسعودية; ACS 74177 مجيدية حاصبيا"
   }
 ]

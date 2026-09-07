@@ -52,7 +52,11 @@ def test_proposed_aliases_cover_maslakh_recon_mentions() -> None:
     assert "مدينة النبطية" in texts
     assert "حي المسلخ" in texts
     assert "المسلخ" in texts
+    assert "القنطرة" in texts
+    assert "دوحة كفررمان" in texts
+    assert "وادي زبقين" in texts
     assert all(row.confidence == "proposed" for row in PROPOSED_VILLAGE_LOCATION_ALIASES)
+    assert len(PROPOSED_VILLAGE_LOCATION_ALIASES) >= 15
 
 
 def test_seed_village_location_aliases_inserts_new_rows(monkeypatch, tmp_path) -> None:
