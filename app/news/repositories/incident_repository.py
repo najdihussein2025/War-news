@@ -88,7 +88,7 @@ class IncidentRepository(IncidentRepositoryInterface):
 
     def list_all(self, params: IncidentListParams) -> IncidentListResponse:
         filters = self._list_filters(params)
-        low_confidence = self._low_confidence_match()
+        needs_verification = Incident.verification_status == "needs_verification"
         event_datetime = func.coalesce(
             RawMessage.message_datetime,
             RawMessage.received_at,
@@ -130,7 +130,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                 self._source_reference_expression().label("source_reference"),
                 case(
                     (Incident.id.is_(None), False),
-                    (low_confidence, False),
+                    (needs_verification, False),
                     else_=True,
                 ).label("matched"),
                 func.coalesce(
@@ -206,7 +206,7 @@ class IncidentRepository(IncidentRepositoryInterface):
         summary = self.db.execute(
             select(
                 func.count(Incident.id)
-                .filter(func.coalesce(low_confidence, False).is_(True))
+                .filter(Incident.verification_status == "needs_verification")
                 .label("needs_verification_count"),
                 func.count(Incident.id)
                 .filter(Incident.duplicate_flag.is_(True))
@@ -248,7 +248,6 @@ class IncidentRepository(IncidentRepositoryInterface):
         )
 
     def get_by_id(self, incident_id: UUID) -> IncidentDetailDTO | None:
-        low_confidence = self._low_confidence_match()
         row = self.db.execute(
             select(
                 Incident,
@@ -265,7 +264,10 @@ class IncidentRepository(IncidentRepositoryInterface):
                     else_=None,
                 ).label("source"),
                 self._source_reference_expression().label("source_reference"),
-                case((low_confidence, False), else_=True).label("matched"),
+                case(
+                    (Incident.verification_status == "needs_verification", False),
+                    else_=True,
+                ).label("matched"),
                 case(
                     (Incident.duplicate_flag.is_(True), "possible"),
                     else_="none",
@@ -1172,15 +1174,14 @@ class IncidentRepository(IncidentRepositoryInterface):
         self.db.rollback()
 
     @staticmethod
-    def _low_confidence_match() -> object:
-        # New shape stores a pre-computed flag; old shape stores the status directly.
-        return or_(
-            RawMessage.match_result["any_village_low_confidence"].astext == "true",
-            RawMessage.match_result["village_match_status"].astext
-            == "matched_low_confidence",
-            RawMessage.match_result["condition_match_status"].astext
-            == "matched_low_confidence",
-        )
+    def _needs_verification_column() -> object:
+        """User-facing needs-verification predicate: stored column only.
+
+        ``raw_messages.match_result`` low-confidence JSON is no longer used for
+        list filters, dashboard counts, or the ``matched`` DTO field. Inspect
+        ``match_result`` directly when debugging matching confidence.
+        """
+        return Incident.verification_status == "needs_verification"
 
     @classmethod
     def _list_filters(cls, params: IncidentListParams) -> list[object]:
@@ -1217,13 +1218,14 @@ class IncidentRepository(IncidentRepositoryInterface):
             filters.append(
                 or_(
                     Incident.duplicate_flag.is_(True),
-                    cls._low_confidence_match(),
+                    cls._needs_verification_column(),
                 )
             )
         if params.verification_status == "needs_verification":
-            filters.append(func.coalesce(cls._low_confidence_match(), False).is_(True))
+            filters.append(cls._needs_verification_column())
         elif params.verification_status == "matched":
-            filters.append(func.coalesce(cls._low_confidence_match(), False).is_(False))
+            # Legacy alias: "confident / not needing verification".
+            filters.append(Incident.verification_status != "needs_verification")
         elif params.verification_status is not None:
             filters.append(Incident.verification_status == params.verification_status)
         if params.duplicate_only:

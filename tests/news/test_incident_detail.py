@@ -159,6 +159,7 @@ def test_repository_get_by_id_returns_detail_and_hides_soft_deleted() -> None:
             event_time=time(9, 45),
             khabar="Repository detail test",
             duplicate_flag=True,
+            verification_status="needs_verification",
         )
         db.add(incident)
         db.flush()

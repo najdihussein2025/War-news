@@ -180,7 +180,7 @@ export const IncidentDetailPage = () => {
                 variant={sourceVariant(incident.source)}
               />
             ) : null}
-            {!incident.matched ? (
+            {incident.verification_status === "needs_verification" ? (
               <StatusBadge label="Needs verification" variant="warning" />
             ) : null}
             {incident.duplicate_flag === "possible" ? (
