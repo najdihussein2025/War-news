@@ -33,6 +33,11 @@ from app.news.models import (
 
 MATCH_THRESHOLD = 0.6
 LOW_CONFIDENCE_THRESHOLD = 0.35
+# Minimum score gap between #1 and #2 before a ≥0.6 hit is treated as a
+# confident match. Recon showed five * النبطية villages tied at ~0.615 with
+# margin 0.0 (lowest id won). Unambiguous hits like النبطية الفوقا had
+# ~0.29 margin. 0.05 catches exact/near ties without demoting clear winners.
+MATCH_TIE_MARGIN = 0.05
 DEFAULT_CANDIDATE_LIMIT = 5
 CONDITION_DISTINGUISHING_TOKENS: dict[int, tuple[str, ...]] = {
     2: ("تحذيريه",),
@@ -140,21 +145,38 @@ class MatchingService(MatchingServiceInterface):
         if not candidates:
             return _ClassifiedMatch(None, None, MatchResultStatus.unmatched)
 
+        allowed: list[tuple[Village | Condition, float]] = []
         for candidate, score in candidates:
             if not self._condition_match_allowed(candidate.id, normalized):
                 continue
-            score = max(0.0, min(float(score), 1.0))
-            if score >= MATCH_THRESHOLD:
-                return _ClassifiedMatch(candidate.id, score, MatchResultStatus.matched)
-            if score >= LOW_CONFIDENCE_THRESHOLD:
+            allowed.append((candidate, max(0.0, min(float(score), 1.0))))
+        if not allowed:
+            return _ClassifiedMatch(None, None, MatchResultStatus.unmatched)
+
+        top_candidate, top_score = allowed[0]
+        second_score = allowed[1][1] if len(allowed) > 1 else None
+        if top_score >= MATCH_THRESHOLD:
+            if (
+                second_score is not None
+                and (top_score - second_score) < MATCH_TIE_MARGIN
+            ):
                 return _ClassifiedMatch(
-                    candidate.id,
-                    score,
+                    top_candidate.id,
+                    top_score,
                     MatchResultStatus.matched_low_confidence,
                 )
-            return _ClassifiedMatch(None, score, MatchResultStatus.unmatched)
-
-        return _ClassifiedMatch(None, None, MatchResultStatus.unmatched)
+            return _ClassifiedMatch(
+                top_candidate.id,
+                top_score,
+                MatchResultStatus.matched,
+            )
+        if top_score >= LOW_CONFIDENCE_THRESHOLD:
+            return _ClassifiedMatch(
+                top_candidate.id,
+                top_score,
+                MatchResultStatus.matched_low_confidence,
+            )
+        return _ClassifiedMatch(None, top_score, MatchResultStatus.unmatched)
 
     @staticmethod
     def _condition_match_allowed(condition_id: int, normalized_text: str) -> bool:

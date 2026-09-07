@@ -26,6 +26,21 @@ class _SimilarRepositoryStub:
         return [(SimpleNamespace(id=self.candidate_id), self.score)]
 
 
+class _MultiSimilarRepositoryStub:
+    """Returns a fixed candidate list (for tie-margin regressions)."""
+
+    def __init__(self, candidates: list[tuple[int, float]]) -> None:
+        self.candidates = candidates
+        self.calls: list[tuple[str, int]] = []
+
+    def find_similar(self, text: str, limit: int = 5):
+        self.calls.append((text, limit))
+        return [
+            (SimpleNamespace(id=candidate_id), score)
+            for candidate_id, score in self.candidates[:limit]
+        ]
+
+
 def _extraction(
     village: list[str] | None = None,
     action: str | None = "غارة جوية",
@@ -320,3 +335,60 @@ def test_action_does_not_persist_match_when_air_violation_routing_fails() -> Non
         ).execute(42)
 
     assert repository.saved is None
+
+
+def test_nabatiyeh_style_near_tie_downgrades_to_low_confidence() -> None:
+    """Recon: five * النبطية villages tied at ~0.615; lowest id must not auto-match."""
+    villages = _MultiSimilarRepositoryStub(
+        [
+            (543, 0.615385),  # Douair — would have won by id ASC alone
+            (614, 0.615385),
+            (741, 0.615385),
+            (874, 0.615385),
+            (1366, 0.615385),
+        ]
+    )
+    service = MatchingService(villages, _SimilarRepositoryStub(None, None))
+
+    result = service.match(_extraction(village=["النبطية"], action=None))
+
+    vm = result.village_matches[0]
+    assert vm.matched_village_id == 543
+    assert vm.village_confidence == pytest.approx(0.615385)
+    assert vm.village_match_status == MatchResultStatus.matched_low_confidence
+    assert vm.village_review_required is True
+    assert result.any_village_low_confidence is True
+
+
+def test_clear_winner_above_margin_stays_confident_match() -> None:
+    villages = _MultiSimilarRepositoryStub(
+        [
+            (1153, 0.733333),  # النبطية الفوقا style
+            (543, 0.444444),
+            (614, 0.444444),
+        ]
+    )
+    service = MatchingService(villages, _SimilarRepositoryStub(None, None))
+
+    result = service.match(_extraction(village=["النبطية الفوقا"], action=None))
+
+    vm = result.village_matches[0]
+    assert vm.matched_village_id == 1153
+    assert vm.village_match_status == MatchResultStatus.matched
+    assert vm.village_review_required is False
+
+
+def test_near_tie_within_margin_downgrades_even_when_top_exceeds_threshold() -> None:
+    villages = _MultiSimilarRepositoryStub(
+        [
+            (100, 0.62),
+            (200, 0.60),  # margin 0.02 < 0.05
+        ]
+    )
+    service = MatchingService(villages, _SimilarRepositoryStub(None, None))
+
+    result = service.match(_extraction(village=["قرية"], action=None))
+
+    assert result.village_matches[0].village_match_status == (
+        MatchResultStatus.matched_low_confidence
+    )
