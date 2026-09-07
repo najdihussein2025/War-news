@@ -15,7 +15,7 @@ import app.logs.models  # noqa: F401
 import app.sources.models  # noqa: F401
 from app.core.database import SessionLocal
 from app.news.models import RawMessage
-from app.news.services.clustering_service import ClusteringService
+from app.news.services.clustering.clustering_service import ClusteringService
 from app.news.services.pipeline_sweep_stages import (
     cluster_all_eligible,
     sweep_clustering,

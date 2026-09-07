@@ -7,7 +7,7 @@ from uuid import uuid4
 import pytest
 
 from app.news.models import TrustTier
-from app.news.services.clustering_service import (
+from app.news.services.clustering.clustering_service import (
     ClusteringService,
     village_ids_from_match_result,
 )
@@ -472,7 +472,7 @@ def test_sweep_clustering_partial_subsumption() -> None:
     rep_match = _match_result(matched_village_id=976)
     member_match = _two_village_match_result(village_id_a=976, village_id_b=977)
 
-    from app.news.services.clustering_service import village_ids_from_match_result
+    from app.news.services.clustering.clustering_service import village_ids_from_match_result
 
     rep_ids = village_ids_from_match_result(rep_match)
     member_ids = village_ids_from_match_result(member_match)

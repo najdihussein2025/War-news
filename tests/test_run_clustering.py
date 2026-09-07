@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
-from app.news.services.clustering_service import ClusteringService
+from app.news.services.clustering.clustering_service import ClusteringService
 
 
 class _ScalarResult:
