@@ -6,11 +6,11 @@ from typing import Any
 from app.core.config import settings
 from app.news.interfaces import DedupMatchingInterface, IncidentRepositoryInterface
 from app.news.models import Incident
-from app.news.services.dedup.duplicate_comparison_service import (
+from app.news.services.duplicate_comparison_service import (
     DuplicateComparisonService,
     Verdict,
 )
-from app.news.services.dedup.incident_merge_service import IncidentMergeService
+from app.news.services.incident_merge_service import IncidentMergeService
 
 WEIGHT_ACTION_MATCH = 0.35
 WEIGHT_EMBEDDING_SIMILARITY = 0.45

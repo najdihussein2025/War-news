@@ -5,8 +5,6 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-# Related models must be imported so SQLAlchemy can resolve AirViolation.source
-# (and similar) relationships when this seed runs as a standalone CLI module.
 import app.accounts.models  # noqa: F401
 import app.logs.models  # noqa: F401
 import app.sources.models  # noqa: F401

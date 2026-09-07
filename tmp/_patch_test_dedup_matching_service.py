@@ -2,8 +2,8 @@ from datetime import date, time
 from types import SimpleNamespace
 from uuid import uuid4
 
-from app.news.services.dedup.dedup_matching_service import DedupMatchingService
-from app.news.services.dedup.duplicate_comparison_service import (
+from app.news.services.dedup_matching_service import DedupMatchingService
+from app.news.services.duplicate_comparison_service import (
     DuplicateComparisonConfig,
     DuplicateComparisonService,
 )

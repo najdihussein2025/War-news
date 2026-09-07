@@ -82,10 +82,10 @@ class Settings(BaseSettings):
     # Max pre-dedup rows processed per full sweep before tier1 starts.
     # Prevents multi-minute "frozen" sweeps on large backlogs.
     pre_dedup_sweep_row_cap: int = 100
-    # Incident-level dedup look-back window (full materialization / embedding-weighted
-    # DedupMatchingService only). The fast-path incident-level signal no longer uses
-    # this flat window — it is threshold-driven via DuplicateComparisonService (below)
-    # with dedup_fastpath_lookup_window_days as the outer query bound instead.
+    # DEPRECATED for verdict decisions. Soft/embedding DedupMatchingService and
+    # fast-path both gate accept/reject via DuplicateComparisonService (6h tiers)
+    # with dedup_fastpath_lookup_window_days as the outer candidate query bound.
+    # Kept only for any remaining callers that still read the flat window.
     dedup_time_window_days: int = 3
     dedup_high_threshold: float = 0.80
     dedup_low_threshold: float = 0.50
