@@ -13,14 +13,14 @@ from app.news.models import Incident, IncidentDetail, MessageStatus, RawMessage
 from app.news.repositories.emergency_organization_repository import (
     EmergencyOrganizationRepository,
 )
-from app.news.services.category_mapper import compute_rollups, map_categories
-from app.news.services.casualty_demographic_consistency import reconcile_root_demographics
+from app.news.services.incident_details.category_mapper import compute_rollups, map_categories
+from app.news.services.incident_details.casualty_demographic_consistency import reconcile_root_demographics
 from app.news.services.dedup_matching_service import DedupMatchingService
 from app.news.services.clustering.embedding_service import EmbeddingService
 from app.news.services.matching.emergency_organization_matching_service import (
     EmergencyOrganizationMatchingService,
 )
-from app.news.services.incident_detail_merge import merge_incident_detail_fields
+from app.news.services.incident_details.incident_detail_merge import merge_incident_detail_fields
 
 logger = logging.getLogger(__name__)
 
@@ -271,6 +271,7 @@ class Tier2DetailFillService:
             event_date=incident.event_date,
             khabar_embedding=embedding,
             exclude_raw_message_id=incident.raw_message_id or raw_message_id,
+            event_time=incident.event_time,
         )
         if existing is None or existing.id == incident.id:
             return

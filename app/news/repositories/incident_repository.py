@@ -51,22 +51,22 @@ from app.news.models import (
     UpdateAction,
     Village,
 )
-from app.news.services.incident_detail_category_serializer import (
+from app.news.services.incident_details.incident_detail_category_serializer import (
     serialize_incident_category_sections,
 )
-from app.news.services.incident_detail_edit_service import (
+from app.news.services.incident_details.incident_detail_edit_service import (
     IncidentDetailEditError,
     apply_incident_detail_edits,
 )
-from app.news.services.casualty_transition_merge import (
+from app.news.services.incident_details.casualty_transition_merge import (
     apply_casualty_transitions,
     parse_casualty_transitions,
     sync_transition_totals,
 )
-from app.news.services.casualty_transition_backstop import (
+from app.news.services.incident_details.casualty_transition_backstop import (
     detect_casualty_transition_backstop,
 )
-from app.news.services.incident_detail_merge import merge_incident_detail_fields
+from app.news.services.incident_details.incident_detail_merge import merge_incident_detail_fields
 from app.sources.models import Source, SourceType
 
 

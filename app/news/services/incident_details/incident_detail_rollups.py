@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from app.news.models.incident_detail import IncidentDetail
-from app.news.services.category_mapper import _safe_add
+from app.news.services.incident_details.category_mapper import _safe_add
 
 
 def recompute_detail_rollups(detail: IncidentDetail) -> None:

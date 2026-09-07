@@ -3,7 +3,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 from app.news.models.incident_detail import IncidentDetail
-from app.news.services.incident_detail_category_serializer import (
+from app.news.services.incident_details.incident_detail_category_serializer import (
     serialize_category_section,
     serialize_incident_category_sections,
 )

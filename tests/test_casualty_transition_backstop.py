@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.news.services.casualty_transition_backstop import (
+from app.news.services.incident_details.casualty_transition_backstop import (
     detect_casualty_transition_backstop,
 )
 

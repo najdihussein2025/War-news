@@ -21,7 +21,7 @@ from app.core.config import settings
 from app.core.ollama_client import OllamaChatClient
 from app.llm.dtos import ExtractionResult
 from app.llm.services.ollama_extraction_service import OllamaExtractionService
-from app.news.services.casualty_transition_backstop import (
+from app.news.services.incident_details.casualty_transition_backstop import (
     casualty_transition_keyword_labels,
     detect_casualty_transition_backstop,
 )

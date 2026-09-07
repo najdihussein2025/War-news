@@ -7,8 +7,8 @@ from app.core.text_sanitizer import strip_emoji_and_pictographs
 from app.llm.dtos.extraction_dto import ExtractionCasualties
 from app.news.models.incident import Incident
 from app.news.models.incident_detail import DidValue, IncidentDetail
-from app.news.services.category_mapper import compute_rollups
-from app.news.services.incident_detail_field_registry import (
+from app.news.services.incident_details.category_mapper import compute_rollups
+from app.news.services.incident_details.incident_detail_field_registry import (
     AUTOMATED_API_FIELDS,
     DID_GATES,
     EDITABLE_API_FIELDS,
@@ -16,7 +16,7 @@ from app.news.services.incident_detail_field_registry import (
     GATE_TO_DID,
     db_column,
 )
-from app.news.services.incident_detail_rollups import recompute_detail_rollups
+from app.news.services.incident_details.incident_detail_rollups import recompute_detail_rollups
 
 ROLLUP_API_FIELDS: tuple[str, ...] = (
     "la_td",

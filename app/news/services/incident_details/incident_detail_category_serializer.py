@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.news.models.incident_detail import IncidentDetail
-from app.news.services.incident_detail_field_registry import (
+from app.news.services.incident_details.incident_detail_field_registry import (
     CATEGORY_SECTIONS,
     DID_GATES,
     db_column,

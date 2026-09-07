@@ -11,7 +11,7 @@ import app.sources.models  # noqa: F401
 from app.llm.dtos import ExtractionCasualties
 from app.news.models import Incident, IncidentUpdate, UpdateAction
 from app.news.repositories.incident_repository import IncidentRepository
-from app.news.services.category_mapper import compute_rollups
+from app.news.services.incident_details.category_mapper import compute_rollups
 
 
 class _MergeSessionStub:

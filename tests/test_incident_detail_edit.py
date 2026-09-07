@@ -17,7 +17,7 @@ from app.core.database import get_db
 from app.main import app
 from app.news.models import Condition, Incident, IncidentDetail, IncidentUpdate, RawMessage, UpdateAction, Village
 from app.news.repositories import IncidentRepository
-from app.news.services.incident_detail_edit_service import (
+from app.news.services.incident_details.incident_detail_edit_service import (
     IncidentDetailEditError,
     apply_incident_detail_edits,
 )

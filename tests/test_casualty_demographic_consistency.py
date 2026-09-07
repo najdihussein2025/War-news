@@ -1,5 +1,5 @@
 from app.llm.dtos import ExtractionCasualties, ExtractionCategory, ExtractionCategoryKey
-from app.news.services.casualty_demographic_consistency import reconcile_root_demographics
+from app.news.services.incident_details.casualty_demographic_consistency import reconcile_root_demographics
 
 
 def test_category_confirmed_two_male_deaths_corrects_conflicting_root_split() -> None:

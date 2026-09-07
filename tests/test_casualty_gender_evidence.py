@@ -1,5 +1,5 @@
 from app.llm.dtos import ExtractionCasualties
-from app.news.services.casualty_gender_evidence import apply_explicit_arabic_gender_evidence
+from app.news.services.incident_details.casualty_gender_evidence import apply_explicit_arabic_gender_evidence
 
 
 def test_explicit_masculine_singular_fills_death_and_injury() -> None:
