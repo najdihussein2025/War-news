@@ -18,7 +18,7 @@ from app.news.dtos import (
 )
 from app.accounts.models import User
 from app.news.repositories import AirViolationRepository
-from app.news.services.air_violation_khabar_import import AirViolationKhabarImportService
+from app.news.services.air_violations.air_violation_khabar_import import AirViolationKhabarImportService
 from app.news.services import (
     AirViolationConflictError,
     AirViolationNotFoundError,

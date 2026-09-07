@@ -26,8 +26,8 @@ from app.news.dtos import (
 )
 from app.news.repositories import IncidentRepository
 from app.news.services import IncidentConflictError, IncidentNotFoundError, IncidentService, IncidentWorkbookService
-from app.news.services.incident_event_stream import incident_event_stream
-from app.news.services.imported_incident_enrichment import enrich_imported_incidents
+from app.news.services.realtime.incident_event_stream import incident_event_stream
+from app.news.services.incidents.imported_incident_enrichment import enrich_imported_incidents
 from app.sources.models import SourceType
 
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])

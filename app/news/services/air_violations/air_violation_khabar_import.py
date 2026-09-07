@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.news.dtos import WorkbookImportRowErrorDTO, WorkbookImportSummaryDTO
 from app.news.models import AirViolation, Condition, MessageStatus, RawMessage, Village
-from app.news.services.red_alert_air_violation_service import RedAlertAirViolationService
+from app.news.services.air_violations.red_alert_air_violation_service import RedAlertAirViolationService
 from app.sources.models import Source, SourceType
 from app.sources.services.red_alert_collector import classify_condition, match_village
 

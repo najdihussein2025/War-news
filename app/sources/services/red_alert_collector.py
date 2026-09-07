@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.news.models import Condition, MessageStatus, RawMessage, Village
 from app.news.repositories.air_violation_repository import AirViolationRepository
-from app.news.services.red_alert_air_violation_service import RedAlertAirViolationService
+from app.news.services.air_violations.red_alert_air_violation_service import RedAlertAirViolationService
 from app.sources.actions.ingest_source_action import IngestSourceAction
 from app.sources.models import Source, SourceType
 

@@ -8,7 +8,7 @@ import pytest
 from openpyxl import Workbook
 
 from app.news.models import AirViolation, RawMessage, Village
-from app.news.services.air_violation_khabar_import import AirViolationKhabarImportService, read_khabar_rows
+from app.news.services.air_violations.air_violation_khabar_import import AirViolationKhabarImportService, read_khabar_rows
 
 
 def test_reads_only_khabar_excel_column():

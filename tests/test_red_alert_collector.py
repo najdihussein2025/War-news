@@ -24,7 +24,7 @@ from app.sources.services.red_alert_collector import (
 from app.news.models import MessageStatus, RawMessage, Village
 from app.news.models.air_violation import AirViolation
 from app.news.repositories.air_violation_repository import AirViolationRepository
-from app.news.services.red_alert_air_violation_service import RedAlertAirViolationService
+from app.news.services.air_violations.red_alert_air_violation_service import RedAlertAirViolationService
 from app.sources.models import Source, SourceType
 
 

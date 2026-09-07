@@ -8,7 +8,7 @@ from uuid import uuid4
 from openpyxl import Workbook, load_workbook
 
 from app.news.models import Condition, Incident, IncidentDetail, MessageStatus, RawMessage, Village
-from app.news.services.incident_workbook_service import IncidentWorkbookService
+from app.news.services.incidents.incident_workbook_service import IncidentWorkbookService
 from app.sources.models import Source, SourceType
 
 
@@ -301,7 +301,7 @@ def test_import_workbook_requires_note_extra_2_schema_column(monkeypatch) -> Non
             return [{"name": "id"}, {"name": "note"}, {"name": "note_extra"}]
 
     monkeypatch.setattr(
-        "app.news.services.incident_workbook_service.inspect",
+        "app.news.services.incidents.incident_workbook_service.inspect",
         lambda _bind: _Inspector(),
     )
 

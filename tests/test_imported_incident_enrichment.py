@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from app.news.services import imported_incident_enrichment as enrichment
+from app.news.services.incidents import imported_incident_enrichment as enrichment
 
 
 class _SessionContext:
