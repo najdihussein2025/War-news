@@ -22,3 +22,10 @@ class VillageRepositoryInterface(ABC):
         limit: int = 5,
     ) -> list[tuple[Village, float]]:
         pass
+
+    def resolve_alias(self, normalized_text: str) -> tuple[Village, float] | None:
+        """Exact normalized location-alias → parent village, or None.
+
+        Default no-op so lightweight test stubs need not implement aliases.
+        """
+        return None

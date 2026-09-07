@@ -64,7 +64,11 @@ class MatchingService(MatchingServiceInterface):
         village_matches: list[VillageMatchResult] = []
         for village_mention in village_mentions:
             village_text = village_mention.village
-            classified = self._match_mention(village_text, self.villages.find_similar)
+            classified = self._match_mention(
+                village_text,
+                self.villages.find_similar,
+                allow_alias=True,
+            )
             village_matches.append(
                 VillageMatchResult(
                     matched_village_id=classified.matched_id,
@@ -113,10 +117,24 @@ class MatchingService(MatchingServiceInterface):
             [str, int],
             list[tuple[Village, float]] | list[tuple[Condition, float]],
         ],
+        *,
+        allow_alias: bool = False,
     ) -> _ClassifiedMatch:
         normalized = normalize_arabic_text(mention or "")
         if not normalized:
             return _ClassifiedMatch(None, None, MatchResultStatus.unmatched)
+
+        if allow_alias:
+            resolve_alias = getattr(self.villages, "resolve_alias", None)
+            if resolve_alias is not None:
+                alias_hit = resolve_alias(normalized)
+                if alias_hit is not None:
+                    village, score = alias_hit
+                    return _ClassifiedMatch(
+                        village.id,
+                        max(0.0, min(float(score), 1.0)),
+                        MatchResultStatus.matched,
+                    )
 
         candidates = find_similar(normalized, self.candidate_limit)
         if not candidates:

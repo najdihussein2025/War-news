@@ -1,9 +1,10 @@
 from sqlalchemy import desc, func, literal, select
 from sqlalchemy.orm import Session
 
-from app.core.text_normalization import normalize_arabic_sql
+from app.core.text_normalization import normalize_arabic_sql, normalize_arabic_text
 from app.news.interfaces import VillageRepositoryInterface
 from app.news.models import Village
+from app.news.models.village_location_alias import VillageLocationAlias
 
 
 class VillageRepository(VillageRepositoryInterface):
@@ -18,6 +19,32 @@ class VillageRepository(VillageRepositoryInterface):
                 .order_by(Village.acs_code.asc())
             ).all()
         )
+
+    def resolve_alias(self, normalized_text: str) -> tuple[Village, float] | None:
+        """Return the parent village for an exact normalized alias hit.
+
+        Neighborhood / city-seat mentions resolve through to the canonical
+        village with confidence 1.0 so fuzzy scoring cannot override them.
+        """
+        normalized = normalize_arabic_text(normalized_text or "")
+        if not normalized:
+            return None
+        village = self.db.scalars(
+            select(Village)
+            .join(
+                VillageLocationAlias,
+                VillageLocationAlias.village_id == Village.id,
+            )
+            .where(
+                VillageLocationAlias.is_active.is_(True),
+                VillageLocationAlias.alias_normalized == normalized,
+                Village.is_active.is_(True),
+            )
+            .limit(1)
+        ).first()
+        if village is None:
+            return None
+        return village, 1.0
 
     def find_best_match_by_normalized_name(
         self,
