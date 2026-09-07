@@ -2,14 +2,27 @@ import base64
 import hashlib
 import json
 from contextlib import AbstractContextManager
+from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import and_, case, desc, false, func, or_, select, true, update as sa_update
+from sqlalchemy import (
+    and_,
+    case,
+    desc,
+    false,
+    func,
+    literal,
+    or_,
+    select,
+    true,
+    update as sa_update,
+)
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import StaleDataError
 
+from app.core.text_normalization import normalize_arabic_sql
 from app.core.text_sanitizer import strip_emoji_and_pictographs
 from app.llm.dtos import ExtractedCandidate
 from app.news.dtos import (
@@ -55,6 +68,18 @@ from app.news.services.casualty_transition_backstop import (
 )
 from app.news.services.incident_detail_merge import merge_incident_detail_fields
 from app.sources.models import Source, SourceType
+
+
+@dataclass(frozen=True)
+class FastDedupCandidate:
+    """An active same-village + same-condition incident considered by the
+    fast-path incident-level dedup, with the signals DuplicateComparisonService
+    needs to return a verdict."""
+
+    incident: Incident
+    time_gap_seconds: float
+    text_similarity: float | None
+    embedding_similarity: float | None
 
 
 class IncidentRepository(IncidentRepositoryInterface):
@@ -972,18 +997,48 @@ class IncidentRepository(IncidentRepositoryInterface):
         )
         return int(count or 0) > 0
 
-    def find_active_incident_in_fast_dedup_window(
+    def find_fast_dedup_candidates(
         self,
         *,
         village_id: int,
         condition_id: int,
         message_datetime: datetime,
-        window_days: int,
+        lookup_window_days: int,
+        candidate_text: str | None = None,
+        candidate_embedding: list[float] | None = None,
         exclude_raw_message_id: int | None = None,
-    ) -> Incident | None:
-        event_date = message_datetime.date()
-        start_date = event_date - timedelta(days=window_days)
-        end_date = event_date + timedelta(days=window_days)
+    ) -> list[FastDedupCandidate]:
+        """Return active same-village + same-condition incidents inside the outer
+        lookup window, each annotated with the time gap and (when the candidate
+        supplies text / an embedding) the word_similarity() and cosine
+        similarity against this candidate.
+
+        The outer window here is only a coarse pre-filter — the actual
+        duplicate / distinct decision is made by DuplicateComparisonService from
+        the returned time gap + similarity values.
+        """
+        naive_dt = message_datetime.replace(tzinfo=None)
+        event_date = naive_dt.date()
+        start_date = event_date - timedelta(days=lookup_window_days)
+        end_date = event_date + timedelta(days=lookup_window_days)
+
+        columns: list[Any] = [Incident]
+        want_text = bool(candidate_text and candidate_text.strip())
+        want_embedding = candidate_embedding is not None
+        if want_text:
+            columns.append(
+                func.word_similarity(
+                    normalize_arabic_sql(Incident.khabar),
+                    normalize_arabic_sql(literal(candidate_text)),
+                ).label("text_similarity")
+            )
+        if want_embedding:
+            columns.append(
+                (
+                    1.0
+                    - Incident.khabar_embedding.cosine_distance(candidate_embedding)
+                ).label("embedding_similarity")
+            )
 
         filters = [
             Incident.village_id == village_id,
@@ -995,12 +1050,36 @@ class IncidentRepository(IncidentRepositoryInterface):
         if exclude_raw_message_id is not None:
             filters.append(Incident.raw_message_id != exclude_raw_message_id)
 
-        return self.db.scalar(
-            select(Incident)
-            .where(*filters)
-            .order_by(Incident.created_at.asc())
-            .limit(1)
-        )
+        rows = self.db.execute(select(*columns).where(*filters)).all()
+
+        candidates: list[FastDedupCandidate] = []
+        for row in rows:
+            incident = row[0]
+            idx = 1
+            text_similarity: float | None = None
+            if want_text:
+                text_similarity = float(row[idx] or 0.0)
+                idx += 1
+            embedding_similarity: float | None = None
+            if want_embedding:
+                value = row[idx]
+                embedding_similarity = None if value is None else float(value)
+                idx += 1
+            incident_dt = datetime.combine(
+                incident.event_date, incident.event_time or time(0, 0)
+            )
+            gap_seconds = abs((incident_dt - naive_dt).total_seconds())
+            candidates.append(
+                FastDedupCandidate(
+                    incident=incident,
+                    time_gap_seconds=gap_seconds,
+                    text_similarity=text_similarity,
+                    embedding_similarity=embedding_similarity,
+                )
+            )
+
+        candidates.sort(key=lambda c: c.time_gap_seconds)
+        return candidates
 
     def soft_delete_for_raw_message_id(
         self,

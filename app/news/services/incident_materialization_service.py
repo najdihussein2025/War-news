@@ -254,6 +254,8 @@ class IncidentMaterializationService:
                 village_id=village_id,
                 condition_id=condition_id,
                 message_datetime=event_datetime,
+                candidate_text=representative.raw_text,
+                candidate_embedding=representative.content_embedding,
                 exclude_raw_message_id=representative.id,
             )
 
@@ -269,6 +271,40 @@ class IncidentMaterializationService:
                 continue
 
             materializable_villages += 1
+
+            if decision.outcome == FastPathDedupOutcome.possible_duplicate:
+                # Flag for human review: materialize the row and link it to the
+                # matched active incident with a pending duplicate_matches entry.
+                incident = self._insert_fast_incident(
+                    representative=representative,
+                    extraction=extraction,
+                    village_id=village_id,
+                    condition_id=condition_id,
+                    event_datetime=event_datetime,
+                    origin_villages=origin_villages,
+                    duplicate_flag=True,
+                )
+                if incident is not None and decision.matched_incident is not None:
+                    fast_dedup.incidents.create_duplicate_match(
+                        incident=incident,
+                        matched_incident=decision.matched_incident,
+                        similarity_score=decision.similarity_score or 0.0,
+                    )
+                    self.db.commit()
+                    created.append(incident)
+                logger.info(
+                    "raw_message_id=%s village_id=%s fast_path possible_duplicate "
+                    "matched_incident_id=%s score=%.3f method=%s incident_id=%s",
+                    representative.id,
+                    village_id,
+                    decision.canonical_incident_id,
+                    decision.similarity_score or 0.0,
+                    decision.similarity_method,
+                    incident.id if incident is not None else None,
+                )
+                if holds_village_lock:
+                    self.db.commit()
+                continue
 
             if decision.outcome == FastPathDedupOutcome.confident_duplicate:
                 canonical_incident = decision.canonical_incident

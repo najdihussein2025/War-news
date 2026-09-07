@@ -4,95 +4,136 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import uuid4
 
-import pytest
-
-from app.core.config import settings
+from app.news.repositories.incident_repository import FastDedupCandidate
+from app.news.services.duplicate_comparison_service import (
+    DuplicateComparisonConfig,
+    DuplicateComparisonService,
+)
 from app.news.services.fast_path_dedup import (
     FastPathDedupOutcome,
     FastPathDedupService,
 )
 
+_CONFIG = DuplicateComparisonConfig(
+    lookup_window_days=7,
+    gap_near_seconds=120,
+    gap_mid_seconds=1800,
+    gap_far_seconds=21600,
+    text_near=0.38,
+    text_mid=0.65,
+    text_high=0.80,
+    embedding_possible=0.78,
+    embedding_high=0.86,
+)
+
+_MSG_DT = datetime(2026, 8, 18, 11, 0, tzinfo=timezone.utc)
+
 
 class _IncidentRepoStub:
-    def __init__(self, existing=None) -> None:
-        self.existing = existing
+    def __init__(self, candidates: list[FastDedupCandidate] | None = None) -> None:
+        self.candidates = candidates or []
         self.last_query: dict | None = None
 
-    def find_active_incident_in_fast_dedup_window(self, **kwargs):
+    def find_fast_dedup_candidates(self, **kwargs):
         self.last_query = kwargs
-        return self.existing
+        return list(self.candidates)
 
 
-def test_confident_duplicate_when_high_confidence_match_in_window() -> None:
-    existing = SimpleNamespace(
-        id=uuid4(),
-        raw_message_id=100,
+def _service(repo: _IncidentRepoStub) -> FastPathDedupService:
+    return FastPathDedupService(repo, DuplicateComparisonService(_CONFIG))
+
+
+def _candidate(*, gap: float, text: float | None, embedding: float | None = None):
+    return FastDedupCandidate(
+        incident=SimpleNamespace(id=uuid4(), raw_message_id=100),
+        time_gap_seconds=gap,
+        text_similarity=text,
+        embedding_similarity=embedding,
     )
-    repo = _IncidentRepoStub(existing=existing)
-    service = FastPathDedupService(repo)
 
-    decision = service.decide_for_village(
+
+def _decide(service: FastPathDedupService, **overrides):
+    kwargs = dict(
         village_match_status="matched",
         condition_match_status="matched",
         village_id=42,
         condition_id=7,
-        message_datetime=datetime(2026, 8, 18, 11, 0, tzinfo=timezone.utc),
+        message_datetime=_MSG_DT,
+        candidate_text="قصف على الخيام",
+        candidate_embedding=None,
         exclude_raw_message_id=200,
     )
+    kwargs.update(overrides)
+    return service.decide_for_village(**kwargs)
+
+
+def test_confident_duplicate_on_high_confidence_verdict() -> None:
+    repo = _IncidentRepoStub([_candidate(gap=90, text=0.88)])
+    service = _service(repo)
+
+    decision = _decide(service)
 
     assert decision.outcome == FastPathDedupOutcome.confident_duplicate
     assert decision.representative_raw_message_id == 100
-    assert repo.last_query == {
-        "village_id": 42,
-        "condition_id": 7,
-        "message_datetime": datetime(2026, 8, 18, 11, 0, tzinfo=timezone.utc),
-        "window_days": settings.dedup_time_window_days,
-        "exclude_raw_message_id": 200,
-    }
+    assert decision.similarity_method == "text"
+    assert repo.last_query["village_id"] == 42
+    assert repo.last_query["condition_id"] == 7
+    assert repo.last_query["lookup_window_days"] == 7
+    assert repo.last_query["exclude_raw_message_id"] == 200
 
 
-def test_materialize_when_no_existing_incident_in_window() -> None:
-    repo = _IncidentRepoStub(existing=None)
-    service = FastPathDedupService(repo)
+def test_possible_duplicate_on_mid_tier_verdict() -> None:
+    repo = _IncidentRepoStub([_candidate(gap=10 * 60, text=0.70)])
+    decision = _decide(_service(repo))
 
-    decision = service.decide_for_village(
-        village_match_status="matched",
-        condition_match_status="matched",
-        village_id=42,
-        condition_id=7,
-        message_datetime=datetime(2026, 8, 18, 11, 0, tzinfo=timezone.utc),
-    )
+    assert decision.outcome == FastPathDedupOutcome.possible_duplicate
+    assert decision.matched_incident is not None
 
+
+def test_materialize_when_no_candidates() -> None:
+    decision = _decide(_service(_IncidentRepoStub([])))
     assert decision.outcome == FastPathDedupOutcome.materialize
 
 
-def test_materialize_on_low_confidence_village_even_when_window_match_exists() -> None:
-    existing = SimpleNamespace(id=uuid4(), raw_message_id=100)
-    repo = _IncidentRepoStub(existing=existing)
-    service = FastPathDedupService(repo)
-
-    decision = service.decide_for_village(
-        village_match_status="matched_low_confidence",
-        condition_match_status="matched",
-        village_id=42,
-        condition_id=7,
-        message_datetime=datetime(2026, 8, 18, 11, 0, tzinfo=timezone.utc),
+def test_materialize_when_all_candidates_are_distinct() -> None:
+    # Mansouri-style: ~88h gap, low similarity -> distinct -> materialize.
+    repo = _IncidentRepoStub(
+        [
+            _candidate(gap=88 * 3600, text=0.19),
+            _candidate(gap=94 * 3600, text=0.57, embedding=0.60),
+        ]
     )
-
+    decision = _decide(_service(repo))
     assert decision.outcome == FastPathDedupOutcome.materialize
+
+
+def test_high_confidence_wins_over_a_closer_possible() -> None:
+    repo = _IncidentRepoStub(
+        [
+            _candidate(gap=60, text=0.50),          # possible
+            _candidate(gap=20 * 60, text=0.95),     # high confidence
+        ]
+    )
+    decision = _decide(_service(repo))
+    assert decision.outcome == FastPathDedupOutcome.confident_duplicate
+
+
+def test_low_confidence_village_never_fast_dedups() -> None:
+    repo = _IncidentRepoStub([_candidate(gap=30, text=0.99)])
+    decision = _decide(_service(repo), village_match_status="matched_low_confidence")
+    assert decision.outcome == FastPathDedupOutcome.materialize
+    assert repo.last_query is None
 
 
 def test_skip_ineligible_when_village_unmatched() -> None:
     repo = _IncidentRepoStub()
-    service = FastPathDedupService(repo)
-
-    decision = service.decide_for_village(
-        village_match_status="unmatched",
-        condition_match_status="matched",
-        village_id=None,
-        condition_id=7,
-        message_datetime=datetime(2026, 8, 18, 11, 0, tzinfo=timezone.utc),
-    )
-
+    decision = _decide(_service(repo), village_match_status="unmatched", village_id=None)
     assert decision.outcome == FastPathDedupOutcome.skip_ineligible
     assert repo.last_query is None
+
+
+def test_embedding_substitutes_for_missing_text() -> None:
+    repo = _IncidentRepoStub([_candidate(gap=90, text=None, embedding=0.90)])
+    decision = _decide(_service(repo), candidate_text=None, candidate_embedding=[0.1])
+    assert decision.outcome == FastPathDedupOutcome.confident_duplicate
+    assert decision.similarity_method == "embedding"

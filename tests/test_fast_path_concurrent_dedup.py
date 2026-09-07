@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from app.llm.dtos import ExtractionCasualties, ExtractionResult
 from app.news.models import DuplicateMatch, Incident, MatchType, MessageStatus
+from app.news.repositories.incident_repository import FastDedupCandidate
 from app.news.services.fast_path_dedup import FastPathDedupService
 from app.news.services.incident_materialization_service import (
     IncidentMaterializationService,
@@ -113,7 +114,7 @@ class _ConcurrentIncidentRepo:
         self.store = store
         self.db = session
 
-    def find_active_incident_in_fast_dedup_window(self, **kwargs):
+    def find_fast_dedup_candidates(self, **kwargs):
         # Hold the advisory lock during the check so the second worker cannot
         # observe a half-written window.
         time.sleep(0.05)
@@ -124,8 +125,16 @@ class _ConcurrentIncidentRepo:
                     and incident.condition_id == kwargs["condition_id"]
                     and not incident.is_deleted
                 ):
-                    return incident
-        return None
+                    # Identical message text, same timestamp -> high-confidence.
+                    return [
+                        FastDedupCandidate(
+                            incident=incident,
+                            time_gap_seconds=0.0,
+                            text_similarity=1.0,
+                            embedding_similarity=None,
+                        )
+                    ]
+        return []
 
     def create_fast_path_duplicate_match(self, *, canonical_incident, raw_message_id: int) -> None:
         self.db.add(
