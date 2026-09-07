@@ -9,6 +9,9 @@ from app.news.interfaces.condition_resolution_interface import (
 )
 from app.news.interfaces.dedup_matching_interface import DedupMatchingInterface
 from app.news.interfaces.embedding_service_interface import EmbeddingServiceInterface
+from app.news.interfaces.emergency_organization_repository_interface import (
+    EmergencyOrganizationRepositoryInterface,
+)
 from app.news.interfaces.i_matching_service import MatchingServiceInterface
 from app.news.interfaces.incident_repository_interface import IncidentRepositoryInterface
 from app.news.interfaces.raw_message_repository_interface import (
@@ -23,6 +26,7 @@ __all__ = [
     "ConditionResolutionInterface",
     "DedupMatchingInterface",
     "EmbeddingServiceInterface",
+    "EmergencyOrganizationRepositoryInterface",
     "IncidentRepositoryInterface",
     "MatchingServiceInterface",
     "RawMessageRepositoryInterface",
