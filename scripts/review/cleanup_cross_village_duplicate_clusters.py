@@ -31,12 +31,13 @@ review. No hard deletes. Does not re-seed neighborhood aliases.
 
 Usage:
   python scripts/review/cleanup_cross_village_duplicate_clusters.py
-  python scripts/review/cleanup_cross_village_duplicate_clusters.py --apply
-  python scripts/review/cleanup_cross_village_duplicate_clusters.py --apply --correct-canonical-village
+  python scripts/review/cleanup_cross_village_duplicate_clusters.py \\
+    --apply --correct-canonical-village --allowlist tmp/alias_cleanup_allowlist.json
 """
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 from collections import defaultdict
@@ -744,6 +745,40 @@ def build_clusters(
     return plans
 
 
+def load_allowlist(path: Path) -> tuple[set[UUID], set[UUID]]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    approved = {UUID(str(item)) for item in payload.get("approved_canonical_ids") or []}
+    rejected = {UUID(str(item)) for item in payload.get("rejected_canonical_ids") or []}
+    if not approved:
+        raise SystemExit(f"Allowlist {path} has no approved_canonical_ids.")
+    return approved, rejected
+
+
+def filter_plans_by_allowlist(
+    plans: list[ClusterPlan],
+    *,
+    approved: set[UUID],
+    rejected: set[UUID],
+) -> tuple[list[ClusterPlan], list[ClusterPlan]]:
+    selected: list[ClusterPlan] = []
+    skipped: list[ClusterPlan] = []
+    seen: set[UUID] = set()
+    for plan in plans:
+        cid = plan.canonical.id
+        if cid in rejected or cid not in approved:
+            skipped.append(plan)
+            continue
+        selected.append(plan)
+        seen.add(cid)
+    missing = approved - seen
+    if missing:
+        raise SystemExit(
+            "Allowlist canonical ids not found in current merge plans: "
+            + ", ".join(str(item) for item in sorted(missing, key=str))
+        )
+    return selected, skipped
+
+
 def _snip(text_value: str, n: int = 140) -> str:
     one = " ".join((text_value or "").split())
     return one if len(one) <= n else one[: n - 1] + "…"
@@ -1049,7 +1084,20 @@ def main() -> None:
         default=6,
         help="How many left-alone possible_duplicate examples to print.",
     )
+    parser.add_argument(
+        "--allowlist",
+        type=Path,
+        help="JSON file with approved_canonical_ids (required with --apply).",
+    )
     args = parser.parse_args()
+    if args.apply and args.allowlist is None:
+        raise SystemExit(
+            "--apply requires --allowlist PATH so rejected clusters cannot be merged."
+        )
+    if args.apply and not args.correct_canonical_village:
+        raise SystemExit(
+            "--apply requires --correct-canonical-village; otherwise survivors keep wrong village_id."
+        )
 
     comparison = DuplicateComparisonService()
     cfg = comparison.config
@@ -1118,18 +1166,38 @@ def main() -> None:
             else:
                 print("  Canonical village already matches live alias resolution.")
 
+        apply_plans = plans
+        skipped_plans: list[ClusterPlan] = []
+        if args.allowlist is not None:
+            approved, rejected = load_allowlist(args.allowlist)
+            apply_plans, skipped_plans = filter_plans_by_allowlist(
+                plans, approved=approved, rejected=rejected
+            )
+            print()
+            print(
+                f"Allowlist {args.allowlist}: applying {len(apply_plans)} clusters, "
+                f"skipping {len(skipped_plans)}."
+            )
+            for plan in skipped_plans:
+                print(
+                    f"  SKIP canonical={plan.canonical.id} "
+                    f"size={plan.size} village={plan.canonical.village_name}"
+                    f"({plan.canonical.village_id})"
+                )
+
         if not args.apply:
             print()
-            print("Dry-run only. Re-run with --apply after review to merge.")
-            if any(p.village_correction_needed for p in plans):
+            print("Dry-run only. Re-run with --apply --allowlist after review to merge.")
+            if any(p.village_correction_needed for p in apply_plans):
                 print(
-                    "Village correction is opt-in: add --correct-canonical-village "
-                    "or the surviving row keeps the (possibly wrong) canonical village_id."
+                    "Village correction is required on apply: "
+                    "--correct-canonical-village."
                 )
             return
 
+        expected_deletes = sum(p.size - 1 for p in apply_plans)
         total = 0
-        for plan in plans:
+        for plan in apply_plans:
             total += apply_cluster(
                 db,
                 plan,
@@ -1137,8 +1205,8 @@ def main() -> None:
             )
         print()
         print(
-            f"Applied: soft-deleted {total} incidents across {len(plans)} clusters"
-            f"{' (with village correction)' if args.correct_canonical_village else ''}."
+            f"Applied: soft-deleted {total} incidents across {len(apply_plans)} clusters "
+            f"(expected {expected_deletes}) with village correction."
         )
     finally:
         db.close()

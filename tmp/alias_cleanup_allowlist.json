@@ -1,0 +1,21 @@
+{
+  "note": "2026-09-07 review: apply clusters 1-11 and 13 from alias-driven cleanup dry-run. Cluster 12 rejected (city-wide vs El-Faouka semantic mismatch).",
+  "approved_canonical_ids": [
+    "feb456c0-b46b-45b0-8a1f-7781d3a350e9",
+    "10fbab84-11a3-4990-8608-7e8e7cc73725",
+    "75b02192-8a18-47ad-b529-797b19a48b7f",
+    "9d963d73-59d9-4b89-a17b-c58679da9286",
+    "5d015d5e-eecb-4441-a71c-c81531f06cbd",
+    "219cd4f5-4f0e-4cce-a0c6-777afd23e1a3",
+    "c3db77aa-9eef-44c0-8add-35d79ad9b223",
+    "10bafe93-cd5d-42d6-88d7-63b678015ba2",
+    "3094610f-c707-40e1-bdf2-eec96554631c",
+    "7695149e-2e06-4f49-b027-221b705f780c",
+    "19093baf-ccc9-4229-8742-960d4e2e9a04",
+    "0b0e4a71-4e1d-45ff-9b02-016bde47b663"
+  ],
+  "rejected_canonical_ids": [
+    "d147db95-0221-4ba1-bb42-d50003b6f1c0"
+  ],
+  "rejected_reason": "cluster 12: حزام ناري محيط مدينة النبطية vs سلسلة غارات تستهدف النبطية الفوقا — different real-world scopes"
+}
