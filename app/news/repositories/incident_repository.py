@@ -651,9 +651,6 @@ class IncidentRepository(IncidentRepositoryInterface):
             old_values = self._snapshot_merge_fields(canonical)
             for field in ("deaths", "injuries", "total_deaths", "total_injuries"):
                 setattr(canonical, field, self._max_preserving_empty(getattr(canonical, field), getattr(incident, field)))
-            if incident.khabar:
-                addition = f"[Confirmed duplicate {incident.id}] {incident.khabar}"
-                canonical.note = f"{canonical.note.rstrip()}\n\n{addition}" if canonical.note else addition
             if canonical.source_link is None:
                 canonical.source_link = incident.source_link
             if canonical.source_link_2 is None:
@@ -677,6 +674,11 @@ class IncidentRepository(IncidentRepositoryInterface):
                 )
 
             new_values = self._snapshot_merge_fields(canonical)
+            new_values["merged_from"] = {
+                "raw_message_id": incident.raw_message_id,
+                "channel": None,
+                "khabar": incident.khabar,
+            }
             self.db.add(IncidentUpdate(
                 incident_id=canonical.id,
                 action=UpdateAction.pipeline_merge,
@@ -955,14 +957,20 @@ class IncidentRepository(IncidentRepositoryInterface):
             existing.note = self._append_unique_note(existing.note, origin_note)
 
         khabar = new_candidate_data.get("khabar")
-        if khabar:
-            existing.note = self._append_note(existing.note, khabar, raw_message_id)
 
         new_values = self._snapshot_merge_audit(existing, detail)
         if transition_provenance:
             new_values = {**new_values, **transition_provenance}
         if suppressed:
             new_values = {**new_values, **suppressed}
+        new_values = {
+            **new_values,
+            "merged_from": {
+                "raw_message_id": raw_message_id,
+                "channel": source_label,
+                "khabar": khabar if isinstance(khabar, str) else None,
+            },
+        }
         if old_values != new_values:
             self.db.add(
                 IncidentUpdate(
@@ -1387,15 +1395,6 @@ class IncidentRepository(IncidentRepositoryInterface):
         if current is None and incoming_value is None:
             return None
         return max(current or 0, incoming_value or 0)
-
-    @staticmethod
-    def _append_note(existing_note: str | None, khabar: str, raw_message_id: int) -> str:
-        appended = (
-            f"Automated duplicate merge from raw_message_id={raw_message_id}:\n{khabar}"
-        )
-        if not existing_note:
-            return appended
-        return f"{existing_note}\n\n{appended}"
 
     @staticmethod
     def _append_unique_note(existing_note: str | None, note_text: str) -> str:

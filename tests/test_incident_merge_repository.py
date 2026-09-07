@@ -45,6 +45,7 @@ def test_merge_keeps_higher_count_and_records_suppressed_incoming() -> None:
         total_deaths=10,
         total_injuries=4,
         details_pending=False,
+        note="human note",
     )
     raw_message = SimpleNamespace(
         source_name="CNRS Webhook",
@@ -68,6 +69,7 @@ def test_merge_keeps_higher_count_and_records_suppressed_incoming() -> None:
 
     assert existing.deaths == 10
     assert existing.injuries == 8
+    assert existing.note == "human note"
     update = next(item for item in db.added if isinstance(item, IncidentUpdate))
     assert update.action == UpdateAction.pipeline_merge
     assert update.new_values["deaths"] == 10
@@ -80,6 +82,37 @@ def test_merge_keeps_higher_count_and_records_suppressed_incoming() -> None:
         "value": 3,
         "raw_message_id": 42,
         "channel": "CNRS Webhook",
+    }
+    assert update.new_values["merged_from"] == {
+        "raw_message_id": 42,
+        "channel": "CNRS Webhook",
+        "khabar": "follow-up",
+    }
+
+
+def test_merge_does_not_append_khabar_into_note() -> None:
+    existing = Incident(id=uuid4(), note=None, duplicate_flag=True)
+    raw_message = SimpleNamespace(
+        source_name="Telegram",
+        origin_account=None,
+        source_platform=None,
+    )
+    db = _MergeSessionStub(raw_message=raw_message)
+    repo = IncidentRepository(db)  # type: ignore[arg-type]
+
+    repo.merge_existing(
+        existing,
+        {"khabar": "Automated should not land in note"},
+        raw_message_id=99,
+    )
+
+    assert existing.note is None
+    update = next(item for item in db.added if isinstance(item, IncidentUpdate))
+    assert "Automated duplicate merge" not in str(update.new_values.get("note"))
+    assert update.new_values["merged_from"] == {
+        "raw_message_id": 99,
+        "channel": "Telegram",
+        "khabar": "Automated should not land in note",
     }
 
 
@@ -127,3 +160,97 @@ def test_merge_clears_stale_duplicate_flag_without_transition_conflict() -> None
     )
 
     assert existing.duplicate_flag is False
+
+
+class _ResolveDuplicateSessionStub:
+    def __init__(
+        self,
+        *,
+        duplicate: Incident,
+        canonical: Incident,
+        match: object,
+    ) -> None:
+        self.duplicate = duplicate
+        self.canonical = canonical
+        self.match = match
+        self.added: list[object] = []
+        self._scalar_calls = 0
+
+    def scalar(self, statement):
+        self._scalar_calls += 1
+        # First: locked duplicate incident. Second: pending match.
+        # Third: canonical. Later: detail lookups return None.
+        if self._scalar_calls == 1:
+            return self.duplicate
+        if self._scalar_calls == 2:
+            return self.match
+        if self._scalar_calls == 3:
+            return self.canonical
+        return None
+
+    def add(self, value: object) -> None:
+        self.added.append(value)
+
+    def flush(self) -> None:
+        return None
+
+    def commit(self) -> None:
+        return None
+
+    def rollback(self) -> None:
+        return None
+
+
+def test_confirmed_duplicate_resolution_keeps_note_clean_and_records_merged_from() -> None:
+    from app.news.models import MatchStatus
+
+    user_id = uuid4()
+    duplicate_id = uuid4()
+    canonical_id = uuid4()
+    duplicate = Incident(
+        id=duplicate_id,
+        version=1,
+        locked_by_user_id=user_id,
+        raw_message_id=55,
+        khabar="duplicate khabar text",
+        note=None,
+        deaths=1,
+    )
+    canonical = Incident(
+        id=canonical_id,
+        note="keep me",
+        deaths=2,
+    )
+    match = SimpleNamespace(
+        id=9,
+        matched_incident_id=canonical_id,
+        status=MatchStatus.pending,
+        resolved_by=None,
+    )
+    db = _ResolveDuplicateSessionStub(
+        duplicate=duplicate,
+        canonical=canonical,
+        match=match,
+    )
+
+    IncidentRepository(db).resolve_duplicate(  # type: ignore[arg-type]
+        incident_id=duplicate_id,
+        match_id=9,
+        decision=MatchStatus.confirmed_duplicate.value,
+        version=1,
+        user_id=user_id,
+    )
+
+    assert canonical.note == "keep me"
+    assert "Confirmed duplicate" not in (canonical.note or "")
+    merge_updates = [
+        item
+        for item in db.added
+        if isinstance(item, IncidentUpdate) and item.action == UpdateAction.pipeline_merge
+    ]
+    assert len(merge_updates) == 1
+    assert merge_updates[0].new_values["merged_from"] == {
+        "raw_message_id": 55,
+        "channel": None,
+        "khabar": "duplicate khabar text",
+    }

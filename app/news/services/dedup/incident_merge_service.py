@@ -11,9 +11,9 @@ class IncidentMergeService:
     materialization.
 
     Both routes call :meth:`merge` identically. Field-level merge behaviour
-    (max-wins casualty counts, note provenance, ``incident_updates`` audit
-    row) lives in :meth:`IncidentRepository.merge_existing`; this service is
-    the one place callers reach it, so the two routes cannot diverge.
+    (max-wins casualty counts, structured ``merged_from`` provenance on
+    ``incident_updates``, audit row) lives in :meth:`IncidentRepository.merge_existing`;
+    this service is the one place callers reach it, so the two routes cannot diverge.
     """
 
     def __init__(self, incident_repository: IncidentRepositoryInterface) -> None:
