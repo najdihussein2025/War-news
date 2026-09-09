@@ -57,6 +57,7 @@ def list_incidents(
     flagged_only: bool = Query(default=False),
     verification_status: Literal["auto_processed", "needs_verification", "verified", "rejected"] | None = Query(default=None),
     duplicate_only: bool = Query(default=False),
+    has_casualties: bool = Query(default=False),
     sort_order: Literal["newest", "oldest"] = Query(default="newest"),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
@@ -72,6 +73,7 @@ def list_incidents(
         flagged_only=flagged_only,
         verification_status=verification_status,
         duplicate_only=duplicate_only,
+        has_casualties=has_casualties,
         sort_order=sort_order,
     )
     return IncidentService(IncidentRepository(db)).list_all(params)

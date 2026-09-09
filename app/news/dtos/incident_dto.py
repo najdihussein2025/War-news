@@ -19,6 +19,8 @@ class IncidentListItemDTO(BaseModel):
     khabar: str
     source: str | None
     source_reference: str | None
+    total_deaths: int | None = None
+    total_injuries: int | None = None
     matched: bool
     verification_status: Literal["auto_processed", "needs_verification", "verified", "rejected"] = "auto_processed"
     verification_reason: str | None = None
@@ -47,6 +49,7 @@ class IncidentListParams(BaseModel):
     flagged_only: bool = False
     verification_status: Literal["auto_processed", "needs_verification", "verified", "rejected"] | None = None
     duplicate_only: bool = False
+    has_casualties: bool = False
     sort_order: Literal["newest", "oldest"] = "newest"
 
 
@@ -59,7 +62,7 @@ class IncidentListResponse(BaseModel):
     next_cursor: str | None = None
     latest_incident_at: datetime | None = None
     needs_verification_count: int = 0
-    duplicate_count: int = 0
+    casualties_count: int = 0
 
 
 class CasualtyDemographicsDTO(BaseModel):
