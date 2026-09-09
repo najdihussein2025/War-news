@@ -31,6 +31,9 @@ from app.llm.services.ollama_relevance_classifier_service import is_valid_reason
 from app.news.services.incident_details.casualty_count_backstop import (
     apply_casualty_count_backstop,
 )
+from app.news.services.incident_details.casualty_scope_backstop import (
+    validate_casualty_scope,
+)
 logger = logging.getLogger(__name__)
 
 ALLOWED_EXTRACTION_CATEGORY_KEYS = frozenset(
@@ -400,6 +403,19 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             categories,
             casualties,
         )
+        village_roles = self._validated_village_roles(
+            general_response.village_roles,
+            post_text=post_text,
+            raw_message_id=raw_message_id,
+        )
+        scope, scope_evidence, scope_needs_review, scope_reason = (
+            self._validated_casualty_scope(
+                general_response,
+                village_roles=village_roles,
+                post_text=post_text,
+                raw_message_id=raw_message_id,
+            )
+        )
 
         return ExtractionResult(
             is_relevant=general_response.is_relevant,
@@ -407,11 +423,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 general_response.village,
                 raw_message_id=raw_message_id,
             ),
-            village_roles=self._validated_village_roles(
-                general_response.village_roles,
-                post_text=post_text,
-                raw_message_id=raw_message_id,
-            ),
+            village_roles=village_roles,
             action_description=self._validated_text(
                 general_response.action_description,
                 field_name="action_description",
@@ -421,13 +433,10 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             casualties=casualties,
             casualty_evidence=casualty_evidence,
             casualty_transitions=list(general_response.casualty_transitions),
-            casualty_scope=general_response.casualty_scope,
-            casualty_scope_evidence=self._validated_source_span(
-                general_response.casualty_scope_evidence,
-                post_text=post_text,
-                field_name="casualty_scope_evidence",
-                raw_message_id=raw_message_id,
-            ),
+            casualty_scope=scope,
+            casualty_scope_evidence=scope_evidence,
+            casualty_scope_needs_review=scope_needs_review,
+            casualty_scope_review_reason=scope_reason,
             presence_category_keys=list(categories_present),
             extraction_tier=1,
             model=self.client.model,
@@ -656,6 +665,19 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             categories,
             casualties,
         )
+        village_roles = self._validated_village_roles(
+            general_response.village_roles,
+            post_text=post_text,
+            raw_message_id=raw_message_id,
+        )
+        scope, scope_evidence, scope_needs_review, scope_reason = (
+            self._validated_casualty_scope(
+                general_response,
+                village_roles=village_roles,
+                post_text=post_text,
+                raw_message_id=raw_message_id,
+            )
+        )
 
         return ExtractionResult(
             is_relevant=general_response.is_relevant,
@@ -663,11 +685,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 general_response.village,
                 raw_message_id=raw_message_id,
             ),
-            village_roles=self._validated_village_roles(
-                general_response.village_roles,
-                post_text=post_text,
-                raw_message_id=raw_message_id,
-            ),
+            village_roles=village_roles,
             action_description=self._validated_text(
                 general_response.action_description,
                 field_name="action_description",
@@ -677,13 +695,10 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             casualties=casualties,
             casualty_evidence=casualty_evidence,
             casualty_transitions=list(general_response.casualty_transitions),
-            casualty_scope=general_response.casualty_scope,
-            casualty_scope_evidence=self._validated_source_span(
-                general_response.casualty_scope_evidence,
-                post_text=post_text,
-                field_name="casualty_scope_evidence",
-                raw_message_id=raw_message_id,
-            ),
+            casualty_scope=scope,
+            casualty_scope_evidence=scope_evidence,
+            casualty_scope_needs_review=scope_needs_review,
+            casualty_scope_review_reason=scope_reason,
             presence_category_keys=list(categories_present),
             extraction_tier=2,
             model=self.client.model,
@@ -947,3 +962,32 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             raw_message_id,
         )
         return None
+
+    def _validated_casualty_scope(
+        self,
+        response: _RawExtractionResponse,
+        *,
+        village_roles: list[VillageRoleEntry],
+        post_text: str,
+        raw_message_id: int | None,
+    ) -> tuple[CasualtyScope, str | None, bool, str | None]:
+        evidence = self._validated_source_span(
+            response.casualty_scope_evidence,
+            post_text=post_text,
+            field_name="casualty_scope_evidence",
+            raw_message_id=raw_message_id,
+        )
+        result = validate_casualty_scope(
+            casualty_scope=response.casualty_scope,
+            evidence=evidence,
+            village_roles=village_roles,
+        )
+        if result.plausible:
+            return response.casualty_scope, evidence, False, None
+
+        reason = (
+            f"Unsupported casualty_scope={response.casualty_scope.value}: "
+            f"evidence matched {result.village_count_in_evidence} target village(s)"
+        )
+        logger.warning("%s raw_message_id=%s", reason, raw_message_id)
+        return CasualtyScope.unspecified, evidence, True, reason

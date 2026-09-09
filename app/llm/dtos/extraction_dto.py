@@ -137,6 +137,8 @@ class ExtractionResult(BaseModel):
     casualty_transitions: list[CasualtyTransition] = Field(default_factory=list)
     casualty_scope: CasualtyScope = CasualtyScope.unspecified
     casualty_scope_evidence: str | None = None
+    casualty_scope_needs_review: bool = False
+    casualty_scope_review_reason: str | None = None
     # Tier 1 stores presence-gate keys here; category detail fills `categories` in Tier 2.
     presence_category_keys: list[ExtractionCategoryKey] = Field(default_factory=list)
     # 1 = fast path (general fields only); 2 = full category detail complete.
