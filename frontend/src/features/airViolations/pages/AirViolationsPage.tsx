@@ -52,6 +52,7 @@ export const AirViolationsPage = () => {
   const [actionError, setActionError] = useState("");
   const currentUserId = useAuthStore((state) => state.user?.id ?? null);
   const [params, setParams] = useSearchParams();
+  const importedOnly = params.get("imported_only") === "true";
   const page = Math.max(1, Number(params.get("page") ?? "1") || 1);
   const offset = (page - 1) * PAGE_SIZE;
   const conditionId = params.get("condition_id") ?? "";
@@ -83,12 +84,13 @@ export const AirViolationsPage = () => {
       limit: PAGE_SIZE,
       offset,
       conditionId,
+      importedOnly,
       eventDateFrom,
       eventDateTo,
       cazaEn,
       lastHours,
     }),
-    [cazaEn, conditionId, eventDateFrom, eventDateTo, lastHours, offset],
+    [cazaEn, conditionId, eventDateFrom, eventDateTo, lastHours, offset, importedOnly],
   );
 
   const { data, isLoading, isError, refetch, isFetching, dataUpdatedAt } =
@@ -110,6 +112,7 @@ export const AirViolationsPage = () => {
       .sort((left, right) => left.label.localeCompare(right.label));
   }, [villages]);
   const totalFilters = {
+    importedOnly,
     limit: 1,
     offset: 0,
     eventDateFrom,
@@ -238,7 +241,7 @@ export const AirViolationsPage = () => {
     {
       key: "date",
       header: "Date / Time",
-      render: (row) => `${formatDate(row.event_date)} · ${formatTime(row.event_time)}`,
+      render: (row) => row.import_enrichment?.date_source === "fallback" ? "Date unavailable" : `${formatDate(row.event_date)} · ${formatTime(row.event_time)}`,
       sortValue: (row) => new Date(row.event_date).getTime(),
     },
     {
@@ -255,6 +258,10 @@ export const AirViolationsPage = () => {
 
   return (
     <div className="space-y-5">
+      <div className="flex gap-2" aria-label="Record views">
+        <Button type="button" variant={importedOnly ? "secondary" : "primary"} aria-pressed={!importedOnly} onClick={() => updateParam("imported_only", "")}>All records</Button>
+        <Button type="button" variant={importedOnly ? "primary" : "secondary"} aria-pressed={importedOnly} onClick={() => updateParam("imported_only", "true")}>Imported</Button>
+      </div>
       <div className="rounded-lg border border-border bg-surface-raised p-4">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <div className="space-y-2">
@@ -376,7 +383,6 @@ export const AirViolationsPage = () => {
 
       {isImportOpen ? (
         <Dialog title="Import Khabar" onClose={() => { if (!isImporting) setIsImportOpen(false); }}>
-          <p className="mb-4 text-small text-text-muted">Upload Excel with a Khabar column, JSON records, or GeoJSON with Khabar properties. Action, village, and caza are detected from the news text. Unrecognized records are reported below. Dates in the file are preserved; missing dates use the date selected here. Time remains unspecified.</p>
           <form className="space-y-4" onSubmit={async (event) => {
             event.preventDefault();
             const form = new FormData(event.currentTarget);
@@ -395,14 +401,22 @@ export const AirViolationsPage = () => {
               }
             } catch (error) {
               const detail = axios.isAxiosError(error) ? error.response?.data?.detail : null;
-              setImportError(typeof detail === "string" ? detail : "Import failed. Check the file and try again.");
+              const validationErrors = Array.isArray(detail)
+                ? detail.map((item: { loc?: string[]; msg?: string }) => `${item.loc?.slice(1).join(".") || "File"}: ${item.msg || "Invalid value"}`).join(" ")
+                : null;
+              setImportError(typeof detail === "string" ? detail : validationErrors || (
+                axios.isAxiosError(error) && !error.response
+                  ? "The connection was interrupted. The server may still be importing. Check the records before retrying."
+                  : "The server could not complete the import. Check the records before retrying."
+              ));
             } finally { setIsImporting(false); }
           }}>
             <div><Label htmlFor="khabar-file">Data file</Label><Input id="khabar-file" name="file" type="file" accept=".xlsx,.json,.geojson" required disabled={isImporting} /></div>
             <div><Label htmlFor="khabar-date">Date for records without a date</Label><Input id="khabar-date" name="default_date" type="date" defaultValue={getBeirutDate()} required disabled={isImporting} /></div>
             {importError ? <p role="alert" className="text-small text-danger">{importError}</p> : null}
             {importResult ? <div role="status" className="space-y-2 text-small">
-              <p>{importResult.succeeded} imported, {importResult.failed} failed.</p>
+              <p>{importResult.succeeded} imported, {importResult.skipped ?? 0} already imported, {importResult.failed} failed.</p>
+              {importResult.succeeded + (importResult.skipped ?? 0) > 0 ? <Button type="button" variant="secondary" onClick={() => { setParams({ imported_only: "true" }); setCustomHoursMode(false); setIsImportOpen(false); }}>View imported records</Button> : null}
               <ul className="max-h-48 overflow-auto">{importResult.row_errors.map((error) => <li key={error.row}>Row {error.row}: {error.error}</li>)}</ul>
             </div> : null}
             <div className="flex justify-end gap-2">
@@ -446,13 +460,17 @@ export const AirViolationsPage = () => {
           size="lg"
         >
           <dl className="grid gap-5 sm:grid-cols-2">
+            {selectedViolation.is_imported ? <>
+              <div><dt className="text-caption font-semibold uppercase text-text-muted">Imported on</dt><dd className="mt-1">{new Date(selectedViolation.created_at).toLocaleString()}</dd></div>
+              {selectedViolation.import_filename ? <div><dt className="text-caption font-semibold uppercase text-text-muted">File</dt><dd className="mt-1">{selectedViolation.import_filename}</dd></div> : null}
+            </> : null}
             <div><dt className="text-caption font-semibold uppercase text-text-muted">Caza</dt><dd className="mt-1">{selectedViolation.caza_en || selectedViolation.caza_ar || emptyText}</dd></div>
             <div><dt className="text-caption font-semibold uppercase text-text-muted">Village</dt><dd className="mt-1">{selectedViolation.village_en || selectedViolation.village_ar || emptyText}{selectedViolation.village_ar && selectedViolation.village_en ? <span className="mt-1 block text-right text-text-muted" dir="rtl" lang="ar">{selectedViolation.village_ar}</span> : null}</dd></div>
             <div><dt className="text-caption font-semibold uppercase text-text-muted">Month</dt><dd className="mt-1">{selectedViolation.event_month || emptyText}</dd></div>
             <div><dt className="text-caption font-semibold uppercase text-text-muted">Action (English)</dt><dd className="mt-1">{selectedViolation.action_en}</dd></div>
             <div><dt className="text-caption font-semibold uppercase text-text-muted">Action (Arabic)</dt><dd className="mt-1 text-right" dir="rtl" lang="ar">{selectedViolation.action_ar}</dd></div>
             <div><dt className="text-caption font-semibold uppercase text-text-muted">Original source</dt><dd className="mt-1">{selectedViolation.source_name}</dd></div>
-            <div><dt className="text-caption font-semibold uppercase text-text-muted">Date and time</dt><dd className="mt-1">{formatDate(selectedViolation.event_date)} at {formatTime(selectedViolation.event_time)}</dd></div>
+            <div><dt className="text-caption font-semibold uppercase text-text-muted">Date and time</dt><dd className="mt-1">{selectedViolation.import_enrichment?.date_source === "fallback" ? "Not available in the file or source" : `${formatDate(selectedViolation.event_date)} at ${formatTime(selectedViolation.event_time)}`}</dd></div>
           </dl>
           <div className="mt-5 rounded-md border border-border bg-surface p-4">
             <p className="text-caption font-semibold uppercase text-text-muted">News</p>
@@ -462,6 +480,18 @@ export const AirViolationsPage = () => {
             <div><dt className="text-caption font-semibold uppercase text-text-muted">Note 1</dt><dd className="mt-1 whitespace-pre-wrap">{selectedViolation.note_1 || emptyText}</dd></div>
             <div><dt className="text-caption font-semibold uppercase text-text-muted">Note 2</dt><dd className="mt-1 whitespace-pre-wrap">{selectedViolation.note_2 || emptyText}</dd></div>
           </dl>
+          {selectedViolation.import_enrichment?.reason ? <p className="mt-4 text-small text-text-muted">{selectedViolation.import_enrichment.reason}</p> : null}
+          {selectedViolation.import_enrichment?.location_basis ? <p className="mt-4 text-small text-text-muted">{selectedViolation.import_enrichment.location_basis} {selectedViolation.import_enrichment.location_reference ? <a href={selectedViolation.import_enrichment.location_reference} target="_blank" rel="noreferrer" className="underline">Location reference</a> : null}</p> : null}
+          {selectedViolation.import_enrichment?.text ? <div className="mt-5"><p className="text-caption font-semibold uppercase text-text-muted">Source post</p><p className="mt-2 whitespace-pre-wrap" dir="auto">{selectedViolation.import_enrichment.text}</p></div> : null}
+          {selectedViolation.import_row ? <div className="mt-5">
+            <p className="text-caption font-semibold uppercase text-text-muted">Original file data</p>
+            <dl className="mt-3 grid gap-4 sm:grid-cols-2">
+              {Object.entries(selectedViolation.import_row).filter(([key]) => key).map(([key, value]) => <div key={key}>
+                <dt className="text-small font-semibold">{key}</dt>
+                <dd className="mt-1 whitespace-pre-wrap break-words" dir="auto">{value == null || value === "" ? emptyText : typeof value === "object" ? JSON.stringify(value) : String(value)}</dd>
+              </div>)}
+            </dl>
+          </div> : null}
           {selectedViolation.source_link ? (
             <a className="mt-5 inline-block font-semibold text-accent underline-offset-4 hover:underline" href={selectedViolation.source_link} target="_blank" rel="noreferrer">
               Open original source

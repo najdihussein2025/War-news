@@ -21,6 +21,10 @@ export type AirViolation = {
   action_en: string;
   action_ar: string;
   source_name: string;
+  is_imported?: boolean;
+  import_filename?: string | null;
+  import_row?: Record<string, unknown> | null;
+  import_enrichment?: { status?: string; reason?: string; text?: string; date_source?: string; published_at?: string; location_basis?: string; location_reference?: string } | null;
 };
 
 export type AirViolationListResponse = {
@@ -34,6 +38,7 @@ export type AirViolationFilters = {
   limit: number;
   offset: number;
   conditionId?: string;
+  importedOnly?: boolean;
   eventDateFrom?: string;
   eventDateTo?: string;
   cazaEn?: string;

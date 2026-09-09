@@ -31,6 +31,7 @@ export const getAirViolations = async (
   const params = new URLSearchParams();
   params.set("limit", String(filters.limit));
   params.set("offset", String(filters.offset));
+  if (filters.importedOnly) params.set("imported_only", "true");
 
   if (filters.conditionId) {
     params.set("condition_id", filters.conditionId);
@@ -58,6 +59,7 @@ export const getAirViolationSummary = async (
   filters: AirViolationFilters,
 ): Promise<AirViolationSummary> => {
   const params = new URLSearchParams();
+  if (filters.importedOnly) params.set("imported_only", "true");
   if (filters.eventDateFrom) params.set("event_date_from", filters.eventDateFrom);
   if (filters.eventDateTo) params.set("event_date_to", filters.eventDateTo);
   if (filters.cazaEn) params.set("caza_en", filters.cazaEn);
@@ -89,6 +91,8 @@ export const importAirViolationKhabar = async (file: File, defaultDate: string):
   const form = new FormData();
   form.append("file", file);
   form.append("default_date", defaultDate);
-  const response = await apiClient.post<WorkbookImportSummary>("/air-violations/import-khabar", form);
+  // Classification completes synchronously; do not abandon it after the normal
+  // ten-second API timeout while the server continues saving records.
+  const response = await apiClient.post<WorkbookImportSummary>("/air-violations/import-khabar", form, { timeout: 0 });
   return response.data;
 };

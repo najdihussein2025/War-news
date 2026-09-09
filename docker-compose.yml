@@ -47,6 +47,7 @@ services:
     environment:
       PG_APPLICATION_NAME: war-news-backend
       PIPELINE_ROLE: api
+      WATCHFILES_FORCE_POLLING: "true"
     volumes:
       - .:/app
     ports:
@@ -169,6 +170,7 @@ services:
     environment:
       VITE_API_BASE_URL: /api
       VITE_API_PROXY_TARGET: http://backend:8000
+      VITE_USE_POLLING: "true"
     volumes:
       - ./frontend:/app
       - /app/node_modules

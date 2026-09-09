@@ -29,6 +29,10 @@ class AirViolationDTO(BaseModel):
     action_en: str
     action_ar: str
     source_name: str
+    is_imported: bool = False
+    import_filename: str | None = None
+    import_row: dict | None = None
+    import_enrichment: dict | None = None
 
 
 class AirViolationCreateDTO(BaseModel):
@@ -53,6 +57,7 @@ class AirViolationListParams(BaseModel):
     limit: int = Field(default=25, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
     condition_id: int | None = None
+    imported_only: bool = False
     event_date_from: date | None = None
     event_date_to: date | None = None
     caza_en: str | None = None

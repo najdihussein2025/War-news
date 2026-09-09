@@ -112,6 +112,7 @@ def release_air_violation_edit_lock(
 
 @router.get("", response_model=AirViolationListResponse)
 def list_air_violations(
+    imported_only: bool = Query(default=False),
     limit: int = Query(default=25, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     condition_id: int | None = Query(default=None),
@@ -126,6 +127,7 @@ def list_air_violations(
         limit=limit,
         offset=offset,
         condition_id=condition_id,
+        imported_only=imported_only,
         event_date_from=event_date_from,
         event_date_to=event_date_to,
         caza_en=caza_en,
@@ -136,6 +138,7 @@ def list_air_violations(
 
 @router.get("/summary", response_model=AirViolationSummaryDTO)
 def summarize_air_violations(
+    imported_only: bool = Query(default=False),
     event_date_from: date | None = Query(default=None),
     event_date_to: date | None = Query(default=None),
     caza_en: str | None = Query(default=None),
@@ -148,7 +151,7 @@ def summarize_air_violations(
     key = (
         f"air-violations:summary:v{version}:caza={normalized_caza}:"
         f"from={event_date_from or 'none'}:to={event_date_to or 'none'}:"
-        f"hours={last_hours or 'none'}"
+        f"hours={last_hours or 'none'}:imported={imported_only}"
     )
     cached = get_json(key)
     if isinstance(cached, dict):
@@ -160,6 +163,7 @@ def summarize_air_violations(
     params = AirViolationListParams(
         limit=1,
         offset=0,
+        imported_only=imported_only,
         event_date_from=event_date_from,
         event_date_to=event_date_to,
         caza_en=caza_en,

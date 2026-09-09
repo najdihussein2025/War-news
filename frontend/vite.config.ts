@@ -7,6 +7,11 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
+      watch: {
+        // Docker Desktop does not reliably forward Windows bind-mount events.
+        usePolling: process.env.VITE_USE_POLLING === "true",
+        interval: 500,
+      },
       proxy: {
         "/api": {
           target:

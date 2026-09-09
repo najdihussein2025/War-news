@@ -108,6 +108,12 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         data = [dict(row._mapping) for row in rows]
         village_ids: set[int] = set()
         for item in data:
+            payload = item.pop("import_payload", None) or {}
+            item["is_imported"] = payload.get("import") == "khabar"
+            item["import_filename"] = payload.get("filename") if item["is_imported"] else None
+            item["import_row"] = payload.get("row") if item["is_imported"] else None
+            item["import_enrichment"] = payload.get("enrichment") if item["is_imported"] else None
+            item["import_location_text"] = payload.get("location_text") if item["is_imported"] else None
             result = item.pop("raw_match_result", None) or {}
             matches = result.get("village_matches") or []
             matched_village_id = (
@@ -133,7 +139,8 @@ class AirViolationRepository(AirViolationRepositoryInterface):
                 if village
                 else item.get("caza_en")
             )
-            item["village_ar"] = village.ref_name_ar if village else item.get("caza_ar")
+            item["village_ar"] = village.ref_name_ar if village else item.get("caza_ar") or item.get("import_location_text")
+            item.pop("import_location_text", None)
         return data
 
     def create(self, payload: AirViolationCreateDTO) -> AirViolationDTO:
@@ -286,9 +293,11 @@ class AirViolationRepository(AirViolationRepositoryInterface):
                 AirViolation.edit_lock_expires_at,
                 AirViolation.created_at,
                 RawMessage.match_result.label("raw_match_result"),
+                RawMessage.raw_payload.label("import_payload"),
                 Condition.action_en,
                 Condition.action_ar,
                 case(
+                    (RawMessage.raw_payload['import'].as_string() == 'khabar', func.coalesce(RawMessage.source_name, Source.name)),
                     (
                         RawMessage.id.is_not(None),
                         func.coalesce(
@@ -366,9 +375,11 @@ class AirViolationRepository(AirViolationRepositoryInterface):
                 AirViolation.edit_lock_expires_at,
                 AirViolation.created_at,
                 RawMessage.match_result.label("raw_match_result"),
+                RawMessage.raw_payload.label("import_payload"),
                 Condition.action_en,
                 Condition.action_ar,
                 case(
+                    (RawMessage.raw_payload['import'].as_string() == 'khabar', func.coalesce(RawMessage.source_name, Source.name)),
                     (
                         RawMessage.id.is_not(None),
                         func.coalesce(
@@ -444,6 +455,10 @@ class AirViolationRepository(AirViolationRepositoryInterface):
     @staticmethod
     def _filters(params: AirViolationListParams) -> list[object]:
         filters: list[object] = []
+        if params.imported_only:
+            filters.append(AirViolation.raw_message_id.in_(
+                select(RawMessage.id).where(RawMessage.raw_payload['import'].as_string() == 'khabar')
+            ))
         if params.condition_id is not None:
             filters.append(AirViolation.condition_id == params.condition_id)
         if params.event_date_from is not None:

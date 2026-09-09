@@ -5,6 +5,9 @@ import { changeAccountPassword } from "./accounts/api";
 import {
   acquireAirViolationEditLock,
   createAirViolation,
+  importAirViolationKhabar,
+  getAirViolations,
+  getAirViolationSummary,
   deleteAirViolation,
   releaseAirViolationEditLock,
   updateAirViolation,
@@ -36,6 +39,26 @@ const client = vi.mocked(apiClient);
 
 describe("frontend API contracts", () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it("filters imported records and their summary on the server", async () => {
+    client.get.mockResolvedValue({ data: {} });
+    await getAirViolations({ limit: 25, offset: 25, importedOnly: true });
+    await getAirViolationSummary({ limit: 1, offset: 0, importedOnly: true });
+    expect(client.get).toHaveBeenNthCalledWith(1, "/air-violations?limit=25&offset=25&imported_only=true");
+    expect(client.get).toHaveBeenNthCalledWith(2, "/air-violations/summary?imported_only=true");
+  });
+
+  it("uploads Khabar and its fallback date without the short API timeout", async () => {
+    const summary = { processed: 1, succeeded: 1, failed: 0, skipped: 0, row_errors: [] };
+    client.post.mockResolvedValue({ data: summary });
+    const file = new File(["workbook"], "news.xlsx");
+    expect(await importAirViolationKhabar(file, "2026-09-09")).toEqual(summary);
+    const [url, form, config] = client.post.mock.calls[0];
+    expect(url).toBe("/air-violations/import-khabar");
+    expect((form as FormData).get("file")).toBe(file);
+    expect((form as FormData).get("default_date")).toBe("2026-09-09");
+    expect(config?.timeout).toBe(0);
+  });
 
   it("logs in through the cookie-enabled endpoint", async () => {
     vi.mocked(client.post).mockResolvedValue({ data: { user: { id: "1", username: "admin" }, role: "super_admin" } });
