@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { Button, ConfirmDialog, Dialog, EmptyState, Input, Label } from "../../../components/ui";
-import { formatDate, formatRelativeTime } from "../../../lib/formatters";
+import { formatDate, formatRelativeTime, formatTimeGap } from "../../../lib/formatters";
 import { roleBaseFromPath } from "../../../lib/rolePath";
 import { useAuthStore } from "../../../stores/authStore";
 import { useIncidentDuplicateCandidateQuery, useIncidentQuery } from "../hooks";
@@ -239,6 +239,11 @@ export const IncidentDetailPage = () => {
                     ? "Loading the suggested match..."
                     : "The suggested matching record could not be loaded."}
               </p>
+              {duplicateCandidate ? (
+                <p className="mt-1 text-caption text-text-muted">
+                  {formatTimeGap(incident, duplicateCandidate.candidate)}
+                </p>
+              ) : null}
             </div>
             {duplicateCandidate ? (
               <div className="flex flex-col gap-2 sm:flex-row">
@@ -281,7 +286,10 @@ export const IncidentDetailPage = () => {
                 <article key={title} className="rounded-lg border border-border bg-surface-raised p-4">
                   <p className="text-caption font-semibold uppercase text-text-muted">{title}</p>
                   <p className="mt-2 font-semibold text-text-primary">{value.village || "Unknown village"}</p>
-                  <p className="text-small text-text-muted">{value.condition || "No condition"} · {formatDate(value.event_date)}</p>
+                  <p className="text-small text-text-muted">
+                    {value.condition || "No condition"} · {formatDate(value.event_date)}
+                    {value.event_time ? ` at ${value.event_time.slice(0, 5)}` : ""}
+                  </p>
                   <p className="mt-3 whitespace-pre-wrap text-small text-text-primary">{value.khabar}</p>
                   <p className="mt-3 text-caption text-text-muted">Source: {value.source_name || value.source_reference || value.source || "Unknown"}</p>
                 </article>
