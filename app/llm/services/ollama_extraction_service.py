@@ -299,10 +299,12 @@ class OllamaExtractionService(ExtractionClassifierInterface):
         client: OllamaChatClient,
         presence_gate: OllamaPresenceGateService | None = None,
         category_detail: OllamaCategoryDetailService | None = None,
+        casualty_scope_aliases: dict[str, tuple[str, ...]] | None = None,
     ) -> None:
         self.client = client
         self.presence_gate = presence_gate or OllamaPresenceGateService(client)
         self.category_detail = category_detail or OllamaCategoryDetailService(client)
+        self.casualty_scope_aliases = casualty_scope_aliases or {}
 
     def extract_tier1(
         self,
@@ -982,6 +984,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             casualty_scope=response.casualty_scope,
             evidence=evidence,
             village_roles=village_roles,
+            aliases_by_village=self.casualty_scope_aliases,
         )
         if result.plausible:
             return response.casualty_scope, evidence, False, None

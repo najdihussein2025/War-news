@@ -46,6 +46,32 @@ class VillageRepository(VillageRepositoryInterface):
             return None
         return village, 1.0
 
+    def casualty_scope_aliases(self) -> dict[str, tuple[str, ...]]:
+        rows = self.db.execute(
+            select(Village, VillageLocationAlias.alias_text)
+            .join(
+                VillageLocationAlias,
+                VillageLocationAlias.village_id == Village.id,
+            )
+            .where(
+                Village.is_active.is_(True),
+                VillageLocationAlias.is_active.is_(True),
+            )
+        ).all()
+        aliases: dict[str, set[str]] = {}
+        for village, alias_text in rows:
+            for canonical_name in (
+                village.ref_name_ar,
+                village.acs_name,
+                village.cad_name,
+            ):
+                if canonical_name:
+                    aliases.setdefault(canonical_name, set()).add(alias_text)
+        return {
+            name: tuple(sorted(values))
+            for name, values in aliases.items()
+        }
+
     def find_best_match_by_normalized_name(
         self,
         normalized_location: str,

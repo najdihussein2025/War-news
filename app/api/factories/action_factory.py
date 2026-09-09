@@ -90,22 +90,36 @@ def build_filter_relevance_action(
     )
 
 
-def build_extraction_classifier() -> ExtractionClassifierInterface:
+def build_extraction_classifier(
+    *,
+    casualty_scope_aliases: dict[str, tuple[str, ...]] | None = None,
+) -> ExtractionClassifierInterface:
     from app.core.config import settings
+    from app.core.database import SessionLocal
     from app.core.ollama_client import OllamaChatClient
     from app.llm.services.ollama_extraction_service import OllamaExtractionService
     from app.llm.services.cnrs_extraction_fallback import CnrsExtractionFallback
+    from app.news.repositories import VillageRepository
 
-    return CnrsExtractionFallback(OllamaExtractionService(
-        OllamaChatClient(
-            base_url=settings.ollama_base_url,
-            api_key=settings.ollama_api_key,
-            model=settings.extraction_ollama_model,
-            timeout_seconds=settings.extraction_llm_timeout_seconds,
-            max_request_retries=settings.extraction_llm_request_retries,
-            retry_backoff_seconds=settings.extraction_llm_retry_backoff_seconds,
+    if casualty_scope_aliases is None:
+        with SessionLocal() as db:
+            casualty_scope_aliases = VillageRepository(
+                db
+            ).casualty_scope_aliases()
+
+    return CnrsExtractionFallback(
+        OllamaExtractionService(
+            OllamaChatClient(
+                base_url=settings.ollama_base_url,
+                api_key=settings.ollama_api_key,
+                model=settings.extraction_ollama_model,
+                timeout_seconds=settings.extraction_llm_timeout_seconds,
+                max_request_retries=settings.extraction_llm_request_retries,
+                retry_backoff_seconds=settings.extraction_llm_retry_backoff_seconds,
+            ),
+            casualty_scope_aliases=casualty_scope_aliases,
         )
-    ))
+    )
 
 
 def build_extract_incidents_action(
@@ -113,9 +127,12 @@ def build_extract_incidents_action(
     classifier: ExtractionClassifierInterface | None = None,
 ) -> ExtractIncidentsAction:
     from app.news.repositories import RawMessageRepository
+    from app.news.repositories import VillageRepository
 
     if classifier is None:
-        classifier = build_extraction_classifier()
+        classifier = build_extraction_classifier(
+            casualty_scope_aliases=VillageRepository(db).casualty_scope_aliases()
+        )
 
     return ExtractIncidentsAction(
         raw_messages=RawMessageRepository(db),
