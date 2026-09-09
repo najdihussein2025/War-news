@@ -147,6 +147,13 @@ PROPOSED_VILLAGE_LOCATION_ALIASES: tuple[VillageLocationAliasProposal, ...] = (
         confidence="proposed",
         evidence="89-pair backlog: 2 msgs → 998; ACS 74177",
     ),
+    VillageLocationAliasProposal(
+        alias_text="حاروف",
+        parent_acs_code=71331,
+        note="Common Arabic spelling → Harouf En-Nabatiyeh.",
+        confidence="proposed",
+        evidence="Road bulletin spelling; ACS ref_name_ar stores حروف.",
+    ),
 )
 
 # Flagged uncertain — do NOT seed until reviewed with more evidence.

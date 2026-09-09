@@ -55,6 +55,7 @@ def test_proposed_aliases_cover_maslakh_recon_mentions() -> None:
     assert "القنطرة" in texts
     assert "دوحة كفررمان" in texts
     assert "وادي زبقين" in texts
+    assert "حاروف" in texts
     assert all(row.confidence == "proposed" for row in PROPOSED_VILLAGE_LOCATION_ALIASES)
     assert len(PROPOSED_VILLAGE_LOCATION_ALIASES) >= 15
 

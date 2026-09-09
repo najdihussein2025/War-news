@@ -117,5 +117,12 @@
     "note": "Majidiye Hasbaya, not Massaaoudiyé (Akkar).",
     "confidence": "proposed",
     "evidence": "89-pair backlog: 2 msgs matched_low_confidence → 998 المسعودية; ACS 74177 مجيدية حاصبيا"
+  },
+  {
+    "alias_text": "حاروف",
+    "parent_acs_code": 71331,
+    "note": "Common Arabic spelling of Harouf En-Nabatiyeh; ACS ref_name_ar omits the internal alef.",
+    "confidence": "proposed",
+    "evidence": "Confirmed road bulletin spelling حاروف; gazetteer ACS 71331 stores حروف."
   }
 ]
