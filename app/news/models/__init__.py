@@ -1,5 +1,10 @@
 from app.accounts.models import User
 from app.news.models.air_violation import AirViolation
+from app.news.models.bulletin_casualty_group import (
+    BulletinBreakdownStatus,
+    BulletinCasualtyGroup,
+    CasualtyScope,
+)
 from app.news.models.channel_trust_tier import ChannelTrustTier, TrustTier
 from app.news.models.condition import Condition
 from app.news.models.duplicate_match import DuplicateMatch, MatchStatus, MatchType
@@ -15,6 +20,9 @@ from app.news.models.village_location_alias import VillageLocationAlias
 
 __all__ = [
     "AirViolation",
+    "BulletinBreakdownStatus",
+    "BulletinCasualtyGroup",
+    "CasualtyScope",
     "ChannelTrustTier",
     "Condition",
     "DidValue",

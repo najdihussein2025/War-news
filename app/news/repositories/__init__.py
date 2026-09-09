@@ -1,4 +1,7 @@
 from app.news.repositories.air_violation_repository import AirViolationRepository
+from app.news.repositories.bulletin_casualty_group_repository import (
+    BulletinCasualtyGroupRepository,
+)
 from app.news.repositories.channel_trust_tier_repository import (
     ChannelTrustTierRepository,
 )
@@ -10,6 +13,7 @@ from app.news.repositories.village_repository import VillageRepository
 
 __all__ = [
     "AirViolationRepository",
+    "BulletinCasualtyGroupRepository",
     "ChannelTrustTierRepository",
     "ConditionRepository",
     "IncidentRepository",
