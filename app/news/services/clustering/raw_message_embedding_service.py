@@ -35,6 +35,36 @@ BOILERPLATE_PATTERNS = (
             re.DOTALL,
         ),
     ),
+    # Added from real Khiyam/Marjaayoun and Nabatiyeh El-Faouka
+    # cross-outlet duplicate-scoring examples.
+    (
+        "NNA attribution",
+        re.compile(
+            r"^\s*[«“\"']?\s*الوكالة الوطنية(?:\s+للإعلام)?"
+            r"\s*[»”\"']?\s*[:：]\s*"
+        ),
+    ),
+    (
+        "Al Mayadeen correspondent attribution",
+        re.compile(
+            r"^\s*(?:لبنان\s*[:：]\s*)?مراسل(?:ة)?\s+الميادين"
+            r"(?:\s+في\s+[^:：\n]{1,80})?\s*[:：]\s*"
+        ),
+    ),
+    (
+        "Lebanon24 attribution",
+        re.compile(
+            r"^\s*[«“\"']?\s*لبنان\s*24\s*[»”\"']?\s*[:：]\s*"
+        ),
+    ),
+    (
+        "Lebanon24 trailing noise",
+        re.compile(
+            r"(?:\s*(?:[#＃]\s*lebanon\s*24\b|"
+            r"(?:https?://)?(?:www\.)?lebanon24\.com(?:/\S*)?))+\s*$",
+            re.IGNORECASE,
+        ),
+    ),
 )
 
 

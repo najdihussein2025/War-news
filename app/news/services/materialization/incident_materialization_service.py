@@ -21,6 +21,7 @@ from app.news.models import Incident, IncidentDetail, MatchStatus, MessageStatus
 from app.news.repositories.emergency_organization_repository import (
     EmergencyOrganizationRepository,
 )
+from app.news.services.clustering.raw_message_embedding_service import strip_boilerplate
 from app.news.services.incident_details.category_mapper import compute_rollups, map_categories
 from app.news.services.matching.emergency_organization_matching_service import (
     EmergencyOrganizationMatchingService,
@@ -267,7 +268,7 @@ class IncidentMaterializationService:
                 village_id=village_id,
                 condition_id=condition_id,
                 message_datetime=event_datetime,
-                candidate_text=representative.raw_text,
+                candidate_text=strip_boilerplate(representative.raw_text or ""),
                 candidate_embedding=representative.content_embedding,
                 exclude_raw_message_id=representative.id,
             )
@@ -498,7 +499,9 @@ class IncidentMaterializationService:
 
         casualties = extraction.casualties
         total_deaths, total_injuries = compute_rollups({}, casualties)
-        sanitized_khabar = strip_emoji_and_pictographs(representative.raw_text or "")
+        sanitized_khabar = strip_boilerplate(
+            strip_emoji_and_pictographs(representative.raw_text or "")
+        )
 
         exact_hash = self._build_exact_hash(
             khabar=sanitized_khabar,
@@ -671,8 +674,8 @@ class IncidentMaterializationService:
                 self.stats.skipped_ineligible += 1
                 continue
 
-            sanitized_khabar = strip_emoji_and_pictographs(
-                representative.raw_text or ""
+            sanitized_khabar = strip_boilerplate(
+                strip_emoji_and_pictographs(representative.raw_text or "")
             )
             exact_hash = self._build_exact_hash(
                 khabar=sanitized_khabar,
