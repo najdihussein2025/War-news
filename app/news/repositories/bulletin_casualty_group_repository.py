@@ -25,11 +25,28 @@ class BulletinCasualtyGroupRepository:
         total_injuries: int | None,
         created_at: datetime | None = None,
     ) -> BulletinCasualtyGroup:
+        now = created_at or datetime.now(timezone.utc)
         existing = self.get_by_raw_message_id(raw_message_id)
         if existing is not None:
+            existing.village_ids = sorted(set(village_ids))
+            existing.casualty_scope = casualty_scope
+            if total_deaths is not None:
+                existing.total_deaths = total_deaths
+            if total_injuries is not None:
+                existing.total_injuries = total_injuries
+            if (
+                casualty_scope == CasualtyScope.bulletin_aggregate
+                and existing.breakdown_status == BulletinBreakdownStatus.n_a
+            ):
+                existing.breakdown_status = BulletinBreakdownStatus.pending
+                existing.window_expires_at = now + timedelta(
+                    hours=settings.bulletin_reconciliation_window_hours
+                )
+            existing.updated_at = now
+            self.db.add(existing)
+            self.db.flush()
             return existing
 
-        now = created_at or datetime.now(timezone.utc)
         is_aggregate = casualty_scope == CasualtyScope.bulletin_aggregate
         group = BulletinCasualtyGroup(
             raw_message_id=raw_message_id,
