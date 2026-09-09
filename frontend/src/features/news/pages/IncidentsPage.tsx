@@ -541,11 +541,25 @@ export const IncidentsPage = () => {
           }
           actions={(row) => (
             <div className="flex flex-nowrap justify-end gap-2">
-            {row.id && row.verification_status !== "verified" && row.verification_status !== "rejected" ? <Button
-              type="button"
-              className="h-9"
-              onClick={() => { setReviewError(""); setReviewRow(row); }}
-            >Review</Button> : null}
+            {row.id && row.verification_status !== "verified" && row.verification_status !== "rejected" ? (
+              row.duplicate_flag === "possible" ? (
+                <Button
+                  type="button"
+                  className="h-9 whitespace-nowrap"
+                  onClick={() => navigate(`${roleBase}/incidents/${row.id}`)}
+                >
+                  Resolve duplicate
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  className="h-9"
+                  onClick={() => { setReviewError(""); setReviewRow(row); }}
+                >
+                  Review
+                </Button>
+              )
+            ) : null}
             <Button
               type="button"
               variant="secondary"
