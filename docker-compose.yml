@@ -121,6 +121,26 @@ services:
     networks:
       - appnet
 
+  bulletin-reconciliation-worker:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      PG_APPLICATION_NAME: war-news-bulletin-reconciliation
+      PIPELINE_ROLE: bulletin-reconciliation-worker
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - .:/app
+    command: sh -c "while true; do python -m scripts.bulletin_reconciliation_sweep; sleep ${BULLETIN_RECONCILIATION_SWEEP_INTERVAL_SECONDS:-1800}; done"
+    restart: unless-stopped
+    networks:
+      - appnet
+
   cnrs-poll-worker:
     build:
       context: .
