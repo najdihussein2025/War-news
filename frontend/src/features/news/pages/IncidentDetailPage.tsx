@@ -119,6 +119,16 @@ export const IncidentDetailPage = () => {
     );
   }
 
+  const duplicateScore =
+    duplicateCandidate?.similarity_score ?? incident.duplicate_similarity_score;
+  const duplicateLevel = incident.duplicate_level ?? duplicateCandidate?.level;
+  const duplicateConfidence =
+    duplicateLevel === "high"
+      ? "High confidence"
+      : duplicateLevel === "medium"
+        ? "Medium confidence"
+        : "Possible match";
+
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -184,7 +194,10 @@ export const IncidentDetailPage = () => {
               <StatusBadge label="Needs verification" variant="warning" />
             ) : null}
             {incident.duplicate_flag === "possible" ? (
-              <StatusBadge label="Possible duplicate" variant="warning" />
+              <StatusBadge
+                label={`Possible duplicate${duplicateScore == null ? "" : ` — ${Math.round(duplicateScore * 100)}%`}`}
+                variant="warning"
+              />
             ) : null}
           </div>
         </div>
@@ -234,7 +247,7 @@ export const IncidentDetailPage = () => {
               <h2 className="mt-1 text-h4 font-semibold text-text-primary">Possible duplicate</h2>
               <p className="mt-2 text-small text-text-muted">
                 {duplicateCandidate
-                  ? `${Math.round(duplicateCandidate.similarity_score * 100)}% similarity (Medium confidence)`
+                  ? `${Math.round(duplicateCandidate.similarity_score * 100)}% similarity (${duplicateConfidence})`
                   : isDuplicateCandidateLoading
                     ? "Loading the suggested match..."
                     : "The suggested matching record could not be loaded."}
@@ -278,14 +291,40 @@ export const IncidentDetailPage = () => {
           </div>
 
           {duplicateCandidate ? (
-            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            <>
+              <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  ["Similarity", `${Math.round(duplicateCandidate.similarity_score * 100)}%`],
+                  ["Confidence", duplicateConfidence],
+                  ["Match status", duplicateCandidate.status === "pending" ? "Pending review" : duplicateCandidate.status],
+                  ["Event time gap", formatTimeGap(incident, duplicateCandidate.candidate)],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-md border border-warning/20 bg-surface-raised p-3">
+                    <dt className="text-caption font-semibold uppercase text-text-muted">{label}</dt>
+                    <dd className="mt-1 text-small font-medium text-text-primary">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <div className="mt-4 text-caption text-text-muted">
+                Match #{duplicateCandidate.match_id}
+              </div>
+              <div className="mt-3 grid gap-4 lg:grid-cols-2">
               {[
                 { title: "Current incident", value: incident },
                 { title: "Suggested main incident", value: duplicateCandidate.candidate },
               ].map(({ title, value }) => (
                 <article key={title} className="rounded-lg border border-border bg-surface-raised p-4">
                   <p className="text-caption font-semibold uppercase text-text-muted">{title}</p>
-                  <p className="mt-2 font-semibold text-text-primary">{value.village || "Unknown village"}</p>
+                  {title === "Suggested main incident" ? (
+                    <Link
+                      className="mt-2 block font-semibold text-accent hover:text-accent-hover"
+                      to={`${roleBase}/incidents/${value.id}`}
+                    >
+                      {value.village || "Unknown village"}
+                    </Link>
+                  ) : (
+                    <p className="mt-2 font-semibold text-text-primary">{value.village || "Unknown village"}</p>
+                  )}
                   <p className="text-small text-text-muted">
                     {value.condition || "No condition"} · {formatDate(value.event_date)}
                     {value.event_time ? ` at ${value.event_time.slice(0, 5)}` : ""}
@@ -294,7 +333,8 @@ export const IncidentDetailPage = () => {
                   <p className="mt-3 text-caption text-text-muted">Source: {value.source_name || value.source_reference || value.source || "Unknown"}</p>
                 </article>
               ))}
-            </div>
+              </div>
+            </>
           ) : null}
         </section>
       ) : null}

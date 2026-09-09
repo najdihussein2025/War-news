@@ -80,6 +80,10 @@ class DuplicatePlan:
     time_gap_seconds: float
     embedding_similarity: float
 
+    @property
+    def duplicate_level(self) -> str:
+        return "high" if self.verdict == "high_confidence_duplicate" else "medium"
+
 
 @dataclass(frozen=True)
 class ScanResult:
@@ -168,7 +172,7 @@ def scan_incidents(
             for earlier in ordered[:later_index]:
                 if (
                     earlier.duplicate_flag
-                    or earlier.verification_status in SETTLED_STATUSES
+                    or earlier.verification_status == "rejected"
                 ):
                     continue
                 gap = later.event_datetime - earlier.event_datetime
@@ -294,7 +298,7 @@ def apply_plans(db: Session, plans: Iterable[DuplicatePlan]) -> int:
             or later.duplicate_flag
             or earlier.duplicate_flag
             or later.verification_status in SETTLED_STATUSES
-            or earlier.verification_status in SETTLED_STATUSES
+            or earlier.verification_status == "rejected"
         ):
             continue
 
@@ -302,13 +306,18 @@ def apply_plans(db: Session, plans: Iterable[DuplicatePlan]) -> int:
             "duplicate_flag": bool(later.duplicate_flag),
             "verification_status": later.verification_status,
             "verification_reason": later.verification_reason,
+            "duplicate_level": later.duplicate_level,
+            "duplicate_similarity_score": later.duplicate_similarity_score,
         }
         reason = _verification_reason(
             None,
             duplicate_flag=True,
-            insufficient_score=True,
+            duplicate_level=plan.duplicate_level,
+            duplicate_similarity_score=plan.embedding_similarity,
         )
         later.duplicate_flag = True
+        later.duplicate_level = plan.duplicate_level
+        later.duplicate_similarity_score = plan.embedding_similarity
         later.verification_status = "needs_verification"
         later.verification_reason = reason
         db.add(later)
@@ -324,6 +333,8 @@ def apply_plans(db: Session, plans: Iterable[DuplicatePlan]) -> int:
                 old_values=old_values,
                 new_values={
                     "duplicate_flag": True,
+                    "duplicate_level": plan.duplicate_level,
+                    "duplicate_similarity_score": plan.embedding_similarity,
                     "verification_status": "needs_verification",
                     "verification_reason": reason,
                     "matched_incident_id": str(earlier.id),
@@ -359,6 +370,7 @@ def print_report(result: ScanResult, *, example_limit: int = 10) -> None:
     for index, plan in enumerate(examples, start=1):
         print(
             f"{index}. {plan.verdict} | "
+            f"level={plan.duplicate_level} | "
             f"{plan.later.village or plan.earlier.village!r} / "
             f"{plan.later.condition or plan.earlier.condition!r}"
         )

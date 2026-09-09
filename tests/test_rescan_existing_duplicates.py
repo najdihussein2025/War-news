@@ -64,13 +64,33 @@ def test_scan_identifies_possible_duplicate_from_embedding() -> None:
     assert result.plans[0].embedding_similarity == 0.8
 
 
-def test_scan_skips_pair_with_verified_incident() -> None:
+def test_scan_uses_verified_earlier_incident_as_candidate() -> None:
     result = scan_incidents(
         [
             _incident(
                 1,
                 embedding=[1.0, 0.0],
                 verification_status="verified",
+            ),
+            _incident(2, event_minute=5, embedding=[1.0, 0.0]),
+        ],
+        comparison=COMPARISON,
+        lookup_window_days=7,
+    )
+
+    assert result.pairs_evaluated == 1
+    assert len(result.plans) == 1
+    assert result.plans[0].earlier.id == UUID(int=1)
+    assert result.plans[0].duplicate_level == "high"
+
+
+def test_scan_skips_pair_with_rejected_incident() -> None:
+    result = scan_incidents(
+        [
+            _incident(
+                1,
+                embedding=[1.0, 0.0],
+                verification_status="rejected",
             ),
             _incident(2, event_minute=5, embedding=[1.0, 0.0]),
         ],
