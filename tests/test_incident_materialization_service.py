@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime, timezone
 from types import SimpleNamespace
+from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
@@ -329,9 +330,39 @@ def test_multi_village_materialization_uses_each_villages_root_casualties() -> N
     }
     assert (incidents[976].deaths, incidents[976].injuries) == (1, 15)
     assert (incidents[977].deaths, incidents[977].injuries) == (2, None)
-    # Category/root rollups remain message-scoped by the explicit Phase-1 limit.
-    assert (incidents[976].total_deaths, incidents[976].total_injuries) == (3, 23)
-    assert (incidents[977].total_deaths, incidents[977].total_injuries) == (3, 23)
+    assert (incidents[976].total_deaths, incidents[976].total_injuries) == (1, 15)
+    assert (incidents[977].total_deaths, incidents[977].total_injuries) == (2, None)
+    details = [
+        detail for detail in db.committed if isinstance(detail, IncidentDetail)
+    ]
+    assert all(
+        (
+            detail.male_d,
+            detail.male_i,
+            detail.female_d,
+            detail.female_i,
+            detail.children_d,
+            detail.children_i,
+        )
+        == (None, None, None, None, None, None)
+        for detail in details
+    )
+
+
+def test_origin_plus_single_target_keeps_root_casualty_fallback() -> None:
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    match_result = _two_village_match_result()
+    match_result["village_matches"][0]["village_role"] = "target"
+    match_result["village_matches"][1]["village_role"] = "origin"
+
+    result = service.materialize(_representative(match_result=match_result))
+
+    assert len(result) == 1
+    incident = result[0]
+    assert incident.village_id == 976
+    assert (incident.deaths, incident.injuries) == (3, 7)
+    assert (incident.total_deaths, incident.total_injuries) == (3, 7)
 
 
 def test_materialization_strips_emoji_from_khabar_and_hash() -> None:
@@ -374,6 +405,51 @@ def test_fast_path_strips_emoji_from_khabar_and_hash() -> None:
     ).hexdigest()
     assert incident.khabar_embedding == [0.1, 0.2, 0.3]
     assert representative.status == MessageStatus.materialized
+
+
+def test_fast_path_keeps_bulletin_aggregate_out_of_village_totals() -> None:
+    db = _SessionStub()
+    bulletin_groups = SimpleNamespace(create_for_message=MagicMock())
+    service = IncidentMaterializationService(
+        db,  # type: ignore[arg-type]
+        bulletin_groups=bulletin_groups,  # type: ignore[arg-type]
+    )
+    representative = _representative(match_result=_two_village_match_result())
+    representative.extraction_result.update(
+        {
+            "casualty_scope": "bulletin_aggregate",
+            "casualty_scope_evidence": (
+                "حصيلة الغارات على النبطية وكفررمان بلغت 4 شهداء و20 جريحا"
+            ),
+        }
+    )
+    representative.extraction_result["casualties"].update(
+        {
+            "deaths": None,
+            "injuries": None,
+            "total_deaths": 4,
+            "total_injuries": 20,
+        }
+    )
+    fast_dedup = SimpleNamespace(
+        decide_for_village=lambda **_kwargs: SimpleNamespace(
+            outcome=FastPathDedupOutcome.materialize,
+            representative_raw_message_id=None,
+            canonical_incident_id=None,
+        )
+    )
+
+    result = service.process_fast_path(representative, fast_dedup)  # type: ignore[arg-type]
+
+    assert len(result) == 2
+    assert all(
+        (incident.deaths, incident.injuries) == (None, None)
+        and (incident.total_deaths, incident.total_injuries) == (None, None)
+        for incident in result
+    )
+    bulletin_groups.create_for_message.assert_called_once()
+    assert bulletin_groups.create_for_message.call_args.kwargs["total_deaths"] == 4
+    assert bulletin_groups.create_for_message.call_args.kwargs["total_injuries"] == 20
 
 
 @pytest.mark.parametrize("condition_id", [35, 36, 38])
