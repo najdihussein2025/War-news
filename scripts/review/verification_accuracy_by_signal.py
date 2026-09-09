@@ -165,10 +165,8 @@ def classify_signal_bucket(
         hard_signal = True
         signals.append("duplicate_flag")
     if relevance_needs_review:
-        hard_signal = True
         signals.append("relevance_needs_review")
     if _casualty_transition_signal(reason):
-        hard_signal = True
         signals.append("possible_missed_casualty_transition")
 
     condition_status = result.get("condition_match_status")

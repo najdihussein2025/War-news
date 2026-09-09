@@ -18,15 +18,15 @@ def test_bucket_hard_signal_wins_over_confidence_signal() -> None:
     assert any(signal.startswith("target_village:") for signal in classification.signals)
 
 
-def test_bucket_confidence_only_single_for_one_target_village_signal() -> None:
+def test_bucket_auto_processed_for_one_target_village_signal() -> None:
     classification = classify_signal_bucket(
         _match_result(village_status="matched_low_confidence")
     )
 
-    assert classification.bucket == "confidence_only_single"
+    assert classification.bucket == "auto_processed_now"
 
 
-def test_bucket_confidence_only_multi_for_condition_and_target_village() -> None:
+def test_bucket_auto_processed_for_condition_and_target_village() -> None:
     classification = classify_signal_bucket(
         _match_result(
             village_status="matched_low_confidence",
@@ -34,7 +34,7 @@ def test_bucket_confidence_only_multi_for_condition_and_target_village() -> None
         )
     )
 
-    assert classification.bucket == "confidence_only_multi"
+    assert classification.bucket == "auto_processed_now"
 
 
 def test_bucket_auto_processed_now_for_origin_low_confidence_only() -> None:
@@ -46,23 +46,23 @@ def test_bucket_auto_processed_now_for_origin_low_confidence_only() -> None:
     assert classification.bucket == "auto_processed_now"
 
 
-def test_bucket_hard_signal_for_relevance_review() -> None:
+def test_bucket_auto_processed_for_relevance_review() -> None:
     classification = classify_signal_bucket(
         _match_result(),
         relevance_needs_review=True,
     )
 
-    assert classification.bucket == "hard_signal"
+    assert classification.bucket == "auto_processed_now"
     assert "relevance_needs_review" in classification.signals
 
 
-def test_bucket_hard_signal_for_existing_casualty_reason() -> None:
+def test_bucket_auto_processed_for_existing_casualty_reason() -> None:
     classification = classify_signal_bucket(
         _match_result(),
         verification_reason="Casualty count may be incomplete - needs review.",
     )
 
-    assert classification.bucket == "hard_signal"
+    assert classification.bucket == "auto_processed_now"
 
 
 def _match_result(
