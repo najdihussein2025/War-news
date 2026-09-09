@@ -7,8 +7,38 @@ from sqlalchemy.dialects import postgresql
 from unittest.mock import MagicMock
 
 from app.news.models import MessageStatus, RawMessage
+from app.news.repositories import pipeline_claim_repository as claim_repository
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
 from app.news.services.pipeline.pipeline_concurrent_sweeps import _WorkerStats
+
+
+class _FixedDateTime(datetime):
+    @classmethod
+    def now(cls, tz=None):
+        value = datetime(2026, 9, 9, 12, 0, tzinfo=timezone.utc)
+        if tz is not None:
+            return value.astimezone(tz)
+        return value
+
+
+def _compiled_fast_path_claim_sql(monkeypatch, *, wait_minutes: int = 20) -> str:
+    db = MagicMock()
+    db.scalar.return_value = None
+    monkeypatch.setattr(
+        claim_repository.settings,
+        "fast_path_embedding_wait_minutes",
+        wait_minutes,
+    )
+    monkeypatch.setattr(claim_repository, "datetime", _FixedDateTime)
+
+    PipelineClaimRepository(db).claim_pending_fast_path()
+    statement = db.scalar.call_args.args[0]
+    return str(
+        statement.compile(
+            dialect=postgresql.dialect(),
+            compile_kwargs={"literal_binds": True},
+        )
+    )
 
 
 def test_pre_dedup_claim_excludes_already_checked_messages() -> None:
@@ -175,25 +205,40 @@ def test_claim_pending_fast_path_excludes_rows_with_active_incidents() -> None:
     assert hasattr(repo, "terminalize_ineligible_fast_path")
 
 
-def test_claim_pending_fast_path_query_requires_materializable_match() -> None:
-    stmt = (
-        select(RawMessage)
-        .where(
-            RawMessage.status == MessageStatus.parsed,
-            RawMessage.duplicate_of_id.is_(None),
-            RawMessage.match_result.is_not(None),
-            RawMessage.extraction_result.is_not(None),
-        )
-        .limit(1)
-        .with_for_update(skip_locked=True)
-    )
-    compiled = str(
-        stmt.compile(
-            dialect=postgresql.dialect(),
-            compile_kwargs={"literal_binds": True},
-        )
-    )
+def test_claim_pending_fast_path_query_requires_materializable_match(monkeypatch) -> None:
+    compiled = _compiled_fast_path_claim_sql(monkeypatch)
+
     assert "SKIP LOCKED" in compiled.upper()
+    assert "raw_messages.match_result IS NOT NULL" in compiled
+    assert "raw_messages.extraction_result IS NOT NULL" in compiled
+    assert "jsonb_typeof(raw_messages.match_result->'village_matches') = 'array'" in compiled
+
+
+def test_claim_pending_fast_path_waits_for_recent_rows_without_embedding(
+    monkeypatch,
+) -> None:
+    compiled = _compiled_fast_path_claim_sql(monkeypatch, wait_minutes=20)
+
+    assert (
+        "raw_messages.content_embedding IS NOT NULL "
+        "OR raw_messages.received_at < '2026-09-09 11:40:00+00:00'"
+    ) in compiled
+
+
+def test_claim_pending_fast_path_claims_rows_with_embedding_regardless_of_age(
+    monkeypatch,
+) -> None:
+    compiled = _compiled_fast_path_claim_sql(monkeypatch)
+
+    assert "raw_messages.content_embedding IS NOT NULL" in compiled
+
+
+def test_claim_pending_fast_path_claims_stale_rows_without_embedding(
+    monkeypatch,
+) -> None:
+    compiled = _compiled_fast_path_claim_sql(monkeypatch, wait_minutes=45)
+
+    assert "raw_messages.received_at < '2026-09-09 11:15:00+00:00'" in compiled
 
 
 def test_worker_stats_reserves_slots_without_overshooting_cap() -> None:

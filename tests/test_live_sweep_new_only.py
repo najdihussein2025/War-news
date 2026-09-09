@@ -303,9 +303,47 @@ async def test_run_stages_stops_after_aborted_tier1(monkeypatch) -> None:
     assert [stage.stage for stage in stages] == [
         "relevance_filter",
         "pre_extraction_dedup",
+        "embedding",
         "tier1_extraction",
     ]
-    run_sync.assert_not_called()
+    run_sync.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_run_stages_runs_embedding_before_fast_path(monkeypatch) -> None:
+    async def fake_relevance_stage(
+        *,
+        cutoff_raw_message_id: int,
+    ) -> tuple[StageSweepResult, int | None]:
+        return _stage("relevance_filter"), 1630
+
+    async def fake_async_stage(stage_name: str, *args, **kwargs) -> StageSweepResult:
+        return _stage(stage_name)
+
+    def fake_sync_stage(stage_name: str, *args, **kwargs) -> StageSweepResult:
+        return _stage(stage_name)
+
+    monkeypatch.setattr(live_sweep, "_run_relevance_stage", fake_relevance_stage)
+    monkeypatch.setattr(live_sweep, "_run_async_stage", fake_async_stage)
+    monkeypatch.setattr(live_sweep, "_run_sync_stage", fake_sync_stage)
+    monkeypatch.setattr(live_sweep, "_persist_cursor", MagicMock())
+
+    stages = await live_sweep._run_stages(cutoff_raw_message_id=201)
+    calls = [stage.stage for stage in stages]
+
+    assert calls.index("embedding") < calls.index("fast_path")
+    assert calls.index("embedding") < calls.index("tier1_extraction")
+    assert calls == [
+        "relevance_filter",
+        "pre_extraction_dedup",
+        "embedding",
+        "tier1_extraction",
+        "matching",
+        "fast_path",
+        "tier2_detail_fill",
+        "clustering",
+        "materialization",
+    ]
 
 
 def test_stage_max_rows_per_pass_is_a_positive_batch_bound() -> None:
@@ -414,11 +452,11 @@ async def test_run_stages_caps_claim_until_empty_stages_and_reaches_matching(
     assert [stage.stage for stage in stages] == [
         "relevance_filter",
         "pre_extraction_dedup",
+        "embedding",
         "tier1_extraction",
         "matching",
         "fast_path",
         "tier2_detail_fill",
-        "embedding",
         "clustering",
         "materialization",
     ]
@@ -468,11 +506,11 @@ async def test_run_stages_persists_live_stage_telemetry(monkeypatch) -> None:
     assert recorded == [
         ("relevance_filter", "live"),
         ("pre_extraction_dedup", "live"),
+        ("embedding", "live"),
         ("tier1_extraction", "live"),
         ("matching", "live"),
         ("fast_path", "live"),
         ("tier2_detail_fill", "live"),
-        ("embedding", "live"),
         ("clustering", "live"),
         ("materialization", "live"),
     ]
