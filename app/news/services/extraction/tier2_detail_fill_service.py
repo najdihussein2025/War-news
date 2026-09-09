@@ -7,12 +7,16 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.llm.dtos import ExtractionCategory, ExtractionCategoryKey, ExtractionResult
+from app.llm.dtos import CasualtyScope, ExtractionCategory, ExtractionCategoryKey, ExtractionResult
 from app.llm.services.ollama_extraction_service import OllamaExtractionService
 from app.news.models import Incident, IncidentDetail, MessageStatus, RawMessage
 from app.news.repositories.emergency_organization_repository import (
     EmergencyOrganizationRepository,
 )
+from app.news.repositories.bulletin_casualty_group_repository import (
+    BulletinCasualtyGroupRepository,
+)
+from app.news.models.bulletin_casualty_group import CasualtyScope as StoredCasualtyScope
 from app.news.services.incident_details.category_mapper import compute_rollups, map_categories
 from app.news.services.incident_details.casualty_demographic_consistency import reconcile_root_demographics
 from app.news.services.dedup.dedup_matching_service import DedupMatchingService
@@ -34,11 +38,13 @@ class Tier2DetailFillService:
         embedding_service: EmbeddingService | None = None,
         dedup_service: DedupMatchingService | None = None,
         emergency_org_matcher: EmergencyOrganizationMatchingService | None = None,
+        bulletin_groups: BulletinCasualtyGroupRepository | None = None,
     ) -> None:
         self.db = db
         self.classifier = classifier
         self.embedding_service = embedding_service or EmbeddingService()
         self.dedup_service = dedup_service
+        self.bulletin_groups = bulletin_groups or BulletinCasualtyGroupRepository(db)
         self.emergency_org_matcher = (
             emergency_org_matcher
             or EmergencyOrganizationMatchingService(
@@ -141,6 +147,20 @@ class Tier2DetailFillService:
             mapped_fields,
             extraction.casualties,
         )
+        target_village_ids = self._target_village_ids(raw_message.match_result)
+        is_multi_village_aggregate = (
+            extraction.casualty_scope == CasualtyScope.bulletin_aggregate
+            and len(target_village_ids) > 1
+        )
+        if is_multi_village_aggregate:
+            self.bulletin_groups.create_for_message(
+                raw_message_id=raw_message_id,
+                village_ids=target_village_ids,
+                casualty_scope=StoredCasualtyScope.bulletin_aggregate,
+                total_deaths=extraction.casualties.total_deaths,
+                total_injuries=extraction.casualties.total_injuries,
+                created_at=raw_message.message_datetime,
+            )
 
         embedding = raw_message.content_embedding
 
@@ -183,13 +203,29 @@ class Tier2DetailFillService:
                 after = getattr(root, extraction_field)
                 if before != after:
                     setattr(detail, detail_field, after)
-            if incident.deaths in (None, 0) and root.deaths is not None:
+            if (
+                not is_multi_village_aggregate
+                and incident.deaths in (None, 0)
+                and root.deaths is not None
+            ):
                 incident.deaths = root.deaths
-            if incident.injuries in (None, 0) and root.injuries is not None:
+            if (
+                not is_multi_village_aggregate
+                and incident.injuries in (None, 0)
+                and root.injuries is not None
+            ):
                 incident.injuries = root.injuries
-            if incident.total_deaths in (None, 0) and total_deaths is not None:
+            if (
+                not is_multi_village_aggregate
+                and incident.total_deaths in (None, 0)
+                and total_deaths is not None
+            ):
                 incident.total_deaths = total_deaths
-            if incident.total_injuries in (None, 0) and total_injuries is not None:
+            if (
+                not is_multi_village_aggregate
+                and incident.total_injuries in (None, 0)
+                and total_injuries is not None
+            ):
                 incident.total_injuries = total_injuries
             self._fill_missing_matches(
                 incident,
@@ -228,6 +264,25 @@ class Tier2DetailFillService:
             len(extraction.categories),
         )
         return updated
+
+    @staticmethod
+    def _target_village_ids(match_result: dict | None) -> list[int]:
+        if not match_result:
+            return []
+        matches = match_result.get("village_matches")
+        if not isinstance(matches, list):
+            village_id = match_result.get("matched_village_id")
+            return [village_id] if isinstance(village_id, int) else []
+        return sorted(
+            {
+                village_id
+                for item in matches
+                if isinstance(item, dict)
+                and item.get("village_role", "target") == "target"
+                and isinstance((village_id := item.get("matched_village_id")), int)
+                and not isinstance(village_id, bool)
+            }
+        )
 
     @staticmethod
     def _fill_missing_matches(
