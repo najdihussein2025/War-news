@@ -32,6 +32,12 @@ class CasualtyTransitionStatus(str, Enum):
     deceased = "deceased"
 
 
+class CasualtyScope(str, Enum):
+    per_village_exact = "per_village_exact"
+    bulletin_aggregate = "bulletin_aggregate"
+    unspecified = "unspecified"
+
+
 class VillageRole(str, Enum):
     origin = "origin"
     target = "target"
@@ -129,6 +135,8 @@ class ExtractionResult(BaseModel):
     casualties: ExtractionCasualties = Field(default_factory=ExtractionCasualties)
     casualty_evidence: list[CasualtyCountEvidence] = Field(default_factory=list)
     casualty_transitions: list[CasualtyTransition] = Field(default_factory=list)
+    casualty_scope: CasualtyScope = CasualtyScope.unspecified
+    casualty_scope_evidence: str | None = None
     # Tier 1 stores presence-gate keys here; category detail fills `categories` in Tier 2.
     presence_category_keys: list[ExtractionCategoryKey] = Field(default_factory=list)
     # 1 = fast path (general fields only); 2 = full category detail complete.

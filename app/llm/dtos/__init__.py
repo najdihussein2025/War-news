@@ -5,6 +5,7 @@ from app.llm.dtos.classification_result_dto import (
 from app.llm.dtos.extraction_dto import (
     CandidateExtractionResult,
     CasualtyCountEvidence,
+    CasualtyScope,
     CasualtyTransition,
     CasualtyTransitionStatus,
     DidValue,
@@ -30,6 +31,7 @@ from app.llm.dtos.relevance_filter_dto import (
 __all__ = [
     "CandidateExtractionResult",
     "CasualtyCountEvidence",
+    "CasualtyScope",
     "CasualtyTransition",
     "CasualtyTransitionStatus",
     "ClassificationResultDTO",

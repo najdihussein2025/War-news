@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.core.ollama_client import JsonObject, OllamaChatClient, OllamaChatMessage
 from app.llm.dtos import (
     CasualtyCountEvidence,
+    CasualtyScope,
     CasualtyTransition,
     ExtractionCasualties,
     ExtractionCategory,
@@ -87,6 +88,8 @@ GENERAL_EXTRACTION_PROMPT = """أنت مساعد لاستخراج الحقول �
 - مثال إلزامي: «عشرات الجرحى والشهداء» أو «عشرات جرحى وشهداء» لا تعني 10. اجعل deaths وinjuries وtotal_deaths وtotal_injuries كلها null ما لم يرد رقم صريح لكل حصيلة في النص.
 - لا تستنتج عدد الأطفال أو النساء أو أي تصنيف ديموغرافي فرعي من عبارات مثل "بينهم أطفال" أو "بينهم نساء" ما لم يُذكر رقم صريح لتلك الفئة تحديداً في النص. ذِكر وجود فئة دون رقم لا يعني تقدير عدد لها.
 - لكل حقل عدد غير null في casualties، أضف عنصراً في casualty_evidence بالشكل {"field":"اسم_الحقل","evidence_span":"المقطع الحرفي من النص الذي يحتوي الرقم الصريح"}. إذا لم يوجد مقطع رقمي صريح لا تملأ الحقل.
+- casualty_scope يصف علاقة أرقام الضحايا بالبلدات: استخدم per_village_exact عندما يرتبط رقم صريح ببلدة target واحدة في جملتها أو عبارتها؛ واستخدم bulletin_aggregate عندما تغطي حصيلة واحدة مشتركة بلدتين target أو أكثر بلا تفصيل رقمي لكل بلدة؛ واستخدم unspecified عند غياب الربط أو الأرقام أو الضحايا.
+- casualty_scope_evidence يجب أن يكون الجملة أو العبارة الحرفية الكاملة التي تبرر التصنيف، وأن تتضمن الرقم والسياق الذي يوضح هل يرتبط ببلدة واحدة أم بقائمة بلدات. لا تُرجع عبارة الرقم وحدها. استخدم null مع unspecified أو عند غياب عبارة حرفية كافية.
 
 Schema الإخراج الوحيد المسموح:
 {
@@ -107,6 +110,8 @@ Schema الإخراج الوحيد المسموح:
     "children_injuries": null
   },
   "casualty_evidence": [],
+  "casualty_scope": "unspecified",
+  "casualty_scope_evidence": null,
   "casualty_transitions": []
 }
 
@@ -206,6 +211,15 @@ GENERAL_EXTRACTION_RESPONSE_SCHEMA: JsonObject = {
                 "required": ["field", "evidence_span"],
             },
         },
+        "casualty_scope": {
+            "type": "string",
+            "enum": [
+                "per_village_exact",
+                "bulletin_aggregate",
+                "unspecified",
+            ],
+        },
+        "casualty_scope_evidence": {"type": ["string", "null"]},
     },
     "required": [
         "is_relevant",
@@ -215,6 +229,8 @@ GENERAL_EXTRACTION_RESPONSE_SCHEMA: JsonObject = {
         "casualties",
         "casualty_transitions",
         "casualty_evidence",
+        "casualty_scope",
+        "casualty_scope_evidence",
     ],
 }
 
@@ -239,6 +255,8 @@ COMBINED_TIER1_RESPONSE_SCHEMA: JsonObject = {
         "casualties": GENERAL_EXTRACTION_RESPONSE_SCHEMA["properties"]["casualties"],  # type: ignore[index]
         "casualty_transitions": GENERAL_EXTRACTION_RESPONSE_SCHEMA["properties"]["casualty_transitions"],  # type: ignore[index]
         "casualty_evidence": GENERAL_EXTRACTION_RESPONSE_SCHEMA["properties"]["casualty_evidence"],  # type: ignore[index]
+        "casualty_scope": GENERAL_EXTRACTION_RESPONSE_SCHEMA["properties"]["casualty_scope"],  # type: ignore[index]
+        "casualty_scope_evidence": GENERAL_EXTRACTION_RESPONSE_SCHEMA["properties"]["casualty_scope_evidence"],  # type: ignore[index]
     },
     "required": [
         "categories_present",
@@ -250,6 +268,8 @@ COMBINED_TIER1_RESPONSE_SCHEMA: JsonObject = {
         "casualties",
         "casualty_transitions",
         "casualty_evidence",
+        "casualty_scope",
+        "casualty_scope_evidence",
     ],
 }
 
@@ -265,6 +285,8 @@ class _RawExtractionResponse(BaseModel):
     casualties: ExtractionCasualties = Field(default_factory=ExtractionCasualties)
     casualty_transitions: list[CasualtyTransition] = Field(default_factory=list)
     casualty_evidence: list[CasualtyCountEvidence] = Field(default_factory=list)
+    casualty_scope: CasualtyScope = CasualtyScope.unspecified
+    casualty_scope_evidence: str | None = None
 
 
 class OllamaExtractionService(ExtractionClassifierInterface):
@@ -344,6 +366,8 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 "casualties",
                 "casualty_transitions",
                 "casualty_evidence",
+                "casualty_scope",
+                "casualty_scope_evidence",
             )
         }
         general_response = self._parse_general_response(
@@ -397,6 +421,13 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             casualties=casualties,
             casualty_evidence=casualty_evidence,
             casualty_transitions=list(general_response.casualty_transitions),
+            casualty_scope=general_response.casualty_scope,
+            casualty_scope_evidence=self._validated_source_span(
+                general_response.casualty_scope_evidence,
+                post_text=post_text,
+                field_name="casualty_scope_evidence",
+                raw_message_id=raw_message_id,
+            ),
             presence_category_keys=list(categories_present),
             extraction_tier=1,
             model=self.client.model,
@@ -646,6 +677,13 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             casualties=casualties,
             casualty_evidence=casualty_evidence,
             casualty_transitions=list(general_response.casualty_transitions),
+            casualty_scope=general_response.casualty_scope,
+            casualty_scope_evidence=self._validated_source_span(
+                general_response.casualty_scope_evidence,
+                post_text=post_text,
+                field_name="casualty_scope_evidence",
+                raw_message_id=raw_message_id,
+            ),
             presence_category_keys=list(categories_present),
             extraction_tier=2,
             model=self.client.model,
@@ -885,5 +923,27 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             self.client.model,
             raw_message_id,
             value,
+        )
+        return None
+
+    def _validated_source_span(
+        self,
+        value: str | None,
+        *,
+        post_text: str,
+        field_name: str,
+        raw_message_id: int | None,
+    ) -> str | None:
+        span = self._validated_text(
+            value,
+            field_name=field_name,
+            raw_message_id=raw_message_id,
+        )
+        if span is None or span in post_text:
+            return span
+        logger.warning(
+            "Dropped non-source extraction span field=%s raw_message_id=%s",
+            field_name,
+            raw_message_id,
         )
         return None
