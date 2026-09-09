@@ -10,6 +10,7 @@ import { useIncidentDuplicateCandidateQuery, useIncidentQuery } from "../hooks";
 import { acquireIncidentEditLock, deleteIncident, releaseIncidentEditLock, resolveIncidentDuplicate, updateIncident, updateIncidentDetails } from "../api";
 import { IncidentCategorySectionFields } from "../components/IncidentCategorySectionFields";
 import { IncidentCategorySectionEditForm } from "../components/IncidentCategorySectionEditForm";
+import { VillageMatchNotice } from "../components/VillageMatchNotice";
 import { fieldGroupForSection, incidentCategorySections } from "../incidentCategorySections";
 import type { IncidentCategorySectionKey } from "../incidentCategorySections";
 import { reportedCount } from "../incidentSchema";
@@ -392,6 +393,14 @@ export const IncidentDetailPage = () => {
           </Button>
         </div>
         {isVillageDetailsOpen ? (
+        <>
+        <VillageMatchNotice
+          village_review_required={incident.village_review_required}
+          any_village_low_confidence={incident.any_village_low_confidence}
+          resolved_by_geo_context={incident.resolved_by_geo_context}
+          geo_context_anchor_village_name={incident.geo_context_anchor_village_name}
+          alternate_candidate_village_name={incident.alternate_candidate_village_name}
+        />
         <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <dt className="text-caption font-semibold uppercase text-text-muted">
@@ -467,6 +476,7 @@ export const IncidentDetailPage = () => {
             </dd>
           </div>
         </dl>
+        </>
         ) : null}
       </section>
 

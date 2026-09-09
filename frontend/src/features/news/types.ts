@@ -132,6 +132,13 @@ export type IncidentDetail = Incident & {
   total_injuries: number | null;
   deaths: number | null;
   injuries: number | null;
+  village_review_required?: boolean;
+  any_village_low_confidence?: boolean;
+  resolved_by_geo_context?: boolean;
+  geo_context_anchor_village_id?: number | null;
+  geo_context_anchor_village_name?: string | null;
+  alternate_candidate_village_id?: number | null;
+  alternate_candidate_village_name?: string | null;
   casualty_demographics: CasualtyDemographics;
   bulletin_group?: BulletinCasualtyGroup | null;
   lebanese_army: IncidentCategorySection | null;
