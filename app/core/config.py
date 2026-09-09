@@ -113,6 +113,9 @@ class Settings(BaseSettings):
     # possible_duplicate within ≤30min at this elevated text similarity (recon
     # true-positive Nabatiyeh pair scored 0.875; same-village high is 0.80).
     dedup_cross_village_text_min: float = 0.87
+    bulletin_reconciliation_window_hours: int = 60
+    bulletin_reconciliation_sweep_interval_seconds: int = 1800
+    bulletin_reconciliation_village_set_min_overlap: float = 1.0
     pg_application_name: str = "war-news"
     pipeline_role: str = "api"
     pipeline_worker_poll_seconds: float = 2.0
