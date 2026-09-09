@@ -404,3 +404,158 @@ def test_near_tie_within_margin_downgrades_even_when_top_exceeds_threshold() -> 
     assert result.village_matches[0].village_match_status == (
         MatchResultStatus.matched_low_confidence
     )
+
+
+class _GeoVillageRepositoryStub:
+    def __init__(
+        self,
+        candidates_by_text,
+        aliases=None,
+    ) -> None:
+        self.candidates_by_text = candidates_by_text
+        self.aliases = aliases or {}
+
+    def resolve_alias(self, normalized_text: str):
+        village = self.aliases.get(normalized_text)
+        return (village, 1.0) if village is not None else None
+
+    def find_similar(self, text: str, limit: int = 5):
+        return self.candidates_by_text.get(text, [])[:limit]
+
+
+def _geo_village(
+    village_id: int,
+    ref_name_ar: str,
+    coord_x: float,
+    coord_y: float,
+):
+    return SimpleNamespace(
+        id=village_id,
+        ref_name_ar=ref_name_ar,
+        coord_x=coord_x,
+        coord_y=coord_y,
+    )
+
+
+def test_geo_context_resolves_zibdine_near_harouf() -> None:
+    harouf = _geo_village(652, "حروف", 727118.662568, 3695226.05415)
+    zibdine_jbayl = _geo_village(
+        1530,
+        "زبدين",
+        749917.749312,
+        3776011.05529,
+    )
+    bzebdine = _geo_village(
+        395,
+        "بزبدين",
+        753227.718606,
+        3751453.96821,
+    )
+    zibdine_nabatiyeh = _geo_village(
+        1529,
+        "زبدين النبطية",
+        729089.964486,
+        3695394.05526,
+    )
+    villages = _GeoVillageRepositoryStub(
+        {
+            "زبدين": [
+                (zibdine_jbayl, 1.0),
+                (bzebdine, 0.44444445),
+                (zibdine_nabatiyeh, 0.42857143),
+            ]
+        },
+        aliases={"حاروف": harouf},
+    )
+    service = MatchingService(villages, _SimilarRepositoryStub(None, None))
+
+    result = service.match(
+        _extraction(village=["حاروف", "زبدين"], action=None)
+    )
+
+    assert result.village_matches[0].matched_village_id == harouf.id
+    zibdine_match = result.village_matches[1]
+    assert zibdine_match.matched_village_id == zibdine_nabatiyeh.id
+    assert zibdine_match.village_match_status == MatchResultStatus.matched
+    assert zibdine_match.resolved_by_geo_context is True
+    assert zibdine_match.geo_context_anchor_village_id == harouf.id
+    assert zibdine_match.original_top_candidate_id == zibdine_jbayl.id
+    assert (
+        zibdine_match.alternate_candidate_village_id
+        == zibdine_jbayl.id
+    )
+
+
+def test_exact_duplicate_without_anchor_keeps_low_confidence_winner() -> None:
+    first = _geo_village(100, "كنيسة", 0, 0)
+    second = _geo_village(200, "كنيسة", 100000, 100000)
+    villages = _GeoVillageRepositoryStub(
+        {"كنيسه": [(first, 1.0), (second, 1.0)]}
+    )
+    service = MatchingService(villages, _SimilarRepositoryStub(None, None))
+
+    result = service.match(_extraction(village=["كنيسة"], action=None))
+
+    village_match = result.village_matches[0]
+    assert village_match.matched_village_id == first.id
+    assert (
+        village_match.village_match_status
+        == MatchResultStatus.matched_low_confidence
+    )
+    assert village_match.resolved_by_geo_context is False
+    assert village_match.alternate_candidate_village_id == second.id
+
+
+def test_region_suffixed_collision_without_anchor_is_reviewable() -> None:
+    plain = _geo_village(100, "زبدين", 80000, 0)
+    lexical_runner_up = _geo_village(200, "بزبدين", 40000, 0)
+    region_qualified = _geo_village(300, "زبدين النبطية", 0, 0)
+    villages = _GeoVillageRepositoryStub(
+        {
+            "زبدين": [
+                (plain, 1.0),
+                (lexical_runner_up, 0.44),
+                (region_qualified, 0.42),
+            ]
+        }
+    )
+    service = MatchingService(villages, _SimilarRepositoryStub(None, None))
+
+    result = service.match(_extraction(village=["زبدين"], action=None))
+
+    village_match = result.village_matches[0]
+    assert village_match.matched_village_id == plain.id
+    assert (
+        village_match.village_match_status
+        == MatchResultStatus.matched_low_confidence
+    )
+    assert village_match.village_review_required is True
+    assert village_match.alternate_candidate_village_id == region_qualified.id
+
+
+def test_geo_context_requires_meaningful_distance_advantage() -> None:
+    anchor = _geo_village(10, "مرساة", 0, 0)
+    original = _geo_village(20, "قرية", 10000, 0)
+    slightly_closer = _geo_village(30, "قرية", 9000, 0)
+    villages = _GeoVillageRepositoryStub(
+        {"قريه": [(original, 1.0), (slightly_closer, 1.0)]},
+        aliases={"مرساة": anchor},
+    )
+    service = MatchingService(
+        villages,
+        _SimilarRepositoryStub(None, None),
+        geo_context_max_distance_meters=20000,
+        geo_context_min_distance_advantage_meters=5000,
+    )
+
+    result = service.match(
+        _extraction(village=["مرساة", "قرية"], action=None)
+    )
+
+    village_match = result.village_matches[1]
+    assert village_match.matched_village_id == original.id
+    assert (
+        village_match.village_match_status
+        == MatchResultStatus.matched_low_confidence
+    )
+    assert village_match.resolved_by_geo_context is False

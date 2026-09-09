@@ -137,6 +137,10 @@ class Settings(BaseSettings):
     pipeline_cursor_stale_minutes: int = 30
     extraction_max_retries: int = 5
     matching_max_retries: int = 5
+    # ACS coordinates are UTM zone 36N metres. Geo context only disambiguates
+    # collision-like village candidates near another confident message village.
+    village_geo_context_max_distance_meters: int = 20000
+    village_geo_context_min_distance_advantage_meters: int = 5000
     redis_url: str = "redis://redis:6379/0"
     cache_enabled: bool = True
 

@@ -23,6 +23,10 @@ class VillageMatchResult(BaseModel):
     deaths: int | None = None
     injuries: int | None = None
     evidence_span: str | None = None
+    resolved_by_geo_context: bool = False
+    geo_context_anchor_village_id: int | None = None
+    original_top_candidate_id: int | None = None
+    alternate_candidate_village_id: int | None = None
 
 
 class MatchResultDTO(BaseModel):
