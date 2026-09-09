@@ -526,7 +526,7 @@ class IncidentMaterializationService:
             event_date=event_datetime.date(),
             event_time=event_datetime.time(),
             khabar=sanitized_khabar,
-            khabar_embedding=None,
+            khabar_embedding=representative.content_embedding,
             note=self._origin_village_note(origin_villages),
             total_deaths=total_deaths,
             total_injuries=total_injuries,

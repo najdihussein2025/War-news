@@ -264,7 +264,7 @@ def test_eligible_representative_inserts_incident_and_detail() -> None:
     assert incident.source_id == 9
     assert incident.event_date.isoformat() == "2026-08-17"
     assert incident.event_time.hour == 15
-    assert incident.khabar == "  خبر   عاجل "
+    assert incident.khabar == "خبر عاجل"
     assert incident.khabar_embedding == [0.1, 0.2, 0.3]
     assert incident.created_by is None
     assert incident.verification_status == "auto_processed"
@@ -312,7 +312,7 @@ def test_materialization_strips_emoji_from_khabar_and_hash() -> None:
     service.materialize(representative)
 
     incident = next(value for value in db.committed if isinstance(value, Incident))
-    assert incident.khabar == " \u062e\u0628\u0631   \u0639\u0627\u062c\u0644 "
+    assert incident.khabar == "\u062e\u0628\u0631 \u0639\u0627\u062c\u0644"
     assert incident.exact_hash == hashlib.sha256(
         "\u062e\u0628\u0631 \u0639\u0627\u062c\u0644|976|5|2026-08-17".encode("utf-8")
     ).hexdigest()
@@ -337,10 +337,11 @@ def test_fast_path_strips_emoji_from_khabar_and_hash() -> None:
 
     assert len(result) == 1
     incident = next(value for value in db.committed if isinstance(value, Incident))
-    assert incident.khabar == " \u062e\u0628\u0631   \u0639\u0627\u062c\u0644 "
+    assert incident.khabar == "\u062e\u0628\u0631 \u0639\u0627\u062c\u0644"
     assert incident.exact_hash == hashlib.sha256(
         "\u062e\u0628\u0631 \u0639\u0627\u062c\u0644|976|5|2026-08-17".encode("utf-8")
     ).hexdigest()
+    assert incident.khabar_embedding == [0.1, 0.2, 0.3]
     assert representative.status == MessageStatus.materialized
 
 
@@ -453,7 +454,7 @@ def test_two_village_match_produces_two_incidents() -> None:
     village_ids = {inc.village_id for inc in incidents}
     assert village_ids == {976, 977}
     # Both incidents share the same khabar
-    assert all(inc.khabar == "  خبر   عاجل " for inc in incidents)
+    assert all(inc.khabar == "خبر عاجل" for inc in incidents)
     assert service.stats.inserted == 2
     assert representative.status == MessageStatus.materialized
 
