@@ -135,7 +135,13 @@ def test_village_roles_are_preserved_in_match_entries() -> None:
             action=None,
             village_roles=[
                 VillageRoleEntry(village="البياض", role=VillageRole.origin),
-                VillageRoleEntry(village="المنصوري", role=VillageRole.target),
+                VillageRoleEntry(
+                    village="المنصوري",
+                    role=VillageRole.target,
+                    deaths=1,
+                    injuries=3,
+                    evidence_span="المنصوري: شهيد و3 جرحى",
+                ),
             ],
         )
     )
@@ -148,6 +154,12 @@ def test_village_roles_are_preserved_in_match_entries() -> None:
         "البياض",
         "المنصوري",
     ]
+    assert result.village_matches[1].deaths == 1
+    assert result.village_matches[1].injuries == 3
+    assert (
+        result.village_matches[1].evidence_span
+        == "المنصوري: شهيد و3 جرحى"
+    )
 
 
 def test_any_village_low_confidence_flag_set_correctly() -> None:

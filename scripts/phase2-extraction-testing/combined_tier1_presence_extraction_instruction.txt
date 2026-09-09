@@ -21,7 +21,8 @@ Presence rules (same precision as the standalone presence gate):
 General field rules:
 - If the text is not about a security/military incident in Lebanon: is_relevant=false and set village/action_description null and casualties numeric fields null.
 - village: array of place names mentioned, or null. Never a single string.
-- village_roles: optional array of objects shaped like `{"village":"name","role":"origin|target"}`. Use `origin` only for the attacking position / launch site / tank position / staging point. Use `target` for the place actually struck or damaged. If the text mentions only one village or does not distinguish roles, default that village to `target`. If no extra role detail is needed, use `[]`.
+- village_roles: array of objects shaped like `{"village":"name","role":"origin|target","deaths":null,"injuries":null,"evidence_span":null}`. Use `origin` only for the attacking position / launch site / tank position / staging point. Use `target` for the place actually struck or damaged.
+- When multiple villages are mentioned, each target entry's deaths/injuries must come only from that village's own clause; never copy a bulletin-wide total to every village. A target village without its own explicit count must use null, not 0 or the bulletin total. Apply the vague-quantifier rule independently per village. For one village, these counts may mirror the root casualties object or remain null.
 - action_description: incident action type from the text only (Arabic).
 - casualties: only explicitly stated numbers in the text; never infer from generic wording.
 - Vague/approximate Arabic quantifiers (عشرات، عشرات الجرحى، عشرات الشهداء، مئات، المئات، عدد من، عدد كبير من، كثير من، العديد من، بضعة، بعض) must leave counts null when no explicit digit accompanies them. Do not invent children/women sub-counts from "بينهم أطفال" / "بينهم نساء" without an explicit digit for that group.

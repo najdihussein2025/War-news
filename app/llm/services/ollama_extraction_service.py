@@ -52,7 +52,10 @@ GENERAL_EXTRACTION_PROMPT = """أنت مساعد لاستخراج الحقول �
 
 إذا كان النص ذا صلة:
 - village: مصفوفة من أسماء البلدات أو الأماكن المذكورة في الخبر. إذا ورد اسم مكان واحد أرجع مصفوفة بعنصر واحد. إذا وردت أسماء أماكن متعددة أرجعها جميعاً في المصفوفة. إذا لم يظهر أي اسم مكان في النص أرجع null. لا تُرجع سلسلة نصية واحدة بل دائماً مصفوفة أو null.
-- village_roles: مصفوفة اختيارية من كائنات بالشكل {"village":"اسم البلدة","role":"origin|target"} لتمييز دور كل بلدة عندما يفرق النص بين مكان انطلاق/تمركز جهة الهجوم ومكان الاستهداف الفعلي. استخدم role="origin" فقط لموضع المنصة أو الدبابة أو موقع الإطلاق أو نقطة التمركز. استخدم role="target" لمكان القصف/الضربة/الضرر الفعلي. إذا ذُكرت بلدة واحدة فقط أو لم يميز النص بين الأدوار، اجعل role="target". إذا لم تحتج هذا التفصيل أرجع [].
+- village_roles: مصفوفة من كائنات بالشكل {"village":"اسم البلدة","role":"origin|target","deaths":null,"injuries":null,"evidence_span":null}. استخدم role="origin" فقط لموضع المنصة أو الدبابة أو موقع الإطلاق أو نقطة التمركز، واستخدم role="target" لمكان القصف/الضربة/الضرر الفعلي.
+- عند ذكر أكثر من بلدة أو موقع، استخرج في كل عنصر target أعداد deaths وinjuries الخاصة بتلك البلدة من جملتها أو عبارتها فقط، ولا تنسخ الحصيلة الإجمالية للنشرة إلى البلدات. يجب أن يكون evidence_span مقطعاً حرفياً قصيراً يربط اسم البلدة بأرقامها.
+- إذا ذُكرت بلدة target بلا عدد صريح خاص بها، اجعل deaths وinjuries وevidence_span لها null، لا 0 ولا حصيلة النشرة. طبّق على كل بلدة قاعدة الألفاظ المبهمة نفسها: عشرات، مئات، عدد من، بضعة وغيرها تعني null ولا تتحول إلى رقم.
+- عند ذكر بلدة واحدة فقط، اجعل أرقام عنصر village_roles مطابقة لأرقام casualties العامة إن وُجدت، مع evidence_span حرفي، أو اتركها null. كلاهما مقبول لأن مسار البلدة الواحدة يستخدم casualties العامة.
 - action_description: وصف نوع العمل أو الحادث من النص فقط.
 - casualties: أعداد الضحايا العامة غير المنسوبة إلى فئة محددة، فقط إذا ذُكرت حرفياً.
 - casualty_transitions: انتقالات حالة بين جرحى ووفيات في *متابعات* لنفس الحادث. استخدمها عندما يذكر النص أن جرحى سابقين توفوا أو «بقي X جرحى وتوفي Y» أو «توفى واحد من الجرحى» دون إعادة عدّ كل الجرحى. لا تستخدمها للأخبار الأولية ولا للإضافات البسيطة مثل «5 جرحى جدد».
@@ -68,9 +71,9 @@ GENERAL_EXTRACTION_PROMPT = """أنت مساعد لاستخراج الحقول �
 5) «أصيب 5 جرحى إضافيين» → casualty_transitions=[] (إضافة فقط، بدون انتقال).
 
 أمثلة على village_roles:
-1) «دبابة متمركزة في البياض تقصف المنصوري» → village=["البياض","المنصوري"] و village_roles=[{"village":"البياض","role":"origin"},{"village":"المنصوري","role":"target"}]
-2) «غارة على عيتا الشعب» → village=["عيتا الشعب"] و village_roles=[{"village":"عيتا الشعب","role":"target"}]
-3) «قصف استهدف المنصوري ومجدل زون» → village=["المنصوري","مجدل زون"] و village_roles=[{"village":"المنصوري","role":"target"},{"village":"مجدل زون","role":"target"}]
+1) «دبابة متمركزة في البياض تقصف المنصوري» → village=["البياض","المنصوري"] و village_roles=[{"village":"البياض","role":"origin","deaths":null,"injuries":null,"evidence_span":null},{"village":"المنصوري","role":"target","deaths":null,"injuries":null,"evidence_span":null}]
+2) «غارة على عيتا الشعب أدت إلى 2 جريحين» → village=["عيتا الشعب"] و village_roles=[{"village":"عيتا الشعب","role":"target","deaths":null,"injuries":2,"evidence_span":"عيتا الشعب أدت إلى 2 جريحين"}]
+3) «المنصوري: شهيد و3 جرحى؛ مجدل زون: 4 جرحى» → village=["المنصوري","مجدل زون"] و village_roles=[{"village":"المنصوري","role":"target","deaths":1,"injuries":3,"evidence_span":"المنصوري: شهيد و3 جرحى"},{"village":"مجدل زون","role":"target","deaths":null,"injuries":4,"evidence_span":"مجدل زون: 4 جرحى"}]
 
 قواعد الأعداد:
 - استخرج الرقم فقط عندما يكون مكتوباً بشكل مباشر في النص.
@@ -125,8 +128,17 @@ GENERAL_EXTRACTION_RESPONSE_SCHEMA: JsonObject = {
                         "type": "string",
                         "enum": ["origin", "target"],
                     },
+                    "deaths": {"type": ["integer", "null"], "minimum": 0},
+                    "injuries": {"type": ["integer", "null"], "minimum": 0},
+                    "evidence_span": {"type": ["string", "null"]},
                 },
-                "required": ["village", "role"],
+                "required": [
+                    "village",
+                    "role",
+                    "deaths",
+                    "injuries",
+                    "evidence_span",
+                ],
             },
         },
         "action_description": {"type": ["string", "null"]},
@@ -370,6 +382,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             ),
             village_roles=self._validated_village_roles(
                 general_response.village_roles,
+                post_text=post_text,
                 raw_message_id=raw_message_id,
             ),
             action_description=self._validated_text(
@@ -618,6 +631,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             ),
             village_roles=self._validated_village_roles(
                 general_response.village_roles,
+                post_text=post_text,
                 raw_message_id=raw_message_id,
             ),
             action_description=self._validated_text(
@@ -778,12 +792,59 @@ class OllamaExtractionService(ExtractionClassifierInterface):
     def _validated_village_roles(
         self,
         village_roles: list[VillageRoleEntry],
+        post_text: str,
         raw_message_id: int | None,
     ) -> list[VillageRoleEntry]:
         validated: list[VillageRoleEntry] = []
         for entry in village_roles:
             if is_valid_reason_text(entry.village):
-                validated.append(entry)
+                evidence_span = self._validated_text(
+                    entry.evidence_span,
+                    field_name="village_roles.evidence_span",
+                    raw_message_id=raw_message_id,
+                )
+                if evidence_span is not None and evidence_span not in post_text:
+                    logger.warning(
+                        "Dropped non-source village casualty evidence for "
+                        "raw_message_id=%s village=%s",
+                        raw_message_id,
+                        entry.village,
+                    )
+                    evidence_span = None
+
+                evidence = (
+                    [
+                        CasualtyCountEvidence(
+                            field=field,
+                            evidence_span=evidence_span,
+                        )
+                        for field, value in (
+                            ("deaths", entry.deaths),
+                            ("injuries", entry.injuries),
+                        )
+                        if value is not None and evidence_span is not None
+                    ]
+                    if evidence_span is not None
+                    else []
+                )
+                village_casualties, _ = apply_casualty_count_backstop(
+                    evidence_span or "",
+                    ExtractionCasualties(
+                        deaths=entry.deaths,
+                        injuries=entry.injuries,
+                    ),
+                    evidence,
+                    raw_message_id=raw_message_id,
+                )
+                validated.append(
+                    entry.model_copy(
+                        update={
+                            "deaths": village_casualties.deaths,
+                            "injuries": village_casualties.injuries,
+                            "evidence_span": evidence_span,
+                        }
+                    )
+                )
             else:
                 logger.warning(
                     "Invalid village_roles.village text from model=%s for raw_message_id=%s",

@@ -20,6 +20,9 @@ class VillageMatchResult(BaseModel):
     village_review_required: bool
     raw_village_text: str | None
     village_role: VillageRole = VillageRole.target
+    deaths: int | None = None
+    injuries: int | None = None
+    evidence_span: str | None = None
 
 
 class MatchResultDTO(BaseModel):

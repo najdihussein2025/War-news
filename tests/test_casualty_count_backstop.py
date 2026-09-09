@@ -100,6 +100,39 @@ def test_arabic_indic_digit_counts_are_preserved() -> None:
     assert len(kept) == 2
 
 
+def test_explicit_arabic_singular_and_dual_counts_are_preserved() -> None:
+    text = "الرمادية: شهيد وجريح، كفرمان: شهيدان"
+    result, kept = apply_casualty_count_backstop(
+        text,
+        ExtractionCasualties(deaths=2, injuries=1),
+        [
+            CasualtyCountEvidence(field="deaths", evidence_span="شهيدان"),
+            CasualtyCountEvidence(field="injuries", evidence_span="جريح"),
+        ],
+    )
+
+    assert result.deaths == 2
+    assert result.injuries == 1
+    assert {item.field for item in kept} == {"deaths", "injuries"}
+
+
+def test_casualty_digit_must_appear_inside_grounded_evidence_span() -> None:
+    text = "البلدة الأولى: 4 جرحى، البلدة الثانية: عشرات الجرحى"
+    result, kept = apply_casualty_count_backstop(
+        text,
+        ExtractionCasualties(injuries=4),
+        [
+            CasualtyCountEvidence(
+                field="injuries",
+                evidence_span="البلدة الثانية: عشرات الجرحى",
+            )
+        ],
+    )
+
+    assert result.injuries is None
+    assert kept == []
+
+
 def test_missing_evidence_span_nulls_count_and_logs_warning(caplog) -> None:
     text = "4 قتلى و10 جرحى في غارة على البلدة"
 

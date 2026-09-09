@@ -303,6 +303,37 @@ def test_casualty_fields_map_from_top_level_extraction_result() -> None:
     ).hexdigest()
 
 
+def test_multi_village_materialization_uses_each_villages_root_casualties() -> None:
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    match_result = _two_village_match_result()
+    match_result["village_matches"][0].update({"deaths": 1, "injuries": 15})
+    match_result["village_matches"][1].update({"deaths": 2, "injuries": None})
+    representative = _representative(match_result=match_result)
+    representative.extraction_result["casualties"].update(
+        {
+            "deaths": 3,
+            "injuries": 23,
+            "total_deaths": 3,
+            "total_injuries": 23,
+        }
+    )
+
+    result = service.materialize(representative)
+
+    assert len(result) == 2
+    incidents = {
+        incident.village_id: incident
+        for incident in db.committed
+        if isinstance(incident, Incident)
+    }
+    assert (incidents[976].deaths, incidents[976].injuries) == (1, 15)
+    assert (incidents[977].deaths, incidents[977].injuries) == (2, None)
+    # Category/root rollups remain message-scoped by the explicit Phase-1 limit.
+    assert (incidents[976].total_deaths, incidents[976].total_injuries) == (3, 23)
+    assert (incidents[977].total_deaths, incidents[977].total_injuries) == (3, 23)
+
+
 def test_materialization_strips_emoji_from_khabar_and_hash() -> None:
     db = _SessionStub()
     service = IncidentMaterializationService(db)  # type: ignore[arg-type]

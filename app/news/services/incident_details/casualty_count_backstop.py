@@ -22,6 +22,17 @@ CASUALTY_COUNT_FIELDS: tuple[str, ...] = (
 
 _WESTERN_TO_ARABIC_INDIC = str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩")
 
+_EXPLICIT_COUNT_WORDS: dict[str, dict[int, tuple[str, ...]]] = {
+    "deaths": {
+        1: ("شهيد", "شهيدة", "قتيل", "قتيلة"),
+        2: ("شهيدان", "شهيدين", "قتيلان", "قتيلين"),
+    },
+    "injuries": {
+        1: ("جريح", "جريحة", "مصاب", "مصابة"),
+        2: ("جريحان", "جريحين", "مصابان", "مصابين"),
+    },
+}
+
 
 def _digit_forms(value: int) -> tuple[str, str]:
     western = str(value)
@@ -39,6 +50,17 @@ def text_contains_count_digit(text: str, value: int) -> bool:
     return bool(re.search(pattern, text))
 
 
+def _evidence_contains_explicit_count(text: str, field: str, value: int) -> bool:
+    if text_contains_count_digit(text, value):
+        return True
+    root_field = field.removeprefix("total_")
+    words = _EXPLICIT_COUNT_WORDS.get(root_field, {}).get(value, ())
+    return any(
+        re.search(rf"(?<![\w]){re.escape(word)}(?![\w])", text)
+        for word in words
+    )
+
+
 def apply_casualty_count_backstop(
     text: str,
     casualties: ExtractionCasualties,
@@ -48,9 +70,9 @@ def apply_casualty_count_backstop(
 ) -> tuple[ExtractionCasualties, list[CasualtyCountEvidence]]:
     """Null casualty counts that lack a source digit and/or evidence_span.
 
-    Safety net behind LLM extraction: a non-null count is kept only when
-    (1) an evidence_span was returned for that field, and
-    (2) the numeric value appears as an explicit digit in the source text.
+    Safety net behind LLM extraction: a non-null count is kept only when its
+    evidence span occurs in the source and contains either the explicit digit
+    or an unambiguous Arabic singular/dual casualty form for 1 or 2.
     """
     evidence_by_field: dict[str, CasualtyCountEvidence] = {}
     for item in evidence or []:
@@ -74,8 +96,19 @@ def apply_casualty_count_backstop(
             continue
 
         field_evidence = evidence_by_field.get(field)
-        has_digit = text_contains_count_digit(text, value)
-        if field_evidence is None or not has_digit:
+        span_is_grounded = (
+            field_evidence is not None
+            and field_evidence.evidence_span in text
+        )
+        has_explicit_count = (
+            field_evidence is not None
+            and _evidence_contains_explicit_count(
+                field_evidence.evidence_span,
+                field,
+                value,
+            )
+        )
+        if not span_is_grounded or not has_explicit_count:
             reason = (
                 "missing_evidence_span"
                 if field_evidence is None

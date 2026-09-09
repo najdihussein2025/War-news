@@ -41,7 +41,10 @@ class VillageRoleEntry(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     village: str
-    role: VillageRole
+    role: VillageRole = VillageRole.target
+    deaths: int | None = Field(default=None, ge=0)
+    injuries: int | None = Field(default=None, ge=0)
+    evidence_span: str | None = None
 
 
 class CasualtyTransition(BaseModel):

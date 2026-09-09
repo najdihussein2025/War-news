@@ -14,8 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.text_sanitizer import strip_emoji_and_pictographs
-from app.llm.dtos import ExtractionResult
-from app.llm.dtos import VillageRole
+from app.llm.dtos import ExtractionCasualties, ExtractionResult, VillageRole
 from app.news.interfaces import DedupMatchingInterface
 from app.news.models import Incident, IncidentDetail, MatchStatus, MessageStatus, RawMessage
 from app.news.repositories.emergency_organization_repository import (
@@ -237,6 +236,7 @@ class IncidentMaterializationService:
 
         village_matches: list[dict[str, Any]] = match_result.get("village_matches", [])
         origin_villages = self._origin_village_names(village_matches)
+        is_multi_village = len(village_matches) > 1
 
         created: list[Incident] = []
         confident_duplicate_villages = 0
@@ -254,6 +254,11 @@ class IncidentMaterializationService:
                 continue
             village_status = village_match.get("village_match_status")
             village_id = self._optional_int(village_match.get("matched_village_id"))
+            village_deaths, village_injuries = self._root_casualties_for_village(
+                village_match,
+                extraction.casualties,
+                is_multi_village=is_multi_village,
+            )
             holds_village_lock = (
                 village_id is not None
                 and village_status in MATERIALIZE_MATCH_STATUSES
@@ -296,6 +301,8 @@ class IncidentMaterializationService:
                     condition_id=condition_id,
                     event_datetime=event_datetime,
                     origin_villages=origin_villages,
+                    deaths=village_deaths,
+                    injuries=village_injuries,
                     duplicate_flag=True,
                 )
                 if incident is not None and decision.matched_incident is not None:
@@ -349,8 +356,8 @@ class IncidentMaterializationService:
                         self.dedup_service.merge_into_incident(
                             existing=canonical_incident,
                             new_candidate_data={
-                                "deaths": casualties.deaths,
-                                "injuries": casualties.injuries,
+                                "deaths": village_deaths,
+                                "injuries": village_injuries,
                                 "total_deaths": total_deaths,
                                 "total_injuries": total_injuries,
                                 "khabar": representative.raw_text or "",
@@ -419,6 +426,8 @@ class IncidentMaterializationService:
                 condition_id=condition_id,
                 event_datetime=event_datetime,
                 origin_villages=origin_villages,
+                deaths=village_deaths,
+                injuries=village_injuries,
             )
             if incident is not None:
                 created.append(incident)
@@ -492,6 +501,8 @@ class IncidentMaterializationService:
         condition_id: int,
         event_datetime: datetime,
         origin_villages: list[str],
+        deaths: int | None,
+        injuries: int | None,
         duplicate_flag: bool = False,
     ) -> Incident | None:
         if village_id is None:
@@ -531,8 +542,8 @@ class IncidentMaterializationService:
             note=self._origin_village_note(origin_villages),
             total_deaths=total_deaths,
             total_injuries=total_injuries,
-            deaths=casualties.deaths,
-            injuries=casualties.injuries,
+            deaths=deaths,
+            injuries=injuries,
             exact_hash=exact_hash,
             duplicate_flag=duplicate_flag,
             details_pending=True,
@@ -639,6 +650,7 @@ class IncidentMaterializationService:
 
         village_matches: list[dict[str, Any]] = match_result.get("village_matches", [])
         origin_villages = self._origin_village_names(village_matches)
+        is_multi_village = len(village_matches) > 1
         if not village_matches:
             self.stats.skipped_ineligible += 1
             self._mark_unmaterializable(representative, ERROR_NO_VILLAGE)
@@ -660,6 +672,11 @@ class IncidentMaterializationService:
                 continue
             village_status = village_match.get("village_match_status")
             village_id = self._optional_int(village_match.get("matched_village_id"))
+            village_deaths, village_injuries = self._root_casualties_for_village(
+                village_match,
+                casualties,
+                is_multi_village=is_multi_village,
+            )
 
             if village_status not in ELIGIBLE_MATCH_STATUSES:
                 logger.info(
@@ -715,8 +732,8 @@ class IncidentMaterializationService:
                         self.dedup_service.merge_into_incident(
                             existing=existing,
                             new_candidate_data={
-                                "deaths": casualties.deaths,
-                                "injuries": casualties.injuries,
+                                "deaths": village_deaths,
+                                "injuries": village_injuries,
                                 "total_deaths": total_deaths,
                                 "total_injuries": total_injuries,
                                 "khabar": representative.raw_text or "",
@@ -784,10 +801,13 @@ class IncidentMaterializationService:
                 khabar=sanitized_khabar,
                 khabar_embedding=khabar_embedding,
                 note=self._origin_village_note(origin_villages),
+                # Category extraction remains message-scoped. These rollups
+                # intentionally retain the existing shared behavior until
+                # category details can be attributed to individual villages.
                 total_deaths=total_deaths,
                 total_injuries=total_injuries,
-                deaths=casualties.deaths,
-                injuries=casualties.injuries,
+                deaths=village_deaths,
+                injuries=village_injuries,
                 exact_hash=exact_hash,
                 duplicate_flag=duplicate_flag,
                 duplicate_level=duplicate_level,
@@ -912,6 +932,29 @@ class IncidentMaterializationService:
         if isinstance(value, bool) or not isinstance(value, int):
             return None
         return value
+
+    @staticmethod
+    def _root_casualties_for_village(
+        village_match: dict[str, Any],
+        casualties: ExtractionCasualties,
+        *,
+        is_multi_village: bool,
+    ) -> tuple[int | None, int | None]:
+        deaths = IncidentMaterializationService._optional_int(
+            village_match.get("deaths")
+        )
+        injuries = IncidentMaterializationService._optional_int(
+            village_match.get("injuries")
+        )
+        if is_multi_village:
+            # Null is meaningful here: it means this village had no explicit
+            # local count. Falling back to the bulletin total would recreate
+            # the multi-village casualty misattribution bug.
+            return deaths, injuries
+        return (
+            deaths if deaths is not None else casualties.deaths,
+            injuries if injuries is not None else casualties.injuries,
+        )
 
     @staticmethod
     def _materializes_village_match(village_match: dict[str, Any]) -> bool:

@@ -111,6 +111,64 @@ def test_extract_tier1_skips_category_detail_calls() -> None:
     assert ExtractionCategoryKey.casualty_demographics in result.categories
 
 
+def test_extract_tier1_backstops_per_village_casualties() -> None:
+    post_text = (
+        "الرمادية قضاء صور: شهيد و15 جريحا\n"
+        "كفرمان قضاء النبطية: شهيدان\n"
+        "النبطية الفوقا: 3 جرحى من بينهم سيدة\n"
+        "ميفدون قضاء النبطية: 4 جرحى\n"
+        "عين التينة: جريح سوري الجنسية"
+    )
+    villages = [
+        ("الرمادية", 1, 15, "الرمادية قضاء صور: شهيد و15 جريحا"),
+        ("كفرمان", 2, None, "كفرمان قضاء النبطية: شهيدان"),
+        ("النبطية الفوقا", None, 3, "النبطية الفوقا: 3 جرحى من بينهم سيدة"),
+        ("ميفدون", None, 4, "ميفدون قضاء النبطية: 4 جرحى"),
+        ("عين التينة", None, 1, "عين التينة: جريح سوري الجنسية"),
+    ]
+    response = json.dumps(
+        {
+            "is_relevant": True,
+            "village": [item[0] for item in villages],
+            "village_roles": [
+                {
+                    "village": village,
+                    "role": "target",
+                    "deaths": deaths,
+                    "injuries": injuries,
+                    "evidence_span": evidence_span,
+                }
+                for village, deaths, injuries, evidence_span in villages
+            ],
+            "action_description": "غارات",
+            "casualties": {"deaths": 3, "injuries": 23},
+            "casualty_evidence": [
+                {"field": "deaths", "evidence_span": "شهيد"},
+                {"field": "injuries", "evidence_span": "15 جريحا"},
+            ],
+            "casualty_transitions": [],
+        },
+        ensure_ascii=False,
+    )
+    service = OllamaExtractionService(
+        client=_client_for_model_contents([response]),
+        presence_gate=_PresenceGateStub(categories=[]),
+    )
+
+    result = service.extract_tier1(post_text)
+
+    assert [
+        (entry.village, entry.deaths, entry.injuries)
+        for entry in result.village_roles
+    ] == [
+        ("الرمادية", 1, 15),
+        ("كفرمان", 2, None),
+        ("النبطية الفوقا", None, 3),
+        ("ميفدون", None, 4),
+        ("عين التينة", None, 1),
+    ]
+
+
 def test_orchestration_skips_category_detail_when_presence_gate_is_empty() -> None:
     presence_gate = _PresenceGateStub(categories=[])
     category_detail = _CategoryDetailStub(details={})

@@ -82,6 +82,9 @@ class MatchingService(MatchingServiceInterface):
                     village_review_required=classified.status != MatchResultStatus.matched,
                     raw_village_text=village_text,
                     village_role=village_mention.role,
+                    deaths=village_mention.deaths,
+                    injuries=village_mention.injuries,
+                    evidence_span=village_mention.evidence_span,
                 )
             )
 
