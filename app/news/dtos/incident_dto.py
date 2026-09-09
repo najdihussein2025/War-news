@@ -101,6 +101,22 @@ class IncidentCategorySectionDTO(BaseModel):
     model_config = ConfigDict(extra="allow", frozen=True)
 
 
+class BulletinCasualtyGroupDTO(BaseModel):
+    model_config = ConfigDict(from_attributes=True, frozen=True)
+
+    casualty_scope: Literal[
+        "per_village_exact",
+        "bulletin_aggregate",
+        "unspecified",
+    ]
+    total_deaths: int | None
+    total_injuries: int | None
+    breakdown_status: Literal["pending", "resolved", "expired", "n_a"]
+    window_expires_at: datetime | None
+    resolved_at: datetime | None
+    resolved_by_raw_message_id: int | None
+
+
 class IncidentDetailDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True, frozen=True)
 
@@ -137,6 +153,7 @@ class IncidentDetailDTO(BaseModel):
     duplicate_level: Literal["low", "medium", "high"] | None = None
     duplicate_similarity_score: float | None = None
     casualty_demographics: CasualtyDemographicsDTO
+    bulletin_group: BulletinCasualtyGroupDTO | None = None
     lebanese_army: IncidentCategorySectionDTO | None = None
     unifil: IncidentCategorySectionDTO | None = None
     municipality: IncidentCategorySectionDTO | None = None

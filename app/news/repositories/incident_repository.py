@@ -40,6 +40,7 @@ from app.news.dtos import (
 )
 from app.news.interfaces import IncidentRepositoryInterface
 from app.news.models import (
+    BulletinCasualtyGroup,
     Condition,
     DuplicateMatch,
     Incident,
@@ -279,21 +280,25 @@ class IncidentRepository(IncidentRepositoryInterface):
                 ).label("source"),
                 self._source_reference_expression().label("source_reference"),
                 RawMessage.source_name.label("source_name"),
-                case(
-                    (Incident.verification_status == "needs_verification", False),
-                    else_=True,
-                ).label("matched"),
+                case((self._needs_verification_column(), False), else_=True).label(
+                    "matched"
+                ),
                 case(
                     (Incident.duplicate_flag.is_(True), "possible"),
                     else_="none",
                 ).label("duplicate_flag"),
                 IncidentDetail,
+                BulletinCasualtyGroup,
             )
             .outerjoin(Village, Village.id == Incident.village_id)
             .outerjoin(Condition, Condition.id == Incident.condition_id)
             .outerjoin(Source, Source.id == Incident.source_id)
             .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
             .outerjoin(IncidentDetail, IncidentDetail.incident_id == Incident.id)
+            .outerjoin(
+                BulletinCasualtyGroup,
+                BulletinCasualtyGroup.raw_message_id == Incident.raw_message_id,
+            )
             .where(
                 Incident.id == incident_id,
                 Incident.is_deleted.is_(False),
@@ -304,6 +309,7 @@ class IncidentRepository(IncidentRepositoryInterface):
 
         incident = row.Incident
         detail = row.IncidentDetail
+        bulletin_group = row.BulletinCasualtyGroup
         village = row.Village
         values = {
             "id": incident.id,
@@ -361,6 +367,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                 children_d=detail.children_d if detail is not None else None,
                 children_i=detail.children_i if detail is not None else None,
             ),
+            "bulletin_group": bulletin_group,
             **serialize_incident_category_sections(detail),
         }
         return IncidentDetailDTO.model_validate(values)
