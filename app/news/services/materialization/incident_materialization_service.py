@@ -25,7 +25,11 @@ from app.news.repositories.bulletin_casualty_group_repository import (
     BulletinCasualtyGroupRepository,
 )
 from app.news.services.clustering.raw_message_embedding_service import strip_boilerplate
-from app.news.services.incident_details.category_mapper import compute_rollups, map_categories
+from app.news.services.incident_details.category_mapper import (
+    compute_rollups,
+    map_categories,
+    suppress_category_casualties,
+)
 from app.news.services.matching.emergency_organization_matching_service import (
     EmergencyOrganizationMatchingService,
 )
@@ -672,6 +676,11 @@ class IncidentMaterializationService:
             if self._materializes_village_match(village_match)
         ]
         is_multi_village = len(target_matches) > 1
+        category_casualties_suppressed = False
+        if is_multi_village:
+            mapped_fields, category_casualties_suppressed = (
+                suppress_category_casualties(mapped_fields)
+            )
         self._ensure_bulletin_group(
             representative,
             extraction,
@@ -761,6 +770,12 @@ class IncidentMaterializationService:
                             canonical_raw_message_id = existing_raw_id
                         existing.duplicate_level = "high"
                         existing.duplicate_similarity_score = score
+                        if category_casualties_suppressed:
+                            existing.verification_status = "needs_verification"
+                            existing.verification_reason = (
+                                "Category casualties require manual per-village "
+                                "confirmation for a multi-target bulletin"
+                            )
                         self.dedup_service.merge_into_incident(
                             existing=existing,
                             new_candidate_data={
@@ -822,6 +837,21 @@ class IncidentMaterializationService:
                 representative.match_result,
                 duplicate_flag=duplicate_flag,
             )
+            if category_casualties_suppressed:
+                verification_status = "needs_verification"
+            verification_reason = (
+                "Category casualties require manual per-village confirmation "
+                "for a multi-target bulletin"
+                if category_casualties_suppressed
+                else _verification_reason(
+                    representative.match_result,
+                    duplicate_flag=duplicate_flag,
+                    duplicate_level=duplicate_level,
+                    duplicate_similarity_score=duplicate_score,
+                )
+                if verification_status == "needs_verification"
+                else None
+            )
 
             incident = Incident(
                 raw_message_id=representative.id,
@@ -833,9 +863,6 @@ class IncidentMaterializationService:
                 khabar=sanitized_khabar,
                 khabar_embedding=khabar_embedding,
                 note=self._origin_village_note(origin_villages),
-                # Category extraction remains message-scoped. These rollups
-                # intentionally retain the existing shared behavior until
-                # category details can be attributed to individual villages.
                 total_deaths=total_deaths,
                 total_injuries=total_injuries,
                 deaths=village_deaths,
@@ -845,14 +872,7 @@ class IncidentMaterializationService:
                 duplicate_level=duplicate_level,
                 duplicate_similarity_score=duplicate_score,
                 verification_status=verification_status,
-                verification_reason=_verification_reason(
-                    representative.match_result,
-                    duplicate_flag=duplicate_flag,
-                    duplicate_level=duplicate_level,
-                    duplicate_similarity_score=duplicate_score,
-                )
-                if verification_status == "needs_verification"
-                else None,
+                verification_reason=verification_reason,
                 created_by=None,
             )
 

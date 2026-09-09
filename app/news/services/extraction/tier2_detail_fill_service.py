@@ -17,7 +17,11 @@ from app.news.repositories.bulletin_casualty_group_repository import (
     BulletinCasualtyGroupRepository,
 )
 from app.news.models.bulletin_casualty_group import CasualtyScope as StoredCasualtyScope
-from app.news.services.incident_details.category_mapper import compute_rollups, map_categories
+from app.news.services.incident_details.category_mapper import (
+    compute_rollups,
+    map_categories,
+    suppress_category_casualties,
+)
 from app.news.services.incident_details.casualty_demographic_consistency import reconcile_root_demographics
 from app.news.services.dedup.dedup_matching_service import DedupMatchingService
 from app.news.services.clustering.embedding_service import EmbeddingService
@@ -143,14 +147,24 @@ class Tier2DetailFillService:
             extraction.categories,
             emergency_org_matcher=self.emergency_org_matcher,
         )
+        target_village_ids = self._target_village_ids(raw_message.match_result)
+        is_multi_village = len(target_village_ids) > 1
+        category_casualties_suppressed = False
+        if is_multi_village:
+            mapped_fields, category_casualties_suppressed = (
+                suppress_category_casualties(mapped_fields)
+            )
+            category_casualties_suppressed = (
+                category_casualties_suppressed
+                or self._has_root_demographic_casualties(extraction)
+            )
         total_deaths, total_injuries = compute_rollups(
             mapped_fields,
             extraction.casualties,
         )
-        target_village_ids = self._target_village_ids(raw_message.match_result)
         is_multi_village_aggregate = (
             extraction.casualty_scope == CasualtyScope.bulletin_aggregate
-            and len(target_village_ids) > 1
+            and is_multi_village
         )
         if is_multi_village_aggregate:
             self.bulletin_groups.create_for_message(
@@ -177,16 +191,23 @@ class Tier2DetailFillService:
                 self.db.flush()
 
             root = extraction.casualties
+            root_demographics = {
+                "male_d": root.male_deaths,
+                "male_i": root.male_injuries,
+                "female_d": root.female_deaths,
+                "female_i": root.female_injuries,
+                "children_d": root.children_deaths,
+                "children_i": root.children_injuries,
+            }
+            if is_multi_village:
+                root_demographics = {
+                    field: None for field in root_demographics
+                }
             merge_incident_detail_fields(
                 detail,
                 {
                     **mapped_fields,
-                    "male_d": root.male_deaths,
-                    "male_i": root.male_injuries,
-                    "female_d": root.female_deaths,
-                    "female_i": root.female_injuries,
-                    "children_d": root.children_deaths,
-                    "children_i": root.children_injuries,
+                    **root_demographics,
                 },
             )
             # Reconciliation is allowed to clear a contradictory positive
@@ -285,6 +306,21 @@ class Tier2DetailFillService:
         )
 
     @staticmethod
+    def _has_root_demographic_casualties(extraction: ExtractionResult) -> bool:
+        root = extraction.casualties
+        return any(
+            value is not None
+            for value in (
+                root.male_deaths,
+                root.male_injuries,
+                root.female_deaths,
+                root.female_injuries,
+                root.children_deaths,
+                root.children_injuries,
+            )
+        )
+
+    @staticmethod
     def _fill_missing_matches(
         incident: Incident,
         match_result: dict | None,
@@ -368,6 +404,8 @@ class Tier2DetailFillService:
 
         if score >= settings.dedup_low_threshold:
             incident.duplicate_flag = True
+            incident.verification_status = "needs_verification"
+            incident.verification_reason = "Possible duplicate detected during detail extraction"
             self.dedup_service.record_possible_duplicate(
                 incident=incident,
                 matched_incident=existing,

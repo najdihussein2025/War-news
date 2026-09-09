@@ -13,6 +13,85 @@ from app.llm.dtos.extraction_dto import (
 
 logger = logging.getLogger(__name__)
 
+CATEGORY_CASUALTY_FIELDS = frozenset(
+    {
+        "lam_d",
+        "lam_i",
+        "laf_d",
+        "laf_i",
+        "la_td",
+        "la_ti",
+        "unm_d",
+        "unm_i",
+        "unf_d",
+        "unf_i",
+        "un_td",
+        "un_ti",
+        "munim_d",
+        "munim_i",
+        "munif_d",
+        "munif_i",
+        "muni_td",
+        "muni_ti",
+        "hosm_d",
+        "hosm_i",
+        "hosf_d",
+        "hosf_i",
+        "hosd",
+        "hosi",
+        "hcm_d",
+        "hcm_i",
+        "hcf_d",
+        "hcf_i",
+        "hcd",
+        "hci",
+        "pressm_d",
+        "pressm_i",
+        "pressf_d",
+        "pressf_i",
+        "pressd",
+        "pressi",
+        "gbm_d",
+        "gbm_i",
+        "gbf_d",
+        "gbf_i",
+        "gbd",
+        "gbi",
+        "carm_d",
+        "carm_i",
+        "carf_d",
+        "carf_i",
+        "carc_d",
+        "carc_i",
+        "card",
+        "cari",
+        "moto_d",
+        "moto_i",
+        "con_d",
+        "con_i",
+        "emer_d",
+        "emer_i",
+        "olives_trees_d",
+    }
+)
+
+
+def suppress_category_casualties(
+    mapped: dict[str, Any],
+) -> tuple[dict[str, Any], bool]:
+    suppressed = any(
+        mapped.get(field) is not None for field in CATEGORY_CASUALTY_FIELDS
+    )
+    if not suppressed:
+        return mapped, False
+    return (
+        {
+            key: (None if key in CATEGORY_CASUALTY_FIELDS else value)
+            for key, value in mapped.items()
+        },
+        True,
+    )
+
 
 class _EmergencyOrgMatcher(Protocol):
     def match(self, text: str | None) -> Any: ...

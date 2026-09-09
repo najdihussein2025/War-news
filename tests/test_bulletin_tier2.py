@@ -3,7 +3,14 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 from uuid import uuid4
 
-from app.llm.dtos import CasualtyScope, ExtractionCasualties, ExtractionResult
+from app.llm.dtos import (
+    CasualtyScope,
+    DidValue,
+    ExtractionCasualties,
+    ExtractionCategory,
+    ExtractionCategoryKey,
+    ExtractionResult,
+)
 from app.news.models import IncidentDetail
 from app.news.models.bulletin_casualty_group import CasualtyScope as StoredCasualtyScope
 from app.news.services.extraction.tier2_detail_fill_service import Tier2DetailFillService
@@ -16,6 +23,12 @@ def test_tier2_stores_bulletin_total_without_backfilling_village() -> None:
         is_relevant=True,
         village=["النبطية", "كفررمان"],
         casualties=ExtractionCasualties(total_deaths=4, total_injuries=20),
+        categories={
+            ExtractionCategoryKey.lebanese_army: ExtractionCategory(
+                did=DidValue.direct,
+                casualties=ExtractionCasualties(male_deaths=2),
+            )
+        },
         casualty_scope=CasualtyScope.bulletin_aggregate,
         casualty_scope_evidence=(
             "حصيلة الغارات على النبطية وكفررمان بلغت 4 شهداء و20 جريحا"
@@ -80,6 +93,9 @@ def test_tier2_stores_bulletin_total_without_backfilling_village() -> None:
     assert updated == 1
     assert (incident.deaths, incident.injuries) == (None, None)
     assert (incident.total_deaths, incident.total_injuries) == (None, None)
+    assert detail.lam_d is None
+    assert incident.verification_status == "needs_verification"
+    assert "manual per-village confirmation" in incident.verification_reason
     bulletin_groups.create_for_message.assert_called_once_with(
         raw_message_id=7,
         village_ids=[10, 20],

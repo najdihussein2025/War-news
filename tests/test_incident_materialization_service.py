@@ -365,6 +365,34 @@ def test_origin_plus_single_target_keeps_root_casualty_fallback() -> None:
     assert (incident.total_deaths, incident.total_injuries) == (3, 7)
 
 
+def test_multi_target_category_casualties_are_suppressed_and_flagged() -> None:
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    representative = _representative(match_result=_two_village_match_result())
+    representative.extraction_result["categories"] = {
+        "lebanese_army": {
+            "did": "D",
+            "casualties": {
+                "male_deaths": 2,
+                "male_injuries": 3,
+            },
+        }
+    }
+
+    result = service.materialize(representative)
+
+    details = [
+        detail for detail in db.committed if isinstance(detail, IncidentDetail)
+    ]
+    assert len(result) == 2
+    assert all(detail.lam_d is None and detail.lam_i is None for detail in details)
+    assert all(
+        incident.verification_status == "needs_verification"
+        and "manual per-village confirmation" in incident.verification_reason
+        for incident in result
+    )
+
+
 def test_materialization_strips_emoji_from_khabar_and_hash() -> None:
     db = _SessionStub()
     service = IncidentMaterializationService(db)  # type: ignore[arg-type]
