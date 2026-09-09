@@ -48,6 +48,12 @@ const matchesFilters = (incident: IncidentStreamEvent, filters: IncidentFilters)
   if (filters.flaggedOnly && incident.duplicate_flag !== "possible" && incident.verification_status !== "needs_verification") return false;
   if (filters.verificationStatus && incident.verification_status !== filters.verificationStatus) return false;
   if (filters.duplicateOnly && incident.duplicate_flag !== "possible") return false;
+  if (
+    filters.hasCasualties &&
+    !((incident.total_deaths ?? 0) > 0 || (incident.total_injuries ?? 0) > 0)
+  ) {
+    return false;
+  }
   return true;
 };
 
@@ -101,10 +107,10 @@ export const useIncidentStream = (filters: IncidentFilters) => {
             incident.verification_status === "needs_verification"
               ? current.needs_verification_count + 1
               : current.needs_verification_count,
-          duplicate_count:
-            incident.duplicate_flag === "possible"
-              ? current.duplicate_count + 1
-              : current.duplicate_count,
+          casualties_count:
+            (incident.total_deaths ?? 0) > 0 || (incident.total_injuries ?? 0) > 0
+              ? current.casualties_count + 1
+              : current.casualties_count,
         };
       });
     };

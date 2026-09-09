@@ -84,8 +84,9 @@ export const IncidentsPage = () => {
   const sortOrder = (params.get("sort_order") as "newest" | "oldest" | null) ?? "newest";
   const flaggedOnly = params.get("flagged_only") === "true";
   const duplicateOnly = params.get("duplicate_only") === "true";
+  const hasCasualties = params.get("has_casualties") === "true";
   const hasFilters = Boolean(
-    village || condition || sourceType || verificationStatus || eventDateFrom || eventDateTo || flaggedOnly || duplicateOnly,
+    village || condition || sourceType || verificationStatus || eventDateFrom || eventDateTo || flaggedOnly || duplicateOnly || hasCasualties,
   );
 
   const filters = useMemo(
@@ -100,6 +101,7 @@ export const IncidentsPage = () => {
       eventDateTo,
       flaggedOnly,
       duplicateOnly,
+      hasCasualties,
       sortOrder,
     }),
     [
@@ -108,6 +110,7 @@ export const IncidentsPage = () => {
       eventDateTo,
       flaggedOnly,
       duplicateOnly,
+      hasCasualties,
       pageSize,
       cursor,
       sortOrder,
@@ -149,7 +152,7 @@ export const IncidentsPage = () => {
     return shared;
   }, [rows]);
   const flaggedCount = data?.needs_verification_count ?? 0;
-  const duplicateCount = data?.duplicate_count ?? 0;
+  const casualtiesCount = data?.casualties_count ?? 0;
   const verificationOptions: SelectOption[] = [
     { value: "needs_verification", label: "Needs verification" },
     { value: "auto_processed", label: "Automatically processed" },
@@ -334,10 +337,10 @@ export const IncidentsPage = () => {
           </div>
           <div className="rounded-xl border border-border bg-surface-raised p-4 shadow-[0_1px_2px_rgba(11,34,54,0.04)]">
             <p className="text-caption font-semibold uppercase text-text-muted">
-              Possible duplicates
+              Reported casualties
             </p>
             <p className="mt-2 text-h3 font-semibold text-text-primary">
-              {duplicateCount}
+              {casualtiesCount}
             </p>
           </div>
         </div>
@@ -485,6 +488,20 @@ export const IncidentsPage = () => {
                   className="h-4 w-4 rounded border-border text-accent focus:ring-focus-ring"
                 />
                 <span className="leading-5">Show items needing attention</span>
+              </label>
+              <label className="flex min-h-[3rem] w-full items-center gap-3 rounded-xl border border-border bg-surface-raised px-3.5 py-2.5 text-small font-semibold text-text-primary shadow-[0_1px_2px_rgba(11,34,54,0.04)] transition-colors hover:border-input-border-hover hover:bg-surface sm:w-auto">
+                <input
+                  type="checkbox"
+                  checked={hasCasualties}
+                  onChange={(event) =>
+                    updateParam(
+                      "has_casualties",
+                      event.target.checked ? "true" : "",
+                    )
+                  }
+                  className="h-4 w-4 rounded border-border text-accent focus:ring-focus-ring"
+                />
+                <span className="leading-5">Show only incidents with casualties</span>
               </label>
               {hasFilters ? (
                 <Button

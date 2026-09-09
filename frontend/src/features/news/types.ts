@@ -19,6 +19,8 @@ export type Incident = {
   khabar: string;
   source: IncidentSource | null;
   source_reference: string | null;
+  total_deaths?: number | null;
+  total_injuries?: number | null;
   matched: boolean;
   verification_status: "auto_processed" | "needs_verification" | "verified" | "rejected";
   verification_reason: string | null;
@@ -41,7 +43,7 @@ export type IncidentListResponse = {
   next_cursor: string | null;
   latest_incident_at: string | null;
   needs_verification_count: number;
-  duplicate_count: number;
+  casualties_count: number;
 };
 
 export type IncidentStreamEvent = Incident & {
@@ -60,6 +62,7 @@ export type IncidentFilters = {
   flaggedOnly?: boolean;
   verificationStatus?: "auto_processed" | "needs_verification" | "verified" | "rejected";
   duplicateOnly?: boolean;
+  hasCasualties?: boolean;
   sortOrder?: "newest" | "oldest";
 };
 
