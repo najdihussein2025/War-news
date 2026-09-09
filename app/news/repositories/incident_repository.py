@@ -292,6 +292,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                 ).label("source"),
                 self._source_reference_expression().label("source_reference"),
                 RawMessage.source_name.label("source_name"),
+                RawMessage.match_result.label("match_result"),
                 case((self._needs_verification_column(), False), else_=True).label(
                     "matched"
                 ),
@@ -323,6 +324,47 @@ class IncidentRepository(IncidentRepositoryInterface):
         detail = row.IncidentDetail
         bulletin_group = row.BulletinCasualtyGroup
         village = row.Village
+        match_result = row.match_result if isinstance(row.match_result, dict) else {}
+        village_matches = match_result.get("village_matches")
+        if not isinstance(village_matches, list):
+            village_matches = [match_result] if match_result else []
+        village_match = next(
+            (
+                entry
+                for entry in village_matches
+                if isinstance(entry, dict)
+                and entry.get("matched_village_id") == incident.village_id
+            ),
+            {},
+        )
+
+        def match_village_id(key: str) -> int | None:
+            value = village_match.get(key)
+            return value if isinstance(value, int) and not isinstance(value, bool) else None
+
+        anchor_village_id = match_village_id("geo_context_anchor_village_id")
+        alternate_village_id = match_village_id("alternate_candidate_village_id")
+        related_village_ids = {
+            value
+            for value in (anchor_village_id, alternate_village_id)
+            if value is not None
+        }
+        related_village_names = (
+            dict(
+                self.db.execute(
+                    select(
+                        Village.id,
+                        func.coalesce(
+                            Village.ref_name_en,
+                            Village.cad_name,
+                            Village.acs_name,
+                        ),
+                    ).where(Village.id.in_(related_village_ids))
+                ).all()
+            )
+            if related_village_ids
+            else {}
+        )
         values = {
             "id": incident.id,
             "village": row.village,
@@ -383,6 +425,23 @@ class IncidentRepository(IncidentRepositoryInterface):
             "duplicate_flag": row.duplicate_flag,
             "duplicate_level": incident.duplicate_level,
             "duplicate_similarity_score": incident.duplicate_similarity_score,
+            "village_review_required": bool(
+                village_match.get("village_review_required", False)
+            ),
+            "any_village_low_confidence": bool(
+                match_result.get("any_village_low_confidence", False)
+            ),
+            "resolved_by_geo_context": bool(
+                village_match.get("resolved_by_geo_context", False)
+            ),
+            "geo_context_anchor_village_id": anchor_village_id,
+            "geo_context_anchor_village_name": related_village_names.get(
+                anchor_village_id
+            ),
+            "alternate_candidate_village_id": alternate_village_id,
+            "alternate_candidate_village_name": related_village_names.get(
+                alternate_village_id
+            ),
             "casualty_demographics": CasualtyDemographicsDTO(
                 male_d=detail.male_d if detail is not None else None,
                 male_i=detail.male_i if detail is not None else None,

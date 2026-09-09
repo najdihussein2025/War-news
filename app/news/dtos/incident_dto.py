@@ -152,6 +152,13 @@ class IncidentDetailDTO(BaseModel):
     duplicate_flag: Literal["none", "possible"]
     duplicate_level: Literal["low", "medium", "high"] | None = None
     duplicate_similarity_score: float | None = None
+    village_review_required: bool = False
+    any_village_low_confidence: bool = False
+    resolved_by_geo_context: bool = False
+    geo_context_anchor_village_id: int | None = None
+    geo_context_anchor_village_name: str | None = None
+    alternate_candidate_village_id: int | None = None
+    alternate_candidate_village_name: str | None = None
     casualty_demographics: CasualtyDemographicsDTO
     bulletin_group: BulletinCasualtyGroupDTO | None = None
     lebanese_army: IncidentCategorySectionDTO | None = None

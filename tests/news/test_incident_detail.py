@@ -127,11 +127,27 @@ def test_repository_get_by_id_returns_detail_and_hides_soft_deleted() -> None:
             acs_code=int(marker[:7], 16),
             ref_name_en=f"Village {marker}",
         )
+        alternate_village = Village(
+            acs_code=int(marker[7:14], 16),
+            ref_name_en=f"Alternate village {marker}",
+        )
+        anchor_village = Village(
+            acs_code=int(marker[14:21], 16),
+            ref_name_en=f"Anchor village {marker}",
+        )
         condition = Condition(
             action_en=f"Condition {marker}",
             action_ar=f"حالة {marker}",
         )
-        db.add_all([source, village, condition])
+        db.add_all(
+            [
+                source,
+                village,
+                alternate_village,
+                anchor_village,
+                condition,
+            ]
+        )
         db.flush()
 
         raw_message = RawMessage(
@@ -142,7 +158,18 @@ def test_repository_get_by_id_returns_detail_and_hides_soft_deleted() -> None:
             origin_account="@redlinkleb",
             raw_payload={},
             match_result={
-                "village_match_status": "matched",
+                "village_matches": [
+                    {
+                        "matched_village_id": village.id,
+                        "village_match_status": "matched",
+                        "village_review_required": False,
+                        "resolved_by_geo_context": True,
+                        "geo_context_anchor_village_id": anchor_village.id,
+                        "original_top_candidate_id": alternate_village.id,
+                        "alternate_candidate_village_id": alternate_village.id,
+                    }
+                ],
+                "any_village_low_confidence": False,
                 "condition_match_status": "matched_low_confidence",
             },
             received_at=datetime.now(timezone.utc),
@@ -186,6 +213,19 @@ def test_repository_get_by_id_returns_detail_and_hides_soft_deleted() -> None:
         assert result.source_name == "Red Alert Lebanon"
         assert result.matched is False
         assert result.duplicate_flag == "possible"
+        assert result.village_review_required is False
+        assert result.any_village_low_confidence is False
+        assert result.resolved_by_geo_context is True
+        assert result.geo_context_anchor_village_id == anchor_village.id
+        assert (
+            result.geo_context_anchor_village_name
+            == anchor_village.ref_name_en
+        )
+        assert result.alternate_candidate_village_id == alternate_village.id
+        assert (
+            result.alternate_candidate_village_name
+            == alternate_village.ref_name_en
+        )
         assert result.casualty_demographics.male_d == 1
         assert result.casualty_demographics.children_i == 2
         assert result.lebanese_army is not None
