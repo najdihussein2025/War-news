@@ -90,7 +90,7 @@ class IncidentRepository(IncidentRepositoryInterface):
 
     def list_all(self, params: IncidentListParams) -> IncidentListResponse:
         filters = self._list_filters(params)
-        needs_verification = Incident.verification_status == "needs_verification"
+        needs_verification = self._needs_verification_column()
         event_datetime = func.coalesce(
             RawMessage.message_datetime,
             RawMessage.received_at,
@@ -138,10 +138,20 @@ class IncidentRepository(IncidentRepositoryInterface):
                     (needs_verification, False),
                     else_=True,
                 ).label("matched"),
-                func.coalesce(
-                    Incident.verification_status, "auto_processed"
+                case(
+                    (needs_verification, "needs_verification"),
+                    (
+                        Incident.verification_status == "needs_verification",
+                        "auto_processed",
+                    ),
+                    else_=func.coalesce(
+                        Incident.verification_status, "auto_processed"
+                    ),
                 ).label("verification_status"),
-                Incident.verification_reason,
+                case(
+                    (needs_verification, Incident.verification_reason),
+                    else_=None,
+                ).label("verification_reason"),
                 Incident.verified_by_user_id,
                 Incident.verified_at,
                 case(
@@ -211,7 +221,7 @@ class IncidentRepository(IncidentRepositoryInterface):
         summary = self.db.execute(
             select(
                 func.count(Incident.id)
-                .filter(Incident.verification_status == "needs_verification")
+                .filter(self._needs_verification_column())
                 .label("needs_verification_count"),
                 func.count(Incident.id)
                 .filter(
@@ -354,8 +364,20 @@ class IncidentRepository(IncidentRepositoryInterface):
             "locked_by_user_id": incident.locked_by_user_id,
             "edit_lock_expires_at": incident.edit_lock_expires_at,
             "matched": row.matched,
-            "verification_status": incident.verification_status,
-            "verification_reason": incident.verification_reason,
+            "verification_status": (
+                incident.verification_status
+                if incident.verification_status != "needs_verification"
+                or self._is_casualty_review_reason(incident.verification_reason)
+                or incident.duplicate_flag
+                else "auto_processed"
+            ),
+            "verification_reason": (
+                incident.verification_reason
+                if incident.verification_status != "needs_verification"
+                or self._is_casualty_review_reason(incident.verification_reason)
+                or incident.duplicate_flag
+                else None
+            ),
             "duplicate_flag": row.duplicate_flag,
             "duplicate_level": incident.duplicate_level,
             "duplicate_similarity_score": incident.duplicate_similarity_score,
@@ -681,6 +703,14 @@ class IncidentRepository(IncidentRepositoryInterface):
         canonical_id = match.matched_incident_id
         if decision == MatchStatus.false_positive.value:
             incident.duplicate_flag = False
+            if (
+                incident.verification_status == "needs_verification"
+                and not self._is_casualty_review_reason(
+                    incident.verification_reason
+                )
+            ):
+                incident.verification_status = "auto_processed"
+                incident.verification_reason = None
             match.status = MatchStatus.false_positive
         elif decision == MatchStatus.confirmed_duplicate.value:
             canonical = self.db.scalar(
@@ -976,7 +1006,14 @@ class IncidentRepository(IncidentRepositoryInterface):
             # A successful automatic merge resolves its duplicate decision.
             # Keep the flag only for an explicit casualty-transition conflict.
             existing.duplicate_flag = False
-            existing.verification_reason = None
+            if (
+                existing.verification_status == "needs_verification"
+                and not self._is_casualty_review_reason(
+                    existing.verification_reason
+                )
+            ):
+                existing.verification_status = "auto_processed"
+                existing.verification_reason = None
         sync_transition_totals(existing, transition_fields)
 
         suppressed: dict[str, Any] = {}
@@ -1392,13 +1429,30 @@ class IncidentRepository(IncidentRepositoryInterface):
 
     @staticmethod
     def _needs_verification_column() -> object:
-        """User-facing needs-verification predicate: stored column only.
+        """User-facing verification means an unresolved possible duplicate.
 
-        ``raw_messages.match_result`` low-confidence JSON is no longer used for
-        list filters, dashboard counts, or the ``matched`` DTO field. Inspect
-        ``match_result`` directly when debugging matching confidence.
+        Historical low-confidence matching rows can still carry the stored
+        ``needs_verification`` value. They must not reappear in list filters,
+        dashboard counts, or the ``matched`` DTO field unless the incident
+        also has an active duplicate flag.
         """
-        return Incident.verification_status == "needs_verification"
+        return and_(
+            Incident.verification_status == "needs_verification",
+            or_(
+                Incident.duplicate_flag.is_(True),
+                Incident.verification_reason.like("Category casualties%"),
+                Incident.verification_reason.like("Unsupported casualty_scope%"),
+            ),
+        )
+
+    @staticmethod
+    def _is_casualty_review_reason(reason: str | None) -> bool:
+        return bool(
+            reason
+            and reason.startswith(
+                ("Category casualties", "Unsupported casualty_scope")
+            )
+        )
 
     @classmethod
     def _list_filters(cls, params: IncidentListParams) -> list[object]:
