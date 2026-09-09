@@ -120,7 +120,12 @@ describe("frontend API contracts", () => {
     vi.mocked(client.put).mockResolvedValue({ data: { id: "42" } });
     vi.mocked(client.patch).mockResolvedValue({ data: { id: "42" } });
 
-    await getIncidents({ limit: 25, cursor: "page-cursor" });
+    await getIncidents({
+      limit: 25,
+      cursor: "page-cursor",
+      duplicateOnly: true,
+      hasCasualties: true,
+    });
     await getIncidentById("42");
     await createIncident(payload as never);
     await updateIncident("42", payload as never);
@@ -128,7 +133,10 @@ describe("frontend API contracts", () => {
     await deleteIncident("42", 7);
     await importIncidents(file);
 
-    expect(client.get).toHaveBeenNthCalledWith(1, "/incidents?limit=25&cursor=page-cursor");
+    expect(client.get).toHaveBeenNthCalledWith(
+      1,
+      "/incidents?limit=25&cursor=page-cursor&duplicate_only=true&has_casualties=true",
+    );
     expect(client.get).toHaveBeenNthCalledWith(2, "/incidents/42");
     expect(client.post).toHaveBeenNthCalledWith(1, "/incidents", payload);
     expect(client.put).toHaveBeenCalledWith("/incidents/42", payload);

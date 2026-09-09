@@ -19,6 +19,9 @@ class IncidentListItemDTO(BaseModel):
     khabar: str
     source: str | None
     source_reference: str | None
+    source_name: str | None = None
+    total_deaths: int | None = None
+    total_injuries: int | None = None
     matched: bool
     verification_status: Literal["auto_processed", "needs_verification", "verified", "rejected"] = "auto_processed"
     verification_reason: str | None = None
@@ -42,11 +45,13 @@ class IncidentListParams(BaseModel):
     village: str | None = None
     condition: str | None = None
     source_type: str | None = None
+    source_name: str | None = None
     event_date_from: date | None = None
     event_date_to: date | None = None
     flagged_only: bool = False
     verification_status: Literal["auto_processed", "needs_verification", "verified", "rejected"] | None = None
     duplicate_only: bool = False
+    has_casualties: bool = False
     sort_order: Literal["newest", "oldest"] = "newest"
 
 
@@ -59,7 +64,7 @@ class IncidentListResponse(BaseModel):
     next_cursor: str | None = None
     latest_incident_at: datetime | None = None
     needs_verification_count: int = 0
-    duplicate_count: int = 0
+    casualties_count: int = 0
 
 
 class CasualtyDemographicsDTO(BaseModel):
@@ -105,6 +110,7 @@ class IncidentDetailDTO(BaseModel):
     condition: str | None
     source: str | None
     source_reference: str | None
+    source_name: str | None = None
     khabar: str
     note: str | None
     moh: str | None
@@ -199,6 +205,7 @@ class DuplicateCandidateIncidentDTO(BaseModel):
     khabar: str
     source: str | None
     source_reference: str | None
+    source_name: str | None = None
     total_deaths: int | None
     total_injuries: int | None
 

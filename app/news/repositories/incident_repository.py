@@ -128,6 +128,9 @@ class IncidentRepository(IncidentRepositoryInterface):
                     else_=None,
                 ).label("source"),
                 self._source_reference_expression().label("source_reference"),
+                RawMessage.source_name.label("source_name"),
+                Incident.total_deaths,
+                Incident.total_injuries,
                 case(
                     (Incident.id.is_(None), False),
                     (needs_verification, False),
@@ -209,8 +212,13 @@ class IncidentRepository(IncidentRepositoryInterface):
                 .filter(Incident.verification_status == "needs_verification")
                 .label("needs_verification_count"),
                 func.count(Incident.id)
-                .filter(Incident.duplicate_flag.is_(True))
-                .label("duplicate_count"),
+                .filter(
+                    or_(
+                        func.coalesce(Incident.total_deaths, 0) > 0,
+                        func.coalesce(Incident.total_injuries, 0) > 0,
+                    )
+                )
+                .label("casualties_count"),
             )
             .select_from(Incident)
             .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
@@ -244,7 +252,7 @@ class IncidentRepository(IncidentRepositoryInterface):
             ),
             latest_incident_at=latest_incident_at,
             needs_verification_count=int(summary.needs_verification_count or 0),
-            duplicate_count=int(summary.duplicate_count or 0),
+            casualties_count=int(summary.casualties_count or 0),
         )
 
     def get_by_id(self, incident_id: UUID) -> IncidentDetailDTO | None:
@@ -264,6 +272,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                     else_=None,
                 ).label("source"),
                 self._source_reference_expression().label("source_reference"),
+                RawMessage.source_name.label("source_name"),
                 case(
                     (Incident.verification_status == "needs_verification", False),
                     else_=True,
@@ -314,6 +323,7 @@ class IncidentRepository(IncidentRepositoryInterface):
             "condition": row.condition,
             "source": row.source,
             "source_reference": row.source_reference,
+            "source_name": row.source_name,
             "khabar": strip_emoji_and_pictographs(incident.khabar).strip(),
             "note": self._sanitize_optional_text(incident.note),
             "moh": incident.moh,
@@ -596,6 +606,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                 khabar=candidate.khabar,
                 source=candidate.source,
                 source_reference=candidate.source_reference,
+                source_name=candidate.source_name,
                 total_deaths=candidate.total_deaths,
                 total_injuries=candidate.total_injuries,
             ),
@@ -911,10 +922,19 @@ class IncidentRepository(IncidentRepositoryInterface):
         if needs_review:
             existing.duplicate_flag = True
             existing.verification_status = "needs_verification"
+            existing.verification_reason = (
+                "Possible duplicate — casualty count conflict detected during merge"
+                + (
+                    f". Matched terms: {', '.join(backstop.matched_keywords)}."
+                    if backstop.plausible
+                    else "."
+                )
+            )
         else:
             # A successful automatic merge resolves its duplicate decision.
             # Keep the flag only for an explicit casualty-transition conflict.
             existing.duplicate_flag = False
+            existing.verification_reason = None
         sync_transition_totals(existing, transition_fields)
 
         suppressed: dict[str, Any] = {}
@@ -1294,6 +1314,8 @@ class IncidentRepository(IncidentRepositoryInterface):
             )
         if params.source_type:
             filters.append(Source.type == params.source_type.lower())
+        if params.source_name:
+            filters.append(RawMessage.source_name == params.source_name)
         if params.event_date_from is not None:
             filters.append(Incident.event_date >= params.event_date_from)
         if params.event_date_to is not None:
@@ -1314,6 +1336,13 @@ class IncidentRepository(IncidentRepositoryInterface):
             filters.append(Incident.verification_status == params.verification_status)
         if params.duplicate_only:
             filters.append(Incident.duplicate_flag.is_(True))
+        if params.has_casualties:
+            filters.append(
+                or_(
+                    func.coalesce(Incident.total_deaths, 0) > 0,
+                    func.coalesce(Incident.total_injuries, 0) > 0,
+                )
+            )
         return filters
 
     @staticmethod
@@ -1457,6 +1486,7 @@ class IncidentRepository(IncidentRepositoryInterface):
             params.village
             or params.condition
             or params.source_type
+            or params.source_name
             or params.event_date_from is not None
             or params.event_date_to is not None
             or params.flagged_only

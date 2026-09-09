@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 import os
 import threading
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -134,6 +134,14 @@ class PipelineClaimRepository:
             )
             .exists()
         )
+        embedding_ready_or_stale = or_(
+            RawMessage.content_embedding.is_not(None),
+            RawMessage.received_at
+            < (
+                datetime.now(timezone.utc)
+                - timedelta(minutes=settings.fast_path_embedding_wait_minutes)
+            ),
+        )
         return self.db.scalar(
             select(RawMessage)
             .where(
@@ -142,6 +150,7 @@ class PipelineClaimRepository:
                 RawMessage.match_result.is_not(None),
                 RawMessage.extraction_result.is_not(None),
                 ~has_active_incident,
+                embedding_ready_or_stale,
                 fast_path_materializable_clause(),
             )
             .order_by(RawMessage.id.asc())

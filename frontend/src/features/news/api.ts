@@ -57,6 +57,9 @@ export const getIncidents = async (
   if (filters.sourceType) {
     params.set("source_type", filters.sourceType);
   }
+  if (filters.sourceName) {
+    params.set("source_name", filters.sourceName);
+  }
   if (filters.eventDateFrom) {
     params.set("event_date_from", filters.eventDateFrom);
   }
@@ -71,6 +74,9 @@ export const getIncidents = async (
   }
   if (filters.duplicateOnly) {
     params.set("duplicate_only", "true");
+  }
+  if (filters.hasCasualties) {
+    params.set("has_casualties", "true");
   }
   if (filters.sortOrder) {
     params.set("sort_order", filters.sortOrder);

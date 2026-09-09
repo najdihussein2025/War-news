@@ -58,6 +58,9 @@ def test_pipeline_duplicate_for_raw_message_id_is_idempotent() -> None:
 
 
 class _ListResult:
+    def __init__(self, casualties_count: int = 0) -> None:
+        self.casualties_count = casualties_count
+
     def all(self) -> list[object]:
         return []
 
@@ -65,17 +68,21 @@ class _ListResult:
         return type(
             "Summary",
             (),
-            {"needs_verification_count": 0, "duplicate_count": 0},
+            {
+                "needs_verification_count": 0,
+                "casualties_count": self.casualties_count,
+            },
         )()
 
 
 class _ListSessionStub:
-    def __init__(self) -> None:
+    def __init__(self, casualties_count: int = 0) -> None:
         self.statements: list[object] = []
+        self.casualties_count = casualties_count
 
     def execute(self, statement: object) -> _ListResult:
         self.statements.append(statement)
-        return _ListResult()
+        return _ListResult(self.casualties_count)
 
     def scalar(self, _statement: object) -> int:
         return 0
@@ -254,6 +261,39 @@ def test_list_filters_matched_alias_excludes_needs_verification_column() -> None
     assert "incidents.verification_status" in compiled
     assert "any_village_low_confidence" not in compiled
     assert "match_result" not in compiled
+
+
+def test_list_filters_by_raw_message_source_name() -> None:
+    filters = IncidentRepository._list_filters(
+        IncidentListParams(source_name="Al Jadeed")
+    )
+    compiled = " ".join(str(f) for f in filters).lower()
+    assert "raw_messages.source_name" in compiled
+
+
+def test_list_filters_has_casualties_uses_rollup_fields() -> None:
+    filters = IncidentRepository._list_filters(
+        IncidentListParams(has_casualties=True)
+    )
+    compiled = " ".join(str(filter_) for filter_ in filters).lower()
+    assert "coalesce(incidents.total_deaths" in compiled
+    assert "coalesce(incidents.total_injuries" in compiled
+    assert "> " in compiled
+
+
+def test_list_all_returns_casualties_summary_count() -> None:
+    db = _ListSessionStub(casualties_count=2)
+
+    result = IncidentRepository(db).list_all(  # type: ignore[arg-type]
+        IncidentListParams()
+    )
+
+    assert result.casualties_count == 2
+    summary_sql = str(
+        db.statements[-1].compile(compile_kwargs={"literal_binds": True})
+    ).lower()
+    assert "coalesce(incidents.total_deaths, 0) > 0" in summary_sql
+    assert "coalesce(incidents.total_injuries, 0) > 0" in summary_sql
 
 
 

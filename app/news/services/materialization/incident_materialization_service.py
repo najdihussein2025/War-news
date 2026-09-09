@@ -39,42 +39,39 @@ from app.news.services.dedup.fast_path_eligibility import (
     ERROR_UNMATERIALIZABLE,
     permanent_ineligibility_reason,
 )
+from app.news.services.materialization.verification_signals import _verification_reason
 
 
 def _initial_verification_status(
     match_result: dict | None,
     *,
     duplicate_flag: bool = False,
-    relevance_needs_review: bool = False,
     insufficient_score: bool = False,
-    possible_missed_casualty_transition: bool = False,
 ) -> str:
-    """Return the initial review state from materialization-time uncertainty signals."""
-    result = match_result or {}
-    if (
-        duplicate_flag
-        or relevance_needs_review
-        or insufficient_score
-        or possible_missed_casualty_transition
-    ):
-        return "needs_verification"
-    if result.get("condition_match_status") != "matched":
-        return "needs_verification"
-    villages = [
-        village
-        for village in (result.get("village_matches") or [])
-        if village.get("village_role", "target") == "target"
-    ]
-    if any(v.get("village_match_status") != "matched" for v in villages):
-        return "needs_verification"
-    return "auto_processed"
+    """Return the initial review state — duplicate signals only.
+
+    Verification is reserved for possible-duplicate cases. Relevance
+    uncertainty, casualty-transition ambiguity, and low-confidence
+    village/condition matches no longer force manual review; they
+    materialize as auto_processed. (`match_result` is kept as a parameter
+    for call-site compatibility even though it's unused here — do not
+    remove it without also updating both call sites.)
+    """
+    return "needs_verification" if (duplicate_flag or insufficient_score) else "auto_processed"
+
+
+def _relevance_review_details(
+    representative: RawMessage,
+) -> tuple[bool, float | None, str | None]:
+    filter_result = getattr(representative, "filter_result", None) or {}
+    needs_review = bool(getattr(representative, "low_confidence_relevance", False)) or bool(
+        filter_result.get("needs_review")
+    )
+    return needs_review, filter_result.get("confidence"), filter_result.get("reasoning")
 
 
 def _relevance_needs_review(representative: RawMessage) -> bool:
-    filter_result = getattr(representative, "filter_result", None) or {}
-    return bool(getattr(representative, "low_confidence_relevance", False)) or bool(
-        filter_result.get("needs_review")
-    )
+    return _relevance_review_details(representative)[0]
 
 logger = logging.getLogger(__name__)
 BEIRUT_TIMEZONE = ZoneInfo("Asia/Beirut")
@@ -126,6 +123,9 @@ def _new_incident_payload(incident: Incident) -> str:
         "khabar": (incident.khabar or "")[:300],
         "source": source_label,
         "source_reference": source_reference,
+        "source_name": raw_message.source_name if raw_message is not None else None,
+        "total_deaths": incident.total_deaths,
+        "total_injuries": incident.total_injuries,
         "matched": True,
         "verification_status": incident.verification_status,
         "verification_reason": incident.verification_reason,
@@ -507,6 +507,14 @@ class IncidentMaterializationService:
             event_date=event_datetime.date().isoformat(),
         )
 
+        verification_status = _initial_verification_status(
+            representative.match_result,
+            duplicate_flag=duplicate_flag,
+            # An insufficient-score duplicate is always created with the
+            # duplicate flag, before its audit record is persisted.
+            insufficient_score=duplicate_flag,
+        )
+
         incident = Incident(
             raw_message_id=representative.id,
             village_id=village_id,
@@ -524,14 +532,14 @@ class IncidentMaterializationService:
             exact_hash=exact_hash,
             duplicate_flag=duplicate_flag,
             details_pending=True,
-            verification_status=_initial_verification_status(
+            verification_status=verification_status,
+            verification_reason=_verification_reason(
                 representative.match_result,
                 duplicate_flag=duplicate_flag,
-                relevance_needs_review=_relevance_needs_review(representative),
-                # An insufficient-score duplicate is always created with the
-                # duplicate flag, before its audit record is persisted.
                 insufficient_score=duplicate_flag,
-            ),
+            )
+            if verification_status == "needs_verification"
+            else None,
             created_by=None,
         )
 
@@ -746,6 +754,11 @@ class IncidentMaterializationService:
                     duplicate_level = "low"
                     duplicate_score = score
 
+            verification_status = _initial_verification_status(
+                representative.match_result,
+                duplicate_flag=duplicate_flag,
+            )
+
             incident = Incident(
                 raw_message_id=representative.id,
                 village_id=village_id,
@@ -764,11 +777,15 @@ class IncidentMaterializationService:
                 duplicate_flag=duplicate_flag,
                 duplicate_level=duplicate_level,
                 duplicate_similarity_score=duplicate_score,
-                verification_status=_initial_verification_status(
+                verification_status=verification_status,
+                verification_reason=_verification_reason(
                     representative.match_result,
                     duplicate_flag=duplicate_flag,
-                    relevance_needs_review=_relevance_needs_review(representative),
-                ),
+                    duplicate_level=duplicate_level,
+                    duplicate_similarity_score=duplicate_score,
+                )
+                if verification_status == "needs_verification"
+                else None,
                 created_by=None,
             )
 

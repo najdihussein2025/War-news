@@ -20,6 +20,7 @@ import { roleBaseFromPath } from "../../../lib/rolePath";
 import { ConditionSelect } from "../components/ConditionSelect";
 import { useConditionsQuery, useIncidentStream, useIncidentsQuery, useVillagesQuery } from "../hooks";
 import { createIncident, reviewIncident } from "../api";
+import { useContentSourcesQuery } from "../../sources/hooks";
 import type { Incident } from "../types";
 
 const DEFAULT_PAGE_SIZE = 150;
@@ -77,15 +78,15 @@ export const IncidentsPage = () => {
   const page = cursorHistory.length + 1;
   const village = params.get("village") ?? "";
   const condition = params.get("condition") ?? "";
-  const sourceType = params.get("source_type") ?? "";
+  const sourceName = params.get("source_name") ?? "";
   const verificationStatus = params.get("verification_status") as Incident["verification_status"] | "";
   const eventDateFrom = params.get("event_date_from") ?? "";
   const eventDateTo = params.get("event_date_to") ?? "";
   const sortOrder = (params.get("sort_order") as "newest" | "oldest" | null) ?? "newest";
-  const flaggedOnly = params.get("flagged_only") === "true";
   const duplicateOnly = params.get("duplicate_only") === "true";
+  const hasCasualties = params.get("has_casualties") === "true";
   const hasFilters = Boolean(
-    village || condition || sourceType || verificationStatus || eventDateFrom || eventDateTo || flaggedOnly || duplicateOnly,
+    village || condition || sourceName || verificationStatus || eventDateFrom || eventDateTo || duplicateOnly || hasCasualties,
   );
 
   const filters = useMemo(
@@ -94,24 +95,24 @@ export const IncidentsPage = () => {
       cursor,
       village,
       condition,
-      sourceType,
+      sourceName,
       verificationStatus: verificationStatus || undefined,
       eventDateFrom,
       eventDateTo,
-      flaggedOnly,
       duplicateOnly,
+      hasCasualties,
       sortOrder,
     }),
     [
       condition,
       eventDateFrom,
       eventDateTo,
-      flaggedOnly,
       duplicateOnly,
+      hasCasualties,
       pageSize,
       cursor,
       sortOrder,
-      sourceType,
+      sourceName,
       verificationStatus,
       village,
     ],
@@ -129,6 +130,10 @@ export const IncidentsPage = () => {
     data: villages = [],
     isLoading: isVillagesLoading,
   } = useVillagesQuery();
+  const {
+    data: contentSources = [],
+    isLoading: isContentSourcesLoading,
+  } = useContentSourcesQuery();
   useLiveQueryTitleAddon(data?.latest_incident_at ?? null, isFetching);
   const rows = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -149,12 +154,11 @@ export const IncidentsPage = () => {
     return shared;
   }, [rows]);
   const flaggedCount = data?.needs_verification_count ?? 0;
-  const duplicateCount = data?.duplicate_count ?? 0;
+  const casualtiesCount = data?.casualties_count ?? 0;
   const verificationOptions: SelectOption[] = [
     { value: "needs_verification", label: "Needs verification" },
     { value: "auto_processed", label: "Automatically processed" },
     { value: "verified", label: "Verified" },
-    { value: "rejected", label: "Rejected" },
   ];
   const verificationBadge = (row: Incident) => {
     if (row.verification_status === "verified") return { label: "Verified", variant: "success" as const };
@@ -162,13 +166,20 @@ export const IncidentsPage = () => {
     if (row.verification_status === "needs_verification") return { label: "Needs verification", variant: "warning" as const };
     return { label: "Automatically processed", variant: "neutral" as const };
   };
-  const sourceOptions: SelectOption[] = [
-    { value: "telegram", label: "Telegram" },
-    { value: "twitter", label: "Twitter" },
-    { value: "facebook", label: "Facebook" },
-    { value: "website", label: "Website" },
-    { value: "manual", label: "Manual" },
-  ];
+  const sourceOptions = useMemo<SelectOption[]>(() => {
+    const channels = new Map<string, SelectOption>();
+    for (const source of contentSources) {
+      if (source.source_name && !channels.has(source.source_name)) {
+        channels.set(source.source_name, {
+          value: source.source_name,
+          label: source.source_name,
+        });
+      }
+    }
+    return [...channels.values()].sort((left, right) =>
+      left.label.localeCompare(right.label),
+    );
+  }, [contentSources]);
   const dateSortOptions: SelectOption[] = [
     { value: "newest", label: "Newest to oldest" },
     { value: "oldest", label: "Oldest to newest" },
@@ -334,17 +345,17 @@ export const IncidentsPage = () => {
           </div>
           <div className="rounded-xl border border-border bg-surface-raised p-4 shadow-[0_1px_2px_rgba(11,34,54,0.04)]">
             <p className="text-caption font-semibold uppercase text-text-muted">
-              Possible duplicates
+              Reported casualties
             </p>
             <p className="mt-2 text-h3 font-semibold text-text-primary">
-              {duplicateCount}
+              {casualtiesCount}
             </p>
           </div>
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-[1.125rem] border border-border bg-surface-raised shadow-raised">
-        <div className="flex flex-col gap-4 border-b border-border bg-[linear-gradient(180deg,rgba(234,242,251,0.82)_0%,rgba(255,255,255,0.98)_100%)] px-4 py-4 sm:px-5 lg:flex-row lg:items-end lg:justify-between lg:px-6">
+      <section className="overflow-visible rounded-[1.125rem] border border-border bg-surface-raised shadow-raised">
+        <div className="flex flex-col gap-4 rounded-t-[1.125rem] border-b border-border bg-[linear-gradient(180deg,rgba(234,242,251,0.82)_0%,rgba(255,255,255,0.98)_100%)] px-4 py-4 sm:px-5 lg:flex-row lg:items-end lg:justify-between lg:px-6">
           <div className="space-y-2">
             <p className="text-caption font-semibold uppercase tracking-[0.14em] text-text-muted">
               Incident workspace
@@ -412,14 +423,17 @@ export const IncidentsPage = () => {
               />
             </div>
             <div className="space-y-2 xl:col-span-1">
-              <Label htmlFor="incident-source-filter">Source</Label>
+              <Label htmlFor="incident-source-filter">Channel</Label>
               <Select
                 id="incident-source-filter"
-                value={sourceType}
-                placeholder="All sources"
+                value={sourceName}
+                placeholder={isContentSourcesLoading && sourceOptions.length === 0 ? "Loading channels..." : "All channels"}
                 options={sourceOptions}
-                className="w-full"
-                onChange={(value) => updateParam("source_type", value)}
+                searchable
+                searchPlaceholder="Search channels"
+                className="w-full min-w-0"
+                disabled={isContentSourcesLoading && sourceOptions.length === 0}
+                onChange={(value) => updateParam("source_name", value)}
               />
             </div>
             <div className="space-y-2 xl:col-span-1">
@@ -475,16 +489,16 @@ export const IncidentsPage = () => {
               <label className="flex min-h-[3rem] w-full items-center gap-3 rounded-xl border border-border bg-surface-raised px-3.5 py-2.5 text-small font-semibold text-text-primary shadow-[0_1px_2px_rgba(11,34,54,0.04)] transition-colors hover:border-input-border-hover hover:bg-surface sm:w-auto">
                 <input
                   type="checkbox"
-                  checked={flaggedOnly}
+                  checked={hasCasualties}
                   onChange={(event) =>
                     updateParam(
-                      "flagged_only",
+                      "has_casualties",
                       event.target.checked ? "true" : "",
                     )
                   }
                   className="h-4 w-4 rounded border-border text-accent focus:ring-focus-ring"
                 />
-                <span className="leading-5">Show items needing attention</span>
+                <span className="leading-5">Show only incidents with casualties</span>
               </label>
               {hasFilters ? (
                 <Button
@@ -497,9 +511,7 @@ export const IncidentsPage = () => {
                 </Button>
               ) : null}
             </div>
-            {hasFilters ? (
-              <StatusBadge label="Filters active" variant="neutral" />
-            ) : null}
+            {hasFilters ? <StatusBadge label="Filters active" variant="neutral" /> : null}
           </div>
         </div>
       </section>
@@ -541,11 +553,25 @@ export const IncidentsPage = () => {
           }
           actions={(row) => (
             <div className="flex flex-nowrap justify-end gap-2">
-            {row.id && row.verification_status !== "verified" && row.verification_status !== "rejected" ? <Button
-              type="button"
-              className="h-9"
-              onClick={() => { setReviewError(""); setReviewRow(row); }}
-            >Review</Button> : null}
+            {row.id && row.verification_status !== "verified" && row.verification_status !== "rejected" ? (
+              row.duplicate_flag === "possible" ? (
+                <Button
+                  type="button"
+                  className="h-9 whitespace-nowrap"
+                  onClick={() => navigate(`${roleBase}/incidents/${row.id}`)}
+                >
+                  Resolve duplicate
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  className="h-9"
+                  onClick={() => { setReviewError(""); setReviewRow(row); }}
+                >
+                  Review
+                </Button>
+              )
+            ) : null}
             <Button
               type="button"
               variant="secondary"

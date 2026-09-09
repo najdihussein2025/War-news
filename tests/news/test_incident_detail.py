@@ -183,6 +183,7 @@ def test_repository_get_by_id_returns_detail_and_hides_soft_deleted() -> None:
         assert result.condition == condition.action_en
         assert result.source == "API"
         assert result.source_reference == "@redlinkleb"
+        assert result.source_name == "Red Alert Lebanon"
         assert result.matched is False
         assert result.duplicate_flag == "possible"
         assert result.casualty_demographics.male_d == 1

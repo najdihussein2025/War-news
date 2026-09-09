@@ -108,7 +108,7 @@ async def test_stage_exception_does_not_block_later_stages(monkeypatch, caplog) 
     assert "matching" in calls
     assert "fast_path" in calls
     assert "materialization" in calls
-    assert calls.index("tier2_detail_fill") < calls.index("embedding")
+    assert calls.index("embedding") < calls.index("tier1_extraction")
     assert result.partial_failure is True
     assert result.skipped is False
     failed = {stage.stage: stage.failed for stage in result.stages}
@@ -124,6 +124,27 @@ async def test_stage_exception_does_not_block_later_stages(monkeypatch, caplog) 
         and "tier1_extraction" in record.message
         for record in caplog.records
     )
+
+
+@pytest.mark.asyncio
+async def test_embedding_stage_runs_before_fast_path(monkeypatch) -> None:
+    calls = _patch_stages(monkeypatch)
+
+    await orchestrator.run_full_pipeline_sweep(max_rows=5, use_advisory_lock=False)
+
+    assert calls.index("embedding") < calls.index("fast_path")
+    assert calls.index("embedding") < calls.index("tier1_extraction")
+    assert calls == [
+        "relevance_filter",
+        "pre_extraction_dedup",
+        "embedding",
+        "tier1_extraction",
+        "matching",
+        "fast_path",
+        "tier2_detail_fill",
+        "clustering",
+        "materialization",
+    ]
 
 
 @pytest.mark.asyncio
@@ -193,6 +214,7 @@ async def test_auth_abort_stops_remaining_stages(monkeypatch, caplog) -> None:
     assert [stage.stage for stage in result.stages] == [
         "relevance_filter",
         "pre_extraction_dedup",
+        "embedding",
         "tier1_extraction",
     ]
     assert any(

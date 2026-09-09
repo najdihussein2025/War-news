@@ -112,6 +112,7 @@ class Settings(BaseSettings):
     # never used to bypass the 6h cutoff).
     dedup_fastpath_embedding_high: float = 0.86
     dedup_fastpath_embedding_possible: float = 0.78
+    fast_path_embedding_wait_minutes: int = 20
     # Cross-village backstop: when village_id differs, never auto-merge; only flag
     # possible_duplicate within ≤30min at this elevated text similarity (recon
     # true-positive Nabatiyeh pair scored 0.875; same-village high is 0.80).
