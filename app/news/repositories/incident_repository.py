@@ -67,7 +67,6 @@ from app.news.services.incident_details.casualty_transition_backstop import (
     detect_casualty_transition_backstop,
 )
 from app.news.services.incident_details.incident_detail_merge import merge_incident_detail_fields
-from app.news.services.materialization.verification_signals import _verification_reason
 from app.sources.models import Source, SourceType
 
 
@@ -912,12 +911,13 @@ class IncidentRepository(IncidentRepositoryInterface):
         if needs_review:
             existing.duplicate_flag = True
             existing.verification_status = "needs_verification"
-            existing.verification_reason = _verification_reason(
-                None,
-                possible_missed_casualty_transition=True,
-                casualty_backstop_keywords=tuple(backstop.matched_keywords)
-                if backstop.plausible
-                else None,
+            existing.verification_reason = (
+                "Possible duplicate — casualty count conflict detected during merge"
+                + (
+                    f". Matched terms: {', '.join(backstop.matched_keywords)}."
+                    if backstop.plausible
+                    else "."
+                )
             )
         else:
             # A successful automatic merge resolves its duplicate decision.

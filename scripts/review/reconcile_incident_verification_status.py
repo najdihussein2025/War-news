@@ -199,7 +199,6 @@ def fetch_plans(db: Session) -> list[ReconcilePlan]:
         proposed = _initial_verification_status(
             match_result,
             duplicate_flag=bool(row["duplicate_flag"]),
-            relevance_needs_review=relevance,
         )
         targets, origin_low_only = _target_and_origin_summary(match_result)
         reason = _classify_reason(

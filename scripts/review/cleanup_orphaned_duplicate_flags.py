@@ -149,7 +149,6 @@ def fetch_plans(db: Session) -> list[OrphanPlan]:
         proposed_vs = _initial_verification_status(
             match_result,
             duplicate_flag=False,
-            relevance_needs_review=_relevance(dict(row)),
         )
         pattern = _fingerprint(dict(row))
         plans.append(

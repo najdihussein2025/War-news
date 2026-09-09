@@ -150,14 +150,12 @@ def classify_signal_bucket(
     recomputed_status = _initial_verification_status(
         result,
         duplicate_flag=duplicate_flag,
-        relevance_needs_review=relevance_needs_review,
     )
     recomputed_reason = _verification_reason(
         result,
         duplicate_flag=duplicate_flag,
         duplicate_level=duplicate_level,
         duplicate_similarity_score=duplicate_similarity_score,
-        relevance_needs_review=relevance_needs_review,
     )
     reason = recomputed_reason or verification_reason
 

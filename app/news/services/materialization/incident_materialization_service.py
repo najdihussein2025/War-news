@@ -46,29 +46,18 @@ def _initial_verification_status(
     match_result: dict | None,
     *,
     duplicate_flag: bool = False,
-    relevance_needs_review: bool = False,
     insufficient_score: bool = False,
-    possible_missed_casualty_transition: bool = False,
 ) -> str:
-    """Return the initial review state from materialization-time uncertainty signals."""
-    result = match_result or {}
-    if (
-        duplicate_flag
-        or relevance_needs_review
-        or insufficient_score
-        or possible_missed_casualty_transition
-    ):
-        return "needs_verification"
-    if result.get("condition_match_status") != "matched":
-        return "needs_verification"
-    villages = [
-        village
-        for village in (result.get("village_matches") or [])
-        if village.get("village_role", "target") == "target"
-    ]
-    if any(v.get("village_match_status") != "matched" for v in villages):
-        return "needs_verification"
-    return "auto_processed"
+    """Return the initial review state — duplicate signals only.
+
+    Verification is reserved for possible-duplicate cases. Relevance
+    uncertainty, casualty-transition ambiguity, and low-confidence
+    village/condition matches no longer force manual review; they
+    materialize as auto_processed. (`match_result` is kept as a parameter
+    for call-site compatibility even though it's unused here — do not
+    remove it without also updating both call sites.)
+    """
+    return "needs_verification" if (duplicate_flag or insufficient_score) else "auto_processed"
 
 
 def _relevance_review_details(
@@ -515,13 +504,9 @@ class IncidentMaterializationService:
             event_date=event_datetime.date().isoformat(),
         )
 
-        relevance_needs_review, relevance_confidence, relevance_reasoning = (
-            _relevance_review_details(representative)
-        )
         verification_status = _initial_verification_status(
             representative.match_result,
             duplicate_flag=duplicate_flag,
-            relevance_needs_review=relevance_needs_review,
             # An insufficient-score duplicate is always created with the
             # duplicate flag, before its audit record is persisted.
             insufficient_score=duplicate_flag,
@@ -548,9 +533,6 @@ class IncidentMaterializationService:
             verification_reason=_verification_reason(
                 representative.match_result,
                 duplicate_flag=duplicate_flag,
-                relevance_needs_review=relevance_needs_review,
-                relevance_confidence=relevance_confidence,
-                relevance_reasoning=relevance_reasoning,
                 insufficient_score=duplicate_flag,
             )
             if verification_status == "needs_verification"
@@ -769,13 +751,9 @@ class IncidentMaterializationService:
                     duplicate_level = "low"
                     duplicate_score = score
 
-            relevance_needs_review, relevance_confidence, relevance_reasoning = (
-                _relevance_review_details(representative)
-            )
             verification_status = _initial_verification_status(
                 representative.match_result,
                 duplicate_flag=duplicate_flag,
-                relevance_needs_review=relevance_needs_review,
             )
 
             incident = Incident(
@@ -802,9 +780,6 @@ class IncidentMaterializationService:
                     duplicate_flag=duplicate_flag,
                     duplicate_level=duplicate_level,
                     duplicate_similarity_score=duplicate_score,
-                    relevance_needs_review=relevance_needs_review,
-                    relevance_confidence=relevance_confidence,
-                    relevance_reasoning=relevance_reasoning,
                 )
                 if verification_status == "needs_verification"
                 else None,
