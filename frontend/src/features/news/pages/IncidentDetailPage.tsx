@@ -18,7 +18,7 @@ import type {
   IncidentSource,
 } from "../types";
 
-const sourceVariant = (source: IncidentSource) =>
+const sourceVariant = (source: IncidentSource | null) =>
   source === "Telegram" ? "accent" : source === "API" ? "neutral" : "warning";
 
 const casualtyFields: Array<{
@@ -174,9 +174,9 @@ export const IncidentDetailPage = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {incident.source ? (
+            {incident.source_name || incident.source_reference || incident.source ? (
               <StatusBadge
-                label={incident.source}
+                label={incident.source_name || incident.source_reference || incident.source || "Unknown source"}
                 variant={sourceVariant(incident.source)}
               />
             ) : null}
@@ -212,7 +212,7 @@ export const IncidentDetailPage = () => {
               Source
             </dt>
             <dd className="mt-1 text-small text-text-primary">
-              {incident.source || "No data"}
+              {incident.source_name || incident.source_reference || incident.source || "No data"}
             </dd>
           </div>
           <div>
@@ -283,7 +283,7 @@ export const IncidentDetailPage = () => {
                   <p className="mt-2 font-semibold text-text-primary">{value.village || "Unknown village"}</p>
                   <p className="text-small text-text-muted">{value.condition || "No condition"} · {formatDate(value.event_date)}</p>
                   <p className="mt-3 whitespace-pre-wrap text-small text-text-primary">{value.khabar}</p>
-                  <p className="mt-3 text-caption text-text-muted">Source: {value.source || "Unknown"}</p>
+                  <p className="mt-3 text-caption text-text-muted">Source: {value.source_name || value.source_reference || value.source || "Unknown"}</p>
                 </article>
               ))}
             </div>

@@ -19,6 +19,7 @@ export type Incident = {
   khabar: string;
   source: IncidentSource | null;
   source_reference: string | null;
+  source_name: string | null;
   total_deaths?: number | null;
   total_injuries?: number | null;
   matched: boolean;
@@ -57,6 +58,7 @@ export type IncidentFilters = {
   village?: string;
   condition?: string;
   sourceType?: string;
+  sourceName?: string;
   eventDateFrom?: string;
   eventDateTo?: string;
   flaggedOnly?: boolean;
@@ -194,6 +196,7 @@ export type DuplicateCandidateIncident = {
   khabar: string;
   source: IncidentSource | null;
   source_reference: string | null;
+  source_name: string | null;
   total_deaths: number | null;
   total_injuries: number | null;
 };

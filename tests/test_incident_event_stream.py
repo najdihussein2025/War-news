@@ -86,6 +86,7 @@ def test_notify_new_incident_publishes_expected_pg_notify_payload() -> None:
         "khabar": "Incident report",
         "source": "Telegram",
         "source_reference": "source-account",
+        "source_name": None,
         "total_deaths": 1,
         "total_injuries": 0,
         "matched": True,

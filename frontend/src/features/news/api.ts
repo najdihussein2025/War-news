@@ -57,6 +57,9 @@ export const getIncidents = async (
   if (filters.sourceType) {
     params.set("source_type", filters.sourceType);
   }
+  if (filters.sourceName) {
+    params.set("source_name", filters.sourceName);
+  }
   if (filters.eventDateFrom) {
     params.set("event_date_from", filters.eventDateFrom);
   }

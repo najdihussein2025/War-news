@@ -128,6 +128,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                     else_=None,
                 ).label("source"),
                 self._source_reference_expression().label("source_reference"),
+                RawMessage.source_name.label("source_name"),
                 Incident.total_deaths,
                 Incident.total_injuries,
                 case(
@@ -271,6 +272,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                     else_=None,
                 ).label("source"),
                 self._source_reference_expression().label("source_reference"),
+                RawMessage.source_name.label("source_name"),
                 case(
                     (Incident.verification_status == "needs_verification", False),
                     else_=True,
@@ -321,6 +323,7 @@ class IncidentRepository(IncidentRepositoryInterface):
             "condition": row.condition,
             "source": row.source,
             "source_reference": row.source_reference,
+            "source_name": row.source_name,
             "khabar": strip_emoji_and_pictographs(incident.khabar).strip(),
             "note": self._sanitize_optional_text(incident.note),
             "moh": incident.moh,
@@ -603,6 +606,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                 khabar=candidate.khabar,
                 source=candidate.source,
                 source_reference=candidate.source_reference,
+                source_name=candidate.source_name,
                 total_deaths=candidate.total_deaths,
                 total_injuries=candidate.total_injuries,
             ),
@@ -1310,6 +1314,8 @@ class IncidentRepository(IncidentRepositoryInterface):
             )
         if params.source_type:
             filters.append(Source.type == params.source_type.lower())
+        if params.source_name:
+            filters.append(RawMessage.source_name == params.source_name)
         if params.event_date_from is not None:
             filters.append(Incident.event_date >= params.event_date_from)
         if params.event_date_to is not None:
@@ -1480,6 +1486,7 @@ class IncidentRepository(IncidentRepositoryInterface):
             params.village
             or params.condition
             or params.source_type
+            or params.source_name
             or params.event_date_from is not None
             or params.event_date_to is not None
             or params.flagged_only

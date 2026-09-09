@@ -263,6 +263,14 @@ def test_list_filters_matched_alias_excludes_needs_verification_column() -> None
     assert "match_result" not in compiled
 
 
+def test_list_filters_by_raw_message_source_name() -> None:
+    filters = IncidentRepository._list_filters(
+        IncidentListParams(source_name="Al Jadeed")
+    )
+    compiled = " ".join(str(f) for f in filters).lower()
+    assert "raw_messages.source_name" in compiled
+
+
 def test_list_filters_has_casualties_uses_rollup_fields() -> None:
     filters = IncidentRepository._list_filters(
         IncidentListParams(has_casualties=True)

@@ -123,6 +123,7 @@ def _new_incident_payload(incident: Incident) -> str:
         "khabar": (incident.khabar or "")[:300],
         "source": source_label,
         "source_reference": source_reference,
+        "source_name": raw_message.source_name if raw_message is not None else None,
         "total_deaths": incident.total_deaths,
         "total_injuries": incident.total_injuries,
         "matched": True,

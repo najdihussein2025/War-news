@@ -19,6 +19,7 @@ class IncidentListItemDTO(BaseModel):
     khabar: str
     source: str | None
     source_reference: str | None
+    source_name: str | None = None
     total_deaths: int | None = None
     total_injuries: int | None = None
     matched: bool
@@ -44,6 +45,7 @@ class IncidentListParams(BaseModel):
     village: str | None = None
     condition: str | None = None
     source_type: str | None = None
+    source_name: str | None = None
     event_date_from: date | None = None
     event_date_to: date | None = None
     flagged_only: bool = False
@@ -108,6 +110,7 @@ class IncidentDetailDTO(BaseModel):
     condition: str | None
     source: str | None
     source_reference: str | None
+    source_name: str | None = None
     khabar: str
     note: str | None
     moh: str | None
@@ -202,6 +205,7 @@ class DuplicateCandidateIncidentDTO(BaseModel):
     khabar: str
     source: str | None
     source_reference: str | None
+    source_name: str | None = None
     total_deaths: int | None
     total_injuries: int | None
 
