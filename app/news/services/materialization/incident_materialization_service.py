@@ -16,7 +16,15 @@ from app.core.config import settings
 from app.core.text_sanitizer import strip_emoji_and_pictographs
 from app.llm.dtos import CasualtyScope, ExtractionCasualties, ExtractionResult, VillageRole
 from app.news.interfaces import DedupMatchingInterface
-from app.news.models import Incident, IncidentDetail, MatchStatus, MessageStatus, RawMessage
+from app.news.models import (
+    Incident,
+    IncidentDetail,
+    IncidentUpdate,
+    MatchStatus,
+    MessageStatus,
+    RawMessage,
+    UpdateAction,
+)
 from app.news.repositories.emergency_organization_repository import (
     EmergencyOrganizationRepository,
 )
@@ -326,6 +334,9 @@ class IncidentMaterializationService:
                     deaths=village_deaths,
                     injuries=village_injuries,
                     duplicate_flag=True,
+                    scope_review_reason=extraction.casualty_scope_review_reason
+                    if extraction.casualty_scope_needs_review
+                    else None,
                 )
                 if incident is not None and decision.matched_incident is not None:
                     fast_dedup.incidents.create_duplicate_match(
@@ -368,10 +379,11 @@ class IncidentMaterializationService:
                         extraction.categories,
                         emergency_org_matcher=self.emergency_org_matcher,
                     )
-                    casualties = extraction.casualties
+                    if is_multi_village:
+                        mapped_fields, _ = suppress_category_casualties(mapped_fields)
                     total_deaths, total_injuries = compute_rollups(
                         mapped_fields,
-                        casualties,
+                        village_casualties,
                     )
                     score = decision.similarity_score or 0.0
                     try:
@@ -450,6 +462,9 @@ class IncidentMaterializationService:
                 origin_villages=origin_villages,
                 deaths=village_deaths,
                 injuries=village_injuries,
+                scope_review_reason=extraction.casualty_scope_review_reason
+                if extraction.casualty_scope_needs_review
+                else None,
             )
             if incident is not None:
                 created.append(incident)
@@ -526,6 +541,7 @@ class IncidentMaterializationService:
         deaths: int | None,
         injuries: int | None,
         duplicate_flag: bool = False,
+        scope_review_reason: str | None = None,
     ) -> Incident | None:
         if village_id is None:
             self.fast_stats.skipped_ineligible += 1
@@ -550,6 +566,20 @@ class IncidentMaterializationService:
             # duplicate flag, before its audit record is persisted.
             insufficient_score=duplicate_flag,
         )
+        if scope_review_reason:
+            verification_status = "needs_verification"
+        verification_reason = (
+            scope_review_reason
+            or (
+                _verification_reason(
+                    representative.match_result,
+                    duplicate_flag=duplicate_flag,
+                    insufficient_score=duplicate_flag,
+                )
+                if verification_status == "needs_verification"
+                else None
+            )
+        )
 
         incident = Incident(
             raw_message_id=representative.id,
@@ -569,13 +599,7 @@ class IncidentMaterializationService:
             duplicate_flag=duplicate_flag,
             details_pending=True,
             verification_status=verification_status,
-            verification_reason=_verification_reason(
-                representative.match_result,
-                duplicate_flag=duplicate_flag,
-                insufficient_score=duplicate_flag,
-            )
-            if verification_status == "needs_verification"
-            else None,
+            verification_reason=verification_reason,
             created_by=None,
         )
 
@@ -592,6 +616,11 @@ class IncidentMaterializationService:
                     children_d=casualties.children_deaths,
                     children_i=casualties.children_injuries,
                 )
+            )
+            self._record_scope_downgrade(
+                incident,
+                raw_message_id=representative.id,
+                reason=scope_review_reason,
             )
             self._mark_materialized(representative, fast_path=True)
             _notify_new_incident(self.db, incident)
@@ -776,6 +805,16 @@ class IncidentMaterializationService:
                                 "Category casualties require manual per-village "
                                 "confirmation for a multi-target bulletin"
                             )
+                        if extraction.casualty_scope_needs_review:
+                            existing.verification_status = "needs_verification"
+                            existing.verification_reason = (
+                                extraction.casualty_scope_review_reason
+                            )
+                            self._record_scope_downgrade(
+                                existing,
+                                raw_message_id=representative.id,
+                                reason=extraction.casualty_scope_review_reason,
+                            )
                         self.dedup_service.merge_into_incident(
                             existing=existing,
                             new_candidate_data={
@@ -837,10 +876,12 @@ class IncidentMaterializationService:
                 representative.match_result,
                 duplicate_flag=duplicate_flag,
             )
-            if category_casualties_suppressed:
+            if category_casualties_suppressed or extraction.casualty_scope_needs_review:
                 verification_status = "needs_verification"
             verification_reason = (
-                "Category casualties require manual per-village confirmation "
+                extraction.casualty_scope_review_reason
+                if extraction.casualty_scope_needs_review
+                else "Category casualties require manual per-village confirmation "
                 "for a multi-target bulletin"
                 if category_casualties_suppressed
                 else _verification_reason(
@@ -900,6 +941,13 @@ class IncidentMaterializationService:
                         children_i=village_casualties.children_injuries,
                         **mapped_fields,
                     )
+                )
+                self._record_scope_downgrade(
+                    incident,
+                    raw_message_id=representative.id,
+                    reason=extraction.casualty_scope_review_reason
+                    if extraction.casualty_scope_needs_review
+                    else None,
                 )
                 self._mark_materialized(representative, fast_path=False)
                 _notify_new_incident(self.db, incident)
@@ -1041,6 +1089,41 @@ class IncidentMaterializationService:
             total_deaths=extraction.casualties.total_deaths,
             total_injuries=extraction.casualties.total_injuries,
             created_at=representative.message_datetime,
+        )
+
+    def _record_scope_downgrade(
+        self,
+        incident: Incident,
+        *,
+        raw_message_id: int,
+        reason: str | None,
+    ) -> None:
+        if not reason:
+            return
+        already_recorded = self.db.scalar(
+            select(IncidentUpdate.id).where(
+                IncidentUpdate.incident_id == incident.id,
+                IncidentUpdate.action == UpdateAction.pipeline_merge,
+                IncidentUpdate.new_values[
+                    "casualty_scope_source_raw_message_id"
+                ].astext
+                == str(raw_message_id),
+            )
+        )
+        if already_recorded is not None:
+            return
+        self.db.add(
+            IncidentUpdate(
+                incident_id=incident.id,
+                action=UpdateAction.pipeline_merge,
+                old_values={"casualty_scope": "unsupported_model_claim"},
+                new_values={
+                    "casualty_scope": CasualtyScope.unspecified.value,
+                    "casualty_scope_source_raw_message_id": raw_message_id,
+                    "downgrade_reason": reason,
+                },
+                performed_by=None,
+            )
         )
 
     @staticmethod

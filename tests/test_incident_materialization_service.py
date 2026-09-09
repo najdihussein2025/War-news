@@ -12,7 +12,9 @@ from sqlalchemy.exc import IntegrityError
 import app.accounts.models  # noqa: F401
 import app.logs.models  # noqa: F401
 import app.sources.models  # noqa: F401
-from app.news.models import Incident, IncidentDetail, MessageStatus
+from app.news.models import Incident, IncidentDetail, IncidentUpdate, MessageStatus
+from app.news.dtos import BulletinCasualtyGroupDTO
+from app.news.models import BulletinBreakdownStatus
 from app.news.services.dedup.fast_path_dedup import FastPathDedupOutcome
 from app.news.services.dedup.fast_path_eligibility import (
     ERROR_AIR_VIOLATION,
@@ -393,6 +395,32 @@ def test_multi_target_category_casualties_are_suppressed_and_flagged() -> None:
     )
 
 
+def test_scope_downgrade_flags_incident_and_records_provenance() -> None:
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    representative = _representative()
+    representative.extraction_result.update(
+        {
+            "casualty_scope": "unspecified",
+            "casualty_scope_needs_review": True,
+            "casualty_scope_review_reason": (
+                "Unsupported casualty_scope=per_village_exact: "
+                "evidence matched 0 target village(s)"
+            ),
+        }
+    )
+
+    result = service.materialize(representative)
+
+    assert result[0].verification_status == "needs_verification"
+    assert result[0].verification_reason.startswith("Unsupported casualty_scope")
+    update = next(
+        value for value in db.committed if isinstance(value, IncidentUpdate)
+    )
+    assert update.new_values["casualty_scope"] == "unspecified"
+    assert update.new_values["casualty_scope_source_raw_message_id"] == 42
+
+
 def test_materialization_strips_emoji_from_khabar_and_hash() -> None:
     db = _SessionStub()
     service = IncidentMaterializationService(db)  # type: ignore[arg-type]
@@ -478,6 +506,69 @@ def test_fast_path_keeps_bulletin_aggregate_out_of_village_totals() -> None:
     bulletin_groups.create_for_message.assert_called_once()
     assert bulletin_groups.create_for_message.call_args.kwargs["total_deaths"] == 4
     assert bulletin_groups.create_for_message.call_args.kwargs["total_injuries"] == 20
+
+
+def test_exact_multi_village_bulletin_is_visible_only_as_bulletin_toll() -> None:
+    bulletin_text = (
+        "4 شهداء و20 جريحا جراء الغارات على عربصاليم والنبطية "
+        "والنبطية الفوقا وكفررمان"
+    )
+    match_result = _two_village_match_result()
+    match_result["village_matches"].extend(
+        [
+            {
+                **match_result["village_matches"][0],
+                "raw_village_text": "عربصاليم",
+                "matched_village_id": 978,
+            },
+            {
+                **match_result["village_matches"][0],
+                "raw_village_text": "النبطية الفوقا",
+                "matched_village_id": 979,
+            },
+        ]
+    )
+    bulletin_groups = MagicMock()
+    db = _SessionStub()
+    service = IncidentMaterializationService(
+        db,  # type: ignore[arg-type]
+        bulletin_groups=bulletin_groups,
+    )
+    representative = _representative(match_result=match_result)
+    representative.raw_text = bulletin_text
+    representative.extraction_result.update(
+        {
+            "casualty_scope": "bulletin_aggregate",
+            "casualty_scope_evidence": bulletin_text,
+        }
+    )
+    representative.extraction_result["casualties"].update(
+        {
+            "deaths": None,
+            "injuries": None,
+            "total_deaths": 4,
+            "total_injuries": 20,
+        }
+    )
+
+    incidents = service.materialize(representative)
+
+    assert all(
+        (incident.deaths, incident.injuries) == (None, None)
+        for incident in incidents
+    )
+    group_values = bulletin_groups.create_for_message.call_args.kwargs
+    api_group = BulletinCasualtyGroupDTO.model_validate(
+        SimpleNamespace(
+            **group_values,
+            breakdown_status=BulletinBreakdownStatus.pending,
+            window_expires_at=datetime.now(timezone.utc),
+            resolved_at=None,
+            resolved_by_raw_message_id=None,
+        )
+    )
+    assert (api_group.total_deaths, api_group.total_injuries) == (4, 20)
+    assert api_group.casualty_scope == "bulletin_aggregate"
 
 
 @pytest.mark.parametrize("condition_id", [35, 36, 38])
@@ -890,6 +981,56 @@ def test_fast_path_confident_duplicate_merges_without_re_score() -> None:
     assert len(duplicate_matches) == 1
     assert duplicate_matches[0]["status"].value == "confirmed_duplicate"
     assert duplicate_matches[0]["similarity_score"] == 0.91
+
+
+def test_fast_path_confident_merge_uses_only_village_local_casualties() -> None:
+    existing = SimpleNamespace(id=uuid4(), raw_message_id=999)
+    dedup = _DedupServiceStub(existing=existing, score=0.10)  # type: ignore[arg-type]
+    db = _SessionStub()
+    service = IncidentMaterializationService(
+        db,  # type: ignore[arg-type]
+        dedup_service=dedup,
+        bulletin_groups=MagicMock(),
+    )
+    representative = _representative(match_result=_two_village_match_result())
+    representative.extraction_result.update(
+        {
+            "casualty_scope": "bulletin_aggregate",
+            "casualty_scope_evidence": (
+                "حصيلة الغارات على النبطية وكفررمان بلغت 4 شهداء و20 جريحا"
+            ),
+        }
+    )
+    representative.extraction_result["casualties"].update(
+        {
+            "deaths": None,
+            "injuries": None,
+            "total_deaths": 4,
+            "total_injuries": 20,
+        }
+    )
+    fast_dedup = SimpleNamespace(
+        incidents=SimpleNamespace(create_fast_path_duplicate_match=MagicMock()),
+        decide_for_village=lambda **_kwargs: SimpleNamespace(
+            outcome=FastPathDedupOutcome.confident_duplicate,
+            representative_raw_message_id=999,
+            canonical_incident_id=existing.id,
+            canonical_incident=existing,
+            similarity_score=0.91,
+            similarity_method="text",
+        ),
+    )
+
+    service.process_fast_path(representative, fast_dedup)  # type: ignore[arg-type]
+
+    assert len(dedup.merge_calls) == 2
+    assert all(
+        call[1]["deaths"] is None
+        and call[1]["injuries"] is None
+        and call[1]["total_deaths"] is None
+        and call[1]["total_injuries"] is None
+        for call in dedup.merge_calls
+    )
 
 
 def test_terminalized_message_leaves_stage_timestamps_null() -> None:

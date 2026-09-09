@@ -254,6 +254,20 @@ class Tier2DetailFillService:
             )
             incident.khabar_embedding = embedding
             incident.details_pending = False
+            if category_casualties_suppressed:
+                incident.verification_status = "needs_verification"
+                incident.verification_reason = (
+                    "Category casualties require manual per-village confirmation "
+                    "for a multi-target bulletin"
+                )
+            if extraction.casualty_scope_needs_review:
+                incident.verification_status = "needs_verification"
+                incident.verification_reason = extraction.casualty_scope_review_reason
+                self._record_scope_downgrade(
+                    incident,
+                    raw_message_id=raw_message_id,
+                    reason=extraction.casualty_scope_review_reason,
+                )
             self._apply_dedup_backstop(
                 incident,
                 embedding,
@@ -317,6 +331,41 @@ class Tier2DetailFillService:
                 root.female_injuries,
                 root.children_deaths,
                 root.children_injuries,
+            )
+        )
+
+    def _record_scope_downgrade(
+        self,
+        incident: Incident,
+        *,
+        raw_message_id: int,
+        reason: str | None,
+    ) -> None:
+        if not reason:
+            return
+        already_recorded = self.db.scalar(
+            select(IncidentUpdate.id).where(
+                IncidentUpdate.incident_id == incident.id,
+                IncidentUpdate.action == UpdateAction.pipeline_merge,
+                IncidentUpdate.new_values[
+                    "casualty_scope_source_raw_message_id"
+                ].astext
+                == str(raw_message_id),
+            )
+        )
+        if already_recorded is not None:
+            return
+        self.db.add(
+            IncidentUpdate(
+                incident_id=incident.id,
+                action=UpdateAction.pipeline_merge,
+                old_values={"casualty_scope": "unsupported_model_claim"},
+                new_values={
+                    "casualty_scope": CasualtyScope.unspecified.value,
+                    "casualty_scope_source_raw_message_id": raw_message_id,
+                    "downgrade_reason": reason,
+                },
+                performed_by=None,
             )
         )
 
