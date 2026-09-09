@@ -481,6 +481,62 @@ export const IncidentDetailPage = () => {
         </dl>
       </section>
 
+      {incident.bulletin_group ? (
+        <section className="rounded-lg border border-accent bg-surface-raised p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-h4 font-semibold text-text-primary">
+                Bulletin-wide toll
+              </h2>
+              <p className="mt-1 text-small text-text-muted">
+                Shared across the villages named in the source bulletin; these are
+                not this village&apos;s reported figures.
+              </p>
+            </div>
+            {incident.bulletin_group.breakdown_status === "pending" ? (
+              <StatusBadge
+                label={`Auto-updates until ${formatRelativeTime(
+                  incident.bulletin_group.window_expires_at,
+                )}`}
+                variant="warning"
+              />
+            ) : incident.bulletin_group.breakdown_status === "resolved" ? (
+              <StatusBadge label="Resolved from follow-up report" variant="success" />
+            ) : incident.bulletin_group.breakdown_status === "expired" ? (
+              <StatusBadge
+                label="Reconciliation window closed — update manually if new figures are reported"
+                variant="warning"
+              />
+            ) : (
+              <StatusBadge label="No reconciliation needed" variant="neutral" />
+            )}
+          </div>
+          <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-md bg-surface-muted p-3">
+              <dt className="text-caption text-text-muted">Bulletin deaths</dt>
+              <dd className="mt-1 font-semibold text-text-primary">
+                {incident.bulletin_group.total_deaths ?? "No data"}
+              </dd>
+            </div>
+            <div className="rounded-md bg-surface-muted p-3">
+              <dt className="text-caption text-text-muted">Bulletin injuries</dt>
+              <dd className="mt-1 font-semibold text-text-primary">
+                {incident.bulletin_group.total_injuries ?? "No data"}
+              </dd>
+            </div>
+          </dl>
+          {incident.bulletin_group.breakdown_status === "resolved" ? (
+            <p className="mt-3 text-small text-text-muted">
+              Per-village figures now reflect the follow-up
+              {incident.bulletin_group.resolved_by_raw_message_id
+                ? ` (raw message #${incident.bulletin_group.resolved_by_raw_message_id})`
+                : ""}
+              .
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
       <section className="rounded-lg border border-border bg-surface-raised p-5">
         <h2 className="text-h4 font-semibold text-text-primary">
           Record information

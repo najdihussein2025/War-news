@@ -110,6 +110,16 @@ export type IncidentVillageDetails = {
 
 export type IncidentCategorySection = Record<string, number | string>;
 
+export type BulletinCasualtyGroup = {
+  casualty_scope: "per_village_exact" | "bulletin_aggregate" | "unspecified";
+  total_deaths: number | null;
+  total_injuries: number | null;
+  breakdown_status: "pending" | "resolved" | "expired" | "n_a";
+  window_expires_at: string | null;
+  resolved_at: string | null;
+  resolved_by_raw_message_id: number | null;
+};
+
 export type IncidentDetail = Incident & {
   village_details: IncidentVillageDetails | null;
   note: string | null;
@@ -123,6 +133,7 @@ export type IncidentDetail = Incident & {
   deaths: number | null;
   injuries: number | null;
   casualty_demographics: CasualtyDemographics;
+  bulletin_group?: BulletinCasualtyGroup | null;
   lebanese_army: IncidentCategorySection | null;
   unifil: IncidentCategorySection | null;
   municipality: IncidentCategorySection | null;
