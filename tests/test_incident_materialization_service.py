@@ -22,6 +22,7 @@ from app.news.services.materialization.incident_materialization_service import (
     EXACT_HASH_CONSTRAINT,
     IncidentMaterializationService,
     _initial_verification_status,
+    _verification_reason,
 )
 
 
@@ -101,6 +102,117 @@ def test_initial_verification_status_flags_low_confidence_match() -> None:
         )
         == "needs_verification"
     )
+
+
+def test_verification_reason_returns_none_for_clean_exact_matches() -> None:
+    assert _verification_reason(_match_result()) is None
+
+
+def test_verification_reason_duplicate_with_score() -> None:
+    assert _verification_reason(
+        _match_result(),
+        duplicate_flag=True,
+        duplicate_level="medium",
+        duplicate_similarity_score=0.71,
+    ) == "Possible duplicate of an existing incident (similarity medium, score 0.71)."
+
+
+def test_verification_reason_fast_path_duplicate_omits_insufficient_score_clause() -> None:
+    assert _verification_reason(
+        _match_result(),
+        duplicate_flag=True,
+        insufficient_score=True,
+    ) == (
+        "Possible duplicate of an existing incident — flagged during fast-path "
+        "matching."
+    )
+
+
+def test_verification_reason_relevance_includes_confidence_and_reasoning() -> None:
+    assert _verification_reason(
+        _match_result(),
+        relevance_needs_review=True,
+        relevance_confidence=0.42,
+        relevance_reasoning="borderline source text",
+    ) == (
+        "Initial relevance check was uncertain (confidence 0.42): "
+        "borderline source text"
+    )
+
+
+def test_verification_reason_casualty_transition_mentions_keywords() -> None:
+    assert _verification_reason(
+        _match_result(),
+        possible_missed_casualty_transition=True,
+        casualty_backstop_keywords=("injured", "died"),
+    ) == (
+        "Casualty count may be incomplete — message may describe someone whose "
+        "status changed (injured → died) that wasn't fully captured. Matched "
+        "terms: injured, died."
+    )
+
+
+def test_verification_reason_condition_low_confidence() -> None:
+    result = _match_result(condition_status="matched_low_confidence")
+    result["condition_confidence"] = 0.55
+
+    assert _verification_reason(result) == (
+        "Incident type matched at 55% confidence — verify "
+        f"'{result['raw_condition_text']}' is really this category."
+    )
+
+
+def test_verification_reason_condition_unmatched() -> None:
+    result = _match_result(condition_status="unmatched", condition_id=None)
+
+    assert _verification_reason(result) == (
+        "Could not confidently match an incident type for "
+        f"'{result['raw_condition_text']}'."
+    )
+
+
+def test_verification_reason_target_village_low_confidence() -> None:
+    result = _match_result(village_status="matched_low_confidence")
+    result["village_matches"][0]["village_confidence"] = 0.55
+
+    assert _verification_reason(result) == (
+        "Village matched at 55% confidence — verify "
+        f"'{result['village_matches'][0]['raw_village_text']}' "
+        "is the right location."
+    )
+
+
+def test_verification_reason_target_village_unmatched() -> None:
+    result = _match_result(village_status="unmatched", village_id=None)
+
+    assert _verification_reason(result) == (
+        "Could not confidently match a village for "
+        f"'{result['village_matches'][0]['raw_village_text']}'."
+    )
+
+
+def test_verification_reason_joins_multiple_signals() -> None:
+    result = _match_result(village_status="matched_low_confidence")
+    result["village_matches"][0]["village_confidence"] = 0.35
+
+    assert _verification_reason(
+        result,
+        duplicate_flag=True,
+        duplicate_level="medium",
+        duplicate_similarity_score=0.62,
+    ) == (
+        "Possible duplicate of an existing incident (similarity medium, score 0.62). "
+        "| Village matched at 35% confidence — verify "
+        f"'{result['village_matches'][0]['raw_village_text']}' "
+        "is the right location."
+    )
+
+
+def test_verification_reason_ignores_origin_village_low_confidence() -> None:
+    result = _match_result(village_status="matched_low_confidence")
+    result["village_matches"][0]["village_role"] = "origin"
+
+    assert _verification_reason(result) is None
 
 
 # ---------------------------------------------------------------------------
@@ -237,6 +349,8 @@ def test_eligible_representative_inserts_incident_and_detail() -> None:
     assert incident.khabar == "  خبر   عاجل "
     assert incident.khabar_embedding == [0.1, 0.2, 0.3]
     assert incident.created_by is None
+    assert incident.verification_status == "auto_processed"
+    assert incident.verification_reason is None
     assert detail.incident_id == incident.id
     assert service.stats.inserted == 1
     assert representative.status == MessageStatus.materialized
@@ -517,6 +631,9 @@ def test_dedup_mid_score_creates_incident_with_duplicate_flag() -> None:
     assert len(result) == 1
     assert result[0].duplicate_flag is True
     assert result[0].verification_status == "needs_verification"
+    assert result[0].verification_reason == (
+        "Possible duplicate of an existing incident (similarity medium, score 0.65)."
+    )
     assert result[0].duplicate_level == "medium"
     assert result[0].duplicate_similarity_score == 0.65
     assert service.stats.inserted == 1
@@ -543,6 +660,7 @@ def test_dedup_low_score_creates_incident_without_duplicate_flag() -> None:
     assert len(result) == 1
     assert result[0].duplicate_flag is False
     assert result[0].verification_status == "auto_processed"
+    assert result[0].verification_reason is None
     assert result[0].duplicate_level == "low"
     assert result[0].duplicate_similarity_score == 0.30
     assert service.stats.inserted == 1

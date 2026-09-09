@@ -173,6 +173,10 @@ def test_transition_clamps_at_zero_and_flags_review() -> None:
     assert existing.deaths == 1
     assert existing.duplicate_flag is True
     assert existing.verification_status == "needs_verification"
+    assert existing.verification_reason == (
+        "Casualty count may be incomplete — message may describe someone whose "
+        "status changed (injured → died) that wasn't fully captured."
+    )
     update = next(item for item in db.added if isinstance(item, IncidentUpdate))
     assert update.action == UpdateAction.pipeline_merge
     assert update.new_values["deaths_transitioned_from_injuries"]["requested_count"] == 2
@@ -210,7 +214,17 @@ def test_backstop_flags_possible_missed_transition_for_review() -> None:
     )
 
     assert existing.duplicate_flag is True
+    assert existing.verification_status == "needs_verification"
+    assert existing.verification_reason is not None
+    assert "Matched terms:" in existing.verification_reason
     update = next(item for item in db.added if isinstance(item, IncidentUpdate))
+    matched_keyword = update.new_values["possible_missed_casualty_transition"][
+        "matched_keywords"
+    ][0]
+    assert (
+        matched_keyword
+        in existing.verification_reason
+    )
     assert update.action == UpdateAction.pipeline_merge
     assert (
         update.new_values["possible_missed_casualty_transition"]["note"]
@@ -220,3 +234,39 @@ def test_backstop_flags_possible_missed_transition_for_review() -> None:
         "وفاة أحد المصابين متأثراً بجراحه"
         in update.new_values["possible_missed_casualty_transition"]["matched_keywords"]
     )
+
+
+def test_clean_resolved_merge_clears_verification_reason() -> None:
+    existing = Incident(
+        id=uuid4(),
+        deaths=0,
+        injuries=2,
+        total_deaths=0,
+        total_injuries=2,
+        duplicate_flag=True,
+        details_pending=False,
+        verification_status="needs_verification",
+        verification_reason="stale reason",
+    )
+    db = _MergeSessionStub(
+        raw_message=SimpleNamespace(
+            source_name="CNRS Webhook",
+            origin_account=None,
+            source_platform=None,
+            raw_text="Ø£ØµÙŠØ¨ Ø´Ø®ØµØ§Ù† ÙÙŠ Ø§Ù„Ø­Ø§Ø¯Ø«.",
+        )
+    )
+    repo = IncidentRepository(db)  # type: ignore[arg-type]
+
+    repo.merge_existing(
+        existing,
+        _followup_candidate_data(
+            deaths=0,
+            injuries=2,
+            casualty_transitions=[],
+        ),
+        raw_message_id=9006,
+    )
+
+    assert existing.duplicate_flag is False
+    assert existing.verification_reason is None
