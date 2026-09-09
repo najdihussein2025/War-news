@@ -236,7 +236,12 @@ class IncidentMaterializationService:
 
         village_matches: list[dict[str, Any]] = match_result.get("village_matches", [])
         origin_villages = self._origin_village_names(village_matches)
-        is_multi_village = len(village_matches) > 1
+        target_matches = [
+            village_match
+            for village_match in village_matches
+            if self._materializes_village_match(village_match)
+        ]
+        is_multi_village = len(target_matches) > 1
 
         created: list[Incident] = []
         confident_duplicate_villages = 0
@@ -650,7 +655,12 @@ class IncidentMaterializationService:
 
         village_matches: list[dict[str, Any]] = match_result.get("village_matches", [])
         origin_villages = self._origin_village_names(village_matches)
-        is_multi_village = len(village_matches) > 1
+        target_matches = [
+            village_match
+            for village_match in village_matches
+            if self._materializes_village_match(village_match)
+        ]
+        is_multi_village = len(target_matches) > 1
         if not village_matches:
             self.stats.skipped_ineligible += 1
             self._mark_unmaterializable(representative, ERROR_NO_VILLAGE)
