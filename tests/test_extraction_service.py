@@ -112,6 +112,55 @@ def test_extract_tier1_skips_category_detail_calls() -> None:
     assert ExtractionCategoryKey.casualty_demographics in result.categories
 
 
+def test_tier1_recovers_both_dash_joined_route_villages() -> None:
+    post_text = (
+        "الطيران المسير المعادي استهدف دراجة نارية على طريق عام "
+        "مرج حاروف - زبدين"
+    )
+    model_response = json.dumps(
+        {
+            "categories_present": ["vehicles"],
+            "category_evidence": [
+                {
+                    "category_key": "vehicles",
+                    "evidence_span": "استهدف دراجة نارية",
+                }
+            ],
+            "is_relevant": True,
+            # Reproduce the observed inference miss: only the second endpoint.
+            "village": ["زبدين"],
+            "village_roles": [
+                {
+                    "village": "زبدين",
+                    "role": "target",
+                    "deaths": None,
+                    "injuries": None,
+                    "evidence_span": None,
+                }
+            ],
+            "action_description": "استهداف دراجة نارية",
+            "casualties": {},
+            "casualty_transitions": [],
+            "casualty_evidence": [],
+            "casualty_scope": "unspecified",
+            "casualty_scope_evidence": None,
+        },
+        ensure_ascii=False,
+    )
+    service = OllamaExtractionService(
+        client=_client_for_model_contents([model_response])
+    )
+
+    result = service._extract_tier1_combined(post_text, raw_message_id=8788)
+
+    assert set(result.village or []) == {"حاروف", "زبدين"}
+    assert {entry.village for entry in result.village_roles} == {
+        "حاروف",
+        "زبدين",
+    }
+    assert all(entry.role.value == "target" for entry in result.village_roles)
+
+
 def test_extract_tier1_backstops_per_village_casualties() -> None:
     post_text = (
         "الرمادية قضاء صور: شهيد و15 جريحا\n"

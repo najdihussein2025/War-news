@@ -22,6 +22,7 @@ General field rules:
 - If the text is not about a security/military incident in Lebanon: is_relevant=false and set village/action_description null and casualties numeric fields null.
 - village: array of place names mentioned, or null. Never a single string.
 - village_roles: array of objects shaped like `{"village":"name","role":"origin|target","deaths":null,"injuries":null,"evidence_span":null}`. Use `origin` only for the attacking position / launch site / tank position / staging point. Use `target` for the place actually struck or damaged.
+- A road, route, or area written with two dash-joined place names names two locations, not one compound location. Capture both endpoints as separate `village` entries and separate `target` entries in `village_roles`, even when the wording describes a route rather than a list. Example: «استهدف دراجة نارية على طريق عام مرج حاروف - زبدين» → village=["حاروف","زبدين"] and two target role entries.
 - When multiple villages are mentioned, each target entry's deaths/injuries must come only from that village's own clause; never copy a bulletin-wide total to every village. A target village without its own explicit count must use null, not 0 or the bulletin total. Apply the vague-quantifier rule independently per village. For one village, these counts may mirror the root casualties object or remain null.
 - action_description: incident action type from the text only (Arabic).
 - casualties: only explicitly stated numbers in the text; never infer from generic wording.

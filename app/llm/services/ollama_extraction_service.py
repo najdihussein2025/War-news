@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -9,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.core.config import settings
 from app.core.ollama_client import JsonObject, OllamaChatClient, OllamaChatMessage
+from app.core.text_normalization import normalize_arabic_text
 from app.llm.dtos import (
     CasualtyCountEvidence,
     CasualtyScope,
@@ -17,6 +19,7 @@ from app.llm.dtos import (
     ExtractionCategory,
     ExtractionCategoryKey,
     ExtractionResult,
+    VillageRole,
     VillageRoleEntry,
 )
 from app.llm.interfaces import ExtractionClassifierInterface
@@ -35,6 +38,15 @@ from app.news.services.incident_details.casualty_scope_backstop import (
     validate_casualty_scope,
 )
 logger = logging.getLogger(__name__)
+
+_DASH_ROUTE_RE = re.compile(
+    r"طريق(?:\s+عام)?\s+"
+    r"(?P<left>[\u0600-\u06ff][\u0600-\u06ff\s]{1,60}?)"
+    r"\s*[-–—]\s*"
+    r"(?P<right>[\u0600-\u06ff][\u0600-\u06ff\s]{1,60}?)"
+    r"(?=$|[\n،؛.!؟])"
+)
+_ROUTE_AREA_PREFIXES = ("مرج ",)
 
 ALLOWED_EXTRACTION_CATEGORY_KEYS = frozenset(
     category.value for category in ExtractionCategoryKey
@@ -57,6 +69,7 @@ GENERAL_EXTRACTION_PROMPT = """أنت مساعد لاستخراج الحقول �
 إذا كان النص ذا صلة:
 - village: مصفوفة من أسماء البلدات أو الأماكن المذكورة في الخبر. إذا ورد اسم مكان واحد أرجع مصفوفة بعنصر واحد. إذا وردت أسماء أماكن متعددة أرجعها جميعاً في المصفوفة. إذا لم يظهر أي اسم مكان في النص أرجع null. لا تُرجع سلسلة نصية واحدة بل دائماً مصفوفة أو null.
 - village_roles: مصفوفة من كائنات بالشكل {"village":"اسم البلدة","role":"origin|target","deaths":null,"injuries":null,"evidence_span":null}. استخدم role="origin" فقط لموضع المنصة أو الدبابة أو موقع الإطلاق أو نقطة التمركز، واستخدم role="target" لمكان القصف/الضربة/الضرر الفعلي.
+- إذا سُمّي طريق أو مسار أو نطاق باسمَي مكان موصولين بشرطة، فهما موقعان منفصلان لا اسم مركب واحد. استخرج الطرفين كلّاً في عنصر village وعنصر target مستقل، حتى لو كانت الصياغة تصف طريقاً لا قائمة. مثال: «استهدف دراجة نارية على طريق عام مرج حاروف - زبدين» → village=["حاروف","زبدين"] وعنصرا target منفصلان.
 - عند ذكر أكثر من بلدة أو موقع، استخرج في كل عنصر target أعداد deaths وinjuries الخاصة بتلك البلدة من جملتها أو عبارتها فقط، ولا تنسخ الحصيلة الإجمالية للنشرة إلى البلدات. يجب أن يكون evidence_span مقطعاً حرفياً قصيراً يربط اسم البلدة بأرقامها.
 - إذا ذُكرت بلدة target بلا عدد صريح خاص بها، اجعل deaths وinjuries وevidence_span لها null، لا 0 ولا حصيلة النشرة. طبّق على كل بلدة قاعدة الألفاظ المبهمة نفسها: عشرات، مئات، عدد من، بضعة وغيرها تعني null ولا تتحول إلى رقم.
 - عند ذكر بلدة واحدة فقط، اجعل أرقام عنصر village_roles مطابقة لأرقام casualties العامة إن وُجدت، مع evidence_span حرفي، أو اتركها null. كلاهما مقبول لأن مسار البلدة الواحدة يستخدم casualties العامة.
@@ -411,6 +424,15 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             post_text=post_text,
             raw_message_id=raw_message_id,
         )
+        villages = self._validated_village_list(
+            general_response.village,
+            raw_message_id=raw_message_id,
+        )
+        villages, village_roles = self._apply_dash_route_village_backstop(
+            post_text,
+            villages,
+            village_roles,
+        )
         scope, scope_evidence, scope_needs_review, scope_reason = (
             self._validated_casualty_scope(
                 general_response,
@@ -422,10 +444,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
 
         return ExtractionResult(
             is_relevant=general_response.is_relevant,
-            village=self._validated_village_list(
-                general_response.village,
-                raw_message_id=raw_message_id,
-            ),
+            village=villages,
             village_roles=village_roles,
             action_description=self._validated_text(
                 general_response.action_description,
@@ -918,6 +937,66 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                     entry.model_dump(mode="json"),
                 )
         return validated
+
+    @staticmethod
+    def _apply_dash_route_village_backstop(
+        post_text: str,
+        villages: list[str] | None,
+        village_roles: list[VillageRoleEntry],
+    ) -> tuple[list[str] | None, list[VillageRoleEntry]]:
+        """Recover both endpoints when a model drops one dash-joined route place."""
+        match = _DASH_ROUTE_RE.search(post_text)
+        if match is None:
+            return villages, village_roles
+
+        left = match.group("left").strip()
+        for prefix in _ROUTE_AREA_PREFIXES:
+            if left.startswith(prefix):
+                left = left[len(prefix) :].strip()
+                break
+        right = match.group("right").strip()
+        if not left or not right:
+            return villages, village_roles
+
+        existing_names = list(villages or [])
+        existing_names.extend(entry.village for entry in village_roles)
+        existing_norms = {
+            normalize_arabic_text(name)
+            for name in existing_names
+            if normalize_arabic_text(name)
+        }
+        endpoint_norms = {
+            normalize_arabic_text(left),
+            normalize_arabic_text(right),
+        }
+        # Do not invent two locations from arbitrary dash punctuation. At least
+        # one endpoint must already have been recognized by the model.
+        if not existing_norms.intersection(endpoint_norms):
+            return villages, village_roles
+
+        merged_villages = list(villages or [])
+        merged_norms = {
+            normalize_arabic_text(name)
+            for name in merged_villages
+            if normalize_arabic_text(name)
+        }
+        merged_roles = list(village_roles)
+        role_norms = {
+            normalize_arabic_text(entry.village)
+            for entry in merged_roles
+            if normalize_arabic_text(entry.village)
+        }
+        for endpoint in (left, right):
+            normalized = normalize_arabic_text(endpoint)
+            if normalized not in merged_norms:
+                merged_villages.append(endpoint)
+                merged_norms.add(normalized)
+            if normalized not in role_norms:
+                merged_roles.append(
+                    VillageRoleEntry(village=endpoint, role=VillageRole.target)
+                )
+                role_norms.add(normalized)
+        return merged_villages, merged_roles
 
     def _validated_text(
         self,
