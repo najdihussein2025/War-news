@@ -74,6 +74,9 @@ GENERAL_EXTRACTION_PROMPT = """أنت مساعد لاستخراج الحقول �
 1) «دبابة متمركزة في البياض تقصف المنصوري» → village=["البياض","المنصوري"] و village_roles=[{"village":"البياض","role":"origin","deaths":null,"injuries":null,"evidence_span":null},{"village":"المنصوري","role":"target","deaths":null,"injuries":null,"evidence_span":null}]
 2) «غارة على عيتا الشعب أدت إلى 2 جريحين» → village=["عيتا الشعب"] و village_roles=[{"village":"عيتا الشعب","role":"target","deaths":null,"injuries":2,"evidence_span":"عيتا الشعب أدت إلى 2 جريحين"}]
 3) «المنصوري: شهيد و3 جرحى؛ مجدل زون: 4 جرحى» → village=["المنصوري","مجدل زون"] و village_roles=[{"village":"المنصوري","role":"target","deaths":1,"injuries":3,"evidence_span":"المنصوري: شهيد و3 جرحى"},{"village":"مجدل زون","role":"target","deaths":null,"injuries":4,"evidence_span":"مجدل زون: 4 جرحى"}]
+- عند وجود مكان انطلاق ومكان استهداف، أضف عنصراً origin للأول وعنصراً target للثاني.
+- عند وجود مكان استهداف واحد، أضف عنصراً target له.
+- عند وجود عدة أماكن مستهدفة، أضف عنصراً target مستقلاً لكل مكان واربط به حصيلته الصريحة وحدها إن وجدت.
 
 قواعد الأعداد:
 - استخرج الرقم فقط عندما يكون مكتوباً بشكل مباشر في النص.

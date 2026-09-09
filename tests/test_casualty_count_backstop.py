@@ -116,6 +116,22 @@ def test_explicit_arabic_singular_and_dual_counts_are_preserved() -> None:
     assert {item.field for item in kept} == {"deaths", "injuries"}
 
 
+def test_explicit_arabic_accusative_singular_is_preserved() -> None:
+    text = "سجلت البلدة شهيدا وجريحا"
+    result, kept = apply_casualty_count_backstop(
+        text,
+        ExtractionCasualties(deaths=1, injuries=1),
+        [
+            CasualtyCountEvidence(field="deaths", evidence_span="شهيدا"),
+            CasualtyCountEvidence(field="injuries", evidence_span="جريحا"),
+        ],
+    )
+
+    assert result.deaths == 1
+    assert result.injuries == 1
+    assert {item.field for item in kept} == {"deaths", "injuries"}
+
+
 def test_casualty_digit_must_appear_inside_grounded_evidence_span() -> None:
     text = "البلدة الأولى: 4 جرحى، البلدة الثانية: عشرات الجرحى"
     result, kept = apply_casualty_count_backstop(
