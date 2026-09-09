@@ -174,8 +174,7 @@ def test_transition_clamps_at_zero_and_flags_review() -> None:
     assert existing.duplicate_flag is True
     assert existing.verification_status == "needs_verification"
     assert existing.verification_reason == (
-        "Casualty count may be incomplete — message may describe someone whose "
-        "status changed (injured → died) that wasn't fully captured."
+        "Possible duplicate — casualty count conflict detected during merge."
     )
     update = next(item for item in db.added if isinstance(item, IncidentUpdate))
     assert update.action == UpdateAction.pipeline_merge
@@ -216,6 +215,9 @@ def test_backstop_flags_possible_missed_transition_for_review() -> None:
     assert existing.duplicate_flag is True
     assert existing.verification_status == "needs_verification"
     assert existing.verification_reason is not None
+    assert existing.verification_reason.startswith(
+        "Possible duplicate — casualty count conflict detected during merge."
+    )
     assert "Matched terms:" in existing.verification_reason
     update = next(item for item in db.added if isinstance(item, IncidentUpdate))
     matched_keyword = update.new_values["possible_missed_casualty_transition"][

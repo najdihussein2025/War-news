@@ -75,32 +75,30 @@ class _SessionStub:
         return None
 
 
-def test_initial_verification_status_auto_processes_clean_exact_matches() -> None:
-    assert _initial_verification_status(_match_result()) == "auto_processed"
-
-
-@pytest.mark.parametrize(
-    "signal",
-    [
-        "duplicate_flag",
-        "relevance_needs_review",
-        "insufficient_score",
-        "possible_missed_casualty_transition",
-    ],
-)
-def test_initial_verification_status_flags_each_uncertainty_signal(signal: str) -> None:
+@pytest.mark.parametrize("signal", ["duplicate_flag", "insufficient_score"])
+def test_initial_verification_status_flags_duplicate_signals(signal: str) -> None:
     assert (
         _initial_verification_status(_match_result(), **{signal: True})
         == "needs_verification"
     )
 
 
-def test_initial_verification_status_flags_low_confidence_match() -> None:
+@pytest.mark.parametrize(
+    "match_kwargs",
+    [
+        {},
+        {"village_status": "matched_low_confidence"},
+        {"village_status": "unmatched", "village_id": None},
+        {"condition_status": "matched_low_confidence"},
+        {"condition_status": "unmatched", "condition_id": None},
+    ],
+)
+def test_initial_verification_status_auto_processes_non_duplicate_matches(
+    match_kwargs: dict,
+) -> None:
     assert (
-        _initial_verification_status(
-            _match_result(village_status="matched_low_confidence")
-        )
-        == "needs_verification"
+        _initial_verification_status(_match_result(**match_kwargs))
+        == "auto_processed"
     )
 
 
@@ -128,89 +126,9 @@ def test_verification_reason_fast_path_duplicate_omits_insufficient_score_clause
     )
 
 
-def test_verification_reason_relevance_includes_confidence_and_reasoning() -> None:
-    assert _verification_reason(
-        _match_result(),
-        relevance_needs_review=True,
-        relevance_confidence=0.42,
-        relevance_reasoning="borderline source text",
-    ) == (
-        "Initial relevance check was uncertain (confidence 0.42): "
-        "borderline source text"
-    )
-
-
-def test_verification_reason_casualty_transition_mentions_keywords() -> None:
-    assert _verification_reason(
-        _match_result(),
-        possible_missed_casualty_transition=True,
-        casualty_backstop_keywords=("injured", "died"),
-    ) == (
-        "Casualty count may be incomplete — message may describe someone whose "
-        "status changed (injured → died) that wasn't fully captured. Matched "
-        "terms: injured, died."
-    )
-
-
-def test_verification_reason_condition_low_confidence() -> None:
-    result = _match_result(condition_status="matched_low_confidence")
-    result["condition_confidence"] = 0.55
-
-    assert _verification_reason(result) == (
-        "Incident type matched at 55% confidence — verify "
-        f"'{result['raw_condition_text']}' is really this category."
-    )
-
-
-def test_verification_reason_condition_unmatched() -> None:
-    result = _match_result(condition_status="unmatched", condition_id=None)
-
-    assert _verification_reason(result) == (
-        "Could not confidently match an incident type for "
-        f"'{result['raw_condition_text']}'."
-    )
-
-
-def test_verification_reason_target_village_low_confidence() -> None:
-    result = _match_result(village_status="matched_low_confidence")
-    result["village_matches"][0]["village_confidence"] = 0.55
-
-    assert _verification_reason(result) == (
-        "Village matched at 55% confidence — verify "
-        f"'{result['village_matches'][0]['raw_village_text']}' "
-        "is the right location."
-    )
-
-
-def test_verification_reason_target_village_unmatched() -> None:
-    result = _match_result(village_status="unmatched", village_id=None)
-
-    assert _verification_reason(result) == (
-        "Could not confidently match a village for "
-        f"'{result['village_matches'][0]['raw_village_text']}'."
-    )
-
-
-def test_verification_reason_joins_multiple_signals() -> None:
+def test_verification_reason_ignores_non_duplicate_match_signals() -> None:
     result = _match_result(village_status="matched_low_confidence")
     result["village_matches"][0]["village_confidence"] = 0.35
-
-    assert _verification_reason(
-        result,
-        duplicate_flag=True,
-        duplicate_level="medium",
-        duplicate_similarity_score=0.62,
-    ) == (
-        "Possible duplicate of an existing incident (similarity medium, score 0.62). "
-        "| Village matched at 35% confidence — verify "
-        f"'{result['village_matches'][0]['raw_village_text']}' "
-        "is the right location."
-    )
-
-
-def test_verification_reason_ignores_origin_village_low_confidence() -> None:
-    result = _match_result(village_status="matched_low_confidence")
-    result["village_matches"][0]["village_role"] = "origin"
 
     assert _verification_reason(result) is None
 
