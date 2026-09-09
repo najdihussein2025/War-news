@@ -1,11 +1,13 @@
 from datetime import date, datetime, timezone
+from types import SimpleNamespace
+from unittest.mock import MagicMock
 from uuid import uuid4
 
 import app.accounts.models  # noqa: F401
 import app.logs.models  # noqa: F401
 import app.sources.models  # noqa: F401
 from app.news.dtos import IncidentListItemDTO, IncidentListParams
-from app.news.models import Incident
+from app.news.models import Incident, MessageStatus
 from app.news.repositories.incident_repository import IncidentRepository
 
 
@@ -33,7 +35,7 @@ class _SessionStub:
         self.flush_calls += 1
 
 
-def test_pipeline_duplicate_for_raw_message_id_preserves_incident() -> None:
+def test_pipeline_duplicate_for_raw_message_id_retires_incident() -> None:
     incident = Incident()
     incident.id = uuid4()
     incident.is_deleted = False
@@ -42,7 +44,8 @@ def test_pipeline_duplicate_for_raw_message_id_preserves_incident() -> None:
     deleted_ids = IncidentRepository(db).soft_delete_for_raw_message_id(42)  # type: ignore[arg-type]
 
     assert deleted_ids == [incident.id]
-    assert incident.is_deleted is False
+    assert incident.is_deleted is True
+    assert incident.duplicate_flag is False
     assert db.added == [incident]
     assert db.flush_calls == 1
 
@@ -55,6 +58,35 @@ def test_pipeline_duplicate_for_raw_message_id_is_idempotent() -> None:
     assert deleted_ids == []
     assert db.added == []
     assert db.flush_calls == 1
+
+
+def test_mark_raw_duplicate_flattens_existing_child_links() -> None:
+    raw = SimpleNamespace(
+        id=22,
+        status=MessageStatus.materialized,
+        duplicate_of_id=None,
+        error_message=None,
+    )
+    canonical = SimpleNamespace(id=11, duplicate_of_id=None)
+    child = SimpleNamespace(id=33, duplicate_of_id=22)
+    db = MagicMock()
+    db.get.side_effect = lambda _model, raw_id: {
+        11: canonical,
+        22: raw,
+    }.get(raw_id)
+    db.scalars.return_value.all.return_value = [child]
+    repository = IncidentRepository(db)
+    repository.has_active_incidents_for_raw_message = lambda _raw_id: False  # type: ignore[method-assign]
+
+    changed = repository.mark_raw_duplicate_if_fully_subsumed(
+        raw_message_id=22,
+        canonical_raw_message_id=11,
+    )
+
+    assert changed is True
+    assert raw.status == MessageStatus.duplicate
+    assert raw.duplicate_of_id == 11
+    assert child.duplicate_of_id == 11
 
 
 class _ListResult:
@@ -86,6 +118,63 @@ class _ListSessionStub:
 
     def scalar(self, _statement: object) -> int:
         return 0
+
+
+class _VerificationSessionStub:
+    def __init__(self, incident: object, raw_message: object) -> None:
+        self.results = iter([incident, raw_message])
+        self.added: list[object] = []
+        self.committed = False
+
+    def scalar(self, _statement: object) -> object:
+        return next(self.results)
+
+    def add(self, value: object) -> None:
+        self.added.append(value)
+
+    def commit(self) -> None:
+        self.committed = True
+
+
+def test_rejecting_incident_moves_raw_message_to_rejected_news() -> None:
+    incident_id = uuid4()
+    user_id = uuid4()
+    incident = SimpleNamespace(
+        id=incident_id,
+        raw_message_id=42,
+        verification_status="needs_verification",
+        verification_reason=None,
+        verified_by_user_id=None,
+        verified_at=None,
+    )
+    raw_message = SimpleNamespace(
+        filter_result={"existing": "value"},
+        status=MessageStatus.materialized,
+        error_message=None,
+    )
+    db = _VerificationSessionStub(incident, raw_message)
+    repository = IncidentRepository(db)  # type: ignore[arg-type]
+    repository.get_by_id = lambda _incident_id: SimpleNamespace(id=incident_id)  # type: ignore[method-assign]
+
+    repository.set_verification(
+        incident_id,
+        "rejected",
+        "Not a valid incident",
+        1,
+        user_id,
+    )
+
+    assert incident.verification_status == "rejected"
+    assert raw_message.status == MessageStatus.rejected
+    assert raw_message.error_message == "Not a valid incident"
+    assert raw_message.filter_result == {
+        "existing": "value",
+        "verdict": "reject",
+        "reasoning": "Not a valid incident",
+        "review_source": "human",
+        "reviewed_by_user_id": str(user_id),
+    }
+    assert db.committed is True
 
 
 def test_list_all_defaults_to_newest_event_first() -> None:
@@ -251,6 +340,20 @@ def test_list_filters_needs_verification_uses_column_not_match_result_json() -> 
     assert "incidents.verification_status" in compiled
     assert "any_village_low_confidence" not in compiled
     assert "match_result" not in compiled
+
+
+def test_list_filters_hide_rejected_incidents_by_default() -> None:
+    default_filters = IncidentRepository._list_filters(IncidentListParams())
+    rejected_filters = IncidentRepository._list_filters(
+        IncidentListParams(verification_status="rejected")
+    )
+
+    assert "incidents.verification_status != " in " ".join(
+        str(filter_) for filter_ in default_filters
+    ).lower()
+    assert "incidents.verification_status = " in " ".join(
+        str(filter_) for filter_ in rejected_filters
+    ).lower()
 
 
 def test_list_filters_matched_alias_excludes_needs_verification_column() -> None:

@@ -149,7 +149,7 @@ def _incident_stub(**overrides: object) -> SimpleNamespace:
     return SimpleNamespace(**base)
 
 
-def test_tier2_high_score_backstop_records_duplicate_match() -> None:
+def test_tier2_high_score_backstop_canonicalizes_existing_incident() -> None:
     from app.core.config import settings
 
     dedup = MagicMock()
@@ -172,13 +172,21 @@ def test_tier2_high_score_backstop_records_duplicate_match() -> None:
         casualty_transitions=[],
     )
 
-    dedup.merge_into_incident.assert_called_once()
-    dedup.record_possible_duplicate.assert_called_once_with(
-        incident=current,
-        matched_incident=peer,
+    dedup.canonicalize_existing_incident.assert_called_once_with(
+        canonical=peer,
+        duplicate=current,
+        new_candidate_data={
+            "deaths": current.deaths,
+            "injuries": current.injuries,
+            "total_deaths": current.total_deaths,
+            "total_injuries": current.total_injuries,
+            "khabar": current.khabar,
+            "mapped_fields": {},
+            "casualty_transitions": [],
+        },
         similarity_score=settings.dedup_high_threshold,
     )
-    assert current.duplicate_flag is True
+    dedup.record_possible_duplicate.assert_not_called()
 
 
 def test_tier2_mid_score_backstop_records_duplicate_match_without_merge() -> None:

@@ -174,14 +174,6 @@ export const RejectedNewsPage = () => {
             type="button"
             variant="secondary"
             className="whitespace-nowrap"
-            onClick={() => setReasonItem(row)}
-          >
-            Why rejected?
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            className="whitespace-nowrap"
             onClick={() => setSelectedId(row.id)}
           >
             View report

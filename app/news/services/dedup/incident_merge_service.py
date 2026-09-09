@@ -31,3 +31,29 @@ class IncidentMergeService:
             new_candidate_data=new_candidate_data,
             raw_message_id=raw_message_id,
         )
+
+    def canonicalize_existing(
+        self,
+        *,
+        canonical: Incident,
+        duplicate: Incident,
+        new_candidate_data: dict[str, Any],
+        similarity_score: float,
+    ) -> None:
+        """Merge and retire an already-materialized duplicate incident."""
+        if duplicate.id == canonical.id:
+            return
+        if duplicate.raw_message_id is None or duplicate.village_id is None:
+            raise ValueError("A duplicate incident must have a raw message and village.")
+
+        self.merge(
+            existing=canonical,
+            new_candidate_data=new_candidate_data,
+            raw_message_id=duplicate.raw_message_id,
+        )
+        self.incident_repository.soft_delete_for_village_incident(
+            duplicate.raw_message_id,
+            duplicate.village_id,
+            matched_incident_id=canonical.id,
+            similarity_score=similarity_score,
+        )

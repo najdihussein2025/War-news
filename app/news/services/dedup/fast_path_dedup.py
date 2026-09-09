@@ -33,7 +33,6 @@ class FastPathDedupDecision:
     similarity_method: str | None = None
 
 
-CONFIDENT_MATCH_STATUSES = frozenset({"matched"})
 MATERIALIZE_MATCH_STATUSES = frozenset({"matched", "matched_low_confidence"})
 
 
@@ -66,11 +65,11 @@ class FastPathDedupService:
         if condition_match_status not in MATERIALIZE_MATCH_STATUSES:
             return FastPathDedupDecision(outcome=FastPathDedupOutcome.skip_ineligible)
 
-        # Same village_id + same condition_id at *confident* status remains the
-        # primary path (may auto-merge on high_confidence).
+        # Canonical IDs are sufficient for source-neutral incident identity;
+        # low-confidence matcher metadata must not bypass duplicate detection.
         if (
-            village_match_status in CONFIDENT_MATCH_STATUSES
-            and condition_match_status in CONFIDENT_MATCH_STATUSES
+            village_match_status in MATERIALIZE_MATCH_STATUSES
+            and condition_match_status in MATERIALIZE_MATCH_STATUSES
         ):
             same_village = self._decide_same_village(
                 village_id=village_id,

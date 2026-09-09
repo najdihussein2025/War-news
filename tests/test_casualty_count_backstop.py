@@ -142,3 +142,28 @@ def test_evidence_present_but_digit_absent_is_nulled(caplog) -> None:
         "digit_not_in_source" in record.message and "raw_message_id=4121" in record.message
         for record in caplog.records
     )
+
+
+def test_dozens_of_injured_and_martyrs_never_becomes_ten() -> None:
+    text = "عشرات الجرحى والشهداء جراء الغارة على البلدة"
+    evidence = [
+        CasualtyCountEvidence(
+            field=field,
+            evidence_span="عشرات الجرحى والشهداء",
+        )
+        for field in ("deaths", "injuries", "total_deaths", "total_injuries")
+    ]
+
+    result, kept = apply_casualty_count_backstop(
+        text,
+        ExtractionCasualties(
+            deaths=10,
+            injuries=10,
+            total_deaths=10,
+            total_injuries=10,
+        ),
+        evidence,
+    )
+
+    assert result == ExtractionCasualties()
+    assert kept == []

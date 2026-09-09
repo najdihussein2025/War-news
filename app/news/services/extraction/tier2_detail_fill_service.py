@@ -216,7 +216,8 @@ class Tier2DetailFillService:
         # at least one details_pending incident actually needed filling.
         raw_message.tier2_completed_at = datetime.now(timezone.utc)
         raw_message.materialized_at = datetime.now(timezone.utc)
-        raw_message.status = MessageStatus.materialized
+        if getattr(raw_message, "status", None) != MessageStatus.duplicate:
+            raw_message.status = MessageStatus.materialized
         raw_message.error_message = None
         self.db.add(raw_message)
         self.db.commit()
@@ -277,30 +278,33 @@ class Tier2DetailFillService:
             return
 
         if score >= settings.dedup_high_threshold:
-            self.dedup_service.merge_into_incident(
-                existing=existing,
-                new_candidate_data={
-                    "deaths": incident.deaths,
-                    "injuries": incident.injuries,
-                    "total_deaths": incident.total_deaths,
-                    "total_injuries": incident.total_injuries,
-                    "khabar": incident.khabar,
-                    "mapped_fields": mapped_fields,
-                    "casualty_transitions": casualty_transitions,
-                },
-                raw_message_id=raw_message_id,
+            candidate_data = {
+                "deaths": incident.deaths,
+                "injuries": incident.injuries,
+                "total_deaths": incident.total_deaths,
+                "total_injuries": incident.total_injuries,
+                "khabar": incident.khabar,
+                "mapped_fields": mapped_fields,
+                "casualty_transitions": casualty_transitions,
+            }
+            canonicalize = getattr(
+                self.dedup_service, "canonicalize_existing_incident", None
             )
-            # Keep both rows (preserve-duplicate policy) but always pair the
-            # reviewer-facing flag with a pending soft match — same bookkeeping
-            # as slow-path mid-score via record_possible_duplicate.
-            incident.duplicate_flag = True
-            self.dedup_service.record_possible_duplicate(
-                incident=incident,
-                matched_incident=existing,
-                similarity_score=score,
-            )
+            if canonicalize is not None:
+                canonicalize(
+                    canonical=existing,
+                    duplicate=incident,
+                    new_candidate_data=candidate_data,
+                    similarity_score=score,
+                )
+            else:
+                self.dedup_service.merge_into_incident(
+                    existing=existing,
+                    new_candidate_data=candidate_data,
+                    raw_message_id=raw_message_id,
+                )
             logger.info(
-                "tier2 dedup linked incident_id=%s to incident_id=%s score=%.3f",
+                "tier2 dedup canonicalized incident_id=%s into incident_id=%s score=%.3f",
                 incident.id,
                 existing.id,
                 score,

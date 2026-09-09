@@ -748,7 +748,8 @@ def test_fast_path_confident_duplicate_merges_without_re_score() -> None:
 
     assert len(dedup.merge_calls) == 1
     assert dedup.merge_calls[0][0] is existing
-    assert representative.status == MessageStatus.materialized
+    assert representative.status == MessageStatus.duplicate
+    assert representative.duplicate_of_id == 999
     assert representative.materialized_at is not None
     assert representative.fast_path_completed_at is not None
     assert len(duplicate_matches) == 1

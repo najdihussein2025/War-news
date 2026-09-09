@@ -30,6 +30,16 @@ class DedupMatchingInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def canonicalize_existing_incident(
+        self,
+        canonical: Incident,
+        duplicate: Incident,
+        new_candidate_data: dict[str, Any],
+        similarity_score: float,
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def record_possible_duplicate(
         self,
         incident: Incident,

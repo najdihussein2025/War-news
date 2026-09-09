@@ -108,6 +108,20 @@ class DedupMatchingService(DedupMatchingInterface):
             raw_message_id=raw_message_id,
         )
 
+    def canonicalize_existing_incident(
+        self,
+        canonical: Incident,
+        duplicate: Incident,
+        new_candidate_data: dict[str, Any],
+        similarity_score: float,
+    ) -> None:
+        self.merge_service.canonicalize_existing(
+            canonical=canonical,
+            duplicate=duplicate,
+            new_candidate_data=new_candidate_data,
+            similarity_score=similarity_score,
+        )
+
     def record_possible_duplicate(
         self,
         incident: Incident,

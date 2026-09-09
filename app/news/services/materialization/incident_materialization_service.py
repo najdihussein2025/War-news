@@ -321,6 +321,7 @@ class IncidentMaterializationService:
                 continue
 
             if decision.outcome == FastPathDedupOutcome.confident_duplicate:
+                confident_duplicate_villages += 1
                 # DuplicateComparisonService is the sole verdict authority on the
                 # fast path — do not re-score with DedupMatchingService /
                 # dedup_time_window_days (that override reintroduced Mansouri-class
@@ -368,9 +369,7 @@ class IncidentMaterializationService:
                             status=MatchStatus.confirmed_duplicate,
                             similarity_score=score,
                         )
-                        self._mark_materialized(representative, fast_path=True)
                         self.db.commit()
-                        created.append(canonical_incident)
                         logger.info(
                             "raw_message_id=%s village_id=%s fast_path merged into "
                             "incident_id=%s score=%.3f method=%s",
@@ -387,7 +386,6 @@ class IncidentMaterializationService:
                         self.db.commit()
                     continue
 
-                confident_duplicate_villages += 1
                 self.fast_stats.skipped_confident_duplicate += 1
                 try:
                     if canonical_incident is not None:
@@ -428,11 +426,14 @@ class IncidentMaterializationService:
         if (
             materializable_villages > 0
             and confident_duplicate_villages == materializable_villages
-            and not created
             and representative_raw_message_id is not None
         ):
             representative.status = MessageStatus.duplicate
             representative.duplicate_of_id = representative_raw_message_id
+            now = datetime.now(timezone.utc)
+            representative.fast_path_completed_at = now
+            representative.materialized_at = now
+            representative.error_message = None
             self.db.commit()
             self.fast_stats.marked_message_duplicate += 1
             logger.info(
@@ -632,6 +633,9 @@ class IncidentMaterializationService:
         )
         total_deaths, total_injuries = compute_rollups(mapped_fields, casualties)
         created: list[Incident] = []
+        materializable_villages = 0
+        merged_villages = 0
+        canonical_raw_message_id: int | None = None
 
         village_matches: list[dict[str, Any]] = match_result.get("village_matches", [])
         origin_villages = self._origin_village_names(village_matches)
@@ -673,6 +677,7 @@ class IncidentMaterializationService:
                 )
                 self.stats.skipped_ineligible += 1
                 continue
+            materializable_villages += 1
 
             sanitized_khabar = strip_boilerplate(
                 strip_emoji_and_pictographs(representative.raw_text or "")
@@ -702,6 +707,9 @@ class IncidentMaterializationService:
                 )
                 if existing is not None and score >= settings.dedup_high_threshold:
                     try:
+                        existing_raw_id = getattr(existing, "raw_message_id", None)
+                        if existing_raw_id is not None:
+                            canonical_raw_message_id = existing_raw_id
                         existing.duplicate_level = "high"
                         existing.duplicate_similarity_score = score
                         self.dedup_service.merge_into_incident(
@@ -721,8 +729,13 @@ class IncidentMaterializationService:
                             },
                             raw_message_id=representative.id,
                         )
-                        self._mark_materialized(representative, fast_path=False)
                         self.db.commit()
+                        merged_villages += 1
+                        created.append(existing)
+                        if existing_raw_id is None:
+                            self._mark_materialized(
+                                representative, fast_path=False
+                            )
                         self.stats.merged_into_existing += 1
                         logger.info(
                             "raw_message_id=%s village_id=%s merged into "
@@ -732,7 +745,6 @@ class IncidentMaterializationService:
                             existing.id,
                             score,
                         )
-                        created.append(existing)
                         continue
                     except Exception:
                         self.db.rollback()
@@ -834,6 +846,11 @@ class IncidentMaterializationService:
                     )
                 )
                 existing_id = existing.id if existing is not None else None
+                if existing is not None:
+                    merged_villages += 1
+                    existing_raw_id = getattr(existing, "raw_message_id", None)
+                    if existing_raw_id is not None:
+                        canonical_raw_message_id = existing_raw_id
                 self.stats.skipped_duplicate_hash += 1
                 logger.info(
                     "incident already exists for this hash, skipping "
@@ -845,6 +862,17 @@ class IncidentMaterializationService:
             except Exception:
                 self.db.rollback()
                 raise
+
+        if (
+            materializable_villages > 0
+            and merged_villages == materializable_villages
+            and canonical_raw_message_id is not None
+        ):
+            representative.status = MessageStatus.duplicate
+            representative.duplicate_of_id = canonical_raw_message_id
+            representative.error_message = None
+            representative.materialized_at = datetime.now(timezone.utc)
+            self.db.commit()
 
         return created
 

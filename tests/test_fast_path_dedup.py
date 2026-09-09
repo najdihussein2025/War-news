@@ -95,11 +95,11 @@ def test_confident_duplicate_on_high_confidence_verdict() -> None:
     assert repo.last_query["exclude_raw_message_id"] == 200
 
 
-def test_possible_duplicate_on_mid_tier_verdict() -> None:
+def test_semantic_match_inside_30_minutes_is_confident_duplicate() -> None:
     repo = _IncidentRepoStub([_candidate(gap=10 * 60, text=0.70)])
     decision = _decide(_service(repo))
 
-    assert decision.outcome == FastPathDedupOutcome.possible_duplicate
+    assert decision.outcome == FastPathDedupOutcome.confident_duplicate
     assert decision.matched_incident is not None
 
 
@@ -131,23 +131,20 @@ def test_high_confidence_wins_over_a_closer_possible() -> None:
     assert decision.outcome == FastPathDedupOutcome.confident_duplicate
 
 
-def test_low_confidence_village_skips_same_village_but_may_cross_village() -> None:
-    # Same-village lookup is skipped for low-confidence; cross-village backstop
-    # still runs and can flag possible_duplicate.
+def test_low_confidence_match_metadata_still_uses_canonical_ids() -> None:
     cross = _candidate(gap=90, text=0.875)
     repo = _IncidentRepoStub([_candidate(gap=30, text=0.99)], cross_candidates=[cross])
     decision = _decide(_service(repo), village_match_status="matched_low_confidence")
-    assert decision.outcome == FastPathDedupOutcome.possible_duplicate
-    assert repo.last_query is None
-    assert repo.last_cross_query is not None
-    assert repo.last_cross_query["min_text_similarity"] == 0.87
+    assert decision.outcome == FastPathDedupOutcome.confident_duplicate
+    assert repo.last_query is not None
+    assert repo.last_cross_query is None
 
 
 def test_low_confidence_village_materializes_when_cross_village_misses() -> None:
-    repo = _IncidentRepoStub([_candidate(gap=30, text=0.99)], cross_candidates=[])
+    repo = _IncidentRepoStub([], cross_candidates=[])
     decision = _decide(_service(repo), village_match_status="matched_low_confidence")
     assert decision.outcome == FastPathDedupOutcome.materialize
-    assert repo.last_query is None
+    assert repo.last_query is not None
 
 
 def test_skip_ineligible_when_village_unmatched() -> None:

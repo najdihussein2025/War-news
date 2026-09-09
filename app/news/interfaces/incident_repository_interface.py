@@ -116,7 +116,33 @@ class IncidentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    def soft_delete_for_raw_message_id(self, raw_message_id: int) -> list[UUID]:
+    def soft_delete_for_raw_message_id(
+        self,
+        raw_message_id: int,
+        *,
+        representative_raw_message_id: int | None = None,
+        similarity_score: float | None = None,
+    ) -> list[UUID]:
+        pass
+
+    @abstractmethod
+    def soft_delete_for_village_incident(
+        self,
+        raw_message_id: int,
+        village_id: int,
+        *,
+        matched_incident_id: UUID | None = None,
+        similarity_score: float | None = None,
+    ) -> list[UUID]:
+        pass
+
+    @abstractmethod
+    def mark_raw_duplicate_if_fully_subsumed(
+        self,
+        *,
+        raw_message_id: int,
+        canonical_raw_message_id: int,
+    ) -> bool:
         pass
 
     @abstractmethod

@@ -62,12 +62,10 @@ class Settings(BaseSettings):
     auth_cookie_secure: bool = False
     auth_cookie_samesite: str = "lax"
     super_admin_seed_password: str = "password"
-    # First-pass values derived from a single confirmed duplicate pair
-    # (248 min gap, 0.7675 cosine similarity — 2026-08-18).
-    # Revisit after 2–3 weeks of live backlog data to validate against a
-    # full similarity/time-gap distribution before treating as permanent.
-    cluster_time_window_minutes: int = 300
-    cluster_similarity_threshold: float = 0.75
+    # Source-neutral canonical incident rule: the same village, action and
+    # semantic event may collapse only inside a strict 30-minute window.
+    cluster_time_window_minutes: int = 30
+    cluster_similarity_threshold: float = 0.78
     cluster_require_condition_match: bool = True
     # Hard cap on clustering candidate rows per pass (memory/CPU safety).
     clustering_max_rows_per_pass: int = 100
@@ -91,16 +89,14 @@ class Settings(BaseSettings):
     # with dedup_fastpath_lookup_window_days as the outer candidate query bound.
     # Kept only for any remaining callers that still read the flat window.
     dedup_time_window_days: int = 3
-    dedup_high_threshold: float = 0.80
+    dedup_high_threshold: float = 0.78
     dedup_low_threshold: float = 0.50
     # --- Fast-path incident-level duplicate comparison (DuplicateComparisonService) ---
-    # Outer lookup bound: how far back the fast-path query pulls candidate active
-    # incidents. The verdict itself is decided by the time-gap / similarity tiers
-    # below, NOT by this window (kept wide so the 6h service cutoff always has
-    # candidates to evaluate).
+    # Outer lookup bound for candidate retrieval. The verdict below enforces the
+    # strict 30-minute event-identity window.
     dedup_fastpath_lookup_window_days: int = 7
-    # Time-gap tier boundaries (seconds): near = "≤ 2 minutes", mid = "≤ 30 minutes",
-    # far = "≤ 6 hours". Beyond `far` the verdict is always `distinct`.
+    # `gap_mid` is the canonical cutoff. The other values remain in the config
+    # shape for compatibility with explicit test/service configuration.
     dedup_fastpath_gap_near_seconds: int = 120
     dedup_fastpath_gap_mid_seconds: int = 1800
     dedup_fastpath_gap_far_seconds: int = 21600

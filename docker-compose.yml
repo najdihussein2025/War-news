@@ -51,7 +51,8 @@ services:
       - .:/app
     ports:
       - "8000:8000"
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-exclude scripts/*
+    # Bound graceful shutdown so an open SSE connection cannot stall dev reloads.
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-exclude scripts/* --timeout-graceful-shutdown 3
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 5s

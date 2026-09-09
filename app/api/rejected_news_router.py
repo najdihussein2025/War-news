@@ -4,13 +4,13 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import func, or_, select
+from sqlalchemy import exists, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.accounts.models import User
 from app.api.deps import require_admin
 from app.core.database import get_db
-from app.news.models import MessageStatus, RawMessage
+from app.news.models import Incident, MessageStatus, RawMessage
 
 
 router = APIRouter(prefix="/api/rejected-news", tags=["rejected-news"])
@@ -162,8 +162,19 @@ def _reason(message: RawMessage) -> tuple[str, str]:
     return rejection_type, arabic
 
 
-def _item(message: RawMessage) -> RejectedNewsItem:
-    rejection_type, rejection_reason_en, rejection_reason_ar = _reason_details(message)
+def _item(
+    message: RawMessage,
+    manual_rejection_reason: str | None = None,
+) -> RejectedNewsItem:
+    if manual_rejection_reason:
+        rejection_type = "rejected"
+        rejection_reason_en = manual_rejection_reason
+        rejection_reason_ar = _arabic_reason(
+            manual_rejection_reason,
+            rejection_type,
+        )
+    else:
+        rejection_type, rejection_reason_en, rejection_reason_ar = _reason_details(message)
     return RejectedNewsItem(
         id=message.id,
         khabar=message.raw_text or "",
@@ -190,8 +201,18 @@ def list_rejected_news(
     db: Session = Depends(get_db),
 ) -> RejectedNewsList:
     cutoff = datetime.now().astimezone() - timedelta(days=7)
+    manually_rejected = exists(
+        select(Incident.id).where(
+            Incident.raw_message_id == RawMessage.id,
+            Incident.is_deleted.is_(False),
+            Incident.verification_status == "rejected",
+        )
+    )
     filters = [
-        RawMessage.status.in_([MessageStatus.rejected, MessageStatus.duplicate]),
+        or_(
+            RawMessage.status.in_([MessageStatus.rejected, MessageStatus.duplicate]),
+            manually_rejected,
+        ),
         func.coalesce(RawMessage.message_datetime, RawMessage.received_at) >= cutoff,
         or_(
             RawMessage.source_name.is_(None),
@@ -201,16 +222,35 @@ def list_rejected_news(
     if search and search.strip():
         pattern = f"%{search.strip()}%"
         filters.append(or_(RawMessage.raw_text.ilike(pattern), RawMessage.source_name.ilike(pattern)))
+    manual_reason = (
+        select(Incident.verification_reason)
+        .where(
+            Incident.raw_message_id == RawMessage.id,
+            Incident.is_deleted.is_(False),
+            Incident.verification_status == "rejected",
+        )
+        .order_by(Incident.verified_at.desc().nullslast())
+        .limit(1)
+        .scalar_subquery()
+    )
     statement = (
-        select(RawMessage)
+        select(RawMessage, manual_reason.label("manual_rejection_reason"))
         .where(*filters)
         .order_by(func.coalesce(RawMessage.message_datetime, RawMessage.received_at).desc(), RawMessage.id.desc())
         .limit(limit)
         .offset(offset)
     )
-    messages = list(db.scalars(statement).all())
+    rows = db.execute(statement).all()
     total = db.scalar(select(func.count(RawMessage.id)).where(*filters)) or 0
-    return RejectedNewsList(items=[_item(message) for message in messages], total=int(total), limit=limit, offset=offset)
+    return RejectedNewsList(
+        items=[
+            _item(message, manual_rejection_reason)
+            for message, manual_rejection_reason in rows
+        ],
+        total=int(total),
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/{raw_message_id}", response_model=RejectedNewsItem)
@@ -220,9 +260,25 @@ def get_rejected_news(
     db: Session = Depends(get_db),
 ) -> RejectedNewsItem:
     message = db.get(RawMessage, raw_message_id)
-    if message is None or message.status not in {MessageStatus.rejected, MessageStatus.duplicate}:
+    manual_reason = db.scalar(
+        select(Incident.verification_reason)
+        .where(
+            Incident.raw_message_id == raw_message_id,
+            Incident.is_deleted.is_(False),
+            Incident.verification_status == "rejected",
+        )
+        .order_by(Incident.verified_at.desc().nullslast())
+        .limit(1)
+    )
+    if (
+        message is None
+        or (
+            message.status not in {MessageStatus.rejected, MessageStatus.duplicate}
+            and manual_reason is None
+        )
+    ):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rejected news was not found.")
-    return _item(message)
+    return _item(message, manual_reason)
 
 
 @router.post("/{raw_message_id}/restore", response_model=RestoreRejectedResult)
@@ -232,17 +288,51 @@ def restore_rejected_news(
     db: Session = Depends(get_db),
 ) -> RestoreRejectedResult:
     message = db.scalar(select(RawMessage).where(RawMessage.id == raw_message_id).with_for_update())
-    if message is None or message.status not in {MessageStatus.rejected, MessageStatus.duplicate}:
+    manually_rejected_incidents = list(
+        db.scalars(
+            select(Incident)
+            .where(
+                Incident.raw_message_id == raw_message_id,
+                Incident.is_deleted.is_(False),
+                Incident.verification_status == "rejected",
+            )
+            .with_for_update()
+        ).all()
+    )
+    if (
+        message is None
+        or (
+            message.status not in {MessageStatus.rejected, MessageStatus.duplicate}
+            and not manually_rejected_incidents
+        )
+    ):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Rejected news is missing or already restored.")
+    manual_reason = next(
+        (
+            incident.verification_reason
+            for incident in manually_rejected_incidents
+            if incident.verification_reason
+        ),
+        None,
+    )
     payload = dict(message.raw_payload or {})
     payload["manual_rejection_override"] = {
         "restored_by": str(current_user.id),
         "restored_at": datetime.now().astimezone().isoformat(),
         "previous_status": message.status.value,
-        "reason": _reason(message)[1],
+        "reason": manual_reason or _reason(message)[1],
     }
     message.raw_payload = payload
-    message.status = MessageStatus.parsed
+    if manually_rejected_incidents:
+        for incident in manually_rejected_incidents:
+            incident.verification_status = "needs_verification"
+            incident.verification_reason = None
+            incident.verified_by_user_id = None
+            incident.verified_at = None
+            db.add(incident)
+        message.status = MessageStatus.materialized
+    else:
+        message.status = MessageStatus.parsed
     message.duplicate_of_id = None
     message.error_message = None
     message.extraction_retry_count = 0

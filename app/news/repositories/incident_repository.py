@@ -47,6 +47,7 @@ from app.news.models import (
     IncidentUpdate,
     MatchStatus,
     MatchType,
+    MessageStatus,
     RawMessage,
     UpdateAction,
     Village,
@@ -224,6 +225,11 @@ class IncidentRepository(IncidentRepositoryInterface):
             .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
             .where(
                 Incident.is_deleted.is_(False),
+                Incident.verification_status != "rejected",
+                or_(
+                    RawMessage.id.is_(None),
+                    RawMessage.status != MessageStatus.rejected,
+                ),
                 or_(
                     RawMessage.id.is_(None),
                     ~RawMessage.raw_payload.op("?")("ocr_text"),
@@ -567,6 +573,25 @@ class IncidentRepository(IncidentRepositoryInterface):
         incident.verification_reason = reason
         incident.verified_by_user_id = user_id
         incident.verified_at = datetime.now(timezone.utc)
+        if status == "rejected" and incident.raw_message_id is not None:
+            raw_message = self.db.scalar(
+                select(RawMessage)
+                .where(RawMessage.id == incident.raw_message_id)
+                .with_for_update()
+            )
+            if raw_message is not None:
+                filter_result = dict(raw_message.filter_result or {})
+                filter_result.update(
+                    {
+                        "verdict": "reject",
+                        "reasoning": reason,
+                        "review_source": "human",
+                        "reviewed_by_user_id": str(user_id),
+                    }
+                )
+                raw_message.filter_result = filter_result
+                raw_message.status = MessageStatus.rejected
+                raw_message.error_message = reason
         self.db.add(IncidentUpdate(
             incident_id=incident.id,
             action=UpdateAction.status_change,
@@ -702,6 +727,15 @@ class IncidentRepository(IncidentRepositoryInterface):
             incident.is_deleted = True
             incident.duplicate_flag = False
             match.status = MatchStatus.confirmed_duplicate
+            self.db.flush()
+            if (
+                incident.raw_message_id is not None
+                and canonical.raw_message_id is not None
+            ):
+                self.mark_raw_duplicate_if_fully_subsumed(
+                    raw_message_id=incident.raw_message_id,
+                    canonical_raw_message_id=canonical.raw_message_id,
+                )
         else:
             self.db.rollback()
             raise ValueError("Unsupported duplicate resolution decision.")
@@ -824,6 +858,7 @@ class IncidentRepository(IncidentRepositoryInterface):
         incident: Incident,
         matched_incident: Incident,
         similarity_score: float,
+        status: MatchStatus = MatchStatus.pending,
     ) -> None:
         self.db.add(
             DuplicateMatch(
@@ -831,7 +866,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                 matched_incident_id=matched_incident.id,
                 match_type=MatchType.soft,
                 similarity_score=similarity_score,
-                status=MatchStatus.pending,
+                status=status,
             )
         )
         self.db.flush()
@@ -1108,7 +1143,13 @@ class IncidentRepository(IncidentRepositoryInterface):
                 )
             )
 
-        candidates.sort(key=lambda c: c.time_gap_seconds)
+        candidates.sort(
+            key=lambda c: (
+                c.incident.event_date,
+                c.incident.event_time or time.min,
+                str(c.incident.id),
+            )
+        )
         return candidates
 
     def find_cross_village_dedup_candidates(
@@ -1217,21 +1258,26 @@ class IncidentRepository(IncidentRepositoryInterface):
                     representative_raw_message_id,
                     incident.village_id,
                 )
-            # Duplicate incident records are preserved (not soft-deleted) per
-            # "Show imported incidents and preserve duplicate records"; still
-            # repoint any pending review link onto the active canonical.
             self.redirect_pending_duplicate_matches(
                 retired_incident=incident,
                 canonical_incident=representative_incident,
             )
+            incident.is_deleted = True
+            incident.duplicate_flag = False
             self.db.add(incident)
             if representative_incident is not None:
                 self.create_duplicate_match(
                     incident=incident,
                     matched_incident=representative_incident,
                     similarity_score=similarity_score or 0.0,
+                    status=MatchStatus.confirmed_duplicate,
                 )
         self.db.flush()
+        if representative_raw_message_id is not None:
+            self.mark_raw_duplicate_if_fully_subsumed(
+                raw_message_id=raw_message_id,
+                canonical_raw_message_id=representative_raw_message_id,
+            )
         return [incident.id for incident in incidents]
 
     def soft_delete_for_village_incident(
@@ -1261,15 +1307,75 @@ class IncidentRepository(IncidentRepositoryInterface):
                 retired_incident=incident,
                 canonical_incident=matched_incident,
             )
+            incident.is_deleted = True
+            incident.duplicate_flag = False
             self.db.add(incident)
             if matched_incident is not None:
                 self.create_duplicate_match(
                     incident=incident,
                     matched_incident=matched_incident,
                     similarity_score=similarity_score or 0.0,
+                    status=MatchStatus.confirmed_duplicate,
                 )
         self.db.flush()
+        if matched_incident is not None and matched_incident.raw_message_id is not None:
+            self.mark_raw_duplicate_if_fully_subsumed(
+                raw_message_id=raw_message_id,
+                canonical_raw_message_id=matched_incident.raw_message_id,
+            )
         return [incident.id for incident in incidents]
+
+    def mark_raw_duplicate_if_fully_subsumed(
+        self,
+        *,
+        raw_message_id: int,
+        canonical_raw_message_id: int,
+    ) -> bool:
+        """Link a raw to the canonical root once it has no active incidents.
+
+        A raw may describe several villages, so retiring one village incident
+        must not hide the entire source bulletin.
+        """
+        if raw_message_id == canonical_raw_message_id:
+            return False
+        if self.has_active_incidents_for_raw_message(raw_message_id):
+            return False
+
+        raw = self.db.get(RawMessage, raw_message_id)
+        canonical = self.db.get(RawMessage, canonical_raw_message_id)
+        if raw is None or canonical is None:
+            return False
+
+        visited = {raw_message_id}
+        while canonical.duplicate_of_id is not None:
+            if canonical.id in visited:
+                raise ValueError("Circular raw-message duplicate chain detected.")
+            visited.add(canonical.id)
+            parent = self.db.get(RawMessage, canonical.duplicate_of_id)
+            if parent is None:
+                break
+            canonical = parent
+
+        if raw.id == canonical.id:
+            return False
+        raw.status = MessageStatus.duplicate
+        raw.duplicate_of_id = canonical.id
+        raw.error_message = None
+        self.db.add(raw)
+        # Keep every duplicate link direct. Existing children may point at a
+        # row that has now itself been canonicalized.
+        children = list(
+            self.db.scalars(
+                select(RawMessage).where(
+                    RawMessage.duplicate_of_id == raw.id,
+                    RawMessage.id != canonical.id,
+                )
+            ).all()
+        )
+        for child in children:
+            child.duplicate_of_id = canonical.id
+            self.db.add(child)
+        return True
 
     def begin_nested(self) -> AbstractContextManager[object]:
         return self.db.begin_nested()
@@ -1296,6 +1402,16 @@ class IncidentRepository(IncidentRepositoryInterface):
                 ~RawMessage.raw_payload.op("?")("ocr_text"),
             ),
         ]
+        if params.verification_status is None:
+            filters.extend(
+                [
+                    Incident.verification_status != "rejected",
+                    or_(
+                        RawMessage.id.is_(None),
+                        RawMessage.status != MessageStatus.rejected,
+                    ),
+                ]
+            )
         if params.village:
             village_pattern = f"%{params.village}%"
             filters.append(

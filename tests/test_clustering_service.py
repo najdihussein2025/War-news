@@ -201,7 +201,7 @@ def test_low_confidence_condition_match_does_not_force_merge_without_similarity(
     )
 
 
-def test_pick_representative_prefers_highest_trust_tier() -> None:
+def test_pick_representative_uses_earliest_report_regardless_of_source() -> None:
     service = _service(
         tiers={
             "NNALeb": TrustTier.official,
@@ -230,7 +230,7 @@ def test_pick_representative_prefers_highest_trust_tier() -> None:
 
     representative = service.pick_representative([detail, trusted, official])
 
-    assert representative.id == official.id
+    assert representative.id == detail.id
 
 
 def test_pick_representative_breaks_ties_by_earliest_timestamp() -> None:
@@ -258,7 +258,7 @@ def test_pick_representative_breaks_ties_by_earliest_timestamp() -> None:
     assert representative.id == earlier.id
 
 
-def test_cluster_batch_groups_transitively_similar_messages() -> None:
+def test_cluster_batch_groups_directly_similar_messages() -> None:
     service = _service()
     first = _message(
         message_id=1,
@@ -283,6 +283,28 @@ def test_cluster_batch_groups_transitively_similar_messages() -> None:
     singleton_cluster = next(cluster for cluster in clusters if len(cluster) == 1)
     assert {message.id for message in merged_cluster} == {1, 2}
     assert singleton_cluster[0].id == 3
+
+
+def test_cluster_batch_does_not_chain_beyond_30_minutes() -> None:
+    service = _service()
+    messages = [
+        _message(
+            message_id=index,
+            message_datetime=datetime(
+                2026, 8, 17, 12, minute, tzinfo=timezone.utc
+            ),
+            embedding=_embedding(primary=1.0),
+            match_result=_match_result(),
+        )
+        for index, minute in ((1, 0), (2, 20), (3, 40))
+    ]
+
+    clusters = service.cluster_batch(messages)
+
+    assert [{message.id for message in cluster} for cluster in clusters] == [
+        {1, 2},
+        {3},
+    ]
 
 
 def test_cluster_batch_does_not_group_messages_from_different_villages() -> None:

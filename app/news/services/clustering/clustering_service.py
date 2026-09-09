@@ -126,11 +126,12 @@ class ClusteringService:
     ) -> None:
         self.db = db
         self.channel_trust_tiers = channel_trust_tiers
-        self.time_window_minutes = (
+        configured_window = (
             time_window_minutes
             if time_window_minutes is not None
             else settings.cluster_time_window_minutes
         )
+        self.time_window_minutes = min(configured_window, 30)
         self.similarity_threshold = (
             similarity_threshold
             if similarity_threshold is not None
@@ -245,7 +246,6 @@ class ClusteringService:
         return min(
             cluster,
             key=lambda message: (
-                self._trust_rank(message),
                 message.message_datetime
                 or datetime.max.replace(tzinfo=timezone.utc),
                 message.id,
@@ -256,31 +256,30 @@ class ClusteringService:
         if not messages:
             return []
 
-        parent = {message.id: message.id for message in messages}
-
-        def find(message_id: int) -> int:
-            root = message_id
-            while parent[root] != root:
-                parent[root] = parent[parent[root]]
-                root = parent[root]
-            return root
-
-        def union(left_id: int, right_id: int) -> None:
-            left_root = find(left_id)
-            right_root = find(right_id)
-            if left_root != right_root:
-                parent[right_root] = left_root
-
-        for index, left in enumerate(messages):
-            for right in messages[index + 1 :]:
-                if self._are_candidates(left, right) and self.should_merge(left, right):
-                    union(left.id, right.id)
-
-        grouped: dict[int, list[RawMessage]] = {}
-        for message in messages:
-            grouped.setdefault(find(message.id), []).append(message)
-
-        return list(grouped.values())
+        # Anchor every member directly to the earliest representative. This
+        # prevents transitive A-B-C chains from spanning beyond the 30-minute
+        # identity window or joining messages that are not semantically alike.
+        ordered = sorted(
+            messages,
+            key=lambda message: (
+                message.message_datetime
+                or datetime.max.replace(tzinfo=timezone.utc),
+                message.id,
+            ),
+        )
+        clusters: list[list[RawMessage]] = []
+        for message in ordered:
+            for cluster in clusters:
+                representative = cluster[0]
+                if (
+                    self._are_candidates(representative, message)
+                    and self.should_merge(representative, message)
+                ):
+                    cluster.append(message)
+                    break
+            else:
+                clusters.append([message])
+        return clusters
 
     def _are_candidates(self, left: RawMessage, right: RawMessage) -> bool:
         left_ids = village_ids_from_match_result(left.match_result)
