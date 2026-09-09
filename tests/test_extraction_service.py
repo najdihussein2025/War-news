@@ -11,6 +11,7 @@ from app.llm.dtos import (
     ExtractionCasualties,
     ExtractionCategory,
     ExtractionCategoryKey,
+    ExtractionVehicleDetails,
 )
 from app.llm.services.ollama_extraction_service import OllamaExtractionService
 from app.llm.services.ollama_presence_gate_service import OllamaPresenceGateService
@@ -211,6 +212,7 @@ def test_orchestration_extracts_detail_once_per_present_category() -> None:
                 did=DidValue.direct,
                 name="سيارة",
                 casualties=ExtractionCasualties(injuries=1),
+                vehicles=ExtractionVehicleDetails(moto=True),
             ),
         }
     )
@@ -234,6 +236,9 @@ def test_orchestration_extracts_detail_once_per_present_category() -> None:
     )
     assert result.categories[ExtractionCategoryKey.vehicles].casualties == (
         ExtractionCasualties(injuries=1)
+    )
+    assert result.categories[ExtractionCategoryKey.vehicles].vehicles == (
+        ExtractionVehicleDetails(moto=True)
     )
 
 

@@ -150,7 +150,12 @@ def test_merge_does_not_reopen_details_pending_for_existing_category() -> None:
 
 
 def test_merge_clears_stale_duplicate_flag_without_transition_conflict() -> None:
-    existing = Incident(id=uuid4(), duplicate_flag=True)
+    existing = Incident(
+        id=uuid4(),
+        duplicate_flag=True,
+        verification_status="needs_verification",
+        verification_reason="Possible duplicate",
+    )
     db = _MergeSessionStub(raw_message=None)
 
     IncidentRepository(db).merge_existing(  # type: ignore[arg-type]
@@ -160,6 +165,8 @@ def test_merge_clears_stale_duplicate_flag_without_transition_conflict() -> None
     )
 
     assert existing.duplicate_flag is False
+    assert existing.verification_status == "auto_processed"
+    assert existing.verification_reason is None
 
 
 class _ResolveDuplicateSessionStub:
@@ -199,6 +206,45 @@ class _ResolveDuplicateSessionStub:
 
     def rollback(self) -> None:
         return None
+
+
+def test_false_positive_resolution_clears_duplicate_verification() -> None:
+    from app.news.models import MatchStatus
+
+    user_id = uuid4()
+    duplicate_id = uuid4()
+    duplicate = Incident(
+        id=duplicate_id,
+        version=1,
+        locked_by_user_id=user_id,
+        duplicate_flag=True,
+        verification_status="needs_verification",
+        verification_reason="Possible duplicate",
+    )
+    match = SimpleNamespace(
+        id=9,
+        matched_incident_id=uuid4(),
+        status=MatchStatus.pending,
+        resolved_by=None,
+    )
+    db = _ResolveDuplicateSessionStub(
+        duplicate=duplicate,
+        canonical=Incident(id=uuid4()),
+        match=match,
+    )
+
+    IncidentRepository(db).resolve_duplicate(  # type: ignore[arg-type]
+        incident_id=duplicate_id,
+        match_id=9,
+        decision=MatchStatus.false_positive.value,
+        version=1,
+        user_id=user_id,
+    )
+
+    assert duplicate.duplicate_flag is False
+    assert duplicate.verification_status == "auto_processed"
+    assert duplicate.verification_reason is None
+    assert match.status == MatchStatus.false_positive
 
 
 def test_confirmed_duplicate_resolution_keeps_note_clean_and_records_merged_from() -> None:

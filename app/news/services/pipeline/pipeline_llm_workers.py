@@ -5,6 +5,7 @@ import logging
 from app.api.factories.action_factory import build_extraction_classifier
 from app.core.database import SessionLocal
 from app.llm.dtos import ExtractionResult
+from app.llm.services.cnrs_extraction_fallback import trusted_cnrs_action
 from app.llm.services.transient_llm_errors import (
     ExtractionRetryCappedError,
     is_transient_llm_error,
@@ -17,6 +18,17 @@ from app.news.services.matching.condition_evidence_override import apply_conditi
 from app.news.services.incident_details.casualty_gender_evidence import apply_explicit_arabic_gender_evidence
 
 logger = logging.getLogger(__name__)
+
+
+def _final_action_description(
+    post_text: str,
+    extracted_action: str | None,
+    cnrs_classification: dict | None,
+) -> str | None:
+    cnrs_action = trusted_cnrs_action(cnrs_classification, post_text)
+    if cnrs_action is not None:
+        return cnrs_action
+    return apply_condition_evidence_override(post_text, extracted_action)
 
 
 def run_tier1_extraction_for_message(raw_message_id: int) -> None:
@@ -39,6 +51,7 @@ def run_tier1_extraction_for_message(raw_message_id: int) -> None:
             PipelineClaimRepository(db).release_claim(raw_message_id)
             return
         post_text = message.raw_text or ""
+        cnrs_classification = message.cnrs_classification
 
     classifier = build_extraction_classifier()
     try:
@@ -48,9 +61,10 @@ def run_tier1_extraction_for_message(raw_message_id: int) -> None:
         )
         result = result.model_copy(
             update={
-                "action_description": apply_condition_evidence_override(
+                "action_description": _final_action_description(
                     post_text,
                     result.action_description,
+                    cnrs_classification,
                 ),
                 "casualties": apply_explicit_arabic_gender_evidence(
                     post_text,

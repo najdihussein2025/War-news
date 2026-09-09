@@ -23,6 +23,23 @@ from app.news.services.incident_details.casualty_count_backstop import (
 
 logger = logging.getLogger(__name__)
 
+_MOTORCYCLE_TEXT_MARKERS = ("دراج", "موتور")
+
+
+def _ground_motorcycle_flag(
+    post_text: str,
+    vehicles: ExtractionVehicleDetails | None,
+) -> ExtractionVehicleDetails | None:
+    """Preserve an explicit Arabic motorcycle mention if the model misses it."""
+    if not any(marker in post_text for marker in _MOTORCYCLE_TEXT_MARKERS):
+        return vehicles
+    if vehicles is None:
+        return ExtractionVehicleDetails(moto=True)
+    if vehicles.moto:
+        return vehicles
+    return vehicles.model_copy(update={"moto": True})
+
+
 PROMPT_PATH = (
     Path(__file__).resolve().parents[3]
     / "scripts"
@@ -251,6 +268,9 @@ class OllamaCategoryDetailService:
                     list(item.casualty_evidence),
                     raw_message_id=raw_message_id,
                 )
+            vehicles = item.vehicles
+            if category_key == ExtractionCategoryKey.vehicles:
+                vehicles = _ground_motorcycle_flag(post_text, vehicles)
             parsed[category_key] = ExtractionCategory(
                 did=item.did,
                 name=self._validated_name(
@@ -259,7 +279,7 @@ class OllamaCategoryDetailService:
                     raw_message_id=raw_message_id,
                 ),
                 casualties=casualties,
-                vehicles=item.vehicles,
+                vehicles=vehicles,
             )
         return parsed
 
@@ -293,6 +313,9 @@ class OllamaCategoryDetailService:
                 list(response.casualty_evidence),
                 raw_message_id=raw_message_id,
             )
+        vehicles = response.vehicles
+        if category_key == ExtractionCategoryKey.vehicles:
+            vehicles = _ground_motorcycle_flag(post_text, vehicles)
         return ExtractionCategory(
             did=response.did,
             name=self._validated_name(
@@ -301,7 +324,7 @@ class OllamaCategoryDetailService:
                 raw_message_id=raw_message_id,
             ),
             casualties=casualties,
-            vehicles=response.vehicles,
+            vehicles=vehicles,
         )
 
     def _validated_name(

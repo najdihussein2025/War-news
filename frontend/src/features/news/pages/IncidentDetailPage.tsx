@@ -10,8 +10,9 @@ import { useIncidentDuplicateCandidateQuery, useIncidentQuery } from "../hooks";
 import { acquireIncidentEditLock, deleteIncident, releaseIncidentEditLock, resolveIncidentDuplicate, updateIncident, updateIncidentDetails } from "../api";
 import { IncidentCategorySectionFields } from "../components/IncidentCategorySectionFields";
 import { IncidentCategorySectionEditForm } from "../components/IncidentCategorySectionEditForm";
-import { incidentCategorySections } from "../incidentCategorySections";
+import { fieldGroupForSection, incidentCategorySections } from "../incidentCategorySections";
 import type { IncidentCategorySectionKey } from "../incidentCategorySections";
+import { reportedCount } from "../incidentSchema";
 import type {
   CasualtyDemographics,
   IncidentDuplicateDecision,
@@ -20,6 +21,39 @@ import type {
 
 const sourceVariant = (source: IncidentSource | null) =>
   source === "Telegram" ? "accent" : source === "API" ? "neutral" : "warning";
+
+const readableReport = (text: string) =>
+  text
+    .replace(
+      /\b(?:(?:https?:\/\/|www\.)[^\s]+|(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?)/giu,
+      "",
+    )
+    .replace(/\bLink\s*\d*\b/giu, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/ *\n */g, "\n")
+    .trim();
+
+const normalizeArabicForSearch = (text: string) =>
+  text
+    .normalize("NFKD")
+    .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, "")
+    .replace(/[إأآٱ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const villageSpecificReport = (text: string, arabicVillage: string | null | undefined) => {
+  const report = readableReport(text);
+  const village = normalizeArabicForSearch(arabicVillage ?? "");
+  if (village.length < 3) return report;
+
+  const matchingLines = report
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => normalizeArabicForSearch(line).includes(village));
+
+  return matchingLines.length > 0 ? matchingLines.join("\n") : report;
+};
 
 const casualtyFields: Array<{
   key: keyof CasualtyDemographics;
@@ -32,8 +66,6 @@ const casualtyFields: Array<{
   { key: "children_d", label: "Children deaths" },
   { key: "children_i", label: "Children injuries" },
 ];
-
-const emptyCategories = incidentCategorySections;
 
 const BackLink = ({ to }: { to: string }) => (
   <Link className="font-semibold text-accent hover:text-accent-hover" to={to}>
@@ -329,7 +361,13 @@ export const IncidentDetailPage = () => {
                     {value.condition || "No condition"} · {formatDate(value.event_date)}
                     {value.event_time ? ` at ${value.event_time.slice(0, 5)}` : ""}
                   </p>
-                  <p className="mt-3 whitespace-pre-wrap text-small text-text-primary">{value.khabar}</p>
+                  <p
+                    className="mt-3 whitespace-pre-wrap text-right text-small leading-7 text-text-primary"
+                    dir="rtl"
+                    lang="ar"
+                  >
+                    {readableReport(value.khabar)}
+                  </p>
                   <p className="mt-3 text-caption text-text-muted">Source: {value.source_name || value.source_reference || value.source || "Unknown"}</p>
                 </article>
               ))}
@@ -434,8 +472,15 @@ export const IncidentDetailPage = () => {
 
       <section className="rounded-lg border border-border bg-surface-raised p-5">
         <h2 className="text-h4 font-semibold text-text-primary">Report</h2>
-        <p className="mt-3 whitespace-pre-wrap text-body text-text-primary">
-          {incident.khabar}
+        <p
+          className="mt-3 whitespace-pre-wrap text-right text-body leading-8 text-text-primary"
+          dir="rtl"
+          lang="ar"
+        >
+          {villageSpecificReport(
+            incident.khabar,
+            villageDetails?.ref_name_ar,
+          )}
         </p>
         <div className="mt-5 border-t border-border pt-5">
           <h3 className="text-small font-semibold text-text-primary">Note</h3>
@@ -586,66 +631,82 @@ export const IncidentDetailPage = () => {
         <h2 className="text-h4 font-semibold text-text-primary">
           Incident categories
         </h2>
-        {emptyCategories.map(({ key, label }) => (
-          <details
-            key={key}
-            className="rounded-lg border border-border bg-surface-raised"
-            open={editingSection === key ? true : undefined}
-          >
-            <summary className="cursor-pointer px-5 py-4 text-small font-semibold text-text-primary">
-              <span className="flex items-center justify-between gap-3">
-                <span>{label}</span>
-                {editingSection !== key ? (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="shrink-0"
-                    disabled={isLockedByAnother}
-                    onClick={async (event) => {
-                      event.preventDefault();
-                      if (!incidentId) return;
-                      setActionError("");
-                      try {
-                        await acquireIncidentEditLock(incidentId);
-                        await refetch();
-                        setEditingSection(key);
-                      } catch (error) {
-                        setActionError(isAxiosError(error) && error.response?.status === 409
-                          ? "This incident is currently being edited by another administrator."
-                          : "Could not open this section for editing.");
-                        await refetch();
+        {incidentCategorySections.map(({ key, label }) => {
+          const details = incident[key];
+          const group = fieldGroupForSection(key);
+          const filledFieldCount = details && group ? reportedCount(details, group) : 0;
+
+          return (
+            <details
+              key={key}
+              className="rounded-lg border border-border bg-surface-raised"
+              open={editingSection === key ? true : undefined}
+            >
+              <summary className="cursor-pointer px-5 py-4 text-small font-semibold text-text-primary">
+                <span className="flex items-center justify-between gap-3">
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span>{label}</span>
+                    <StatusBadge
+                      label={
+                        filledFieldCount === 0
+                          ? "No data"
+                          : `${filledFieldCount} ${filledFieldCount === 1 ? "field" : "fields"} filled`
                       }
-                    }}
-                  >
-                    {isLockedByAnother ? "Being edited" : "Edit"}
-                  </Button>
-                ) : null}
-              </span>
-            </summary>
-            {editingSection === key ? (
-              <IncidentCategorySectionEditForm
-                sectionKey={key}
-                details={incident[key]}
-                onCancel={async () => {
-                  if (incidentId) await releaseIncidentEditLock(incidentId);
-                  setEditingSection(null);
-                  await refetch();
-                }}
-                onSave={async (fields) => {
-                  if (!incidentId) return;
-                  await updateIncidentDetails(incidentId, fields, incident.version);
-                  await refetch();
-                  setEditingSection(null);
-                }}
-              />
-            ) : (
-              <IncidentCategorySectionFields
-                sectionKey={key}
-                details={incident[key]}
-              />
-            )}
-          </details>
-        ))}
+                      variant={filledFieldCount > 0 ? "success" : "neutral"}
+                    />
+                  </span>
+                  {editingSection !== key ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="shrink-0"
+                      disabled={isLockedByAnother}
+                      onClick={async (event) => {
+                        event.preventDefault();
+                        if (!incidentId) return;
+                        setActionError("");
+                        try {
+                          await acquireIncidentEditLock(incidentId);
+                          await refetch();
+                          setEditingSection(key);
+                        } catch (error) {
+                          setActionError(isAxiosError(error) && error.response?.status === 409
+                            ? "This incident is currently being edited by another administrator."
+                            : "Could not open this section for editing.");
+                          await refetch();
+                        }
+                      }}
+                    >
+                      {isLockedByAnother ? "Being edited" : "Edit"}
+                    </Button>
+                  ) : null}
+                </span>
+              </summary>
+              {editingSection === key ? (
+                <IncidentCategorySectionEditForm
+                  sectionKey={key}
+                  details={details}
+                  onCancel={async () => {
+                    if (incidentId) await releaseIncidentEditLock(incidentId);
+                    setEditingSection(null);
+                    await refetch();
+                  }}
+                  onSave={async (fields) => {
+                    if (!incidentId) return;
+                    await updateIncidentDetails(incidentId, fields, incident.version);
+                    await refetch();
+                    setEditingSection(null);
+                  }}
+                />
+              ) : (
+                <IncidentCategorySectionFields
+                  sectionKey={key}
+                  details={details}
+                />
+              )}
+            </details>
+          );
+        })}
       </section>
 
 

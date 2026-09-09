@@ -780,6 +780,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                     raw_message_id=raw_message_id,
                 ),
                 casualties=raw_category.casualties,
+                vehicles=raw_category.vehicles,
             )
         return validated
 

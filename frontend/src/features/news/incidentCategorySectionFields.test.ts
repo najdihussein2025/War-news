@@ -46,4 +46,10 @@ describe("incident category section field selection", () => {
     const group = fieldGroupForSection("press")!;
     expect(reportedCount({}, group)).toBe(0);
   });
+
+  it("does not count a missing DID value just because its flag is set", () => {
+    const group = fieldGroupForSection("vehicles")!;
+
+    expect(reportedCount({ moto: 1 }, group)).toBe(1);
+  });
 });

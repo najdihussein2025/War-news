@@ -332,12 +332,13 @@ def test_incident_list_item_accepts_excel_import_without_raw_message() -> None:
     assert item.raw_status is None
 
 
-def test_list_filters_needs_verification_uses_column_not_match_result_json() -> None:
+def test_list_filters_needs_verification_requires_active_duplicate_flag() -> None:
     filters = IncidentRepository._list_filters(
         IncidentListParams(verification_status="needs_verification")
     )
     compiled = " ".join(str(f) for f in filters).lower()
     assert "incidents.verification_status" in compiled
+    assert "incidents.duplicate_flag" in compiled
     assert "any_village_low_confidence" not in compiled
     assert "match_result" not in compiled
 

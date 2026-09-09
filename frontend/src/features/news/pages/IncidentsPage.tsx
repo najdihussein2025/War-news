@@ -163,7 +163,9 @@ export const IncidentsPage = () => {
   const verificationBadge = (row: Incident) => {
     if (row.verification_status === "verified") return { label: "Verified", variant: "success" as const };
     if (row.verification_status === "rejected") return { label: "Rejected", variant: "danger" as const };
-    if (row.verification_status === "needs_verification") return { label: "Needs verification", variant: "warning" as const };
+    if (row.verification_status === "needs_verification" && row.duplicate_flag === "possible") {
+      return { label: "Needs verification", variant: "warning" as const };
+    }
     return { label: "Automatically processed", variant: "neutral" as const };
   };
   const sourceOptions = useMemo<SelectOption[]>(() => {

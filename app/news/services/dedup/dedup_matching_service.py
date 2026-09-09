@@ -82,6 +82,7 @@ class DedupMatchingService(DedupMatchingInterface):
                 time_gap_seconds=gap_seconds,
                 text_similarity=None,
                 embedding_similarity=float(embedding_similarity),
+                token_similarity=None,
             )
             if result.verdict == "distinct":
                 continue

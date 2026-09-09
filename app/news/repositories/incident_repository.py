@@ -69,6 +69,7 @@ from app.news.services.incident_details.casualty_transition_backstop import (
     detect_casualty_transition_backstop,
 )
 from app.news.services.incident_details.incident_detail_merge import merge_incident_detail_fields
+from app.news.services.dedup.text_similarity import event_token_similarity
 from app.sources.models import Source, SourceType
 
 
@@ -82,6 +83,7 @@ class FastDedupCandidate:
     time_gap_seconds: float
     text_similarity: float | None
     embedding_similarity: float | None
+    token_similarity: float | None = None
 
 
 class IncidentRepository(IncidentRepositoryInterface):
@@ -722,6 +724,11 @@ class IncidentRepository(IncidentRepositoryInterface):
             if canonical is None:
                 self.db.rollback()
                 raise StaleDataError("The suggested main incident is no longer available.")
+            if incident.village_id != canonical.village_id:
+                self.db.rollback()
+                raise ValueError(
+                    "Incidents from different villages cannot be confirmed as duplicates."
+                )
 
             old_values = self._snapshot_merge_fields(canonical)
             for field in ("deaths", "injuries", "total_deaths", "total_injuries"):
@@ -897,6 +904,10 @@ class IncidentRepository(IncidentRepositoryInterface):
         similarity_score: float,
         status: MatchStatus = MatchStatus.pending,
     ) -> None:
+        if incident.village_id != matched_incident.village_id:
+            raise ValueError(
+                "Duplicate matches require the same canonical village."
+            )
         self.db.add(
             DuplicateMatch(
                 incident_id=incident.id,
@@ -960,14 +971,42 @@ class IncidentRepository(IncidentRepositoryInterface):
             select(IncidentDetail).where(IncidentDetail.incident_id == existing.id)
         )
         old_values = self._snapshot_merge_audit(existing, detail)
-        parsed_transitions = parse_casualty_transitions(
-            new_candidate_data.get("casualty_transitions")
-        )
-        backstop = detect_casualty_transition_backstop(
+        source_text = (
             getattr(raw_message, "raw_text", None)
             if raw_message is not None
             else new_candidate_data.get("khabar")
         )
+        parsed_transitions = parse_casualty_transitions(
+            new_candidate_data.get("casualty_transitions")
+        )
+        backstop = detect_casualty_transition_backstop(source_text)
+        transition_already_applied = False
+        if parsed_transitions:
+            transition_already_applied = (
+                self.db.scalar(
+                    select(IncidentUpdate.id).where(
+                        IncidentUpdate.incident_id == existing.id,
+                        IncidentUpdate.action == UpdateAction.pipeline_merge,
+                        IncidentUpdate.new_values[
+                            "merged_from"
+                        ]["raw_message_id"].astext
+                        == str(raw_message_id),
+                        IncidentUpdate.new_values.has_key(  # type: ignore[attr-defined]
+                            "deaths_transitioned_from_injuries"
+                        ),
+                    )
+                )
+                is not None
+            )
+        if source_text and not backstop.plausible:
+            # The model can confuse separate casualty groups (for example,
+            # "a martyr and two injured") with an injured-to-deceased update.
+            # Never mutate stored totals without explicit transition wording.
+            parsed_transitions = []
+        elif transition_already_applied:
+            # A raw message can reach the same canonical incident through more
+            # than one village match. Its transition must remain idempotent.
+            parsed_transitions = []
 
         transition_fields, transition_provenance, needs_review = (
             apply_casualty_transitions(
@@ -1184,16 +1223,14 @@ class IncidentRepository(IncidentRepositoryInterface):
                     time_gap_seconds=gap_seconds,
                     text_similarity=text_similarity,
                     embedding_similarity=embedding_similarity,
+                    token_similarity=event_token_similarity(
+                        incident.khabar,
+                        candidate_text,
+                    ),
                 )
             )
 
-        candidates.sort(
-            key=lambda c: (
-                c.incident.event_date,
-                c.incident.event_time or time.min,
-                str(c.incident.id),
-            )
-        )
+        candidates.sort(key=lambda c: c.time_gap_seconds)
         return candidates
 
     def find_cross_village_dedup_candidates(
@@ -1274,6 +1311,10 @@ class IncidentRepository(IncidentRepositoryInterface):
                     time_gap_seconds=gap_seconds,
                     text_similarity=text_similarity,
                     embedding_similarity=embedding_similarity,
+                    token_similarity=event_token_similarity(
+                        incident.khabar,
+                        candidate_text,
+                    ),
                 )
             )
 

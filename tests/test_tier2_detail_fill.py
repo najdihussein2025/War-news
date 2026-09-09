@@ -220,6 +220,8 @@ def test_tier2_mid_score_backstop_records_duplicate_match_without_merge() -> Non
         similarity_score=mid_score,
     )
     assert current.duplicate_flag is True
+    assert current.verification_status == "needs_verification"
+    assert current.verification_reason == "Possible duplicate detected during detail extraction"
 
 
 def test_tier2_below_low_threshold_does_not_flag_or_record_match() -> None:

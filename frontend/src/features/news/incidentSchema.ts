@@ -184,7 +184,12 @@ export const fieldValue = (details: IncidentDetails, def: FieldDef) => details[d
 // their controlling flag is set, numerics when non-zero, text when non-empty.
 export const isReported = (details: IncidentDetails, def: FieldDef): boolean => {
   if (def.kind === "did") {
-    return Number(details[def.controlledBy!] ?? 0) === 1;
+    const value = details[def.name];
+    return (
+      Number(details[def.controlledBy!] ?? 0) === 1
+      && typeof value === "string"
+      && value.trim() !== ""
+    );
   }
   const value = details[def.name];
   if (def.kind === "text") {

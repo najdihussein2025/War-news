@@ -3,8 +3,8 @@
 
 After Part 2's Tier-2 backstop fix, new orphans should not be created on that
 path. This script addresses the *existing* backlog: active incidents with
-``duplicate_flag = true`` and **no** ``duplicate_matches`` row at all (as
-``incident_id`` or ``matched_incident_id``, any status).
+``duplicate_flag = true`` and no actionable outgoing pending
+``duplicate_matches`` row.
 
 These flags are not reviewable in the UI (resolve requires a pending match),
 so the approved treatment is to clear the flag. Patterns from the Part 2
@@ -16,7 +16,9 @@ recon:
 * A — fast-path edge cases (small)
 
 Pattern D is treated the same as B/C after a fingerprint check: if there is
-still no match row of any status, there is nothing to review against.
+still no pending match with this incident as the duplicate, there is nothing
+to review against. A row where this incident is only the suggested canonical
+target for another duplicate does not make this incident reviewable.
 
 When clearing the flag, also re-evaluate ``verification_status`` with
 ``_initial_verification_status`` so a flag-only NV does not remain after the
@@ -135,7 +137,9 @@ def fetch_plans(db: Session) -> list[OrphanPlan]:
               AND i.duplicate_flag = true
               AND NOT EXISTS (
                 SELECT 1 FROM duplicate_matches dm
-                WHERE dm.incident_id = i.id OR dm.matched_incident_id = i.id
+                WHERE dm.incident_id = i.id
+                  AND dm.status = 'pending'
+                  AND dm.matched_incident_id IS NOT NULL
               )
             ORDER BY i.created_at DESC
             """
@@ -194,8 +198,8 @@ def summarize(plans: list[OrphanPlan]) -> dict[str, int]:
 def print_summary(counts: dict[str, int]) -> None:
     print("=== Orphan duplicate_flag cleanup (dry-run) ===")
     print(
-        "Scope: active incidents with duplicate_flag=true and zero "
-        "duplicate_matches rows (any status)."
+        "Scope: active incidents with duplicate_flag=true and no actionable "
+        "outgoing pending duplicate match."
     )
     for key, value in counts.items():
         print(f"  {key}: {value}")
@@ -262,7 +266,8 @@ def apply_plans(db: Session, plans: list[OrphanPlan]) -> dict[str, int]:
                   AND NOT EXISTS (
                     SELECT 1 FROM duplicate_matches dm
                     WHERE dm.incident_id = incidents.id
-                       OR dm.matched_incident_id = incidents.id
+                      AND dm.status = 'pending'
+                      AND dm.matched_incident_id IS NOT NULL
                   )
                 """
             ),
@@ -284,7 +289,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
             "Dry-run or apply cleanup of orphaned duplicate_flag rows with no "
-            "backing duplicate_matches."
+            "actionable outgoing pending duplicate match."
         )
     )
     parser.add_argument("--apply", action="store_true")

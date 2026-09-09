@@ -166,6 +166,32 @@ def test_config_from_settings_matches_approved_defaults() -> None:
     assert cfg.embedding_possible == 0.78
     assert cfg.embedding_high == 0.86
     assert cfg.cross_village_text_min == 0.87
+    assert cfg.event_token_overlap_min == 0.72
+
+
+def test_token_overlap_catches_same_event_wording_variant(
+    service: DuplicateComparisonService,
+) -> None:
+    result = service.compare(
+        time_gap_seconds=3 * MIN,
+        text_similarity=0.40,
+        embedding_similarity=None,
+        token_similarity=0.75,
+    )
+    assert result.verdict == "high_confidence_duplicate"
+    assert result.similarity_method == "token"
+
+
+def test_token_overlap_does_not_bypass_time_window(
+    service: DuplicateComparisonService,
+) -> None:
+    result = service.compare(
+        time_gap_seconds=31 * MIN,
+        text_similarity=0.40,
+        embedding_similarity=None,
+        token_similarity=0.95,
+    )
+    assert result.verdict == "distinct"
 
 
 @pytest.mark.parametrize(

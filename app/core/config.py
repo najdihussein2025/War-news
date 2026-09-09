@@ -108,6 +108,9 @@ class Settings(BaseSettings):
     # never used to bypass the 6h cutoff).
     dedup_fastpath_embedding_high: float = 0.86
     dedup_fastpath_embedding_possible: float = 0.78
+    # Same-village + same-condition wording-variant backstop inside the 30-minute
+    # event-identity window.
+    dedup_fastpath_event_token_overlap_min: float = 0.72
     fast_path_embedding_wait_minutes: int = 20
     # Cross-village backstop: when village_id differs, never auto-merge; only flag
     # possible_duplicate within ≤30min at this elevated text similarity (recon

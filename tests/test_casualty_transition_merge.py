@@ -15,13 +15,20 @@ from app.news.services.incident_details.category_mapper import compute_rollups
 
 
 class _MergeSessionStub:
-    def __init__(self, *, raw_message: object | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        raw_message: object | None = None,
+        transition_update_id: int | None = None,
+    ) -> None:
         self.raw_message = raw_message or SimpleNamespace(
             source_name="CNRS Webhook",
             origin_account=None,
             source_platform=None,
             raw_text="بقي 3 جرحى وتوفي واحد من جرحى الغارة السابقة",
         )
+        self.transition_update_id = transition_update_id
+        self.scalar_calls = 0
         self.added: list[object] = []
 
     def get(self, model, pk):
@@ -30,7 +37,8 @@ class _MergeSessionStub:
         return None
 
     def scalar(self, _statement):
-        return None
+        self.scalar_calls += 1
+        return self.transition_update_id if self.scalar_calls > 1 else None
 
     def add(self, value: object) -> None:
         self.added.append(value)
@@ -121,6 +129,66 @@ def test_transition_followup_incremental_death_only_merge_applies_transition() -
     assert existing.injuries == 3
 
 
+def test_ungrounded_transition_is_ignored_for_separate_casualty_groups() -> None:
+    existing = Incident(
+        id=uuid4(),
+        deaths=9,
+        injuries=5,
+        total_deaths=9,
+        total_injuries=5,
+        details_pending=False,
+    )
+    db = _MergeSessionStub(
+        raw_message=SimpleNamespace(
+            source_name="Telegram",
+            origin_account=None,
+            source_platform=None,
+            raw_text=(
+                "أدت الغارة على منزل إلى 8 شهداء و11 جريحا، "
+                "والغارة على سيارة إلى شهيد وجريحين"
+            ),
+        )
+    )
+
+    IncidentRepository(db).merge_existing(  # type: ignore[arg-type]
+        existing,
+        _followup_candidate_data(
+            deaths=9,
+            injuries=13,
+            casualty_transitions=_injured_to_deceased(1),
+        ),
+        raw_message_id=5050,
+    )
+
+    assert existing.deaths == 9
+    assert existing.injuries == 13
+
+
+def test_same_raw_message_transition_is_applied_only_once() -> None:
+    existing = Incident(
+        id=uuid4(),
+        deaths=10,
+        injuries=4,
+        total_deaths=10,
+        total_injuries=4,
+        details_pending=False,
+    )
+    db = _MergeSessionStub(transition_update_id=1178)
+
+    IncidentRepository(db).merge_existing(  # type: ignore[arg-type]
+        existing,
+        _followup_candidate_data(
+            deaths=None,
+            injuries=None,
+            casualty_transitions=_injured_to_deceased(1),
+        ),
+        raw_message_id=5050,
+    )
+
+    assert existing.deaths == 10
+    assert existing.injuries == 4
+
+
 def test_transition_wins_over_conflicting_restated_injury_count() -> None:
     existing = Incident(
         id=uuid4(),
@@ -173,7 +241,8 @@ def test_transition_clamps_at_zero_and_flags_review() -> None:
     assert existing.deaths == 1
     assert existing.duplicate_flag is True
     assert existing.verification_status == "needs_verification"
-    assert existing.verification_reason == (
+    assert existing.verification_reason is not None
+    assert existing.verification_reason.startswith(
         "Possible duplicate — casualty count conflict detected during merge."
     )
     update = next(item for item in db.added if isinstance(item, IncidentUpdate))

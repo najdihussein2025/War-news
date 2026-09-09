@@ -37,7 +37,7 @@ from typing import Literal
 from app.core.config import Settings, settings
 
 Verdict = Literal["distinct", "possible_duplicate", "high_confidence_duplicate"]
-SimilarityMethod = Literal["text", "embedding"]
+SimilarityMethod = Literal["text", "embedding", "token"]
 
 _VERDICT_RANK: dict[Verdict, int] = {
     "distinct": 0,
@@ -69,6 +69,7 @@ class DuplicateComparisonConfig:
     embedding_possible: float
     embedding_high: float
     cross_village_text_min: float = 0.87
+    event_token_overlap_min: float = 0.72
 
     @classmethod
     def from_settings(cls, source: Settings | None = None) -> "DuplicateComparisonConfig":
@@ -84,6 +85,7 @@ class DuplicateComparisonConfig:
             embedding_possible=s.dedup_fastpath_embedding_possible,
             embedding_high=s.dedup_fastpath_embedding_high,
             cross_village_text_min=s.dedup_cross_village_text_min,
+            event_token_overlap_min=s.dedup_fastpath_event_token_overlap_min,
         )
 
 
@@ -97,6 +99,7 @@ class DuplicateComparisonService:
         time_gap_seconds: float,
         text_similarity: float | None,
         embedding_similarity: float | None,
+        token_similarity: float | None = None,
         village_match_uncertain: bool = False,
     ) -> DuplicateComparisonResult:
         gap = abs(float(time_gap_seconds))
@@ -107,6 +110,7 @@ class DuplicateComparisonService:
                 gap=gap,
                 text_similarity=text_similarity,
                 embedding_similarity=embedding_similarity,
+                token_similarity=token_similarity,
             )
 
         # Event identity is bounded to 30 minutes. Reports outside that window
@@ -136,6 +140,14 @@ class DuplicateComparisonService:
                     "embedding",
                 )
             )
+        if token_similarity is not None:
+            candidates.append(
+                (
+                    self._token_verdict(gap, float(token_similarity)),
+                    float(token_similarity),
+                    "token",
+                )
+            )
 
         if not candidates:
             return DuplicateComparisonResult(
@@ -161,6 +173,7 @@ class DuplicateComparisonService:
         gap: float,
         text_similarity: float | None,
         embedding_similarity: float | None,
+        token_similarity: float | None,
     ) -> DuplicateComparisonResult:
         """Human-review-only path when village_id disagrees.
 
@@ -188,11 +201,23 @@ class DuplicateComparisonService:
             candidates.append(
                 ("possible_duplicate", float(embedding_similarity), "embedding")
             )
+        if (
+            token_similarity is not None
+            and float(token_similarity) >= cfg.event_token_overlap_min
+        ):
+            candidates.append(("possible_duplicate", float(token_similarity), "token"))
         if not candidates:
+            score = text_similarity or embedding_similarity or token_similarity or 0.0
             return DuplicateComparisonResult(
                 verdict="distinct",
-                similarity_score=float(text_similarity or embedding_similarity or 0.0),
-                similarity_method="text" if text_similarity is not None else "embedding",
+                similarity_score=float(score),
+                similarity_method=(
+                    "text"
+                    if text_similarity is not None
+                    else "embedding"
+                    if embedding_similarity is not None
+                    else "token"
+                ),
                 time_gap_seconds=gap,
             )
         verdict, score, method = max(
@@ -217,6 +242,14 @@ class DuplicateComparisonService:
         cfg = self.config
         if gap <= cfg.gap_mid_seconds:
             if embedding >= cfg.embedding_possible:
+                return "high_confidence_duplicate"
+            return "distinct"
+        return "distinct"
+
+    def _token_verdict(self, gap: float, token: float) -> Verdict:
+        cfg = self.config
+        if gap <= cfg.gap_mid_seconds:
+            if token >= cfg.event_token_overlap_min:
                 return "high_confidence_duplicate"
             return "distinct"
         return "distinct"

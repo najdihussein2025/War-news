@@ -55,6 +55,8 @@ VEHICLE_TERMS = (
     "مركبات",
     "آلية",
     "آليات",
+    # Stem form also matches possessed inflections such as "دراجتهما".
+    "دراج",
     "دراجة",
     "دراجات",
     "موتور",
@@ -342,6 +344,18 @@ class OllamaPresenceGateService:
                 )
             )
 
+        if (
+            ExtractionCategoryKey.vehicles not in seen
+            and self._has_vehicle_language("", post_text)
+        ):
+            updated_categories.append(ExtractionCategoryKey.vehicles)
+            updated_evidence.append(
+                PresenceGateEvidence(
+                    category_key=ExtractionCategoryKey.vehicles,
+                    evidence_span=self._extract_vehicle_evidence_span(post_text),
+                )
+            )
+
         return updated_categories, updated_evidence
 
     def _has_civil_defense_organization_language(self, post_text: str) -> bool:
@@ -353,6 +367,15 @@ class OllamaPresenceGateService:
             if index >= 0:
                 start = max(0, index - 20)
                 end = min(len(post_text), index + len(term) + 40)
+                return post_text[start:end].strip()
+        return post_text[:80].strip()
+
+    def _extract_vehicle_evidence_span(self, post_text: str) -> str:
+        for term in VEHICLE_TERMS:
+            index = post_text.find(term)
+            if index >= 0:
+                start = max(0, index - 30)
+                end = min(len(post_text), index + len(term) + 50)
                 return post_text[start:end].strip()
         return post_text[:80].strip()
 

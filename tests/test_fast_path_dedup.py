@@ -4,8 +4,6 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import uuid4
 
-import pytest
-
 from app.news.repositories.incident_repository import FastDedupCandidate
 from app.news.services.dedup.duplicate_comparison_service import (
     DuplicateComparisonConfig,
@@ -15,6 +13,7 @@ from app.news.services.dedup.fast_path_dedup import (
     FastPathDedupOutcome,
     FastPathDedupService,
 )
+from app.news.services.dedup.text_similarity import event_token_similarity
 
 _CONFIG = DuplicateComparisonConfig(
     lookup_window_days=7,
@@ -56,12 +55,19 @@ def _service(repo: _IncidentRepoStub) -> FastPathDedupService:
     return FastPathDedupService(repo, DuplicateComparisonService(_CONFIG))
 
 
-def _candidate(*, gap: float, text: float | None, embedding: float | None = None):
+def _candidate(
+    *,
+    gap: float,
+    text: float | None,
+    embedding: float | None = None,
+    token: float | None = None,
+):
     return FastDedupCandidate(
         incident=SimpleNamespace(id=uuid4(), raw_message_id=100),
         time_gap_seconds=gap,
         text_similarity=text,
         embedding_similarity=embedding,
+        token_similarity=token,
     )
 
 
@@ -101,6 +107,30 @@ def test_semantic_match_inside_30_minutes_is_confident_duplicate() -> None:
 
     assert decision.outcome == FastPathDedupOutcome.confident_duplicate
     assert decision.matched_incident is not None
+
+
+def test_event_token_overlap_catches_same_news_wording_variant() -> None:
+    repo = _IncidentRepoStub([_candidate(gap=3 * 60, text=0.40, token=0.75)])
+    decision = _decide(_service(repo))
+
+    assert decision.outcome == FastPathDedupOutcome.confident_duplicate
+    assert decision.similarity_method == "token"
+
+
+def test_zibdine_motorcycle_reports_have_high_event_token_overlap() -> None:
+    original = (
+        "عاجل | مراسل المنار: الطيران المسير المعادي أغار على دراجة نارية "
+        "في بلدة زبدين"
+    )
+    variant = (
+        "الطيران المسير المعادي استهدف دراجة نارية على طريق عام مرج حاروف - "
+        "زبدين"
+    )
+
+    score = event_token_similarity(original, variant)
+
+    assert score is not None
+    assert score >= _CONFIG.event_token_overlap_min
 
 
 def test_materialize_when_no_candidates() -> None:
@@ -161,10 +191,8 @@ def test_embedding_substitutes_for_missing_text() -> None:
     assert decision.similarity_method == "embedding"
 
 
-def test_nabatiyeh_style_same_village_flags_duplicate_split_village_cross_flags() -> None:
-    """Same village_id still auto-merges; split village_id now flags possible_duplicate
-    at elevated similarity (recon 0.875) instead of silently materializing.
-    """
+def test_same_text_deduplicates_same_village_only() -> None:
+    """Identical bulletin text may legitimately produce different village rows."""
     shared_village_id = 703
     split_village_id = 1153
     condition_id = 12
@@ -187,25 +215,13 @@ def test_nabatiyeh_style_same_village_flags_duplicate_split_village_cross_flags(
         village_id=split_village_id,
         condition_id=condition_id,
     )
-    assert decision_split.outcome == FastPathDedupOutcome.possible_duplicate
-    assert decision_split.similarity_score == pytest.approx(0.875)
-    assert repo_split.last_cross_query["village_id"] == split_village_id
-    assert repo_split.last_cross_query["min_text_similarity"] == 0.87
+    assert decision_split.outcome == FastPathDedupOutcome.materialize
+    assert repo_split.last_cross_query is None
 
 
-def test_cross_village_never_returns_confident_duplicate() -> None:
-    # Even at 0.99 text, cross-village path is review-only.
+def test_cross_village_candidates_are_never_queried() -> None:
     cross = _candidate(gap=60, text=0.99)
     repo = _IncidentRepoStub([], cross_candidates=[cross])
     decision = _decide(_service(repo), village_id=995, condition_id=1)
-    assert decision.outcome == FastPathDedupOutcome.possible_duplicate
-    assert decision.outcome != FastPathDedupOutcome.confident_duplicate
-
-
-def test_cross_village_below_elevated_threshold_stays_materialize() -> None:
-    # 0.80 would be high_confidence same-village; cross-village requires 0.87.
-    cross = _candidate(gap=60, text=0.80)
-    repo = _IncidentRepoStub([], cross_candidates=[cross])
-    # Stub still returns the row; comparison service must reject it.
-    decision = _decide(_service(repo), village_id=995, condition_id=1)
     assert decision.outcome == FastPathDedupOutcome.materialize
+    assert repo.last_cross_query is None

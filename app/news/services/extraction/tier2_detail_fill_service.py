@@ -9,7 +9,14 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.llm.dtos import CasualtyScope, ExtractionCategory, ExtractionCategoryKey, ExtractionResult
 from app.llm.services.ollama_extraction_service import OllamaExtractionService
-from app.news.models import Incident, IncidentDetail, MessageStatus, RawMessage
+from app.news.models import (
+    Incident,
+    IncidentDetail,
+    IncidentUpdate,
+    MessageStatus,
+    RawMessage,
+    UpdateAction,
+)
 from app.news.repositories.emergency_organization_repository import (
     EmergencyOrganizationRepository,
 )
