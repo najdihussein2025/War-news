@@ -7,7 +7,7 @@ from sqlalchemy import TextClause, text
 from app.news.models import MessageStatus
 
 ELIGIBLE_MATCH_STATUSES = frozenset({"matched", "matched_low_confidence"})
-AIR_VIOLATION_CONDITION_IDS = frozenset({35, 36, 38, 45})
+AIR_VIOLATION_CONDITION_IDS = frozenset({35, 36, 38})
 
 ERROR_AIR_VIOLATION = "fast_path: routed to air_violations; not an incident"
 ERROR_UNMATCHED_CONDITION = "fast_path: unmatched or missing condition"
@@ -23,7 +23,7 @@ FAST_PATH_MATERIALIZABLE_SQL = """
     'matched', 'matched_low_confidence'
   )
   AND (raw_messages.match_result->>'matched_condition_id') ~ '^[0-9]+$'
-  AND (raw_messages.match_result->>'matched_condition_id')::int NOT IN (35, 36, 38, 45)
+  AND (raw_messages.match_result->>'matched_condition_id')::int NOT IN (35, 36, 38)
   AND (
     (
       jsonb_typeof(raw_messages.match_result->'village_matches') = 'array'
@@ -115,14 +115,14 @@ def ineligible_fast_path_update_sql() -> TextClause:
             status = CASE
                 WHEN (raw_messages.match_result->>'matched_condition_id') ~ '^[0-9]+$'
                      AND (raw_messages.match_result->>'matched_condition_id')::int
-                         IN (35, 36, 38, 45)
+                         IN (35, 36, 38)
                     THEN CAST(:routed_air_violation_status AS message_status)
                 ELSE CAST(:error_status AS message_status)
             END,
             error_message = CASE
                 WHEN (raw_messages.match_result->>'matched_condition_id') ~ '^[0-9]+$'
                      AND (raw_messages.match_result->>'matched_condition_id')::int
-                         IN (35, 36, 38, 45)
+                         IN (35, 36, 38)
                     THEN :air_violation
                 WHEN (raw_messages.match_result->>'condition_match_status') NOT IN (
                         'matched', 'matched_low_confidence'

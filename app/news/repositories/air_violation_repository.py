@@ -401,7 +401,7 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         return AirViolationDTO.model_validate(self._with_village_labels([row])[0])
 
     def route_from_match(self, message: RawMessage, result: MatchResultDTO) -> bool:
-        if result.matched_condition_id not in {35, 36, 38, 45}:
+        if result.matched_condition_id not in {35, 36, 38}:
             return False
         matched_village_id: int | None = next(
             (
@@ -454,7 +454,7 @@ class AirViolationRepository(AirViolationRepositoryInterface):
 
     @staticmethod
     def _filters(params: AirViolationListParams) -> list[object]:
-        filters: list[object] = []
+        filters: list[object] = [AirViolation.condition_id.in_((35, 36, 38))]
         if params.imported_only:
             filters.append(AirViolation.raw_message_id.in_(
                 select(RawMessage.id).where(RawMessage.raw_payload['import'].as_string() == 'khabar')
