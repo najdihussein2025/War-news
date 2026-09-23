@@ -13,6 +13,7 @@ import {
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ROLES, type Role } from "../constants/roles";
 import { cn } from "../lib/cn";
+import { incidentsNavTarget } from "../lib/rolePath";
 import { useAuthStore } from "../stores/authStore";
 import { logout as revokeSession } from "../features/auth/api";
 
