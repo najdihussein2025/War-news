@@ -25,6 +25,7 @@ import { useContentSourcesQuery } from "../../sources/hooks";
 import type { FilteredNewsItem, Incident } from "../types";
 
 const DEFAULT_PAGE_SIZE = 150;
+const PAGE_SIZE_OPTIONS = new Set([50, 100, 150]);
 const DEFAULT_EVENT_DATE_FROM = "2026-08-20";
 const NEWS_PAGE_SIZE = 100;
 const DEFAULT_NEWS_DATE_FROM = "2026-08-01";
@@ -32,6 +33,11 @@ const twoLineClampClass =
   "overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]";
 const threeLineClampClass =
   "overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]";
+
+const parsePageSize = (value: string | null) => {
+  const parsed = Number(value);
+  return PAGE_SIZE_OPTIONS.has(parsed) ? parsed : DEFAULT_PAGE_SIZE;
+};
 
 const newsStatusVariant = (status: string) => {
   if (status === "materialized") return "success" as const;
@@ -136,7 +142,6 @@ export const IncidentsPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [cursorHistory, setCursorHistory] = useState<string[]>([]);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [reviewRow, setReviewRow] = useState<Incident | null>(null);
   const [reviewError, setReviewError] = useState("");
   const [isReviewing, setIsReviewing] = useState(false);
@@ -160,6 +165,7 @@ export const IncidentsPage = () => {
   const sortOrder = (params.get("sort_order") as "newest" | "oldest" | null) ?? "newest";
   const duplicateOnly = params.get("duplicate_only") === "true";
   const hasCasualties = params.get("has_casualties") === "true";
+  const pageSize = parsePageSize(params.get("page_size"));
   const hasFilters = Boolean(
     village || condition || sourceName || verificationStatus || eventDateFrom || eventDateTo || duplicateOnly || hasCasualties,
   );
@@ -657,8 +663,10 @@ export const IncidentsPage = () => {
                     placeholder="150 per page"
                     className="w-full"
                     onChange={(value) => {
-                      setPageSize(Number(value) || DEFAULT_PAGE_SIZE);
-                      setCursorHistory([]);
+                      updateParam(
+                        "page_size",
+                        value === String(DEFAULT_PAGE_SIZE) ? "" : value,
+                      );
                     }}
                   />
                 </div>
@@ -684,12 +692,16 @@ export const IncidentsPage = () => {
                       type="button"
                       variant="ghost"
                       className="h-11 w-full rounded-xl px-4 sm:w-auto"
-                      onClick={() =>
-                        setParams({
-                          event_date_from: DEFAULT_EVENT_DATE_FROM,
-                          event_date_to: getBeirutDate(),
-                        })
-                      }
+                      onClick={() => {
+                        const next = new URLSearchParams();
+                        next.set("event_date_from", DEFAULT_EVENT_DATE_FROM);
+                        next.set("event_date_to", getBeirutDate());
+                        if (pageSize !== DEFAULT_PAGE_SIZE) {
+                          next.set("page_size", String(pageSize));
+                        }
+                        setCursorHistory([]);
+                        setParams(next);
+                      }}
                     >
                       Clear filters
                     </Button>
