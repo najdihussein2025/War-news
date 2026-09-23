@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { isAxiosError } from "axios";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { StatusBadge } from "../../../components/StatusBadge";
 import {
   Button,
@@ -15,53 +14,25 @@ import {
   type SelectOption,
 } from "../../../components/ui";
 import { useLiveQueryTitleAddon } from "../../../hooks/useLiveQueryTitleAddon";
-import { formatDate, formatDateTime } from "../../../lib/formatters";
+import { formatDate } from "../../../lib/formatters";
 import { getBeirutDate, normalizeDateInputValue } from "../../../lib/localDate";
 import { roleBaseFromPath } from "../../../lib/rolePath";
 import { ConditionSelect } from "../components/ConditionSelect";
 import { useConditionsQuery, useIncidentStream, useIncidentsQuery, useVillagesQuery } from "../hooks";
-import { createIncident, getFilteredNews, reviewIncident } from "../api";
+import { createIncident, reviewIncident } from "../api";
 import { useContentSourcesQuery } from "../../sources/hooks";
-import type { FilteredNewsItem, Incident } from "../types";
+import type { Incident } from "../types";
 
 const DEFAULT_PAGE_SIZE = 150;
 const PAGE_SIZE_OPTIONS = new Set([50, 100, 150]);
 const DEFAULT_EVENT_DATE_FROM = "2026-08-20";
-const NEWS_PAGE_SIZE = 100;
-const DEFAULT_NEWS_DATE_FROM = "2026-08-01";
 const twoLineClampClass =
   "overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]";
-const threeLineClampClass =
-  "overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]";
 
 const parsePageSize = (value: string | null) => {
   const parsed = Number(value);
   return PAGE_SIZE_OPTIONS.has(parsed) ? parsed : DEFAULT_PAGE_SIZE;
 };
-
-const newsStatusVariant = (status: string) => {
-  if (status === "materialized") return "success" as const;
-  if (status === "duplicate") return "neutral" as const;
-  if (status === "error") return "danger" as const;
-  return "accent" as const;
-};
-
-const eventDay = (value: string) =>
-  new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Beirut",
-    month: "short",
-    day: "2-digit",
-    year: "numeric",
-  }).format(new Date(value));
-
-const eventHour = (value: string) =>
-  new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Beirut",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).format(new Date(value));
 
 const relatedSourceNotes = (row: Incident, pageRows: Incident[]): string[] => {
   const notes: string[] = [];
@@ -146,14 +117,6 @@ export const IncidentsPage = () => {
   const [reviewRow, setReviewRow] = useState<Incident | null>(null);
   const [reviewError, setReviewError] = useState("");
   const [isReviewing, setIsReviewing] = useState(false);
-  // Filtered news state
-  const [newsPage, setNewsPage] = useState(1);
-  const [newsDateFrom, setNewsDateFrom] = useState(DEFAULT_NEWS_DATE_FROM);
-  const [newsDateTo, setNewsDateTo] = useState(getBeirutDate());
-  const [newsSourceName, setNewsSourceName] = useState("");
-  const [newsStatus, setNewsStatus] = useState("");
-  const [newsSearch, setNewsSearch] = useState("");
-  const newsOffset = (newsPage - 1) * NEWS_PAGE_SIZE;
 
   const cursor = cursorHistory.at(-1);
   const page = cursorHistory.length + 1;
@@ -218,124 +181,6 @@ export const IncidentsPage = () => {
   } = useContentSourcesQuery();
   useLiveQueryTitleAddon(data?.latest_incident_at ?? null, isFetching);
 
-  // Filtered news query — always related to incidents only
-  const newsFilters = useMemo(
-    () => ({
-      limit: NEWS_PAGE_SIZE,
-      offset: newsOffset,
-      eventDateFrom: newsDateFrom || undefined,
-      eventDateTo: newsDateTo || undefined,
-      sourceName: newsSourceName || undefined,
-      status: newsStatus || undefined,
-      relatedOnly: true,
-      search: newsSearch || undefined,
-    }),
-    [newsDateFrom, newsDateTo, newsOffset, newsSearch, newsSourceName, newsStatus],
-  );
-  const newsQuery = useQuery({
-    queryKey: ["filtered-news", newsFilters],
-    queryFn: () => getFilteredNews(newsFilters),
-  });
-  const newsRows = newsQuery.data?.items ?? [];
-  const newsTotal = newsQuery.data?.total ?? 0;
-  const newsTotalPages = Math.max(1, Math.ceil(newsTotal / NEWS_PAGE_SIZE));
-  const newsSourceOptions = useMemo(() => {
-    const names = new Set(newsRows.map((r) => r.source_name).filter(Boolean) as string[]);
-    return [...names].sort().map((name) => ({ value: name, label: name }));
-  }, [newsRows]);
-
-  const newsColumns: Array<DataTableColumn<FilteredNewsItem>> = [
-    {
-      key: "index",
-      header: "#",
-      headerClassName: "w-12 whitespace-nowrap",
-      cellClassName: "w-12 tabular-nums text-text-muted",
-      render: (row) => newsOffset + newsRows.indexOf(row) + 1,
-    },
-    {
-      key: "time",
-      header: "Event Day / Hour",
-      headerClassName: "w-[12rem] whitespace-nowrap",
-      cellClassName: "w-[12rem]",
-      render: (row) => (
-        <div className="space-y-0.5">
-          <p className="font-semibold text-text-primary">{eventDay(row.event_at)}</p>
-          <p className="text-caption font-mono text-accent">{eventHour(row.event_at)}</p>
-        </div>
-      ),
-    },
-    {
-      key: "report",
-      header: "Filtered News (Khabar)",
-      headerClassName: "min-w-[24rem]",
-      cellClassName: "min-w-[24rem]",
-      render: (row) => (
-        <div className="space-y-1.5">
-          <p className={`${threeLineClampClass} whitespace-normal leading-6 text-text-primary`} dir="auto">
-            {row.khabar}
-          </p>
-          <div className="flex flex-wrap items-center gap-2 text-caption text-text-muted">
-            <span>Raw #{row.id}</span>
-            {row.external_message_id ? <span>· ID: {row.external_message_id}</span> : null}
-            {row.source_name ? (
-              <span className="rounded bg-surface-subtle px-1.5 py-0.5 font-medium text-text-secondary">
-                {row.source_name}
-              </span>
-            ) : null}
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: "incident_link",
-      header: "Related Incident",
-      headerClassName: "w-[16rem]",
-      cellClassName: "w-[16rem]",
-      render: (row) => {
-        if (!row.incident_id) {
-          return (
-            <span className="inline-flex items-center rounded-md bg-surface-subtle px-2.5 py-1 text-caption text-text-muted">
-              No incident linked
-            </span>
-          );
-        }
-        return (
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-              <span className="font-medium text-text-primary text-small">Incident linked</span>
-            </div>
-            {row.village_name || row.condition_name ? (
-              <p className="text-caption text-text-secondary">
-                {row.village_name ? <span>📍 {row.village_name} </span> : null}
-                {row.condition_name ? <span>⚡ {row.condition_name}</span> : null}
-              </p>
-            ) : null}
-          </div>
-        );
-      },
-    },
-    {
-      key: "status",
-      header: "Pipeline Status",
-      headerClassName: "w-[10rem]",
-      cellClassName: "w-[10rem]",
-      render: (row) => (
-        <StatusBadge label={row.status} variant={newsStatusVariant(row.status)} />
-      ),
-    },
-    {
-      key: "reason",
-      header: "Relevance Reason",
-      headerClassName: "w-[16rem]",
-      cellClassName: "w-[16rem]",
-      render: (row) => (
-        <p className={`${threeLineClampClass} text-small leading-5 text-text-muted`}>
-          {row.reasoning ?? (row.verdict === "relevant" ? "Classified as relevant" : "Relevant incident news")}
-        </p>
-      ),
-    },
-  ];
   const rows = data?.items ?? [];
   const total = data?.total ?? 0;
   const flaggedCount = data?.needs_verification_count ?? 0;
@@ -539,7 +384,6 @@ export const IncidentsPage = () => {
         </div>
       </section>
 
-      <>
           <section className="overflow-visible rounded-[1.125rem] border border-border bg-surface-raised shadow-raised">
             <div className="flex flex-col gap-4 rounded-t-[1.125rem] border-b border-border bg-[linear-gradient(180deg,rgba(234,242,251,0.82)_0%,rgba(255,255,255,0.98)_100%)] px-4 py-4 sm:px-5 lg:flex-row lg:items-end lg:justify-between lg:px-6">
               <div className="space-y-2">
@@ -915,103 +759,6 @@ export const IncidentsPage = () => {
               </form>
             </Dialog>
           ) : null}
-
-          {/* Filtered News — Related to Incidents */}
-          <section className="space-y-6">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1">
-                <p className="text-caption font-semibold uppercase tracking-[0.14em] text-text-muted">
-                  Filtered news
-                </p>
-                <h2 className="text-h4 font-semibold text-text-primary">Filtered News (Related to Incidents)</h2>
-                <p className="max-w-3xl text-small leading-6 text-text-muted">
-                  All filtered news saved in the database, ordered chronologically day by day and hour by hour with direct linkage to incidents.
-                </p>
-              </div>
-              <span className="inline-flex items-center rounded-full bg-accent/10 px-3 py-1 text-small font-semibold text-accent">
-                Related to incidents only
-              </span>
-            </div>
-
-            <section className="grid gap-4 rounded-lg border border-border bg-surface-raised p-4 shadow-[0_1px_2px_rgba(11,34,54,0.04)] md:grid-cols-5">
-              <div className="space-y-2">
-                <Label htmlFor="filtered-from">From Date</Label>
-                <Input id="filtered-from" type="date" value={newsDateFrom} onChange={(event) => { setNewsDateFrom(event.target.value); setNewsPage(1); }} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="filtered-to">To Date</Label>
-                <Input id="filtered-to" type="date" value={newsDateTo} onChange={(event) => { setNewsDateTo(event.target.value); setNewsPage(1); }} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="filtered-source">Source</Label>
-                <Select
-                  id="filtered-source"
-                  value={newsSourceName}
-                  placeholder="All sources"
-                  options={newsSourceOptions}
-                  onChange={(value) => { setNewsSourceName(value); setNewsPage(1); }}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="filtered-status">Status</Label>
-                <Select
-                  id="filtered-status"
-                  value={newsStatus}
-                  placeholder="All statuses"
-                  options={[
-                    { value: "parsed", label: "Parsed" },
-                    { value: "materialized", label: "Materialized" },
-                    { value: "duplicate", label: "Duplicate" },
-                    { value: "error", label: "Error" },
-                  ]}
-                  onChange={(value) => { setNewsStatus(value); setNewsPage(1); }}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="filtered-search">Search</Label>
-                <Input id="filtered-search" value={newsSearch} placeholder="Text, village, or ID" onChange={(event) => { setNewsSearch(event.target.value); setNewsPage(1); }} />
-              </div>
-            </section>
-
-            <DataTable
-              columns={newsColumns}
-              rows={newsRows}
-              getRowKey={(row) => String(row.id)}
-              minWidth="1180px"
-              clientSort={false}
-              loading={newsQuery.isLoading}
-              error={newsQuery.isError}
-              emptyState={<EmptyState title="No filtered news found" description="Try adjusting your date range or filters." />}
-              errorState={<EmptyState title="Could not load filtered news" description="Check API connection and try again." />}
-              actions={(row) => (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={!row.incident_id}
-                  onClick={() => {
-                    if (row.incident_id) navigate(`${roleBase}/incidents/${row.incident_id}${location.search}`);
-                  }}
-                >
-                  Open incident
-                </Button>
-              )}
-            />
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-small text-text-muted">
-                Showing {newsRows.length} of {newsTotal} filtered news items · Page {newsPage} of {newsTotalPages}
-              </p>
-              <div className="flex gap-2">
-                <Button variant="secondary" disabled={newsPage <= 1} onClick={() => setNewsPage(newsPage - 1)}>Previous</Button>
-                <Button variant="secondary" disabled={newsPage >= newsTotalPages} onClick={() => setNewsPage(newsPage + 1)}>Next</Button>
-              </div>
-            </div>
-
-            <p className="text-caption text-text-muted">
-              Last loaded at {formatDateTime(new Date())}.
-            </p>
-          </section>
-        </>
     </div>
   );
 };
