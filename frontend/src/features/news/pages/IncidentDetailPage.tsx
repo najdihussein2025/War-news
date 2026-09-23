@@ -76,8 +76,9 @@ const BackLink = ({ to }: { to: string }) => (
 
 export const IncidentDetailPage = () => {
   const { incidentId } = useParams();
-  const roleBase = roleBaseFromPath(useLocation().pathname);
-  const incidentsPath = `${roleBase}/incidents`;
+  const location = useLocation();
+  const roleBase = roleBaseFromPath(location.pathname);
+  const incidentsPath = `${roleBase}/incidents${location.search}`;
   const navigate = useNavigate();
   const { data: incident, isLoading, error, refetch } = useIncidentQuery(incidentId);
   const {
@@ -351,7 +352,7 @@ export const IncidentDetailPage = () => {
                   {title === "Suggested main incident" ? (
                     <Link
                       className="mt-2 block font-semibold text-accent hover:text-accent-hover"
-                      to={`${roleBase}/incidents/${value.id}`}
+                      to={`${roleBase}/incidents/${value.id}${location.search}`}
                     >
                       {value.village || "Unknown village"}
                     </Link>
@@ -565,7 +566,7 @@ export const IncidentDetailPage = () => {
               <li key={related.id}>
                 <Link
                   className="text-small font-semibold text-accent hover:text-accent-hover"
-                  to={`${roleBase}/incidents/${related.id}`}
+                  to={`${roleBase}/incidents/${related.id}${location.search}`}
                 >
                   {related.relation === "same_bulletin_other_village"
                     ? `Related: same bulletin, different village${related.village ? ` (${related.village})` : ""}`
@@ -890,7 +891,7 @@ export const IncidentDetailPage = () => {
               );
               setDuplicateDecision(null);
               if (result.decision === "confirmed_duplicate") {
-                navigate(`${roleBase}/incidents/${result.canonical_incident_id}`, { replace: true });
+                navigate(`${roleBase}/incidents/${result.canonical_incident_id}${location.search}`, { replace: true });
               } else {
                 await Promise.all([refetch(), refetchDuplicateCandidate()]);
               }

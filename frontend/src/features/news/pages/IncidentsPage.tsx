@@ -136,7 +136,8 @@ const PlusIcon = () => (
 
 export const IncidentsPage = () => {
   const navigate = useNavigate();
-  const roleBase = roleBaseFromPath(useLocation().pathname);
+  const location = useLocation();
+  const roleBase = roleBaseFromPath(location.pathname);
   const [params, setParams] = useSearchParams();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -754,7 +755,7 @@ export const IncidentsPage = () => {
                     <Button
                       type="button"
                       className="h-9 whitespace-nowrap"
-                      onClick={() => navigate(`${roleBase}/incidents/${row.id}`)}
+                      onClick={() => navigate(`${roleBase}/incidents/${row.id}${location.search}`)}
                     >
                       Resolve duplicate
                     </Button>
@@ -775,7 +776,7 @@ export const IncidentsPage = () => {
                   disabled={!row.id}
                   onClick={() => {
                     if (row.id) {
-                      navigate(`${roleBase}/incidents/${row.id}`);
+                      navigate(`${roleBase}/incidents/${row.id}${location.search}`);
                     }
                   }}
                 >
@@ -988,7 +989,7 @@ export const IncidentsPage = () => {
                   variant="secondary"
                   disabled={!row.incident_id}
                   onClick={() => {
-                    if (row.incident_id) navigate(`${roleBase}/incidents/${row.incident_id}`);
+                    if (row.incident_id) navigate(`${roleBase}/incidents/${row.incident_id}${location.search}`);
                   }}
                 >
                   Open incident
