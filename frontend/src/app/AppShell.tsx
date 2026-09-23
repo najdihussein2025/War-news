@@ -267,12 +267,19 @@ const SidebarContent = ({
         <div className="space-y-2">
           {visibleItems.map((item) => {
             const Icon = item.icon;
-            const to = `${roleBase}/${item.path}`;
-            const isActive = location.pathname === to || location.pathname.startsWith(`${to}/`);
+            const isIncidentsNav = item.path === "incidents";
+            const isInsideIncidents =
+              location.pathname === `${roleBase}/incidents` ||
+              location.pathname.startsWith(`${roleBase}/incidents/`);
+            const to =
+              isIncidentsNav && isInsideIncidents
+                ? `${roleBase}/incidents${location.search}`
+                : `${roleBase}/${item.path}`;
+            const isActive = location.pathname === `${roleBase}/${item.path}` || location.pathname.startsWith(`${roleBase}/${item.path}/`);
 
             return (
               <NavLink
-                key={to}
+                key={`${roleBase}/${item.path}`}
                 to={to}
                 onClick={onNavigate}
                 aria-current={isActive ? "page" : undefined}
