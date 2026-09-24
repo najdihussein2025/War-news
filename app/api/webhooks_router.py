@@ -58,9 +58,7 @@ def receive_cnrs_posts(
     db: Session = Depends(get_db),
 ) -> dict[str, int]:
     sources = SourceRepository(db)
-    source = sources.get_by_id(source_id) if source_id is not None else None
-    if source is None:
-        source = sources.get_active_by_external_id("cnrs_webhook")
+    source = sources.get_active_by_external_id("cnrs_webhook")
     if source is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
