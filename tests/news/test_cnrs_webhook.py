@@ -188,7 +188,7 @@ def test_valid_secret_single_post_returns_202_and_writes_raw_message() -> None:
     }
     assert len(_WebhookSourceRepository.messages) == 1
     message = _WebhookSourceRepository.messages[0]
-    assert message.source_id == 44
+    assert message.source_id == 3
     assert message.external_message_id == "cnrs-1"
     assert message.raw_text == "Post text"
     assert message.raw_payload["extra_field"] == "preserved"
@@ -280,7 +280,7 @@ def test_webhook_writes_one_ingestion_log_with_counts() -> None:
     }
     assert len(_WebhookSourceRepository.ingestion_logs) == 1
     log = _WebhookSourceRepository.ingestion_logs[0]
-    assert log["source_id"] == 44
+    assert log["source_id"] == 3
     assert log["messages_fetched"] == 2
     assert log["messages_parsed"] == 2
     assert log["messages_failed"] == 0
