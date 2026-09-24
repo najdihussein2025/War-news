@@ -61,6 +61,9 @@ class StoryRelationshipClassification(BaseModel):
     review_reason: str | None = None
     candidate_incident_id: UUID | None = None
     matched_keywords: tuple[str, ...] = ()
+    # True when only the similarity heuristic (no keyword backstop, no LLM)
+    # decided this. Such revisions may not lower casualty counts on their own.
+    heuristic_only: bool = False
 
 
 class VillageRole(str, Enum):

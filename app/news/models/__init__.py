@@ -9,7 +9,7 @@ from app.news.models.channel_trust_tier import ChannelTrustTier, TrustTier
 from app.news.models.condition import Condition
 from app.news.models.duplicate_match import DuplicateMatch, MatchStatus, MatchType
 from app.news.models.emergency_organization import EmergencyOrganization
-from app.news.models.incident import Incident
+from app.news.models.incident import PIPELINE_DELETED_REASONS, DeletedReason, Incident
 from app.news.models.incident_detail import DidValue, IncidentDetail
 from app.news.models.incident_update import IncidentUpdate, UpdateAction
 from app.news.models.pipeline_stage_run import PipelineStageRun
@@ -26,12 +26,14 @@ __all__ = [
     "CasualtyScope",
     "ChannelTrustTier",
     "Condition",
+    "DeletedReason",
     "DidValue",
     "DuplicateMatch",
     "EmergencyOrganization",
     "Incident",
     "IncidentDetail",
     "IncidentUpdate",
+    "PIPELINE_DELETED_REASONS",
     "PipelineStageRun",
     "MatchStatus",
     "MatchType",

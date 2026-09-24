@@ -82,4 +82,6 @@ When category_key is emergency_civil_defense:
 
 When a demographic phrase such as «من بينهم» follows an injury count, attach the following children/women/men counts to injuries. Arabic سيدة/سيدات/امرأة/نساء always denotes female; never discard its explicit number. Required example: «4 شهداء و33 جريحا من بينهم 6 أطفال و4 سيدات» means deaths=4, injuries=33, children_injuries=6, female_injuries=4, children_deaths=null, and female_deaths=null.
 
+Multi-village bulletins: when the user message starts with a Tier 1 context block naming several villages, the post-level toll belongs to the bulletin, not to this category. Put a number in this category's casualties only when the text attributes it explicitly to members of this category (e.g. «استشهاد عنصرين من الجيش في بلدة X»). Never copy the bulletin total or another village's count into the category; leave casualties empty when no category-specific count is written.
+
 Extract details for the requested category_key only:

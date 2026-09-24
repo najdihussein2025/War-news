@@ -6,7 +6,7 @@ import { Button, ConfirmDialog, Dialog, EmptyState, Input, Label } from "../../.
 import { formatDate, formatDateTime, formatRelativeTime, formatTimeGap } from "../../../lib/formatters";
 import { roleBaseFromPath } from "../../../lib/rolePath";
 import { useAuthStore } from "../../../stores/authStore";
-import { useIncidentDuplicateCandidateQuery, useIncidentQuery } from "../hooks";
+import { useIncidentDuplicateCandidateQuery, useIncidentQuery, useOpenedVersion } from "../hooks";
 import { acquireIncidentEditLock, deleteIncident, releaseIncidentEditLock, resolveIncidentDuplicate, updateIncident, updateIncidentDetails } from "../api";
 import { IncidentCategorySectionFields } from "../components/IncidentCategorySectionFields";
 import { IncidentCategorySectionEditForm } from "../components/IncidentCategorySectionEditForm";
@@ -80,7 +80,18 @@ export const IncidentDetailPage = () => {
   const roleBase = roleBaseFromPath(location.pathname);
   const incidentsPath = `${roleBase}/incidents${location.search}`;
   const navigate = useNavigate();
-  const { data: incident, isLoading, error, refetch } = useIncidentQuery(incidentId);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingSection, setEditingSection] = useState<IncidentCategorySectionKey | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const [isVillageDetailsOpen, setIsVillageDetailsOpen] = useState(false);
+  const [duplicateDecision, setDuplicateDecision] = useState<IncidentDuplicateDecision | null>(null);
+  const isEditorOpen = isEditing || isDeleting || editingSection !== null || duplicateDecision !== null;
+  const { data: incident, isLoading, error, refetch } = useIncidentQuery(incidentId, {
+    pausePolling: isEditorOpen,
+  });
+  const openedVersion = useOpenedVersion(isEditorOpen, incident?.version);
   const {
     data: duplicateCandidate,
     isLoading: isDuplicateCandidateLoading,
@@ -89,13 +100,6 @@ export const IncidentDetailPage = () => {
     incidentId,
     incident?.duplicate_flag === "possible",
   );
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingSection, setEditingSection] = useState<IncidentCategorySectionKey | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [actionError, setActionError] = useState("");
-  const [isVillageDetailsOpen, setIsVillageDetailsOpen] = useState(false);
-  const [duplicateDecision, setDuplicateDecision] = useState<IncidentDuplicateDecision | null>(null);
   const currentUserId = useAuthStore((state) => state.user?.id ?? null);
   const villageDetails = incident?.village_details;
   const isLockedByAnother = Boolean(
@@ -743,7 +747,7 @@ export const IncidentDetailPage = () => {
                   }}
                   onSave={async (fields) => {
                     if (!incidentId) return;
-                    await updateIncidentDetails(incidentId, fields, incident.version);
+                    await updateIncidentDetails(incidentId, fields, openedVersion ?? incident.version);
                     await refetch();
                     setEditingSection(null);
                   }}
@@ -783,7 +787,7 @@ export const IncidentDetailPage = () => {
               setActionError("");
               try {
                 await updateIncident(incidentId, {
-                  version: incident.version,
+                  version: openedVersion ?? incident.version,
                   event_date: String(form.get("event_date")),
                   event_time: nullable("event_time"),
                   khabar: String(form.get("khabar") ?? "").trim(),
@@ -850,7 +854,7 @@ export const IncidentDetailPage = () => {
             if (!incidentId) return;
             setIsSaving(true);
             try {
-              await deleteIncident(incidentId, incident.version);
+              await deleteIncident(incidentId, openedVersion ?? incident.version);
               navigate(incidentsPath, { replace: true });
             } catch {
               setActionError("Could not delete the incident. Please try again.");
@@ -887,7 +891,7 @@ export const IncidentDetailPage = () => {
                 incidentId,
                 duplicateCandidate.match_id,
                 duplicateDecision,
-                incident.version,
+                openedVersion ?? incident.version,
               );
               setDuplicateDecision(null);
               if (result.decision === "confirmed_duplicate") {

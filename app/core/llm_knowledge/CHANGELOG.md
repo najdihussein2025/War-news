@@ -11,6 +11,128 @@ class of bug on its own — it only patches the one instance found. Flag
 any such code-only fix as incomplete until a corresponding prompt/rule
 update or a documented rationale for staying code-only is added.
 
+## Backfilled entries for rule commits made without a CHANGELOG entry
+
+Reconstructed on 2026-09-24 from `git show` (audit §4.5). Real examples are the
+ones the commits themselves put in the rules; none of these commits added a
+rule-text regression test.
+
+- `c60f40e` (2026-09-14) — added `rules/story_revision_prompt.md` and the
+  `story_revision` stage. Marker list: `حصيلة أولية`, `تحديث الحصيلة`,
+  `ارتفاع عدد`, named-victim `تنعى`. Never invoked until the 2026-09-24
+  borderline fallback (opt-in).
+- `3480afb` (2026-09-16) — multi-village rewrite of `tier1_multi_village.md`,
+  `tier1_general_prompt.md`, `combined_tier1_prompt.md`: only explicit route
+  endpoints (`طريق X - Y`, `بين X و Y`) split into two villages; every other
+  dash phrase is one target plus `qualifier_text`; per-village counts only from
+  that village's clause; a shared toll → `bulletin_aggregate` with figures in
+  `total_*`.
+- `6b1a0fa` (2026-09-16) — `village_roles` shape with per-village counts and
+  `qualifier_text`, `sub_events[].locations`, the Kfar Roummane house+car
+  two-sub-event example, parenthetical qualifiers; `قتيل` added to
+  `casualty_gender.yaml`; condition label additions.
+- `109a2f7` (2026-09-17) — air-violation exclusions (UNIFIL aircraft,
+  "من فلسطين باتجاه لبنان" route wording, sector phrases) in relevance and
+  Tier 1 prompts. The Tier 1 general copy was written as `?????`; repaired
+  2026-09-24 (see "Repair corrupted default Tier 1 prompt").
+- `4ce5cd2` (2026-09-21) — conflict attribution for effect-defined actions:
+  civilian/accidental fires, traffic accidents and routine works are not war
+  events without a stated military actor; negative examples (`احتراق سيارة على
+  أوتوستراد المدفون باتجاه بيروت`) and positive ones (`حريق ... إثر قصف مدفعي`).
+- `a4db207` (2026-09-21) — extends the effect-attribution list (`تلغيم/تفجير`,
+  unexploded ordnance) and adds the distinct-event connector rule
+  (`كما طال القصف ... بلدة Y` = second target), example Zawtar ash-Sharqiyah /
+  Aitaa al-Jabal.
+- `ddc85b2` (2026-09-24) — `بين X و Y` without a road marker is one fuzzy
+  location; only `طريق بين X و Y` splits (`غارة بين كفرتبنيت وزوطر الشرقية` vs
+  `غارة على طريق بين كفرتبنيت وزوطر الشرقية`).
+
+## 2026-09-24 - Knowledge base cleanup: situational transitions, dead files, few-shot schema
+
+**Bug / accuracy gap:** Every Tier 1 call carried the full casualty-transition
+doctrine and the whole condition-label glossary (Tier 1 is told not to classify
+conditions). `condition_action_reconciliation.md` was never loaded, so the
+Mansouri Sour (raw `1235`, `تمشيط من الاباتشي استهدف المنصوري`) text-over-subtype
+rule reached no model. Few-shot `sub_events` used `action_description` while the
+prompt schema requires `action_text`, and `village_collision_examples.jsonl`
+served a non-extraction `village_match_note` example to Tier 1.
+
+**Rule / knowledge files changed:**
+- New `rules/tier1_casualty_transitions.md`: the mandatory transition rules and
+  the five transition examples moved out of `tier1_general_prompt.md`
+  unchanged. Loaded by the new `has_casualty_transition_language` trigger
+  (`متأثر`, `فارق الحياة`, `أحد الجرحى/جريحي/المصابين`, rising/updated toll,
+  `بقي N جرحى`, or the transition backstop). The `casualty_transitions` field
+  definition stays in the core prompt.
+- `index.yaml`: `tier1_extraction` no longer loads `condition_labels.yaml`;
+  it now loads `condition_action_reconciliation.md` as core. The never-built
+  `casualty_scope`, `casualty_transitions` and `village_matching` stages were
+  removed.
+- `casualty_merge.md` and `village_matching.md` moved to `Docs/llm_knowledge/`
+  (they document code behaviour; no LLM consumed them). `tier1_core.md` deleted
+  (orphaned since Phase 3, superseded by `tier1_general_prompt.md`).
+- `fewshot/*.jsonl`: `sub_events[].action_description` → `action_text`;
+  the `village_match_note` example removed.
+- `combined_tier1_prompt.md`: duplicated intro (lines 1-13 repeated at 15-27,
+  byte-identical) removed.
+- Measured effect (assembled system prompt, ~4 chars/token English, ~2.5
+  Arabic): single-village post 14,401 → 14,083 chars (~4.6k → ~4.5k tokens);
+  multi-village 22,663 → 22,345; a transition follow-up grows 14,466 → 15,418
+  because it now also gets the reconciliation rule. The prompt was already
+  ~4.5-7k tokens once the Phase 1 duplication was removed, not 9-11k.
+
+**Regression coverage:**
+- `tests/test_llm_knowledge_loader.py::test_transition_rules_load_only_with_transition_language`
+- `tests/test_llm_knowledge_loader.py::test_tier1_does_not_load_condition_label_glossary`
+- `tests/test_llm_knowledge_loader.py::test_build_loads_core_rules`
+- `tests/test_llm_knowledge_rule_integrity.py` (allowlist for
+  `combined_tier1_prompt.md` removed)
+- Live gate still open: `python -m app.core.llm_knowledge.eval.run_eval --live`
+  must show no regression before these rule moves are treated as final.
+
+## 2026-09-24 - Story revisions: no silent downward revisions, recency required
+
+**Bug / accuracy gap:** A sparse report (`ووقوع اصابات`) with embedding
+similarity ≥ 0.40 to a prior incident was classified as a revision and
+`apply_story_revision` overwrote counts unconditionally, so a late "2 injured"
+could replace "5 injured" (audit F1-12). No check that the report was newer.
+
+**Rule / knowledge files changed:** `rules/story_revision_prompt.md` is now
+wired as an opt-in fallback (`STORY_REVISION_LLM_FALLBACK_ENABLED`, off by
+default) for the borderline band 0.40-0.55 only; its answer must name a marker
+to count as a revision. Code: heuristic-only revisions are tagged; one that
+would lower a count is held (`needs_verification`, proposed values recorded)
+instead of applied; a report not newer than every source already merged into
+the incident is not a revision. Threshold kept at 0.40: the corpus has no
+similarity-scored revision pairs to justify a different number.
+
+**Regression coverage:** `tests/test_story_revision_guards.py`
+
+## 2026-09-24 - Tier 2 receives the multi-village context
+
+**Bug / accuracy gap:** Tier 2 runs per category on the whole post without
+knowing it is a multi-village bulletin, so a bulletin-wide toll could be
+returned as a category's casualties (audit F2-06).
+
+**Rule / knowledge files changed:** `tier2_category_detail_prompt.md` and
+`tier2_batched_category_detail_prompt.md` gain a multi-village rule; the user
+message now starts with a Tier 1 context block (villages + casualty_scope) when
+the bulletin names 2+ villages. Per-village *attribution* of category
+casualties is not possible yet: the category schema has no village field, so
+multi-village category casualties are still suppressed and flagged in code.
+
+**Regression coverage:** `tests/test_tier2_scope_context.py`
+
+## 2026-09-24 - Eval corpus fixes
+
+`eval/corpus/relevance_filter.jsonl` started with a UTF-8 BOM, which made
+`run_eval.py` fail on line 1 (`Unexpected UTF-8 BOM`); stripped.
+`village_matching.jsonl` row 6 (`وادي السلوقي`) now expects ACS 73282 per the
+2026-09-23 alias; row 7 (bare `وادي الحجير`) is left unresolved because only
+`محمية وادي الحجير` is aliased. Added real-pattern cases: Talloussa/Yahoun
+per-village actions, Mansouri raw `1235`, the Majdal Zoun fuzzy-area bulletin
+and a civilian car fire. Corpus: 41 cases, offline harness 41/41.
+
 ## 2026-09-24 - Repair corrupted default Tier 1 prompt and multi-village example
 
 **Bug / accuracy gap:** `rules/tier1_general_prompt.md` (the default Tier 1

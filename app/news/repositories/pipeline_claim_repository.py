@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.news.models import Incident, MessageStatus, RawMessage
 from app.news.services.dedup.fast_path_eligibility import (
+    FAST_PATH_PARTIAL_FAILURE_PREFIX,
     fast_path_materializable_clause,
     ineligible_fast_path_update_sql,
 )
@@ -149,7 +150,12 @@ class PipelineClaimRepository:
                 RawMessage.duplicate_of_id.is_(None),
                 RawMessage.match_result.is_not(None),
                 RawMessage.extraction_result.is_not(None),
-                ~has_active_incident,
+                or_(
+                    ~has_active_incident,
+                    RawMessage.error_message.startswith(
+                        FAST_PATH_PARTIAL_FAILURE_PREFIX
+                    ),
+                ),
                 embedding_ready_or_stale,
                 fast_path_materializable_clause(),
             )
@@ -157,6 +163,36 @@ class PipelineClaimRepository:
             .limit(1)
             .with_for_update(skip_locked=True)
         )
+
+    def mark_fast_path_partial_failure(
+        self,
+        raw_message_id: int,
+        exc: BaseException,
+    ) -> bool:
+        """Re-queue a message whose fast path failed after some villages committed.
+
+        Returns True when the message was marked (it had a live incident).
+        """
+        message = self.db.get(RawMessage, raw_message_id)
+        if message is None:
+            return False
+        has_incident = self.db.scalar(
+            select(Incident.id)
+            .where(
+                Incident.raw_message_id == raw_message_id,
+                Incident.is_deleted.is_(False),
+            )
+            .limit(1)
+        )
+        if has_incident is None:
+            return False
+        message.status = MessageStatus.parsed
+        message.error_message = (
+            f"{FAST_PATH_PARTIAL_FAILURE_PREFIX}: {type(exc).__name__}: {exc}"
+        )[:2000]
+        self.db.add(message)
+        self.db.commit()
+        return True
 
     def terminalize_ineligible_fast_path(self) -> int:
         """Mark permanently unmaterializable matched rows so they are never reclaimed."""
@@ -201,7 +237,21 @@ class PipelineClaimRepository:
             .limit(1)
             .with_for_update(skip_locked=True)
         )
-        if incident is None or incident.raw_message_id is None:
+        if incident is None:
+            # Manual/imported incidents flipped to details_pending by a merge
+            # have no raw message; they are filled from merged-in sources.
+            return self.db.scalar(
+                select(Incident)
+                .where(
+                    Incident.details_pending.is_(True),
+                    Incident.is_deleted.is_(False),
+                    Incident.raw_message_id.is_(None),
+                )
+                .order_by(Incident.created_at.desc())
+                .limit(1)
+                .with_for_update(skip_locked=True)
+            )
+        if incident.raw_message_id is None:
             return incident
         message = self.db.get(RawMessage, incident.raw_message_id)
         if message is not None:

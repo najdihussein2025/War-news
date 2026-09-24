@@ -26,7 +26,10 @@ from app.llm.dtos import (
     VillageRoleEntry,
 )
 from app.llm.interfaces import ExtractionClassifierInterface
-from app.llm.services.ollama_category_detail_service import OllamaCategoryDetailService
+from app.llm.services.ollama_category_detail_service import (
+    OllamaCategoryDetailService,
+    tier2_scope_context,
+)
 from app.llm.services.ollama_auth_failures import coerce_ollama_auth_failure
 from app.llm.services.transient_llm_errors import Tier2ExtractionFailedError
 from app.llm.services.ollama_presence_gate_service import (
@@ -694,10 +697,14 @@ class OllamaExtractionService(ExtractionClassifierInterface):
         *,
         root_casualties: ExtractionCasualties | None = None,
         raw_message_id: int | None = None,
+        villages: list[str] | None = None,
+        casualty_scope: str | None = None,
     ) -> dict[ExtractionCategoryKey, ExtractionCategory]:
         """Run Tier-2 category detail extraction for keys detected in Tier 1."""
         if not presence_category_keys:
             return {}
+
+        scope_context = tier2_scope_context(villages, casualty_scope)
 
         if settings.tier2_use_batched_category_detail:
             return self._extract_tier2_details_batched(
@@ -705,6 +712,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 presence_category_keys,
                 root_casualties=root_casualties,
                 raw_message_id=raw_message_id,
+                scope_context=scope_context,
             )
 
         category_details: dict[str, ExtractionCategory] = {}
@@ -716,6 +724,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                     post_text,
                     category_key=category_key,
                     raw_message_id=raw_message_id,
+                    scope_context=scope_context,
                 )
             except Exception as exc:
                 auth_failure = coerce_ollama_auth_failure(
@@ -776,12 +785,14 @@ class OllamaExtractionService(ExtractionClassifierInterface):
         *,
         root_casualties: ExtractionCasualties | None,
         raw_message_id: int | None,
+        scope_context: str | None = None,
     ) -> dict[ExtractionCategoryKey, ExtractionCategory]:
         try:
             batched = self.category_detail.extract_details_batch(
                 post_text,
                 presence_category_keys,
                 raw_message_id=raw_message_id,
+                scope_context=scope_context,
             )
         except Exception as exc:
             auth_failure = coerce_ollama_auth_failure(

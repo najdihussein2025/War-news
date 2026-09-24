@@ -67,7 +67,11 @@ def seed_super_admin(db: Session) -> tuple[User, bool]:
         user = User(username=username)
         db.add(user)
 
-    user.password_hash = password_context.hash(settings.super_admin_seed_password)
+    # Only a newly created account gets the seed password. Re-running the seed
+    # used to silently reset a live super-admin's password to the default;
+    # a deliberate reset now needs SUPER_ADMIN_SEED_RESET_PASSWORD=1.
+    if inserted or os.getenv("SUPER_ADMIN_SEED_RESET_PASSWORD") == "1":
+        user.password_hash = password_context.hash(settings.super_admin_seed_password)
     user.full_name = full_name
     user.role_id = super_admin_role.id
     user.is_active = True

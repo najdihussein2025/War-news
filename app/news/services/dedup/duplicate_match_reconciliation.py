@@ -5,7 +5,14 @@ import logging
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.news.models import DuplicateMatch, Incident, MatchStatus, MessageStatus, RawMessage
+from app.news.models import (
+    PIPELINE_DELETED_REASONS,
+    DuplicateMatch,
+    Incident,
+    MatchStatus,
+    MessageStatus,
+    RawMessage,
+)
 from app.news.repositories.incident_repository import IncidentRepository
 
 logger = logging.getLogger(__name__)
@@ -63,6 +70,9 @@ def reconcile_orphaned_soft_deleted_incidents(db: Session) -> int:
             .outerjoin(DuplicateMatch, DuplicateMatch.incident_id == Incident.id)
             .where(
                 Incident.is_deleted.is_(True),
+                # Admin deletes (and legacy rows of unknown origin) are never
+                # relabelled as duplicates; only pipeline merge/cluster deletes.
+                Incident.deleted_reason.in_(PIPELINE_DELETED_REASONS),
                 DuplicateMatch.id.is_(None),
             )
         ).all()

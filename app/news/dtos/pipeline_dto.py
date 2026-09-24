@@ -59,9 +59,22 @@ class LatencySummaryResponse(BaseModel):
     terminal_non_materialized: LatencyCohortResponse
 
 
+class PipelineFailureCountsResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    error_rows_total: int
+    # Keyed by raw_messages.failed_stage; "unknown" = rows from before that column.
+    error_rows_by_stage: dict[str, int] = Field(default_factory=dict)
+    tier2_retrying: int
+    tier2_capped: int
+    held_for_review: int
+    oldest_details_pending_seconds: float | None = None
+
+
 class PipelineHealthResponse(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     stages: list[StageQueueDepthResponse] = Field(default_factory=list)
     cursor_gap: CursorGapResponse
     latency: LatencySummaryResponse
+    failures: PipelineFailureCountsResponse | None = None

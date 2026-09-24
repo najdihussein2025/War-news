@@ -45,17 +45,6 @@ Air-violation exclusions:
 - مثال إلزامي للعملين: «غارة على منزل في كفررمان أدت إلى 8 شهداء و11 جريحاً، وفي غارة منفصلة استُهدفت سيارة في النبطية فسقط 1 شهيد وأصيب 2» → sub_events=[{"locations":[{"village":"كفررمان","role":"target","deaths":8,"injuries":11,"evidence_span":"في كفررمان أدت إلى 8 شهداء و11 جريحاً","qualifier_text":null}],"action_text":"غارة على منزل","casualties":{"deaths":8,"injuries":11,"total_deaths":8,"total_injuries":11},"evidence_span":"غارة على منزل في كفررمان أدت إلى 8 شهداء و11 جريحاً","casualty_evidence":[{"field":"deaths","evidence_span":"8 شهداء"},{"field":"injuries","evidence_span":"11 جريحاً"}]},{"locations":[{"village":"النبطية","role":"target","deaths":1,"injuries":2,"evidence_span":"في النبطية فسقط 1 شهيد وأصيب 2","qualifier_text":null}],"action_text":"استهداف سيارة","casualties":{"deaths":1,"injuries":2,"total_deaths":1,"total_injuries":2,"male_deaths":1},"evidence_span":"استُهدفت سيارة في النبطية فسقط 1 شهيد وأصيب 2","casualty_evidence":[{"field":"deaths","evidence_span":"1 شهيد"},{"field":"injuries","evidence_span":"أصيب 2"}]}] وcasualties العامة null أو مجموع فقط إذا صرّح النص بمجموع منفصل.
 - casualties: أعداد الضحايا العامة غير المنسوبة إلى فئة محددة، فقط إذا ذُكرت حرفياً.
 - casualty_transitions: انتقالات حالة بين جرحى ووفيات في _متابعات_ لنفس الحادث. استخدمها عندما يذكر النص أن جرحى سابقين توفوا أو «بقي X جرحى وتوفي Y» أو «توفى واحد من الجرحى» دون إعادة عدّ كل الجرحى. لا تستخدمها للأخبار الأولية ولا للإضافات البسيطة مثل «5 جرحى جدد».
-- قاعدة إلزامية: إذا قال النص صراحة إن مصاباً أو جريحاً سابقاً توفي، فأرجع دائماً [{"from_status":"injured","to_status":"deceased","count":1}] حتى لو ذكر النص أيضاً حصيلة جديدة أو عدداً متبقياً للجرحى.
-- يشمل ذلك على الأقل الصيغ: «استشهاد أحد جريحي/الجرحى»، «وفاة أحد المصابين متأثراً بجراحه»، و«فارق أحد الجرحى الحياة».
-- قد تأتي عبارة الانتقال وعبارة الحصيلة أو العدد المتبقي في شقين مختلفين من الجملة نفسها أو في جملة طويلة متعددة الفواصل؛ اربطهما كتحديث واحد لنفس الحادث ولا تعتبر الحصيلة خبراً منفصلاً.
-
-أمثلة على casualty_transitions:
-
-1. «توفى أحد الجرحى جراء إصابته» → [{"from_status":"injured","to_status":"deceased","count":1}] و casualties.deaths=1 (اختياري).
-2. «بقي 3 جرحى وتوفي واحد» → [{"from_status":"injured","to_status":"deceased","count":1}] — لا حاجة لذكر injuries=3 في casualties.
-3. «أعلنت وزارة الصحة وفاة أحد المصابين متأثراً بجراحه» → [{"from_status":"injured","to_status":"deceased","count":1}]
-4. «أحد جريحي الانفجار استشهد... لتصبح الحصيلة 3 شهداء وجريح واحد» → [{"from_status":"injured","to_status":"deceased","count":1}] حتى لو جاءت الحصيلة في شق لاحق من الجملة.
-5. «أصيب 5 جرحى إضافيين» → casualty_transitions=[] (إضافة فقط، بدون انتقال).
 
 أمثلة على village_roles:
 

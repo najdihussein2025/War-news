@@ -298,6 +298,22 @@ def _build_diff(
     return old_values, new_values
 
 
+def _record_admin_gate_provenance(
+    detail: IncidentDetail,
+    coerced_incoming: dict[str, object],
+) -> None:
+    """Remember gates the admin turned off so pipeline merges leave them off."""
+    cleared = set(getattr(detail, "admin_cleared_gates", None) or [])
+    for gate in set(GATE_DEPENDENTS) | set(GATE_TO_DID):
+        if gate not in coerced_incoming:
+            continue
+        if _gate_is_active_value(coerced_incoming[gate]):
+            cleared.discard(gate)
+        else:
+            cleared.add(gate)
+    detail.admin_cleared_gates = sorted(cleared) or None
+
+
 def apply_incident_detail_edits(
     incident: Incident,
     detail: IncidentDetail,
@@ -344,6 +360,7 @@ def apply_incident_detail_edits(
 
     for api_field, value in coerced_incoming.items():
         setattr(detail, db_column(api_field), value)
+    _record_admin_gate_provenance(detail, coerced_incoming)
 
     recompute_detail_rollups(detail)
 

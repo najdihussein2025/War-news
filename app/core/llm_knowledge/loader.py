@@ -78,8 +78,34 @@ def is_multi_village_candidate(text: str) -> bool:
     return False
 
 
+# Injured → deceased / toll-update wording. Deliberately broader than the
+# deterministic backstop so the transition rules are loaded whenever a post
+# could carry a transition; missing them is worse than the extra tokens.
+_CASUALTY_TRANSITION_RE = re.compile(
+    r"متاثر|فارق\s+الحياه|احد\s+(?:جريحي|الجرحى|المصابين)"
+    r"|(?:لتصبح|لترتفع|ارتفع|ارتفاع)\s+(?:عدد\s+)?(?:الحصيله|الشهداء|الضحايا|القتلى)"
+    r"|تحديث\s+الحصيله|بقي\s+\S+\s+(?:جرحى|جريح|مصاب)"
+)
+
+
+def has_casualty_transition_language(text: str) -> bool:
+    """True when the post may describe injured→deceased or a toll update."""
+    normalized = normalize_arabic_text(text or "")
+    if not normalized:
+        return False
+    if _CASUALTY_TRANSITION_RE.search(normalized):
+        return True
+    # Imported lazily: the backstop module itself imports this loader.
+    from app.news.services.incident_details.casualty_transition_backstop import (
+        detect_casualty_transition_backstop,
+    )
+
+    return detect_casualty_transition_backstop(text).plausible
+
+
 _TRIGGER_REGISTRY: dict[str, SituationalTrigger] = {
     "is_multi_village_candidate": is_multi_village_candidate,
+    "has_casualty_transition_language": has_casualty_transition_language,
 }
 
 

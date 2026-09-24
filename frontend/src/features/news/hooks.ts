@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { liveListQueryOptions } from "../../lib/liveListPolling";
 import { getConditions, getIncidentById, getIncidentDuplicateCandidate, getIncidents, getVillages } from "./api";
@@ -132,13 +132,19 @@ export const useIncidentStream = (filters: IncidentFilters) => {
   return { isReconnecting };
 };
 
-export const useIncidentQuery = (incidentId: string | undefined) =>
+export const useIncidentQuery = (
+  incidentId: string | undefined,
+  options: { pausePolling?: boolean } = {},
+) =>
   useQuery({
     queryKey: incidentKeys.detail(incidentId ?? ""),
     queryFn: () => getIncidentById(incidentId as string),
     enabled: Boolean(incidentId),
-    refetchInterval: 5_000,
-    refetchIntervalInBackground: true,
+    // Polling while an editor is open would swap in a newer version under
+    // form values captured earlier and defeat the server's version check.
+    refetchInterval: options.pausePolling ? false : 5_000,
+    refetchIntervalInBackground: !options.pausePolling,
+    refetchOnWindowFocus: !options.pausePolling,
   });
 
 export const useIncidentDuplicateCandidateQuery = (
@@ -150,3 +156,20 @@ export const useIncidentDuplicateCandidateQuery = (
     queryFn: () => getIncidentDuplicateCandidate(incidentId as string),
     enabled: Boolean(incidentId) && enabled,
   });
+
+/**
+ * Version the open editor/dialog was built from. Frozen while `isOpen` so a
+ * refetch cannot slip a newer version under stale form values; the server's
+ * version check then reports the conflict (409) instead of overwriting.
+ */
+export const useOpenedVersion = (isOpen: boolean, currentVersion: number | undefined) => {
+  const snapshot = useRef<number | undefined>(undefined);
+  if (!isOpen) {
+    snapshot.current = undefined;
+    return currentVersion;
+  }
+  if (snapshot.current === undefined) {
+    snapshot.current = currentVersion;
+  }
+  return snapshot.current;
+};

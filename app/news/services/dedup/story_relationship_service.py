@@ -9,6 +9,7 @@ typed-result + keyword backstop + downgrade-on-unsupported-claim pattern.
 
 from __future__ import annotations
 
+import logging
 import re
 from collections.abc import Callable
 from typing import Any
@@ -24,6 +25,15 @@ _HOUSE_RE = re.compile(r"منزل|بيت|مبنى|بنايه|شقه")
 _CAR_RE = re.compile(r"سيار|دراج")
 _SPARSE_RE = re.compile(r"اصابات|ضحايا|وقوع")
 _DIGIT_RE = re.compile(r"[0-9٠-٩]")
+
+logger = logging.getLogger(__name__)
+
+# A sparse report ("casualties reported") this similar to a prior incident is
+# treated as the same event. Kept at the historical 0.40: the eval corpus has
+# no similarity-scored revision pairs to justify moving it. Between the two
+# thresholds the LLM fallback (when configured) decides.
+SPARSE_REVISION_MIN_SIMILARITY = 0.40
+SPARSE_REVISION_CONFIDENT_SIMILARITY = 0.55
 
 LlmClassifyFn = Callable[
     [str, str],
@@ -77,25 +87,6 @@ class StoryRelationshipService:
                 candidate_incident_id=candidate_incident_id,
                 matched_keywords=backstop.matched_keywords,
             )
-
-        llm_result: StoryRelationshipClassification | None = None
-        if self.llm_classify is not None and current_text and candidate_text:
-            llm_result = self.llm_classify(current_text, candidate_text)
-            if (
-                llm_result.relationship == StoryRelationship.revision
-                and candidate_incident_id is None
-            ):
-                return StoryRelationshipClassification(
-                    relationship=StoryRelationship.unrelated,
-                    relationship_evidence=llm_result.relationship_evidence,
-                    needs_review=True,
-                    review_reason="Unsupported story revision: no candidate incident in window",
-                    candidate_incident_id=None,
-                )
-            if llm_result.relationship != StoryRelationship.unrelated:
-                return llm_result.model_copy(
-                    update={"candidate_incident_id": candidate_incident_id}
-                )
 
         if claimed_relationship is not None:
             if (
@@ -162,6 +153,19 @@ class StoryRelationshipService:
         return ranked[0]
 
 
+    def _llm_borderline(
+        self,
+        current_text: str | None,
+        candidate_text: str | None,
+    ) -> StoryRelationshipClassification | None:
+        if self.llm_classify is None or not current_text or not candidate_text:
+            return None
+        try:
+            return self.llm_classify(current_text, candidate_text)
+        except Exception:  # noqa: BLE001 - fall back to the heuristic
+            logger.exception("story revision LLM fallback failed; using heuristic")
+            return None
+
     def _heuristic(
         self,
         *,
@@ -175,11 +179,27 @@ class StoryRelationshipService:
         embedding = embedding_similarity or 0.0
         current_sparse = _is_sparse(current_text)
 
-        if current_sparse and embedding >= 0.40 and candidate_incident_id is not None:
+        if (
+            current_sparse
+            and embedding >= SPARSE_REVISION_MIN_SIMILARITY
+            and candidate_incident_id is not None
+        ):
+            if embedding < SPARSE_REVISION_CONFIDENT_SIMILARITY:
+                # Borderline band: ask the story-revision prompt (when wired)
+                # instead of trusting similarity alone.
+                llm_result = self._llm_borderline(current_text, candidate_text)
+                if llm_result is not None:
+                    return llm_result.model_copy(
+                        update={
+                            "candidate_incident_id": candidate_incident_id,
+                            "heuristic_only": False,
+                        }
+                    )
             return StoryRelationshipClassification(
                 relationship=StoryRelationship.revision,
                 relationship_evidence="sparse early report of the same village event",
                 candidate_incident_id=candidate_incident_id,
+                heuristic_only=True,
             )
 
         if (

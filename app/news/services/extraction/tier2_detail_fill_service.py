@@ -81,6 +81,8 @@ class Tier2DetailFillService:
                 post_text=raw_message.raw_text or "",
                 presence_category_keys=extraction.presence_category_keys,
                 root_casualties=extraction.casualties,
+                villages=extraction.village,
+                casualty_scope=extraction.casualty_scope.value,
                 raw_message_id=raw_message_id,
             )
         return self.apply_tier2_result_for_raw_message(

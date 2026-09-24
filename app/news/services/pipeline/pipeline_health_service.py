@@ -14,6 +14,16 @@ from app.news.services.dedup.fast_path_eligibility import fast_path_materializab
 
 
 @dataclass(frozen=True)
+class PipelineFailureCounts:
+    error_rows_total: int
+    error_rows_by_stage: dict[str, int]
+    tier2_retrying: int
+    tier2_capped: int
+    held_for_review: int
+    oldest_details_pending_seconds: float | None
+
+
+@dataclass(frozen=True)
 class StageQueueDepth:
     stage_name: str
     queue_depth: int
@@ -300,6 +310,46 @@ class PipelineHealthService:
             p95_seconds=float(p95) if p95 is not None else None,
             p99_seconds=float(p99) if p99 is not None else None,
             sample_size=int(sample_size or 0),
+        )
+
+    def failure_counts(self) -> PipelineFailureCounts:
+        now = datetime.now(timezone.utc)
+        by_stage = {
+            (stage or "unknown"): int(count)
+            for stage, count in self.db.execute(
+                select(RawMessage.failed_stage, func.count())
+                .where(RawMessage.status == MessageStatus.error)
+                .group_by(RawMessage.failed_stage)
+            ).all()
+        }
+        cap = settings.extraction_max_retries
+        tier2_retrying, tier2_capped = self.db.execute(
+            select(
+                func.count().filter(
+                    RawMessage.tier2_retry_count > 0,
+                    RawMessage.tier2_retry_count < cap,
+                ),
+                func.count().filter(RawMessage.tier2_retry_count >= cap),
+            )
+        ).one()
+        held = self.db.scalar(
+            select(func.count()).where(
+                RawMessage.status == MessageStatus.held_for_review
+            )
+        )
+        oldest_pending = self.db.scalar(
+            select(func.min(Incident.created_at)).where(
+                Incident.details_pending.is_(True),
+                Incident.is_deleted.is_(False),
+            )
+        )
+        return PipelineFailureCounts(
+            error_rows_total=sum(by_stage.values()),
+            error_rows_by_stage=by_stage,
+            tier2_retrying=int(tier2_retrying or 0),
+            tier2_capped=int(tier2_capped or 0),
+            held_for_review=int(held or 0),
+            oldest_details_pending_seconds=self._age_seconds(oldest_pending, now),
         )
 
     def _tier2_detail_fill_stage(self, *, now: datetime) -> StageQueueDepth:

@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import Boolean, Enum as SqlEnum, ForeignKey, Integer, String
-from sqlalchemy.dialects.postgresql import UUID as PgUUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -29,6 +29,9 @@ class IncidentDetail(Base):
         ForeignKey("incidents.id", ondelete="CASCADE"),
         primary_key=True,
     )
+    # Gate flags (API names, e.g. "la") an admin explicitly turned off. Pipeline
+    # merges must not re-set these or their dependent fields.
+    admin_cleared_gates: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
 
     male_d: Mapped[int | None] = mapped_column(Integer, nullable=True)
     male_i: Mapped[int | None] = mapped_column(Integer, nullable=True)

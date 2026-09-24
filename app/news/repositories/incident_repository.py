@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import json
+import logging
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
@@ -45,6 +46,7 @@ from app.news.interfaces import IncidentRepositoryInterface
 from app.news.models import (
     BulletinCasualtyGroup,
     Condition,
+    DeletedReason,
     DuplicateMatch,
     Incident,
     IncidentDetail,
@@ -75,10 +77,17 @@ from app.news.services.incident_details.incident_detail_merge import (
     merge_incident_detail_fields,
 )
 from app.news.services.dedup.text_similarity import event_token_similarity
+from app.news.services.incidents.incident_change_log import (
+    changed_fields,
+    record_incident_change,
+)
 from app.news.services.materialization.verification_signals import (
     LOW_CONFIDENCE_VILLAGE_REVIEW_REASON,
 )
 from app.sources.models import Source, SourceType
+
+logger = logging.getLogger(__name__)
+
 
 
 def _optional_count(*values: Any) -> int | None:
@@ -741,6 +750,23 @@ class IncidentRepository(IncidentRepositoryInterface):
             created_by=created_by,
         )
         self.db.add(incident)
+        self.db.flush()
+        record_incident_change(
+            self.db,
+            incident_id=incident.id,
+            action=UpdateAction.create,
+            old_values=None,
+            new_values={
+                "village_id": village.id,
+                "condition_id": condition.id,
+                "event_date": payload.event_date,
+                "event_time": payload.event_time,
+                "khabar": sanitized_khabar,
+                "note": sanitized_note,
+                "source_link": sanitized_source_link,
+            },
+            performed_by=created_by,
+        )
         self.db.commit()
         detail = self.get_by_id(incident.id)
         if detail is None:
@@ -779,13 +805,31 @@ class IncidentRepository(IncidentRepositoryInterface):
             "source_link",
             "source_link_2",
         }
-        for field, value in payload.model_dump(exclude={"version"}).items():
+        # Partial update: only fields the client sent are touched. The UI never
+        # sends source_link_2, and a full dump used to null it on every save.
+        submitted = payload.model_dump(exclude={"version"}, exclude_unset=True)
+        before = {field: getattr(incident, field) for field in submitted}
+        for field, value in submitted.items():
             if field in text_fields:
                 value = self._sanitize_optional_text(value)
                 if field == "khabar" and value is None:
                     value = ""
             setattr(incident, field, value)
-        incident.event_month = payload.event_date.strftime("%B")
+        if "event_date" in submitted:
+            incident.event_month = payload.event_date.strftime("%B")
+        old_values, new_values = changed_fields(
+            before,
+            {field: getattr(incident, field) for field in submitted},
+        )
+        if new_values:
+            record_incident_change(
+                self.db,
+                incident_id=incident.id,
+                action=UpdateAction.edit,
+                old_values=old_values,
+                new_values=new_values,
+                performed_by=user_id,
+            )
         incident.locked_by_user_id = None
         incident.edit_lock_expires_at = None
         self.db.commit()
@@ -880,6 +924,15 @@ class IncidentRepository(IncidentRepositoryInterface):
                 return False
             raise StaleDataError("Incident version or edit lock is stale.")
         incident.is_deleted = True
+        incident.deleted_reason = DeletedReason.admin.value
+        record_incident_change(
+            self.db,
+            incident_id=incident.id,
+            action=UpdateAction.delete,
+            old_values={"is_deleted": False},
+            new_values={"is_deleted": True, "deleted_reason": DeletedReason.admin.value},
+            performed_by=user_id,
+        )
         self.db.commit()
         return True
 
@@ -964,7 +1017,12 @@ class IncidentRepository(IncidentRepositoryInterface):
                 .where(RawMessage.id == incident.raw_message_id)
                 .with_for_update()
             )
-            if raw_message is not None:
+            # Reject is per incident: the raw message (and so the Rejected News
+            # page) only flips once none of its village incidents is still live.
+            if raw_message is not None and not self._has_other_live_incident(
+                incident.raw_message_id,
+                exclude_incident_id=incident.id,
+            ):
                 filter_result = dict(raw_message.filter_result or {})
                 filter_result.update(
                     {
@@ -1158,7 +1216,14 @@ class IncidentRepository(IncidentRepositoryInterface):
                 )
             )
             incident.is_deleted = True
+            incident.deleted_reason = DeletedReason.duplicate_merge.value
             incident.duplicate_flag = False
+            self._record_soft_delete(
+                incident,
+                reason=DeletedReason.duplicate_merge,
+                canonical_incident_id=canonical.id,
+                performed_by=user_id,
+            )
             match.status = MatchStatus.confirmed_duplicate
             self.db.flush()
             if (
@@ -1220,6 +1285,8 @@ class IncidentRepository(IncidentRepositoryInterface):
             Incident.village_id == village_id,
             Incident.is_deleted.is_(False),
             Incident.event_date >= start_date,
+            # Admin-rejected incidents never absorb new reports automatically.
+            Incident.verification_status.is_distinct_from("rejected"),
             Incident.event_date <= end_date,
             Incident.khabar_embedding.is_not(None),
         ]
@@ -1444,6 +1511,10 @@ class IncidentRepository(IncidentRepositoryInterface):
             ):
                 existing.verification_status = "auto_processed"
                 existing.verification_reason = None
+            self._demote_verified_after_pipeline_write(
+                existing,
+                f"Pipeline merged raw message {raw_message_id} into this verified incident",
+            )
         sync_transition_totals(existing, transition_fields)
 
         suppressed: dict[str, Any] = {}
@@ -1518,16 +1589,52 @@ class IncidentRepository(IncidentRepositoryInterface):
         existing: Incident,
         new_candidate_data: dict[str, Any],
         raw_message_id: int,
-    ) -> None:
+        *,
+        heuristic_only: bool = False,
+    ) -> bool:
         """Update casualty fields supplied by a later report of the same event.
 
         Unmentioned fields are left unchanged. The same source message cannot
         apply its revision twice (mirrors transition-merge idempotency).
+
+        Returns False (nothing written) when the report is not newer than the
+        incident's data, or when a heuristic-only revision would lower a count;
+        the latter flags the incident for review instead.
         """
         if self._story_revision_already_applied(existing.id, raw_message_id):
-            return
+            return False
 
         raw_message = self.db.get(RawMessage, raw_message_id)
+        if not self._revision_is_newer(existing, raw_message):
+            logger.info(
+                "story revision skipped raw_message_id=%s incident_id=%s: "
+                "not newer than the incident's data",
+                raw_message_id,
+                existing.id,
+            )
+            return False
+        lowered = self._revision_lowered_fields(existing, new_candidate_data)
+        if heuristic_only and lowered:
+            existing.verification_status = "needs_verification"
+            existing.verification_reason = (
+                f"Unconfirmed story revision from raw message {raw_message_id} "
+                f"would lower {', '.join(sorted(lowered))}; review before applying"
+            )
+            record_incident_change(
+                self.db,
+                incident_id=existing.id,
+                action=UpdateAction.pipeline_merge,
+                old_values={field: getattr(existing, field) for field in lowered},
+                new_values={
+                    "proposed_story_revision": {
+                        field: new_candidate_data.get(field) for field in lowered
+                    },
+                    "story_revision_held_raw_message_id": raw_message_id,
+                },
+                performed_by=None,
+            )
+            self.db.add(existing)
+            return False
         source_label = self._merge_source_label(raw_message)
         detail = self.db.scalar(
             select(IncidentDetail).where(IncidentDetail.incident_id == existing.id)
@@ -1538,6 +1645,10 @@ class IncidentRepository(IncidentRepositoryInterface):
             incoming = new_candidate_data.get(field)
             if isinstance(incoming, int) and not isinstance(incoming, bool):
                 setattr(existing, field, incoming)
+        self._demote_verified_after_pipeline_write(
+            existing,
+            f"Story revision from raw message {raw_message_id} changed this verified incident",
+        )
         if (
             isinstance(new_candidate_data.get("martyrs"), str)
             and new_candidate_data["martyrs"].strip()
@@ -1590,6 +1701,88 @@ class IncidentRepository(IncidentRepositoryInterface):
             )
         )
         self.db.add(existing)
+        return True
+
+    @staticmethod
+    def _revision_lowered_fields(
+        existing: Incident,
+        new_candidate_data: dict[str, Any],
+    ) -> set[str]:
+        lowered: set[str] = set()
+        for field in ("deaths", "injuries", "total_deaths", "total_injuries"):
+            incoming = new_candidate_data.get(field)
+            current = getattr(existing, field)
+            if (
+                isinstance(incoming, int)
+                and not isinstance(incoming, bool)
+                and isinstance(current, int)
+                and incoming < current
+            ):
+                lowered.add(field)
+        return lowered
+
+    def _revision_is_newer(
+        self,
+        existing: Incident,
+        raw_message: RawMessage | None,
+    ) -> bool:
+        """A revision must be later than every report the incident already holds."""
+        if raw_message is None:
+            return True
+        new_at = getattr(raw_message, "message_datetime", None) or getattr(
+            raw_message, "received_at", None
+        )
+        source_ids = [
+            int(value)
+            for value in self.db.scalars(
+                select(
+                    IncidentUpdate.new_values["merged_from"]["raw_message_id"].astext
+                ).where(
+                    IncidentUpdate.incident_id == existing.id,
+                    IncidentUpdate.action == UpdateAction.pipeline_merge,
+                )
+            ).all()
+            if value and str(value).isdigit()
+        ]
+        own_raw_message_id = getattr(existing, "raw_message_id", None)
+        if own_raw_message_id is not None:
+            source_ids.append(own_raw_message_id)
+        if new_at is None or not source_ids:
+            return True
+        latest = self.db.scalar(
+            select(
+                func.max(func.coalesce(RawMessage.message_datetime, RawMessage.received_at))
+            ).where(RawMessage.id.in_(source_ids))
+        )
+        return latest is None or new_at > latest
+
+    def _has_other_live_incident(
+        self,
+        raw_message_id: int,
+        *,
+        exclude_incident_id: UUID,
+    ) -> bool:
+        return (
+            self.db.scalar(
+                select(Incident.id)
+                .where(
+                    Incident.raw_message_id == raw_message_id,
+                    Incident.id != exclude_incident_id,
+                    Incident.is_deleted.is_(False),
+                    Incident.verification_status.is_distinct_from("rejected"),
+                )
+                .limit(1)
+            )
+            is not None
+        )
+
+    @staticmethod
+    def _demote_verified_after_pipeline_write(existing: Incident, reason: str) -> None:
+        """A human-verified badge must not sit over machine-altered data."""
+        if existing.verification_status != "verified":
+            return
+        existing.verification_status = "needs_verification"
+        existing.verification_reason = reason
 
     def _story_revision_already_applied(
         self,
@@ -1687,6 +1880,7 @@ class IncidentRepository(IncidentRepositoryInterface):
             Incident.village_id == village_id,
             Incident.condition_id == condition_id,
             Incident.is_deleted.is_(False),
+            Incident.verification_status.is_distinct_from("rejected"),
             Incident.event_date >= start_date,
             Incident.event_date <= end_date,
         ]
@@ -1877,6 +2071,7 @@ class IncidentRepository(IncidentRepositoryInterface):
         filters = [
             Incident.village_id.in_(village_ids),
             Incident.is_deleted.is_(False),
+            Incident.verification_status.is_distinct_from("rejected"),
             Incident.event_date >= start_date,
             Incident.event_date <= end_date,
             Incident.khabar_embedding.is_not(None),
@@ -2015,12 +2210,34 @@ class IncidentRepository(IncidentRepositoryInterface):
         candidates.sort(key=lambda c: c.time_gap_seconds)
         return candidates
 
+    def _record_soft_delete(
+        self,
+        incident: Incident,
+        *,
+        reason: DeletedReason,
+        canonical_incident_id: UUID | None,
+        performed_by: UUID | None = None,
+    ) -> None:
+        record_incident_change(
+            self.db,
+            incident_id=incident.id,
+            action=UpdateAction.delete,
+            old_values={"is_deleted": False},
+            new_values={
+                "is_deleted": True,
+                "deleted_reason": reason.value,
+                "canonical_incident_id": canonical_incident_id,
+            },
+            performed_by=performed_by,
+        )
+
     def soft_delete_for_raw_message_id(
         self,
         raw_message_id: int,
         *,
         representative_raw_message_id: int | None = None,
         similarity_score: float | None = None,
+        reason: DeletedReason = DeletedReason.cluster_subsumption,
     ) -> list[UUID]:
         incidents = list(
             self.db.scalars(
@@ -2044,7 +2261,15 @@ class IncidentRepository(IncidentRepositoryInterface):
                 canonical_incident=representative_incident,
             )
             incident.is_deleted = True
+            incident.deleted_reason = reason.value
             incident.duplicate_flag = False
+            self._record_soft_delete(
+                incident,
+                reason=reason,
+                canonical_incident_id=(
+                    representative_incident.id if representative_incident else None
+                ),
+            )
             self.db.add(incident)
             if representative_incident is not None:
                 self.create_duplicate_match(
@@ -2068,6 +2293,7 @@ class IncidentRepository(IncidentRepositoryInterface):
         *,
         matched_incident_id: UUID | None = None,
         similarity_score: float | None = None,
+        reason: DeletedReason = DeletedReason.duplicate_merge,
     ) -> list[UUID]:
         """Soft-delete only the incident(s) for a specific (raw_message_id, village_id) pair."""
         incidents = list(
@@ -2089,7 +2315,13 @@ class IncidentRepository(IncidentRepositoryInterface):
                 canonical_incident=matched_incident,
             )
             incident.is_deleted = True
+            incident.deleted_reason = reason.value
             incident.duplicate_flag = False
+            self._record_soft_delete(
+                incident,
+                reason=reason,
+                canonical_incident_id=matched_incident.id if matched_incident else None,
+            )
             self.db.add(incident)
             if matched_incident is not None:
                 self.create_duplicate_match(

@@ -15,6 +15,10 @@ ERROR_UNMATCHED_CONDITION = "fast_path: unmatched or missing condition"
 ERROR_NO_VILLAGE = "fast_path: no materializable village match"
 ERROR_EXACT_HASH = "fast_path: exact hash already materialized; no new incident"
 ERROR_UNMATERIALIZABLE = "fast_path: permanently unmaterializable"
+# A multi-village message where some villages committed an incident and a later
+# village raised. The claim re-admits these so the remaining villages are
+# retried; already-inserted villages are skipped by the exact-hash constraint.
+FAST_PATH_PARTIAL_FAILURE_PREFIX = "fast_path: partial failure"
 
 # Correlated to raw_messages in claim/update statements. Avoids SQLAlchemy `?`
 # bind placeholder by using jsonb_typeof instead of the jsonb `?` operator.

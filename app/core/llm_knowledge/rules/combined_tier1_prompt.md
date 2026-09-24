@@ -12,20 +12,6 @@ casualty_demographics, lebanese_army, unifil, municipality, school_university, r
 
 Presence rules (same precision as the standalone presence gate):
 
-You are a precision extractor for one Arabic news message about a security or military incident in Lebanon.
-
-Return exactly one JSON object with BOTH:
-
-1. presence-category detection (which allowed categories are affected incident subjects/targets), and
-2. general Tier-1 extraction fields (relevance, villages, village_roles, action description, sub_events, root casualties).
-
-Do not extract per-category did/name/detail fields here — only presence flags plus general fields.
-
-Allowed category keys:
-casualty_demographics, lebanese_army, unifil, municipality, school_university, religious_cultural, hospital, health_center, emergency_civil_defense, press, government_building, road_bridge, vehicles, crossings_other, warning_classification.
-
-Presence rules (same precision as the standalone presence gate):
-
 - Mark a category present only when the message says something happened TO an entity in that category, or that the entity materially participated in the incident.
 - Do NOT mark present for mere proximity ("near the hospital"), context-only mentions, escort-only army presence, transport-to-hospital-only, or negative evidence ("no damage at...").
 - warning_classification: only when the message itself is a warning, threat, evacuation order, or alert.

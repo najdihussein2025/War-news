@@ -46,6 +46,27 @@ def _ground_motorcycle_flag(
     return vehicles.model_copy(update={"moto": True})
 
 
+def tier2_scope_context(
+    villages: list[str] | None,
+    casualty_scope: str | None,
+) -> str | None:
+    """Tier 1 location/scope context for a multi-village bulletin, else None.
+
+    Tier 2 runs per category on the whole post; without this it cannot tell a
+    bulletin-wide toll from a count reported for one village's category.
+    """
+    names = [name.strip() for name in villages or [] if name and name.strip()]
+    if len(names) < 2:
+        return None
+    return (
+        "سياق من المرحلة الأولى: الخبر متعدد البلدات "
+        f"({'، '.join(names)}); casualty_scope={casualty_scope or 'unspecified'}.\n"
+        "لا تضع في casualties الخاصة بهذه الفئة إلا أعداداً منسوبة صراحةً إلى "
+        "أفراد هذه الفئة. لا تنسخ الحصيلة الإجمالية للخبر أو حصيلة بلدة أخرى "
+        "إلى هذه الفئة؛ إذا لم يُذكر عدد خاص بالفئة فاترك casualties فارغة.\n\n"
+    )
+
+
 # Deprecated aliases — runtime uses build_stage_system_prompt().
 CATEGORY_DETAIL_PROMPT = (
     Path(__file__).resolve().parents[2]
@@ -182,6 +203,7 @@ class OllamaCategoryDetailService:
         post_text: str,
         category_key: ExtractionCategoryKey,
         raw_message_id: int | None = None,
+        scope_context: str | None = None,
     ) -> ExtractionCategory:
         content = self.client.chat(
             [
@@ -193,6 +215,7 @@ class OllamaCategoryDetailService:
                     role="user",
                     content=(
                         f"category_key: {category_key.value}\n\n"
+                        f"{scope_context or ''}"
                         f"النص:\n{post_text}"
                     ),
                 ),
@@ -212,6 +235,7 @@ class OllamaCategoryDetailService:
         post_text: str,
         category_keys: list[ExtractionCategoryKey],
         raw_message_id: int | None = None,
+        scope_context: str | None = None,
     ) -> dict[ExtractionCategoryKey, ExtractionCategory]:
         if not category_keys:
             return {}
@@ -230,6 +254,7 @@ class OllamaCategoryDetailService:
                     role="user",
                     content=(
                         f"category_keys: [{keys_csv}]\n\n"
+                        f"{scope_context or ''}"
                         f"النص:\n{post_text}"
                     ),
                 ),

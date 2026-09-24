@@ -59,11 +59,29 @@ LIVE_BUG_REFS: tuple[str, ...] = (
     "preliminary-tally-marker",
 )
 
-LIVE_STAGE_OVERRIDE: dict[str, str] = {
-    # Use the production combined prompt for extraction-shaped cases.
-    "tier1_extraction": "combined_tier1",
-    "casualty_scope": "combined_tier1",
+# Corpus labels whose rules live in another built stage. casualty_scope rules
+# are part of the Tier 1 prompt; village matching is code-only in production
+# (no LLM stage), so offline checks only need a loadable prompt.
+BUILD_STAGE_BY_LABEL: dict[str, str] = {
+    "casualty_scope": "tier1_extraction",
+    "village_matching": "tier1_extraction",
 }
+
+# Production default is the separate presence + general Tier 1 calls
+# (tier1_use_combined_presence_extraction=False). Pass
+# --extraction-prompt combined_tier1 to score the combined variant instead.
+DEFAULT_EXTRACTION_PROMPT_STAGE = "tier1_extraction"
+EXTRACTION_SHAPED_LABELS = ("tier1_extraction", "casualty_scope")
+LIVE_SKIPPED_LABELS = frozenset({"village_matching"})
+
+
+def _live_stage_override(extraction_prompt_stage: str) -> dict[str, str]:
+    return {label: extraction_prompt_stage for label in EXTRACTION_SHAPED_LABELS}
+
+
+LIVE_STAGE_OVERRIDE: dict[str, str] = _live_stage_override(
+    DEFAULT_EXTRACTION_PROMPT_STAGE
+)
 
 
 def _log(message: str = "") -> None:
@@ -95,7 +113,7 @@ def _check_case(
 ) -> tuple[bool, str]:
     input_text = str(case.get("input") or "")
     expected = case.get("expected_output") or {}
-    context = builder.build(stage, input_text)
+    context = builder.build(BUILD_STAGE_BY_LABEL.get(stage, stage), input_text)
 
     if not context.rules.strip() and stage != "relevance_filter":
         return False, "no rules loaded"
@@ -322,7 +340,11 @@ def _score_live(
     return "partial", "unscored stage shape"
 
 
-def run_live(*, report_path: Path | None) -> int:
+def run_live(
+    *,
+    report_path: Path | None,
+    extraction_prompt_stage: str = DEFAULT_EXTRACTION_PROMPT_STAGE,
+) -> int:
     from app.core.config import settings
     from app.core.ollama_client import OllamaChatClient, OllamaChatMessage
 
@@ -349,8 +371,14 @@ def run_live(*, report_path: Path | None) -> int:
 
     results: list[dict[str, Any]] = []
     for index, (corpus_name, stage, case) in enumerate(selected, start=1):
+        if stage in LIVE_SKIPPED_LABELS:
+            _log(
+                f"\n[{index}/{len(selected)}] {corpus_name} :: "
+                "skipped (no LLM stage in production)"
+            )
+            continue
         bug_ref = case.get("bug_ref")
-        prompt_stage = LIVE_STAGE_OVERRIDE.get(stage, stage)
+        prompt_stage = _live_stage_override(extraction_prompt_stage).get(stage, stage)
         input_text = str(case.get("input") or "")
         expected = case.get("expected_output") or {}
         _log(f"\n[{index}/{len(selected)}] {corpus_name} :: {bug_ref} (prompt_stage={prompt_stage})")
@@ -502,10 +530,19 @@ def main(argv: list[str] | None = None) -> int:
         default="",
         help="Markdown report path for --live (default Docs/recon/llm_knowledge_live_validation.md).",
     )
+    parser.add_argument(
+        "--extraction-prompt",
+        choices=("tier1_extraction", "combined_tier1"),
+        default=DEFAULT_EXTRACTION_PROMPT_STAGE,
+        help="Tier 1 prompt to score for --live (production default: tier1_extraction).",
+    )
     args = parser.parse_args(argv)
     if args.live:
         report = Path(args.report) if args.report else None
-        return run_live(report_path=report)
+        return run_live(
+            report_path=report,
+            extraction_prompt_stage=args.extraction_prompt,
+        )
     return run_eval()
 
 

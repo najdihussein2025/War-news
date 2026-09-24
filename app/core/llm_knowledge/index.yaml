@@ -2,9 +2,12 @@ tier1_extraction:
   rules:
     core:
       - rules/tier1_general_prompt.md
+      - rules/condition_action_reconciliation.md
     situational:
       - trigger: is_multi_village_candidate
         load: rules/tier1_multi_village.md
+      - trigger: has_casualty_transition_language
+        load: rules/tier1_casualty_transitions.md
   fewshot:
     source: fewshot/village_collision_examples.jsonl
     k: 3
@@ -12,7 +15,6 @@ tier1_extraction:
     - terminology/role_terms.yaml
     - terminology/revision_language_markers.yaml
     - terminology/casualty_gender.yaml
-    - terminology/condition_labels.yaml
 
 combined_tier1:
   rules:
@@ -29,38 +31,6 @@ combined_tier1:
     - terminology/role_terms.yaml
     - terminology/revision_language_markers.yaml
     - terminology/casualty_gender.yaml
-
-casualty_scope:
-  rules:
-    core:
-      - rules/casualty_merge.md
-  fewshot:
-    source: fewshot/scope_examples.jsonl
-    k: 5
-  terminology:
-    - terminology/casualty_gender.yaml
-
-casualty_transitions:
-  rules:
-    core:
-      - rules/casualty_merge.md
-  fewshot:
-    source: fewshot/scope_examples.jsonl
-    k: 3
-  terminology:
-    - terminology/revision_language_markers.yaml
-
-village_matching:
-  rules:
-    core:
-      - rules/village_matching.md
-  fewshot:
-    source: fewshot/village_collision_examples.jsonl
-    k: 3
-  terminology:
-    - terminology/role_terms.yaml
-    - terminology/village_aliases.yaml
-    - terminology/condition_labels.yaml
 
 presence_gate:
   rules:

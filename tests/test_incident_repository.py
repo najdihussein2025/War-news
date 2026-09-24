@@ -56,7 +56,10 @@ def test_pipeline_duplicate_for_raw_message_id_retires_incident() -> None:
     assert deleted_ids == [incident.id]
     assert incident.is_deleted is True
     assert incident.duplicate_flag is False
-    assert db.added == [incident]
+    assert db.added[-1] is incident
+    [audit] = [row for row in db.added if isinstance(row, IncidentUpdate)]
+    assert audit.action == UpdateAction.delete
+    assert audit.new_values["deleted_reason"] == "cluster_subsumption"
     assert db.flush_calls == 1
 
 
@@ -200,7 +203,9 @@ class _VerificationSessionStub:
         self.committed = False
 
     def scalar(self, _statement: object) -> object:
-        return next(self.results)
+        # Third query is the per-incident reject sibling check: no other live
+        # village incident, so the raw message itself moves to Rejected News.
+        return next(self.results, None)
 
     def add(self, value: object) -> None:
         self.added.append(value)

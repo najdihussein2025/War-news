@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import or_, select
@@ -59,23 +59,55 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         message.processing_claimed_at = None
         message.processing_claimed_by = None
 
+    @staticmethod
+    def relevance_claim_available_clause():
+        """Pending rows not currently leased by another relevance sweep."""
+        cutoff = datetime.now(timezone.utc) - timedelta(
+            seconds=settings.relevance_claim_lease_seconds
+        )
+        return or_(
+            RawMessage.processing_claimed_at.is_(None),
+            RawMessage.processing_claimed_at < cutoff,
+        )
+
+    def lease_relevance_batch(self, messages: list[RawMessage]) -> list[RawMessage]:
+        """Lease the selected rows and commit, releasing their row locks.
+
+        Each save_filter_result / save_error commits (clearing the lease), which
+        used to drop the whole batch's FOR UPDATE locks mid-batch and let a
+        concurrent sweep classify the remaining rows again. The lease keeps them
+        reserved for the whole LLM call instead.
+        """
+        if not messages:
+            return messages
+        now = datetime.now(timezone.utc)
+        for message in messages:
+            message.processing_claim_stage = FAILED_STAGE_RELEVANCE
+            message.processing_claimed_at = now
+            message.processing_claimed_by = "relevance_filter"
+            self.db.add(message)
+        self.db.commit()
+        return messages
+
     def get_pending_unfiltered_batch(
         self,
         limit: int,
     ) -> list[RawMessage]:
-        return list(
+        messages = list(
             self.db.scalars(
                 select(RawMessage)
                 .options(joinedload(RawMessage.source, innerjoin=True))
                 .where(
                     RawMessage.status == MessageStatus.pending,
                     RawMessage.filter_result.is_(None),
+                    self.relevance_claim_available_clause(),
                 )
                 .order_by(RawMessage.id.asc())
                 .limit(limit)
                 .with_for_update(skip_locked=True)
             ).all()
         )
+        return self.lease_relevance_batch(messages)
 
     def get_pending_extraction_batch(
         self,

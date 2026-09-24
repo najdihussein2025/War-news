@@ -197,6 +197,7 @@ def _get_pending_unfiltered_batch_filtered(
                 _id_above_cutoff(cutoff_raw_message_id),
                 RawMessage.status == MessageStatus.pending,
                 RawMessage.filter_result.is_(None),
+                RawMessageRepository.relevance_claim_available_clause(),
             )
             .order_by(RawMessage.id.asc())
             .limit(limit)
@@ -205,7 +206,7 @@ def _get_pending_unfiltered_batch_filtered(
     )
     if processed_ids is not None:
         processed_ids.extend(message.id for message in messages)
-    return messages
+    return self.lease_relevance_batch(messages)
 
 
 def _get_pending_extraction_batch_filtered(

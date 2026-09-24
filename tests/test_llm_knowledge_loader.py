@@ -82,9 +82,31 @@ def test_is_multi_village_candidate_single_village_false() -> None:
 
 
 def test_build_loads_core_rules(builder: PromptBuilder) -> None:
-    context = builder.build("casualty_scope", "المنصوري: شهيد و3 جرحى")
-    assert "casualty_scope" in context.rules or "merge" in context.rules.lower()
-    assert context.stage == "casualty_scope"
+    context = builder.build("tier1_extraction", "المنصوري: شهيد و3 جرحى")
+    assert "casualty_scope" in context.rules
+    # Text-over-CNRS-subtype precedence is now part of the Tier 1 core rules.
+    assert "Condition/action reconciliation" in context.rules
+    assert context.stage == "tier1_extraction"
+
+
+def test_transition_rules_load_only_with_transition_language(
+    builder: PromptBuilder,
+) -> None:
+    followup = builder.build(
+        "tier1_extraction",
+        "استشهاد أحد جريحي الغارة على بنت جبيل متأثراً بجراحه",
+    )
+    plain = builder.build("tier1_extraction", "غارة على عيتا الشعب أدت إلى 2 جريحين")
+    assert "rules/tier1_casualty_transitions.md" in followup.situational_rules_loaded
+    assert "rules/tier1_casualty_transitions.md" not in plain.situational_rules_loaded
+    assert "أمثلة على casualty_transitions" in followup.rules
+    assert "أمثلة على casualty_transitions" not in plain.rules
+
+
+def test_tier1_does_not_load_condition_label_glossary(builder: PromptBuilder) -> None:
+    context = builder.build("tier1_extraction", "قصف مدفعي على الخيام")
+    loaded = {getattr(entry, "category", None) for entry in context.terminology or []}
+    assert "condition_alias" not in loaded
 
 
 def test_build_gates_situational_multi_village_rules(builder: PromptBuilder) -> None:
@@ -107,7 +129,7 @@ def test_build_retrieves_fewshot_via_embedding() -> None:
     ]
     builder = PromptBuilder(embedding_service=embedding)
     context = builder.build(
-        "casualty_scope",
+        "combined_tier1",
         "المنصوري: شهيد و3 جرحى؛ مجدل زون: 4 جرحى",
     )
     assert len(context.fewshot_examples) <= 5

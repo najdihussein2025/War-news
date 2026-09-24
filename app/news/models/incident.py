@@ -1,4 +1,5 @@
 from datetime import date, datetime, time
+from enum import Enum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -19,6 +20,20 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from pgvector.sqlalchemy import Vector
 
 from app.core.database import Base
+
+
+class DeletedReason(str, Enum):
+    """Why an incident was soft-deleted; reconciliation only touches pipeline ones."""
+
+    admin = "admin"
+    duplicate_merge = "duplicate_merge"
+    cluster_subsumption = "cluster_subsumption"
+
+
+PIPELINE_DELETED_REASONS = (
+    DeletedReason.duplicate_merge.value,
+    DeletedReason.cluster_subsumption.value,
+)
 
 if TYPE_CHECKING:
     from app.accounts.models.user import User
@@ -112,6 +127,7 @@ class Incident(Base):
         default=False,
         server_default=text("false"),
     )
+    deleted_reason: Mapped[str | None] = mapped_column(String(32), nullable=True)
     created_by: Mapped[UUID | None] = mapped_column(
         PgUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),

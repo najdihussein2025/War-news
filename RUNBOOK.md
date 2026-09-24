@@ -156,3 +156,20 @@ gitGraph
 
 - **Red Alert Rule Rejections**: 190/190 recent messages are being rejected at the rule layer (`red_alert_air_violation_service.py`), predominantly (165/190) citing *"Location could not be identified reliably from the alert image"*. This indicates an OCR/vision extraction issue that requires dedicated investigation.
 - **Frontend Multi-stage Production Image**: As noted, the frontend currently runs in Vite development server mode (`npm run dev`) inside the container. When convenient, a multi-stage Docker build producing a static bundle (`dist/`) served by nginx or `vite preview` should be implemented.
+
+---
+
+## 6. Ollama (LAN inference server) tuning
+
+Ollama is **not** part of either compose stack; it runs standalone on the LAN
+host behind `OLLAMA_BASE_URL`. Server-side and app-side knobs must be tuned
+together, from measured numbers (`nvidia-smi`, `ollama ps` during a real
+extraction, `ollama show qwen2.5:7b`), never guessed.
+
+| Setting | Where | Default | Notes |
+|---|---|---|---|
+| `OLLAMA_NUM_PARALLEL` | Ollama host env | Ollama default | Concurrent requests per loaded model. Each slot needs its own KV cache (≈ `num_ctx` tokens), so on a 4 GB card raising it pushes layers to CPU. Keep ≥ the app's `TIER1_LLM_MAX_CONCURRENT_REQUESTS` + `TIER2_LLM_MAX_CONCURRENT_REQUESTS` for extraction, or requests just queue server-side. |
+| `OLLAMA_MAX_LOADED_MODELS` | Ollama host env | Ollama default | qwen2.5:7b (extraction) and gpt-oss:20b (relevance) cannot both fit in 4 GB VRAM; expect model swaps unless relevance runs elsewhere. |
+| `OLLAMA_NUM_CTX` | app `.env` | unset (server default) | Sent as `options.num_ctx`. Measured Tier 1 system prompt ≈ 4.5k tokens (single village) to ≈ 6.7k (multi-village) + post + JSON answer; 8192 is the smallest safe value. Too small = Ollama silently drops the start of the system prompt ("truncating input prompt" in its log). |
+| `OLLAMA_KEEP_ALIVE` | app `.env` | unset (server default, 5m) | Sent as `keep_alive`, e.g. `30m` or `-1`, so the model is not unloaded between sweeps. |
+| `TIER1_LLM_MAX_CONCURRENT_REQUESTS` / `TIER2_LLM_MAX_CONCURRENT_REQUESTS` / `OLLAMA_MAX_CONCURRENT_REQUESTS` | app `.env` | 2 / 2 / 4 | Placeholders until the Phase 0 latency numbers are in. |

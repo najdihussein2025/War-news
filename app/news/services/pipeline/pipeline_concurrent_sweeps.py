@@ -38,7 +38,7 @@ from app.llm.services.transient_llm_errors import (
 )
 from app.news.services.pipeline.pipeline_llm_workers import (
     run_tier1_extraction_for_message,
-    run_tier2_detail_fill_for_message,
+    run_tier2_detail_fill_for_incident,
 )
 from app.news.services.dedup.pre_extraction_dedup import process_pre_dedup_message
 
@@ -159,12 +159,6 @@ def _claim_tier2_work() -> tuple[object, int] | None:
         incident_id = incident.id
         raw_message_id = incident.raw_message_id
         db.commit()
-        if raw_message_id is None:
-            logger.error(
-                "Concurrent tier2 detail fill claimed incident_id=%s with no raw_message_id",
-                incident_id,
-            )
-            return None
         return incident_id, raw_message_id
 
 
@@ -525,6 +519,10 @@ async def _fast_path_worker(
                     raw_message_id,
                     _format_exception(exc),
                 )
+                PipelineClaimRepository(db).mark_fast_path_partial_failure(
+                    raw_message_id,
+                    exc,
+                )
                 stats.record_failure()
 
 
@@ -595,7 +593,8 @@ async def _tier2_detail_fill_worker(
         release_claim = True
         try:
             await run_with_tier2_ollama_limit(
-                run_tier2_detail_fill_for_message,
+                run_tier2_detail_fill_for_incident,
+                incident_id,
                 raw_message_id,
             )
             stats.record_success()
@@ -623,7 +622,7 @@ async def _tier2_detail_fill_worker(
             )
             stats.record_failure()
         finally:
-            if release_claim:
+            if release_claim and raw_message_id is not None:
                 await asyncio.to_thread(_release_raw_message_claim, raw_message_id)
 
 

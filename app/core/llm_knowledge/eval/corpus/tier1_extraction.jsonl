@@ -9,3 +9,6 @@
 {"input": "أصيب 5 جرحى جدد في قصف جديد على القرية", "expected_output": {"casualty_transitions": []}, "source": "real_bug", "bug_ref": "additive-injuries-not-transition"}
 {"input": "شهيد مسعف في ياطر", "expected_output": {"casualties": {"male_deaths": 1}}, "source": "real_bug", "bug_ref": "occupation-gender-male-paramedic"}
 {"input": "استشهاد مسعفة في بلدة عيتا الشعب", "expected_output": {"casualties": {"female_deaths": 1}}, "source": "real_bug", "bug_ref": "occupation-gender-female-paramedic"}
+{"input": "تمشيط بالأسلحة الرشاشة المعادية باتجاه بلدة ياحون. • إلقاء قنابل مضيئة معادية باتجاه وادي السلوقي لجهة طلوسة", "expected_output": {"action_description": "multiple actions across 2 villages", "sub_events": [{"action_text": "تمشيط", "locations": ["ياحون"]}, {"action_text": "قنابل مضيئة", "locations": ["طلوسة"]}]}, "source": "real_bug", "bug_ref": "per-village-action-attribution"}
+{"input": "تمشيط من الاباتشي استهدف المنصوري", "expected_output": {"village": ["المنصوري"], "action_description_contains": "تمشيط"}, "source": "real_bug", "bug_ref": "text-action-over-cnrs-subtype-raw-1235"}
+{"input": "القوات الإسرائيلية أحرقت حقول الزيتون وبساتين الحمضيات في محيط مجدل زون وبيوت السياد بإطلاق قنابل فوسفورية", "expected_output": {"village": ["مجدل زون"], "location_alternatives": ["بيوت السياد"]}, "source": "real_bug", "bug_ref": "fuzzy-area-single-location"}

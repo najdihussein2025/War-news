@@ -19,6 +19,29 @@ class OllamaChatMessage:
     content: str
 
 
+def _apply_runtime_options(
+    request_payload: JsonObject,
+    temperature: float | None,
+) -> None:
+    """Add temperature plus the deployment-tuned num_ctx / keep_alive.
+
+    num_ctx and keep_alive come from settings (OLLAMA_NUM_CTX,
+    OLLAMA_KEEP_ALIVE). Unset means Ollama's server defaults, which is what
+    every request used before these settings existed.
+    """
+    from app.core.config import settings
+
+    options: dict[str, JsonValue] = {}
+    if temperature is not None:
+        options["temperature"] = temperature
+    if settings.ollama_num_ctx is not None:
+        options["num_ctx"] = settings.ollama_num_ctx
+    if options:
+        request_payload["options"] = options
+    if settings.ollama_keep_alive is not None:
+        request_payload["keep_alive"] = settings.ollama_keep_alive
+
+
 class OllamaChatClient:
     def __init__(
         self,
@@ -66,8 +89,7 @@ class OllamaChatClient:
                 for message in messages
             ],
         }
-        if temperature is not None:
-            request_payload["options"] = {"temperature": temperature}
+        _apply_runtime_options(request_payload, temperature)
 
         response = self._send_with_retries("api/chat", request_payload)
         response.raise_for_status()
@@ -88,8 +110,7 @@ class OllamaChatClient:
                 for message in messages
             ],
         }
-        if temperature is not None:
-            request_payload["options"] = {"temperature": temperature}
+        _apply_runtime_options(request_payload, temperature)
 
         response = await self._send_with_retries_async("api/chat", request_payload)
         response.raise_for_status()

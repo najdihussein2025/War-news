@@ -35,6 +35,16 @@ class Settings(BaseSettings):
     )
     ollama_model: str = "gpt-oss:20b"
     ollama_timeout_seconds: int = 90
+    # PLACEHOLDER — set from the Phase 0 measurement, not guessed. num_ctx must
+    # cover the largest system prompt (Tier 1 general + multi-village block,
+    # roughly 9-11k tokens) plus the post and the JSON answer, with headroom;
+    # Ollama silently truncates the oldest tokens (the start of the system
+    # prompt) when it is too small. Larger values cost VRAM (KV cache), which
+    # matters on a 4 GB card. None = Ollama server default (current behaviour).
+    ollama_num_ctx: int | None = None
+    # How long Ollama keeps the model loaded between calls, e.g. "30m" or "-1"
+    # (forever). None = server default (5m). Set per deployment.
+    ollama_keep_alive: str | None = None
     ollama_max_concurrent_requests: int = 4
     relevance_ollama_model: str = "gpt-oss:20b"
     extraction_ollama_model: str = "qwen2.5:7b"
@@ -47,6 +57,11 @@ class Settings(BaseSettings):
     tier1_use_combined_presence_extraction: bool = False
     # When true, Tier 2 uses one batched category-detail LLM call per message.
     tier2_use_batched_category_detail: bool = False
+    # When true, borderline sparse story revisions (similarity 0.40-0.55) ask the
+    # story_revision prompt instead of trusting similarity. Off by default: the
+    # call runs inside fast-path while it holds the village advisory lock and a
+    # DB session, which conflicts with the no-session-during-LLM rule.
+    story_revision_llm_fallback_enabled: bool = False
     extraction_llm_request_retries: int = 2
     extraction_llm_retry_backoff_seconds: float = 2.0
     relevance_llm_batch_size: int = 4
@@ -135,6 +150,9 @@ class Settings(BaseSettings):
     pipeline_role: str = "api"
     pipeline_worker_poll_seconds: float = 2.0
     pipeline_claim_lease_seconds: int = 240
+    # Relevance batches (up to 15 posts per gpt-oss:20b call) can outlast the
+    # general lease; a shorter lease would let a second sweep re-classify them.
+    relevance_claim_lease_seconds: int = 1800
     # Fairness caps for one pipeline pass. LLM-backed stages need a much smaller
     # slice so a CPU-bound extraction backlog cannot hide matching/materialization
     # for hours.
@@ -159,6 +177,25 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         extra = "ignore"
+
+
+INSECURE_DEFAULTS: dict[str, str] = {
+    "auth_secret_key": "development-only-change-me",
+    "super_admin_seed_password": "password",
+}
+
+
+def insecure_default_settings(current: Settings) -> list[str]:
+    """Names of security settings still holding their shipped defaults.
+
+    The project has no dev/prod switch (the stacks differ only by env file),
+    so startup warns loudly instead of refusing to boot.
+    """
+    return [
+        name
+        for name, default in INSECURE_DEFAULTS.items()
+        if getattr(current, name, None) == default
+    ]
 
 
 settings = Settings()

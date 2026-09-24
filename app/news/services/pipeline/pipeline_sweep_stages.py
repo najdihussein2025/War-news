@@ -15,7 +15,7 @@ from app.core.config import settings
 from app.llm.services.ollama_auth_failures import OllamaAuthFailure
 from app.llm.dtos import ExtractPendingMessagesData, FilterPendingMessagesData
 from app.news.dtos.pipeline_dto import StageSweepResult
-from app.news.models import MessageStatus, RawMessage
+from app.news.models import DeletedReason, MessageStatus, RawMessage
 from app.news.repositories.channel_trust_tier_repository import (
     ChannelTrustTierRepository,
 )
@@ -605,6 +605,7 @@ def sweep_clustering(
                             if representative_incident is not None
                             else None
                         ),
+                        reason=DeletedReason.cluster_subsumption,
                     )
 
             db.commit()

@@ -3,7 +3,7 @@
 {"input": "القنطرة", "expected_output": {"resolved_parent_acs": 73276, "note": "Marjayoun not Akkar"}, "source": "real_bug", "bug_ref": "qantara-disambiguation"}
 {"input": "المسلخ", "expected_output": {"resolved_parent_acs": 71111, "note": "stripped حي still Nabatieh Et-Tahta"}, "source": "real_bug", "bug_ref": "maslakh-stripped-prefix"}
 {"input": "عيناثا", "expected_output": {"resolved_parent_acs": 72119, "note": "Aaynata Bent Jbayl not Metn Aaynab"}, "source": "real_bug", "bug_ref": "aynata-disambiguation"}
-{"input": "وادي السلوقي / السلوقي", "expected_output": {"match": null, "reason": "ambiguous_or_unresolved"}, "source": "real_bug", "bug_ref": "uncertain-village-alias"}
+{"input": "وادي السلوقي / السلوقي", "expected_output": {"resolved_parent_acs": 73282, "note": "Wadi el-Selouqi resolves to Touline (Marjaayoun) per the 2026-09-23 alias; was ambiguous before"}, "source": "real_bug", "bug_ref": "uncertain-village-alias"}
 {"input": "وادي الحجير / الحجير", "expected_output": {"match": null, "reason": "ambiguous_or_unresolved"}, "source": "real_bug", "bug_ref": "uncertain-village-alias"}
 {"input": "الفوقا", "expected_output": {"match": null, "reason": "ambiguous_or_unresolved", "note": "bare الفوقا three-way tie"}, "source": "real_bug", "bug_ref": "bare-fouqa-collision"}
 {"input": "كفره", "expected_output": {"resolved_parent_acs": 72257}, "source": "real_bug", "bug_ref": "import-alias-kafra"}

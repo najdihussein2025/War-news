@@ -20,6 +20,18 @@ class StoryRoute:
     classification: StoryRelationshipClassification
 
 
+def _default_relationship_service() -> StoryRelationshipService:
+    from app.core.config import settings
+
+    if not settings.story_revision_llm_fallback_enabled:
+        return StoryRelationshipService()
+    from app.llm.services.story_revision_llm_classifier import (
+        build_story_revision_llm_classifier,
+    )
+
+    return StoryRelationshipService(llm_classify=build_story_revision_llm_classifier())
+
+
 class StoryContinuationRouter:
     def __init__(
         self,
@@ -30,7 +42,7 @@ class StoryContinuationRouter:
     ) -> None:
         self.incidents = incidents
         self.search = search or StoryCandidateSearch(incidents)
-        self.relationships = relationships or StoryRelationshipService()
+        self.relationships = relationships or _default_relationship_service()
 
     def route_for_village(
         self,

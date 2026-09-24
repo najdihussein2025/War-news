@@ -188,6 +188,8 @@ def run_tier2_detail_fill_for_message(raw_message_id: int) -> int:
                 post_text=post_text,
                 presence_category_keys=extraction.presence_category_keys,
                 root_casualties=extraction.casualties,
+                villages=extraction.village,
+                casualty_scope=extraction.casualty_scope.value,
                 raw_message_id=raw_message_id,
             )
         except Tier2ExtractionFailedError as exc:
@@ -209,3 +211,24 @@ def run_tier2_detail_fill_for_message(raw_message_id: int) -> int:
             raw_message_id,
             tier2_categories=tier2_categories,
         )
+
+
+def run_tier2_detail_fill_for_incident(
+    incident_id,
+    raw_message_id: int | None,
+) -> int:
+    """Tier2 for a claimed incident: its own message, then merged-in sources.
+
+    Incidents without a raw message (manual/imported) skip straight to the
+    merge-source fill, so a merge that flipped ``details_pending`` on them is
+    still completed instead of staying pending forever.
+    """
+    from app.news.services.extraction.merge_detail_fill import (
+        run_merge_detail_fill_for_incident,
+    )
+
+    updated = 0
+    if raw_message_id is not None:
+        updated = run_tier2_detail_fill_for_message(raw_message_id)
+    run_merge_detail_fill_for_incident(incident_id, build_extraction_classifier())
+    return updated

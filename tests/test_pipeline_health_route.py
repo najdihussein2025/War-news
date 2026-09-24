@@ -11,6 +11,7 @@ from app.api.deps import require_super_admin
 from app.core.database import get_db
 from app.main import app
 from app.news.services.pipeline.pipeline_health_service import (
+    PipelineFailureCounts,
     CursorGap,
     LatencyCohort,
     LatencySummary,
@@ -40,6 +41,17 @@ def client() -> TestClient:
         app.dependency_overrides.clear()
 
 
+def _failure_counts() -> PipelineFailureCounts:
+    return PipelineFailureCounts(
+        error_rows_total=3,
+        error_rows_by_stage={"relevance_filter": 1, "unknown": 2},
+        tier2_retrying=1,
+        tier2_capped=0,
+        held_for_review=2,
+        oldest_details_pending_seconds=None,
+    )
+
+
 def test_pipeline_health_returns_stages_and_cursor_gap(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -64,6 +76,9 @@ def test_pipeline_health_returns_stages_and_cursor_gap(
 
         def latency_summary(self):
             return _latency_summary()
+
+        def failure_counts(self):
+            return _failure_counts()
 
     monkeypatch.setattr(pipeline_router_module, "PipelineHealthService", _Service)
 
@@ -105,6 +120,14 @@ def test_pipeline_health_returns_stages_and_cursor_gap(
                 "sample_size": 0,
             },
         },
+        "failures": {
+            "error_rows_total": 3,
+            "error_rows_by_stage": {"relevance_filter": 1, "unknown": 2},
+            "tier2_retrying": 1,
+            "tier2_capped": 0,
+            "held_for_review": 2,
+            "oldest_details_pending_seconds": None,
+        },
     }
 
 
@@ -129,6 +152,9 @@ def test_pipeline_health_returns_200_even_when_cursor_unhealthy(
 
         def latency_summary(self):
             return _latency_summary()
+
+        def failure_counts(self):
+            return _failure_counts()
 
     monkeypatch.setattr(pipeline_router_module, "PipelineHealthService", _Service)
 

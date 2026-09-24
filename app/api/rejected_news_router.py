@@ -10,7 +10,14 @@ from sqlalchemy.orm import Session
 from app.accounts.models import User
 from app.api.deps import require_admin
 from app.core.database import get_db
-from app.news.models import Incident, MessageStatus, RawMessage
+from app.news.models import (
+    Incident,
+    IncidentUpdate,
+    MessageStatus,
+    RawMessage,
+    UpdateAction,
+)
+from app.news.services.incidents.incident_change_log import record_incident_change
 
 
 router = APIRouter(prefix="/api/rejected-news", tags=["rejected-news"])
@@ -306,6 +313,17 @@ def restore_rejected_news(
         )
     ):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Rejected news is missing or already restored.")
+    merged_into = _merged_into_incident_id(db, raw_message_id)
+    if merged_into is not None and not manually_rejected_incidents:
+        # Restoring would only flip the status: the merge into the canonical
+        # incident (casualties, details, provenance) is not undone.
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"This report was already merged into incident {merged_into}. "
+                "Open that incident instead of restoring this one."
+            ),
+        )
     manual_reason = next(
         (
             incident.verification_reason
@@ -324,6 +342,20 @@ def restore_rejected_news(
     message.raw_payload = payload
     if manually_rejected_incidents:
         for incident in manually_rejected_incidents:
+            record_incident_change(
+                db,
+                incident_id=incident.id,
+                action=UpdateAction.status_change,
+                old_values={
+                    "verification_status": incident.verification_status,
+                    "verification_reason": incident.verification_reason,
+                },
+                new_values={
+                    "verification_status": "needs_verification",
+                    "restored_from_rejected_news": True,
+                },
+                performed_by=current_user.id,
+            )
             incident.verification_status = "needs_verification"
             incident.verification_reason = None
             incident.verified_by_user_id = None
@@ -342,3 +374,17 @@ def restore_rejected_news(
     db.add(message)
     db.commit()
     return RestoreRejectedResult(id=message.id)
+
+
+def _merged_into_incident_id(db: Session, raw_message_id: int):
+    """Canonical incident this raw message was merged into by the pipeline, if any."""
+    return db.scalar(
+        select(IncidentUpdate.incident_id)
+        .where(
+            IncidentUpdate.action == UpdateAction.pipeline_merge,
+            IncidentUpdate.new_values["merged_from"]["raw_message_id"].astext
+            == str(raw_message_id),
+        )
+        .order_by(IncidentUpdate.created_at.desc())
+        .limit(1)
+    )

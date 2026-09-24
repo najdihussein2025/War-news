@@ -24,10 +24,6 @@ MOJIBAKE = re.compile(
 REPLACED_TEXT = re.compile(r"\?{3,}")
 MIN_DUPLICATE_LINE_LENGTH = 40
 
-# Known duplicated intro, reported 2026-09-24 and not yet fixed. Remove the
-# entry once the file is cleaned so the guard covers it too.
-KNOWN_DUPLICATED_FILES = {"combined_tier1_prompt.md"}
-
 RULE_FILES = sorted(path for path in RULES_DIR.glob("*.md"))
 
 
@@ -48,8 +44,6 @@ def test_rule_file_has_no_replaced_or_mojibake_text(path: Path) -> None:
 
 @pytest.mark.parametrize("path", RULE_FILES, ids=lambda path: path.name)
 def test_rule_file_is_not_duplicated(path: Path) -> None:
-    if path.name in KNOWN_DUPLICATED_FILES:
-        pytest.skip("known duplicated file; see KNOWN_DUPLICATED_FILES")
     lines = [line.strip() for line in _lines(path)]
     non_empty = [line for line in lines if line]
     assert non_empty.count(non_empty[0]) == 1, f"{path.name} repeats its opening line"

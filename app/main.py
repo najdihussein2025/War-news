@@ -8,6 +8,7 @@ from sqlalchemy import text
 from app.api.router import router as api_router
 from app.core.cors import CORS_ORIGINS
 from app.core.cache import redis_is_available
+from app.core.config import insecure_default_settings, settings
 from app.core.database import SessionLocal
 from app.core.exception_handlers import register_exception_handlers
 from app.core.logging_config import configure_logging
@@ -56,6 +57,13 @@ app.include_router(api_router)
 
 @app.on_event("startup")
 async def startup() -> None:
+    insecure = insecure_default_settings(settings)
+    if insecure:
+        logger.warning(
+            "SECURITY: %s still use the shipped default value(s). Set them in the "
+            "environment before exposing this deployment.",
+            ", ".join(insecure),
+        )
     db = SessionLocal()
     try:
         ensure_super_admin(db)

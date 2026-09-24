@@ -8,6 +8,7 @@ from app.news.dtos.pipeline_dto import (
     CursorGapResponse,
     LatencyCohortResponse,
     LatencySummaryResponse,
+    PipelineFailureCountsResponse,
     PipelineHealthResponse,
     StageQueueDepthResponse,
 )
@@ -52,6 +53,7 @@ def pipeline_health(
     service = PipelineHealthService(db)
     gap = service.cursor_gap()
     latency = service.latency_summary()
+    failures = service.failure_counts()
     return PipelineHealthResponse(
         stages=[
             StageQueueDepthResponse(
@@ -75,4 +77,5 @@ def pipeline_health(
                 **vars(latency.terminal_non_materialized)
             ),
         ),
+        failures=PipelineFailureCountsResponse(**vars(failures)),
     )

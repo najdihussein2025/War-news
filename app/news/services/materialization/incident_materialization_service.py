@@ -493,6 +493,7 @@ class IncidentMaterializationService:
                         is_multi_village=is_multi_village,
                     ),
                     raw_message_id=representative.id,
+                    heuristic_only=story_route.classification.heuristic_only,
                 )
                 self.db.commit()
                 logger.info(
@@ -721,6 +722,18 @@ class IncidentMaterializationService:
             )
             return created
 
+        if (
+            not created
+            and representative.status == MessageStatus.parsed
+            and self.fast_stats.skipped_duplicate_hash > 0
+            and self._has_live_incident(representative.id)
+        ):
+            # Retry of a partial multi-village failure: every remaining village
+            # already exists, so the message is complete rather than empty.
+            self._mark_materialized(representative, fast_path=True)
+            self.db.commit()
+            return created
+
         if not created and representative.status == MessageStatus.parsed:
             reason = (
                 ERROR_EXACT_HASH
@@ -902,6 +915,19 @@ class IncidentMaterializationService:
         # Leaving status=parsed let later stages materialize the held row anyway.
         representative.status = MessageStatus.held_for_review
         self.db.commit()
+
+    def _has_live_incident(self, raw_message_id: int) -> bool:
+        return (
+            self.db.scalar(
+                select(Incident.id)
+                .where(
+                    Incident.raw_message_id == raw_message_id,
+                    Incident.is_deleted.is_(False),
+                )
+                .limit(1)
+            )
+            is not None
+        )
 
     @staticmethod
     def _mark_materialized(representative: RawMessage, *, fast_path: bool) -> None:
@@ -2018,6 +2044,16 @@ class IncidentMaterializationService:
         alternatives = [ordered[1][1]]
         evidence = normalized_text[marker.start() :].strip()
         return primary, alternatives, evidence
+
+    @staticmethod
+    def _village_display_name(village_match: dict[str, Any]) -> str | None:
+        if not village_match.get("alias_matched"):
+            return None
+        raw_text = village_match.get("raw_village_text")
+        if not isinstance(raw_text, str):
+            return None
+        normalized = raw_text.strip()
+        return normalized or None
 
     @staticmethod
     def _origin_village_note(origin_villages: list[str]) -> str | None:
