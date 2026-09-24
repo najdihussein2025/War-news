@@ -11,6 +11,27 @@ class of bug on its own — it only patches the one instance found. Flag
 any such code-only fix as incomplete until a corresponding prompt/rule
 update or a documented rationale for staying code-only is added.
 
+## 2026-09-24 - Evidence-tiered condition/action reconciliation
+
+**Bug / accuracy gap:** Mansouri Sour raw `1235` (`تمشيط من الاباتشي استهدف
+المنصوري`) and Haddatha raw `1233` (`قنابل مضيئة`) were materialized as
+generic Bombs because CNRS `event_subtype` overwrote the LLM/text action before
+condition matching.
+
+**Rule / knowledge files changed:**
+- `rules/condition_action_reconciliation.md` documents that text-grounded
+  action evidence is Candidate A and source metadata is only a review-required
+  Candidate B fallback.
+- `terminology/condition_labels.yaml` adds Apache-sweep wording for Aerial
+  Sweep matching.
+
+**Regression coverage:**
+- `tests/test_cnrs_extraction_fallback.py` verifies CNRS subtype metadata is
+  stored as a hint and only fills action text when LLM extraction is empty.
+- `tests/test_condition_reconciliation.py` covers confident text evidence,
+  source fallback with capped confidence, A/B disagreement review, unclassified
+  no-match behavior, and the Mansouri/Haddatha real snippets.
+
 ## 2026-09-24 - Illumination bombs prefer Flare Bomb over generic Grenades
 
 **Bug / accuracy gap:** A bulletin with `قنابل مضيئة` displayed as generic
