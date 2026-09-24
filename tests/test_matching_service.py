@@ -48,6 +48,16 @@ class _MultiSimilarRepositoryStub:
         ]
 
 
+class _TextSimilarRepositoryStub:
+    def __init__(self, candidates_by_text) -> None:
+        self.candidates_by_text = candidates_by_text
+        self.calls: list[tuple[str, int]] = []
+
+    def find_similar(self, text: str, limit: int = 5):
+        self.calls.append((text, limit))
+        return self.candidates_by_text.get(text, [])[:limit]
+
+
 def _extraction(
     village: list[str] | None = None,
     action: str | None = "غارة جوية",
@@ -1058,6 +1068,49 @@ def test_sub_event_locations_receive_scoped_conditions() -> None:
     assert len(result.village_matches) == 1
     assert result.village_matches[0].matched_condition_id == 5
     assert result.village_matches[0].event_index == 0
+
+
+def test_sub_event_locations_fall_back_to_matched_root_condition() -> None:
+    villages = _MultiSimilarRepositoryStub([(976, 1.0), (1153, 0.9)])
+    conditions = _TextSimilarRepositoryStub(
+        {
+            "bombs": [(SimpleNamespace(id=46), 1.0)],
+            normalize_arabic_text(
+                "اغار الطيران الحربي المعادي مستهدفا المنصوري والنبطية الفوقا"
+            ): [],
+        }
+    )
+    extraction = _extraction(village=[], action="Bombs")
+    extraction = extraction.model_copy(
+        update={
+            "sub_events": [
+                ExtractionSubEvent(
+                    locations=[
+                        VillageRoleEntry(village="المنصوري", role=VillageRole.target),
+                        VillageRoleEntry(
+                            village="النبطية الفوقا",
+                            role=VillageRole.target,
+                        ),
+                    ],
+                    action_description=(
+                        "اغار الطيران الحربي المعادي مستهدفا المنصوري والنبطية الفوقا"
+                    ),
+                    evidence_span=(
+                        "اغار الطيران الحربي المعادي مستهدفا المنصوري والنبطية الفوقا"
+                    ),
+                    casualties=ExtractionCasualties(),
+                )
+            ]
+        }
+    )
+
+    result = MatchingService(villages, conditions).match(extraction)
+
+    assert len(result.village_matches) == 2
+    assert {match.matched_condition_id for match in result.village_matches} == {46}
+    assert {
+        match.condition_match_status for match in result.village_matches
+    } == {MatchResultStatus.matched}
 
 
 def test_exact_duplicate_without_anchor_keeps_low_confidence_winner() -> None:

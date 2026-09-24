@@ -385,6 +385,12 @@ class MatchingService(MatchingServiceInterface):
                 if match is not None
                 else root_condition
             )
+            if (
+                condition.status == MatchResultStatus.unmatched
+                and root_condition.status
+                in {MatchResultStatus.matched, MatchResultStatus.matched_low_confidence}
+            ):
+                condition = root_condition
             event_size = len(sub_event.locations)
             for location in sub_event.locations:
                 items.append((location, index, event_size, condition))
