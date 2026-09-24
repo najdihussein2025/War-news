@@ -21,7 +21,10 @@ from app.news.repositories.pipeline_claim_repository import (
     CLAIM_STAGE_MATCHING,
     PipelineClaimRepository,
 )
-from app.news.repositories.raw_message_repository import RawMessageRepository
+from app.news.repositories.raw_message_repository import (
+    RawMessageRepository,
+    extraction_stage_failure_clause,
+)
 from app.news.repositories.sweep_cursor_repository import SweepCursorRepository
 from app.news.services.pipeline import pipeline_concurrent_sweeps as concurrent_sweeps
 from app.news.services.dedup.fast_path_eligibility import (
@@ -39,7 +42,7 @@ from app.news.services.pipeline.pipeline_concurrent_sweeps import (
 from app.news.services.pipeline.pipeline_sweep_stages import (
     sweep_clustering,
     sweep_embedding_generation,
-    sweep_materialization,
+    sweep_duplicate_match_reconciliation,
     sweep_relevance_filter,
 )
 from app.news.services.pipeline.pipeline_stage_run_service import record_stage_run
@@ -92,6 +95,7 @@ def _retryable_extraction_error_clause():
         RawMessage.status == MessageStatus.error,
         RawMessage.extraction_result.is_(None),
         RawMessage.error_message.is_not(None),
+        extraction_stage_failure_clause(),
         or_(
             RawMessage.error_message.ilike("%ReadTimeout%"),
             RawMessage.error_message.ilike("%ConnectTimeout%"),
@@ -729,8 +733,8 @@ async def _run_stages(*, cutoff_raw_message_id: int) -> list[StageSweepResult]:
         stages.append(
             _finish_stage(
                 _run_sync_stage(
-                    "materialization",
-                    sweep_materialization,
+                    "duplicate_match_reconciliation",
+                    sweep_duplicate_match_reconciliation,
                     cutoff_raw_message_id=cutoff_raw_message_id,
                     max_rows=STAGE_MAX_ROWS_PER_PASS,
                 ),

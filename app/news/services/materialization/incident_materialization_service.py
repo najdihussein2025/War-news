@@ -319,7 +319,6 @@ class IncidentMaterializationService:
 
         village_matches: list[dict[str, Any]] = match_result.get("village_matches", [])
         origin_villages = self._origin_village_names(village_matches)
-<<<<<<< HEAD
         target_matches = [
             village_match
             for village_match in village_matches
@@ -333,18 +332,11 @@ class IncidentMaterializationService:
                 extraction,
             )
         )
-        is_multi_village = self._distinct_target_village_count(target_matches) > 1
-=======
         target_matches = self._dedupe_village_matches_by_village(
-            [
-                village_match
-                for village_match in village_matches
-                if self._materializes_village_match(village_match)
-            ],
+            target_matches,
             extraction=extraction,
         )
         is_multi_village = self._distinct_target_village_count(target_matches) > 1
->>>>>>> ac9dd46 (Add scripts for ACCSTUDY enrichment and scoring)
         if self._has_ambiguous_sub_event_scope(
             extraction,
             target_matches,
@@ -907,6 +899,8 @@ class IncidentMaterializationService:
         representative.low_confidence_relevance = True
         representative.fast_path_completed_at = datetime.now(timezone.utc)
         representative.error_message = reason
+        # Leaving status=parsed let later stages materialize the held row anyway.
+        representative.status = MessageStatus.held_for_review
         self.db.commit()
 
     @staticmethod
@@ -1104,7 +1098,6 @@ class IncidentMaterializationService:
 
         village_matches: list[dict[str, Any]] = match_result.get("village_matches", [])
         origin_villages = self._origin_village_names(village_matches)
-<<<<<<< HEAD
         target_matches = [
             village_match
             for village_match in village_matches
@@ -1118,18 +1111,11 @@ class IncidentMaterializationService:
                 extraction,
             )
         )
-        is_multi_village = self._distinct_target_village_count(target_matches) > 1
-=======
         target_matches = self._dedupe_village_matches_by_village(
-            [
-                village_match
-                for village_match in village_matches
-                if self._materializes_village_match(village_match)
-            ],
+            target_matches,
             extraction=extraction,
         )
         is_multi_village = self._distinct_target_village_count(target_matches) > 1
->>>>>>> ac9dd46 (Add scripts for ACCSTUDY enrichment and scoring)
         category_casualties_suppressed = False
         if is_multi_village:
             mapped_fields, category_casualties_suppressed = (
@@ -1919,25 +1905,16 @@ class IncidentMaterializationService:
         )
 
     @staticmethod
-<<<<<<< HEAD
     def _origin_village_names(village_matches: list[dict[str, Any]]) -> list[str]:
         origin_villages: list[str] = []
         for village_match in village_matches:
             if village_match.get("village_role") != VillageRole.origin.value:
                 continue
-=======
-    def _origin_village_names(village_matches: list[dict[str, Any]]) -> list[str]:
-        origin_villages: list[str] = []
-        for village_match in village_matches:
-            if village_match.get("village_role") != VillageRole.origin.value:
-                continue
->>>>>>> ac9dd46 (Add scripts for ACCSTUDY enrichment and scoring)
             raw_text = village_match.get("raw_village_text")
             if not isinstance(raw_text, str):
                 continue
             normalized = raw_text.strip()
             if normalized and normalized not in origin_villages:
-<<<<<<< HEAD
                 origin_villages.append(normalized)
         return origin_villages
 
@@ -2041,30 +2018,6 @@ class IncidentMaterializationService:
         alternatives = [ordered[1][1]]
         evidence = normalized_text[marker.start() :].strip()
         return primary, alternatives, evidence
-
-    @staticmethod
-    def _village_display_name(village_match: dict[str, Any]) -> str | None:
-        if not village_match.get("alias_matched"):
-            return None
-        raw_text = village_match.get("raw_village_text")
-        if not isinstance(raw_text, str):
-            return None
-        normalized = raw_text.strip()
-        return normalized or None
-=======
-                origin_villages.append(normalized)
-        return origin_villages
-
-    @staticmethod
-    def _village_display_name(village_match: dict[str, Any]) -> str | None:
-        if not village_match.get("alias_matched"):
-            return None
-        raw_text = village_match.get("raw_village_text")
-        if not isinstance(raw_text, str):
-            return None
-        normalized = raw_text.strip()
-        return normalized or None
->>>>>>> ac9dd46 (Add scripts for ACCSTUDY enrichment and scoring)
 
     @staticmethod
     def _origin_village_note(origin_villages: list[str]) -> str | None:

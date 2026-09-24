@@ -91,7 +91,7 @@ def _patch_stages(monkeypatch, *, fail_stage: str | None = None) -> list[str]:
     )
     monkeypatch.setattr(orchestrator, "sweep_clustering", _sync("clustering"))
     monkeypatch.setattr(
-        orchestrator, "sweep_materialization", _sync("materialization")
+        orchestrator, "sweep_duplicate_match_reconciliation", _sync("duplicate_match_reconciliation")
     )
     return calls
 
@@ -163,7 +163,7 @@ async def test_stage_exception_does_not_block_later_stages(monkeypatch, caplog) 
     assert "tier2_detail_fill" in calls
     assert "matching" in calls
     assert "fast_path" in calls
-    assert "materialization" in calls
+    assert "duplicate_match_reconciliation" in calls
     assert calls.index("embedding") < calls.index("tier1_extraction")
     assert result.partial_failure is True
     assert result.skipped is False
@@ -200,7 +200,7 @@ async def test_embedding_stage_runs_before_fast_path(monkeypatch) -> None:
         "fast_path",
         "tier2_detail_fill",
         "clustering",
-        "materialization",
+        "duplicate_match_reconciliation",
     ]
 
 
@@ -242,14 +242,14 @@ async def test_empty_stage_exception_message_is_logged(monkeypatch, caplog) -> N
 
     assert result.partial_failure is True
     assert "clustering" in calls
-    assert "materialization" in calls
+    assert "duplicate_match_reconciliation" in calls
     assert any(
         "Pipeline stage=embedding failed; continuing remaining stages" in record.message
         and "ValueError (no message)" in record.message
         for record in caplog.records
     )
     assert any(stage.stage == "clustering" for stage in result.stages)
-    assert any(stage.stage == "materialization" for stage in result.stages)
+    assert any(stage.stage == "duplicate_match_reconciliation" for stage in result.stages)
 
 
 @pytest.mark.asyncio

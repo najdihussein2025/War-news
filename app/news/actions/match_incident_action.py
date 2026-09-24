@@ -7,6 +7,8 @@ from app.news.interfaces import MatchingServiceInterface
 from app.news.interfaces import RawMessageRepositoryInterface
 from app.news.interfaces import AirViolationRepositoryInterface
 
+TIER1_IRRELEVANT_REASON = "tier1_extraction: model marked the post is_relevant=false"
+
 
 class MatchIncidentAction:
     def __init__(
@@ -38,6 +40,25 @@ class MatchIncidentAction:
             raise ValueError(
                 f"raw_message id={raw_message_id} has an invalid extraction_result."
             ) from exc
+
+        if (
+            extraction_result.is_relevant is False
+            and not (getattr(message, "raw_payload", None) or {}).get(
+                "manual_rejection_override"
+            )
+        ):
+            # Tier 1 itself judged the post irrelevant: reject it the same way
+            # the relevance filter does instead of matching/materializing it.
+            self.raw_messages.reject_as_tier1_irrelevant(message)
+            return MatchResultDTO(
+                village_matches=[],
+                any_village_low_confidence=False,
+                matched_condition_id=None,
+                condition_confidence=None,
+                condition_match_status=MatchResultStatus.unmatched,
+                condition_review_required=False,
+                raw_condition_text=TIER1_IRRELEVANT_REASON,
+            )
 
         non_lebanon_marker = is_non_lebanon_location(
             getattr(message, "raw_text", None)

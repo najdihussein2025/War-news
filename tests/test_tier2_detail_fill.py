@@ -250,3 +250,102 @@ def test_tier2_below_low_threshold_does_not_flag_or_record_match() -> None:
     dedup.merge_into_incident.assert_not_called()
     dedup.record_possible_duplicate.assert_not_called()
     assert current.duplicate_flag is False
+
+
+def _multi_village_fill(
+    incidents: list[SimpleNamespace],
+    *,
+    needs_review: bool = False,
+    single_village: bool = False,
+) -> SimpleNamespace:
+    from app.llm.dtos import CasualtyScope
+
+    db = MagicMock()
+    extraction = ExtractionResult(
+        is_relevant=True,
+        village=["طلوسة"] if single_village else ["طلوسة", "بيت ياحون"],
+        casualties=ExtractionCasualties(deaths=5, injuries=3),
+        casualty_scope=CasualtyScope.unspecified,
+        casualty_scope_needs_review=needs_review,
+        casualty_scope_review_reason=(
+            "bulletin_aggregate downgraded: unsupported by text" if needs_review else None
+        ),
+        extraction_tier=2,
+        model="test",
+        extracted_at=datetime(2026, 9, 24, 11, 0, tzinfo=timezone.utc),
+    )
+    village_ids = [101] if single_village else [101, 102]
+    raw_message = SimpleNamespace(
+        id=7,
+        raw_text="خبر",
+        extraction_result=extraction.model_dump(mode="json"),
+        content_embedding=None,
+        tier2_completed_at=None,
+        status=MessageStatus.materialized,
+        match_result={
+            "village_matches": [
+                {"matched_village_id": village_id, "village_role": "target"}
+                for village_id in village_ids
+            ]
+        },
+    )
+    db.get.return_value = raw_message
+    db.scalars.return_value.all.return_value = incidents
+    db.scalar.return_value = None
+    service = Tier2DetailFillService(
+        db,
+        MagicMock(),
+        embedding_service=MagicMock(),
+        dedup_service=None,
+        emergency_org_matcher=MagicMock(),
+        bulletin_groups=MagicMock(),
+    )
+    service.apply_tier2_result_for_raw_message(7, tier2_categories=None)
+    return raw_message
+
+
+def test_multi_village_unspecified_scope_does_not_stamp_root_toll() -> None:
+    first = _incident_stub(village_id=101)
+    second = _incident_stub(village_id=102)
+
+    _multi_village_fill([first, second])
+
+    for incident in (first, second):
+        assert incident.deaths is None
+        assert incident.injuries is None
+        assert incident.total_deaths is None
+        assert incident.total_injuries is None
+        assert incident.details_pending is False
+
+
+def test_multi_village_explicit_zero_is_not_overwritten_by_root_toll() -> None:
+    zero = _incident_stub(village_id=101, deaths=0, total_deaths=0)
+    other = _incident_stub(village_id=102, deaths=2, total_deaths=2)
+
+    _multi_village_fill([zero, other])
+
+    assert zero.deaths == 0
+    assert zero.total_deaths == 0
+    assert other.deaths == 2
+    assert other.total_deaths == 2
+
+
+def test_multi_village_aggregate_downgraded_to_unspecified_does_not_stamp() -> None:
+    first = _incident_stub(village_id=101)
+    second = _incident_stub(village_id=102)
+
+    _multi_village_fill([first, second], needs_review=True)
+
+    for incident in (first, second):
+        assert incident.deaths is None
+        assert incident.total_deaths is None
+        assert incident.verification_status == "needs_verification"
+
+
+def test_single_village_still_backfills_root_toll() -> None:
+    only = _incident_stub(village_id=101)
+
+    _multi_village_fill([only], single_village=True)
+
+    assert only.deaths == 5
+    assert only.injuries == 3

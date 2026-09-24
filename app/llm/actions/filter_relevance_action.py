@@ -26,6 +26,7 @@ from app.llm.services.relevance_guardrails import (
 )
 from app.news.interfaces import RawMessageRepositoryInterface
 from app.news.models import RawMessage
+from app.news.models.raw_message import FAILED_STAGE_RELEVANCE
 
 logger = logging.getLogger(__name__)
 
@@ -266,6 +267,7 @@ class FilterRelevanceAction:
                         self.raw_messages.save_error(
                             message=failed_message,
                             error_message=error_message,
+                            failed_stage=FAILED_STAGE_RELEVANCE,
                         )
                     errored += len(failed_messages)
                     continue

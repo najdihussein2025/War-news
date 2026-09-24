@@ -19,11 +19,27 @@ from app.news.models import (
     MessageStatus,
     RawMessage,
 )
+from app.news.models.raw_message import (
+    FAILED_STAGE_EXTRACTION,
+    FAILED_STAGE_RELEVANCE,
+)
 
 MATCHING_RETRY_CAP_PREFIX = "matching: exceeded max retries"
 TRANSIENT_LLM_ERROR_ILIKE_PATTERNS = tuple(
     f"%{marker}%" for marker in TRANSIENT_LLM_ERROR_MARKERS
 )
+
+
+def extraction_stage_failure_clause():
+    """Error rows that failed at extraction, never at relevance.
+
+    Rows written before ``failed_stage`` existed (NULL) only qualify when the
+    relevance filter already produced a verdict.
+    """
+    return or_(
+        RawMessage.failed_stage == FAILED_STAGE_EXTRACTION,
+        (RawMessage.failed_stage.is_(None) & RawMessage.filter_result.is_not(None)),
+    )
 
 
 def matching_retry_cap_message(retry_count: int, exc: BaseException) -> str:
@@ -154,9 +170,11 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         self,
         message: RawMessage,
         error_message: str,
+        failed_stage: str | None = None,
     ) -> None:
         message.status = MessageStatus.error
         message.error_message = error_message
+        message.failed_stage = failed_stage
         self._clear_processing_claim(message)
         self.db.add(message)
         self.db.commit()
@@ -184,6 +202,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         )
         message.extraction_retry_count += 1
         message.status = MessageStatus.error
+        message.failed_stage = FAILED_STAGE_EXTRACTION
         self._clear_processing_claim(message)
         if message.extraction_retry_count >= limit:
             message.error_message = extraction_retry_cap_message(
@@ -218,6 +237,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
                     RawMessage.status == MessageStatus.error,
                     RawMessage.extraction_result.is_(None),
                     RawMessage.error_message.is_not(None),
+                    extraction_stage_failure_clause(),
                     or_(
                         *(
                             RawMessage.error_message.ilike(pattern)
@@ -249,6 +269,7 @@ class RawMessageRepository(RawMessageRepositoryInterface):
 
             message.status = MessageStatus.parsed
             message.error_message = None
+            message.failed_stage = None
             self._clear_processing_claim(message)
             self.db.add(message)
             reset_count += 1
@@ -256,6 +277,54 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         if reset_count or capped_count:
             self.db.commit()
         return reset_count, capped_count
+
+    def reject_as_tier1_irrelevant(self, message: RawMessage) -> None:
+        """Reject a post Tier 1 marked is_relevant=false, like a relevance reject."""
+        filter_result = dict(message.filter_result or {})
+        filter_result["relevance_verdict_before_tier1"] = filter_result.get("verdict")
+        filter_result["verdict"] = "reject"
+        filter_result["reasoning"] = (
+            "tier1_extraction: model marked the post is_relevant=false"
+        )
+        message.filter_result = filter_result
+        message.status = MessageStatus.rejected
+        message.error_message = None
+        self._clear_processing_claim(message)
+        self.db.add(message)
+        self.db.commit()
+
+    def reset_retryable_relevance_errors(self, limit: int = 200) -> int:
+        """Re-queue transient relevance failures to pending (not parsed).
+
+        They go back through the relevance filter instead of skipping it.
+        """
+        messages = list(
+            self.db.scalars(
+                select(RawMessage)
+                .where(
+                    RawMessage.status == MessageStatus.error,
+                    RawMessage.failed_stage == FAILED_STAGE_RELEVANCE,
+                    RawMessage.filter_result.is_(None),
+                    or_(
+                        *(
+                            RawMessage.error_message.ilike(pattern)
+                            for pattern in TRANSIENT_LLM_ERROR_ILIKE_PATTERNS
+                        )
+                    ),
+                )
+                .order_by(RawMessage.id.asc())
+                .limit(limit)
+            ).all()
+        )
+        for message in messages:
+            message.status = MessageStatus.pending
+            message.error_message = None
+            message.failed_stage = None
+            self._clear_processing_claim(message)
+            self.db.add(message)
+        if messages:
+            self.db.commit()
+        return len(messages)
 
     def record_transient_matching_failure(
         self,

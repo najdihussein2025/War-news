@@ -242,30 +242,22 @@ class Tier2DetailFillService:
                 after = getattr(root, extraction_field)
                 if before != after:
                     setattr(detail, detail_field, after)
-            if (
-                not is_multi_village_aggregate
-                and incident.deaths in (None, 0)
-                and root.deaths is not None
-            ):
-                incident.deaths = root.deaths
-            if (
-                not is_multi_village_aggregate
-                and incident.injuries in (None, 0)
-                and root.injuries is not None
-            ):
-                incident.injuries = root.injuries
-            if (
-                not is_multi_village_aggregate
-                and incident.total_deaths in (None, 0)
-                and total_deaths is not None
-            ):
-                incident.total_deaths = total_deaths
-            if (
-                not is_multi_village_aggregate
-                and incident.total_injuries in (None, 0)
-                and total_injuries is not None
-            ):
-                incident.total_injuries = total_injuries
+            # Multi-village rows keep fast-path's per-village counts: None means
+            # "not stated for this village" and 0 means "stated as zero". Copying
+            # the bulletin-wide root toll here recreated the multi-village
+            # casualty misattribution bug, whatever casualty_scope said.
+            if not is_multi_village:
+                if incident.deaths in (None, 0) and root.deaths is not None:
+                    incident.deaths = root.deaths
+                if incident.injuries in (None, 0) and root.injuries is not None:
+                    incident.injuries = root.injuries
+                if incident.total_deaths in (None, 0) and total_deaths is not None:
+                    incident.total_deaths = total_deaths
+                if (
+                    incident.total_injuries in (None, 0)
+                    and total_injuries is not None
+                ):
+                    incident.total_injuries = total_injuries
             self._fill_missing_matches(
                 incident,
                 getattr(raw_message, "match_result", None),

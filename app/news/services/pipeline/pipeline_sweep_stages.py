@@ -92,6 +92,9 @@ async def sweep_relevance_filter(
     batch_size: int | None = None,
     max_rows: int | None = None,
 ) -> StageSweepResult:
+    requeued = RawMessageRepository(db).reset_retryable_relevance_errors()
+    if requeued:
+        logger.info("relevance_filter requeued transient relevance errors=%s", requeued)
     started_at = time.monotonic()
     action = build_filter_relevance_action(db)
     default_batch_size = (
@@ -632,6 +635,32 @@ def sweep_clustering(
         succeeded=succeeded,
         failed=failed,
         elapsed_seconds=elapsed_seconds,
+    )
+
+
+def sweep_duplicate_match_reconciliation(
+    db: Session,
+    *,
+    max_rows: int | None = None,
+) -> StageSweepResult:
+    """Automatic replacement for the legacy materialization stage's side call.
+
+    Legacy ``sweep_materialization`` no longer runs in automatic sweeps (it
+    bypassed fast-path's review hold, locks and routing); only its orphaned
+    soft-delete reconciliation is kept here.
+    """
+    started_at = time.monotonic()
+    reconciled = reconcile_orphaned_soft_deleted_incidents(db)
+    logger.info(
+        "duplicate_match_reconciliation backfilled=%s",
+        reconciled,
+    )
+    return StageSweepResult(
+        stage="duplicate_match_reconciliation",
+        processed=reconciled,
+        succeeded=reconciled,
+        failed=0,
+        elapsed_seconds=time.monotonic() - started_at,
     )
 
 

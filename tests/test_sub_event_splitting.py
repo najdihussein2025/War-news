@@ -451,7 +451,7 @@ def test_locationless_multi_village_sub_events_are_flagged_not_multiplied() -> N
 
     assert created == []
     assert not any(isinstance(value, Incident) for value in db.committed)
-    assert representative.status == MessageStatus.parsed
+    assert representative.status == MessageStatus.held_for_review
     assert representative.low_confidence_relevance is True
     assert representative.filter_result["needs_review"] is True
     assert "lack explicit location binding" in representative.error_message

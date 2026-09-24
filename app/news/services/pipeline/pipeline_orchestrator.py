@@ -26,7 +26,7 @@ from app.news.services.pipeline.pipeline_concurrent_sweeps import (
 from app.news.services.pipeline.pipeline_sweep_stages import (
     sweep_clustering,
     sweep_embedding_generation,
-    sweep_materialization,
+    sweep_duplicate_match_reconciliation,
     sweep_relevance_filter,
     sweep_reconcile_orphaned_dedup_originals,
 )
@@ -328,7 +328,7 @@ async def run_full_pipeline_sweep(
 
             for stage_name, sweep_fn in (
                 ("clustering", sweep_clustering),
-                ("materialization", sweep_materialization),
+                ("duplicate_match_reconciliation", sweep_duplicate_match_reconciliation),
             ):
                 post_db = SessionLocal()
                 try:

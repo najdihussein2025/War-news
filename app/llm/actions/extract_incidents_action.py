@@ -12,6 +12,7 @@ from app.llm.services.transient_llm_errors import (
 from app.llm.services.ollama_auth_failures import coerce_ollama_auth_failure
 from app.news.interfaces import RawMessageRepositoryInterface
 from app.news.models import MessageStatus
+from app.news.models.raw_message import FAILED_STAGE_EXTRACTION
 from app.news.services.incident_details.casualty_gender_evidence import (
     apply_casualty_gender_backstops,
 )
@@ -78,6 +79,7 @@ class ExtractIncidentsAction:
                     self.raw_messages.save_error(
                         message=message,
                         error_message=str(exc),
+                        failed_stage=FAILED_STAGE_EXTRACTION,
                     )
 
         return ExtractionBatchSummary(
@@ -132,5 +134,6 @@ class ExtractIncidentsAction:
                 self.raw_messages.save_error(
                     message=message,
                     error_message=str(exc),
+                    failed_stage=FAILED_STAGE_EXTRACTION,
                 )
             raise exc

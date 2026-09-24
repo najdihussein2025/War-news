@@ -349,7 +349,7 @@ async def test_run_stages_runs_embedding_before_fast_path(monkeypatch) -> None:
         "fast_path",
         "tier2_detail_fill",
         "clustering",
-        "materialization",
+        "duplicate_match_reconciliation",
     ]
 
 
@@ -465,7 +465,7 @@ async def test_run_stages_caps_claim_until_empty_stages_and_reaches_matching(
         "fast_path",
         "tier2_detail_fill",
         "clustering",
-        "materialization",
+        "duplicate_match_reconciliation",
     ]
     matching_stage = next(s for s in stages if s.stage == "matching")
     assert matching_stage.processed == 2
@@ -479,7 +479,7 @@ async def test_run_stages_caps_claim_until_empty_stages_and_reaches_matching(
     assert seen_max_rows["tier2_detail_fill"] == live_sweep.LLM_STAGE_MAX_ROWS_PER_PASS
     assert seen_max_rows["embedding"] == cap
     assert seen_max_rows["clustering"] == cap
-    assert seen_max_rows["materialization"] == cap
+    assert seen_max_rows["duplicate_match_reconciliation"] == cap
     # pre_extraction_dedup keeps its own settings-driven cap, not the pass cap.
     assert seen_max_rows["pre_extraction_dedup"] is live_sweep.MAX_ROWS
 
@@ -519,7 +519,7 @@ async def test_run_stages_persists_live_stage_telemetry(monkeypatch) -> None:
         ("fast_path", "live"),
         ("tier2_detail_fill", "live"),
         ("clustering", "live"),
-        ("materialization", "live"),
+        ("duplicate_match_reconciliation", "live"),
     ]
 
 

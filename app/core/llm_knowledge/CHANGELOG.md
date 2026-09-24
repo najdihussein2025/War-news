@@ -11,6 +11,77 @@ class of bug on its own — it only patches the one instance found. Flag
 any such code-only fix as incomplete until a corresponding prompt/rule
 update or a documented rationale for staying code-only is added.
 
+## 2026-09-24 - Repair corrupted default Tier 1 prompt and multi-village example
+
+**Bug / accuracy gap:** `rules/tier1_general_prompt.md` (the default Tier 1
+general-fields prompt) contained the whole prompt twice after merge commit
+`ffa2576`. Copy 1 stopped mid-schema at `"casualty_scope": "unspecified",` and
+was the only copy with the fuzzy-area rule («في محيط X وY»), the effect-attribution
+rule and its fire/قطع طريق examples, and the Majdal Zoun / بيوت السياد negative
+example; copy 2 was the only one with the CNRS fire safety rule. Commit
+`109a2f7` also wrote the air-violation exclusion lines with `"?? ?????? ?????? ?????"`
+and `"?????? ??????"` instead of Arabic (they were never clean in git). In
+`rules/tier1_multi_village.md` the Talloussa/Beit Yahoun example from `4edc7f0`
+carried double-encoded text (`ØªÙ…Ø´ÙŠØ·`).
+
+**Rule / knowledge files changed:**
+- `rules/tier1_general_prompt.md`: one copy, copy 2's structure and complete
+  schema, with copy 1's unique guardrails merged back in. Copy 2's variant of the
+  road rule was split back into copy 1's road rule plus the fuzzy-area rule, which
+  now also lists «بين بلدتي X وY» and «في المنطقة الواقعة بين X وY». The garbled
+  lines now read "من فلسطين باتجاه لبنان" and "القطاع الشرقي", "القطاع الغربي",
+  "القطاع الأوسط", copied from the same rule in `combined_tier1_prompt.md:42-43`.
+- `rules/tier1_multi_village.md`: example restored to `تمشيط` and
+  `قنابل مضيئة وحارقة` (decoded from the mojibake).
+
+**Regression coverage:**
+- `tests/test_llm_knowledge_rule_integrity.py` fails on `???`, mojibake, a
+  repeated opening line, or any repeated line of 40+ characters in `rules/*.md`.
+  `combined_tier1_prompt.md` is allowlisted until its duplicated intro is fixed.
+
+## 2026-09-24 - Tier 1 is_relevant=false now rejects the post
+
+**Bug / accuracy gap:** Tier 1 returns `is_relevant`, but nothing downstream read
+it, so a post the model itself judged irrelevant (UNIFIL, Palestine-route,
+civilian-fire or Gaza exclusions) was still matched and materialized whenever it
+also filled `village`/`action_description` (audit F1-07). Separately, relevance
+errors (e.g. `ConnectError` during an Ollama outage) were reset straight to
+`parsed` and skipped the relevance filter entirely.
+
+**Rule / knowledge files changed:** none. Documented rationale for staying
+code-only: the exclusion rules already exist in `relevance_filter_prompt.md` and
+the Tier 1 prompts; the defect was that their `is_relevant` output was ignored.
+`MatchIncidentAction` now rejects it the same way the relevance filter does
+(status `rejected`, `filter_result.verdict="reject"`), except after an admin
+restore. Error rows record `failed_stage`; only extraction failures are reset to
+`parsed`, relevance failures go back to `pending`.
+
+**Regression coverage:**
+- `tests/test_relevance_gate_bypass.py`
+
+## 2026-09-24 - Tier 2 no longer stamps the bulletin toll onto every village
+
+**Bug / accuracy gap:** For a multi-village bulletin (e.g. one CNRS post naming
+Talloussa and Beit Yahoun with a single total of 5 killed), fast-path correctly
+left each village's `deaths` as `None`, but Tier 2 detail fill then copied the
+root toll onto every village row whose value was `None` or `0` unless
+`casualty_scope` was exactly `bulletin_aggregate`. An `unspecified` scope, or a
+`bulletin_aggregate` claim downgraded to `unspecified` by the scope backstop,
+therefore gave each village the full toll (audit F1-02).
+
+**Rule / knowledge files changed:** none. Documented rationale for staying
+code-only: the model's scope label was not the driver. Materialization already
+treats a multi-village per-village `None` as meaningful regardless of scope;
+Tier 2 was the one path that re-applied the root count. `tier2_detail_fill_service`
+now never backfills root counts onto multi-village incidents (a `None` or an
+explicit `0` is final). Single-village backfill is unchanged.
+
+**Regression coverage:**
+- `tests/test_tier2_detail_fill.py::test_multi_village_unspecified_scope_does_not_stamp_root_toll`
+- `tests/test_tier2_detail_fill.py::test_multi_village_explicit_zero_is_not_overwritten_by_root_toll`
+- `tests/test_tier2_detail_fill.py::test_multi_village_aggregate_downgraded_to_unspecified_does_not_stamp`
+- `tests/test_tier2_detail_fill.py::test_single_village_still_backfills_root_toll`
+
 ## 2026-09-24 - Evidence-tiered condition/action reconciliation
 
 **Bug / accuracy gap:** Mansouri Sour raw `1235` (`تمشيط من الاباتشي استهدف

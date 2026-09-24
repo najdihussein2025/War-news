@@ -30,6 +30,13 @@ class MessageStatus(str, Enum):
     rejected = "rejected"
     error = "error"
     routed_air_violation = "routed_air_violation"
+    # Terminal hold: fast-path refused to materialize (e.g. ambiguous
+    # multi-village sub-events). No stage may materialize it automatically.
+    held_for_review = "held_for_review"
+
+
+FAILED_STAGE_RELEVANCE = "relevance_filter"
+FAILED_STAGE_EXTRACTION = "tier1_extraction"
 
 
 class RawMessage(Base):
@@ -124,6 +131,9 @@ class RawMessage(Base):
         server_default=text("'pending'"),
     )
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Pipeline stage that parked this row in status=error; retry resets key
+    # off it so a relevance failure is never re-queued straight to extraction.
+    failed_stage: Mapped[str | None] = mapped_column(String(64), nullable=True)
     dedup_promotion_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     extraction_retry_count: Mapped[int] = mapped_column(
         Integer,

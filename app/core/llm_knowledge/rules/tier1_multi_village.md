@@ -45,11 +45,11 @@ Load when the message appears to name multiple target locations.
 «...طالت الغارات أطراف بلدة زوطر الشرقية في اتجاه ميفدون... كما طال القصف حرج بلدة عيتا الجبل في قضاء بنت جبيل» → two target villages, `زوطر الشرقية` and `عيتا الجبل`, each with its own village_roles entry (and, if described as separate actions, its own sub_event). Do not drop the second village and do not collapse it the way a محيط/بين phrase is collapsed — «كما طال» explicitly marks it as a second, separately scoped strike.
 
 **Two villages, two different actions:**
-Confirmed failure shape: a CNRS bulletin named Talloussa and Beit Yahoun. Talloussa's sentence described `ØªÙ…Ø´ÙŠØ·` / sweeping operations. Beit Yahoun's sentence described `Ù‚Ù†Ø§Ø¨Ù„ Ù…Ø¶ÙŠØ¦Ø© ÙˆØ­Ø§Ø±Ù‚Ø©` / illumination-incendiary shelling.
+Confirmed failure shape: a CNRS bulletin named Talloussa and Beit Yahoun. Talloussa's sentence described `تمشيط` / sweeping operations. Beit Yahoun's sentence described `قنابل مضيئة وحارقة` / illumination-incendiary shelling.
 
 Wrong output: `action_description="Sweeping Operations"`, flat `village_roles` containing both Talloussa and Beit Yahoun, and `sub_events=[]`. This incorrectly stamps sweeping onto Beit Yahoun.
 
-Correct output: `action_description="multiple actions across 2 villages"` plus two `sub_events`: one with `locations=[{"village":"Talloussa","role":"target",...}]`, `action_text="ØªÙ…Ø´ÙŠØ·"`, and the Talloussa sentence as `evidence_span`; one with `locations=[{"village":"Beit Yahoun","role":"target",...}]`, `action_text="Ù‚Ù†Ø§Ø¨Ù„ Ù…Ø¶ÙŠØ¦Ø© ÙˆØ­Ø§Ø±Ù‚Ø©"`, and the Beit Yahoun sentence as `evidence_span`.
+Correct output: `action_description="multiple actions across 2 villages"` plus two `sub_events`: one with `locations=[{"village":"Talloussa","role":"target",...}]`, `action_text="تمشيط"`, and the Talloussa sentence as `evidence_span`; one with `locations=[{"village":"Beit Yahoun","role":"target",...}]`, `action_text="قنابل مضيئة وحارقة"`, and the Beit Yahoun sentence as `evidence_span`.
 
 **Several connector-led events with separate tolls:**
 «قصف في بلدة ميس الجبل أدى إلى إصابة 4 أشخاص دون وفيات. أيضا غارة أخرى في بلدة ياطر أسفرت عن شهيد و2 جرحى. وفي سياق متصل استهداف في بلدة عيترون أدى إلى إصابة 1» → three `sub_events`, one for each village, with local casualties only for that village.

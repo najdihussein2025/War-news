@@ -54,6 +54,9 @@ class RawMessageRepositoryInterface(ABC):
     def get_parsed_by_id(self, raw_message_id: int) -> RawMessage | None:
         pass
 
+    def reject_as_tier1_irrelevant(self, message: RawMessage) -> None:
+        raise NotImplementedError
+
     @abstractmethod
     def save_match_result(
         self,
@@ -67,6 +70,7 @@ class RawMessageRepositoryInterface(ABC):
         self,
         message: RawMessage,
         error_message: str,
+        failed_stage: str | None = None,
     ) -> None:
         pass
 
