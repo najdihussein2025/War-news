@@ -11,6 +11,26 @@ class of bug on its own — it only patches the one instance found. Flag
 any such code-only fix as incomplete until a corresponding prompt/rule
 update or a documented rationale for staying code-only is added.
 
+## 2026-09-24 - CNRS conflict-attributed fire action extraction
+
+**Bug / accuracy gap:** Real CNRS fire rows such as raw_message_id=1320
+(`drone hostile, dropped incendiary material ... fire started`) could reach
+fast-path matching without a condition-matchable action when the extractor left
+`action_description` null or overly literal, causing `fast_path: unmatched or
+missing condition`.
+
+**Rule / knowledge files changed:**
+- `rules/tier1_general_prompt.md` and `rules/combined_tier1_prompt.md` now
+  state that CNRS `event_subtype=fire_incident` rows with explicit
+  military/security attribution, such as hostile drone incendiary material or
+  fire after shelling/airstrike, must emit a condition-matchable Burning
+  Properties action. Ordinary civilian/traffic/weather fires remain excluded.
+
+**Regression coverage:**
+- `tests/test_cnrs_extraction_fallback.py::test_cnrs_fire_incident_hostile_drone_materials_sets_burning_properties`
+- Existing negative coverage:
+  `tests/test_cnrs_extraction_fallback.py::test_cnrs_fire_incident_without_conflict_attribution_rejects_override`
+
 ## 2026-09-23 - Confirmed no-ACS local place aliases with news-side display names
 
 **Bug / accuracy gap:** The Wadi el-Selouqi -> Touline fix was a one-off. A confirmed ACS reconciliation spreadsheet supplied 28 local/colloquial names with no ACS row of their own, including `وادي راج` -> Zaoutar Ech-Charqiye (ACS 71367), `الدبشة` and `جبل الرفيع` -> Kfar Roummane (ACS 71133), and `بيوت السياد` -> Mansouri Sour (ACS 62296). Without aliases, fuzzy matching could miss, downgrade, or collapse these news-side place names into only the parent ACS village display.

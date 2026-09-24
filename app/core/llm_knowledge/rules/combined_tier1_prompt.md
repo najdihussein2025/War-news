@@ -47,6 +47,12 @@ General field rules:
 - Every other dash-separated location phrase defaults to one target on the left and qualifier context on the right. This includes `مزرعة X - Y`, `بلدة X - حي Y`, `بلدة X - قضاء Y`, and `بلدة X - [neighborhood/hamlet]`. Put only X in `village`/target locations and preserve the complete right tail in `qualifier_text`.
 - A qualifier tail may itself contain conjunctions. In `مزرعة X - Y وZ`, the whole `Y وZ` tail is one qualifier; do not emit Y or Z as targets.
 - action_description: incident action type from the text only (Arabic).
+- CNRS fire safety rule: if the upstream CNRS payload classifies the row as
+  `event_subtype=fire_incident`, keep ordinary civilian/traffic/weather fires
+  with no military/security attribution unclassified, but conflict-attributed
+  fires (for example a hostile drone dropping incendiary material or fire after
+  shelling/airstrike) must produce a condition-matchable action_description
+  equivalent to Burning Properties.
 - Effect-defined actions require explicit conflict attribution. Do not extract property damage/fire, road blockage, tree cutting, bulldozing/excavation, shooting, or unexploded shells as a war-condition action unless the same text states a causal link to a hostile/military actor or action (for example: Israeli/enemy actor, shelling, airstrike, drone, tank, incursion, military detonation, or other weapon/hostile action). Civilian accidents, traffic incidents, routine works, criminal/internal incidents, and unattributed hazards are not enough.
 - Negative examples that must NOT become Burning Properties: "احتراق سيارة عند جسر المدفون ... اندلع حريق بسيارة", "احتراق سيارة على أوتوستراد المدفون باتجاه بيروت", "حريق داخل منزل في البحصة – طرابلس".
 - Positive fire examples: "اندلاع حريق في منزل في عيتا الشعب إثر قصف مدفعي إسرائيلي" and "حريق في سيارة بعد غارة من مسيّرة معادية" may be extracted as a war-condition action because the cause is explicitly hostile/military.

@@ -123,6 +123,12 @@ Schema الإخراج الوحيد المسموح:
 - إذا ذُكرت بلدة target بلا عدد صريح خاص بها، اجعل deaths وinjuries وevidence_span لها null، لا 0 ولا حصيلة النشرة. طبّق على كل بلدة قاعدة الألفاظ المبهمة نفسها: عشرات، مئات، عدد من، بضعة وغيرها تعني null ولا تتحول إلى رقم.
 - عند ذكر بلدة واحدة فقط، اجعل أرقام عنصر village_roles مطابقة لأرقام casualties العامة إن وُجدت، مع evidence_span حرفي، أو اتركها null. كلاهما مقبول لأن مسار البلدة الواحدة يستخدم casualties العامة.
 - action_description: وصف نوع العمل أو الحادث من النص فقط.
+- CNRS fire safety rule: if the upstream CNRS payload classifies the row as
+  `event_subtype=fire_incident`, keep ordinary civilian/traffic/weather fires
+  with no military/security attribution unclassified, but conflict-attributed
+  fires (for example a hostile drone dropping incendiary material or fire after
+  shelling/airstrike) must produce a condition-matchable action_description
+  equivalent to Burning Properties.
 - sub_events: عندما يصف الخبر أكثر من عمل متميز (مثلاً ضربة على منزل وضربة على سيارة في النشرة نفسها) أرجع عنصراً مستقلاً لكل عمل مع locations الخاصة به وأرقامه المحلية وevidence_span الحرفي. يجب أن يكون action_text داخل كل sub_event مربوطاً بالموقع أو المواقع التي تخصه فقط، ولا تجعل action_description العام يغطي كل البلدات إذا كان النص يذكر أفعالاً مختلفة لأماكن مختلفة. إذا كان العمل واحداً أرجع [].
 - داخل كل sub_event، اجعل locations مصفوفة بالشكل نفسه المستخدم في village_roles. ضع فقط الموقع أو المواقع التابعة لذلك العمل. إذا كان الحدث على طريق بين نقطتين، ضع طرفي الطريق في locations للـ sub_event نفسه حتى يبقى الحدث واحداً لا حادثين منفصلين.
 - إذا جاءت عبارة بين قوسين مباشرة بعد اسم بلدة، فهي qualifier_text للبلدة السابقة وليست target مستقل، إلا إذا عاملها النص بوضوح كموقع مستقل في موضع آخر. تسميات القضاء/القضاء الإداري بين قوسين مثل (قضاء بنت جبيل) هي سياق إداري فقط ولا تُستخرج كموقع target.
