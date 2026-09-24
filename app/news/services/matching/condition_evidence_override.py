@@ -30,7 +30,7 @@ def condition_from_explicit_evidence(text: str) -> str | None:
     if _FLARE_BOMB.search(normalized):
         return "Flare Bomb"
     if _AERIAL_SWEEP.search(normalized):
-        return "Sweeping Operations"
+        return "Aerial Sweep"
     if _SWEEP.search(normalized):
         return "Sweeping Operations"
     if _AIRSTRIKE.search(normalized):

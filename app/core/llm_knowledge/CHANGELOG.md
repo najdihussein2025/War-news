@@ -23,7 +23,8 @@ condition matching.
   action evidence is Candidate A and source metadata is only a review-required
   Candidate B fallback.
 - `terminology/condition_labels.yaml` adds Apache-sweep wording for Aerial
-  Sweep matching.
+  Sweep matching; `تمشيط مروحي` / Apache sweep resolves to Aerial Sweep, not
+  generic Bombs or the broader Sweeping Operations bucket.
 
 **Regression coverage:**
 - `tests/test_cnrs_extraction_fallback.py` verifies CNRS subtype metadata is

@@ -12,6 +12,7 @@ from app.news.services.matching.matching_service import MatchingService
 CONDITIONS = {
     "Bombs": (46, 1.0),
     "Sweeping Operations": (18, 1.0),
+    "Aerial Sweep": (19, 1.0),
     "Flare Bomb": (9, 1.0),
     "Unclassified / Needs Review": (47, 1.0),
 }
@@ -106,7 +107,7 @@ def test_mansouri_apache_sweep_no_longer_resolves_to_bombs() -> None:
         _extraction(action, source_hint="Bombs")
     )
 
-    assert result.matched_condition_id == 18
+    assert result.matched_condition_id == 19
     assert result.condition_review_required is True
     assert "disagrees with source metadata" in result.condition_review_reason
 
