@@ -191,6 +191,11 @@
   meaning: "عملية تمشيط"
   notes: "raw_message_ids=703"
 
+- term: "تمشيط من الاباتشي"
+  category: condition_alias
+  meaning: "عملية تمشيط مروحي"
+  notes: "raw_message_ids=1235; Apache sweep wording from Mansouri Sour diagnostic."
+
 # --- Distinguishing tokens (IDs stay in matching_service) ---
 
 - term: "تحذيريه"

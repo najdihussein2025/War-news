@@ -10,10 +10,16 @@ _TANK_FIRE_PATTERNS = (
 _WARNING_RAID = re.compile(r"غار[ةه].{0,15}تحذيري|تحذيري.{0,15}غار[ةه]")
 _FEIGNED_RAID = re.compile(r"غارات?.{0,15}وهمي|وهمي.{0,15}غارات?")
 _AIRSTRIKE = re.compile(r"(?:غار[ةه]|غارات|أغار|اغار)")
+_FLARE_BOMB = re.compile(r"قنابل?.{0,15}مضيئ")
+_SWEEP = re.compile(r"تمشيط|مشط")
+_AERIAL_SWEEP = re.compile(
+    r"(?:اباتشي|أباتشي|مروحي|هليكوبتر).{0,40}(?:تمشيط|مشط)"
+    r"|(?:تمشيط|مشط).{0,40}(?:اباتشي|أباتشي|مروحي|هليكوبتر)"
+)
 
 
 def condition_from_explicit_evidence(text: str) -> str | None:
-    """Return a condition only when the weapon is explicitly doing the firing."""
+    """Return a condition only when the weapon/action is explicit in source text."""
     normalized = " ".join((text or "").split())
     if any(pattern.search(normalized) for pattern in _TANK_FIRE_PATTERNS):
         return "Tank Fire"
@@ -21,6 +27,12 @@ def condition_from_explicit_evidence(text: str) -> str | None:
         return "Warning Raid"
     if _FEIGNED_RAID.search(normalized):
         return "Feigned Attacks"
+    if _FLARE_BOMB.search(normalized):
+        return "Flare Bomb"
+    if _AERIAL_SWEEP.search(normalized):
+        return "Sweeping Operations"
+    if _SWEEP.search(normalized):
+        return "Sweeping Operations"
     if _AIRSTRIKE.search(normalized):
         return "Bombs"
     return None
