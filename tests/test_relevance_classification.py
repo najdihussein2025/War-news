@@ -290,6 +290,53 @@ def test_guardrail_rejects_ordinary_property_fire_without_war_context() -> None:
     assert "ordinary fire" in (result.reasoning or "").lower()
 
 
+def test_guardrail_rejects_abbassiyet_car_fire_without_war_context() -> None:
+    result = relevance_guardrail_result(
+        raw_message_id=16,
+        text="\u0627\u0644\u0646\u064a\u0631\u0627\u0646 \u062a\u0644\u062a\u0647\u0645 \u0633\u064a\u0627\u0631\u0629 \u0641\u064a \u0627\u0644\u0639\u0628\u0627\u0633\u064a\u0629... \u062d\u0631\u064a\u0642 \u0643\u0628\u064a\u0631 \u0634\u0631\u0642 \u0635\u0648\u0631",
+    )
+
+    assert result is not None
+    assert result.verdict == ClassificationVerdict.not_relevant
+    assert "ordinary fire" in (result.reasoning or "").lower()
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "قطع طريق بسبب حادث سير وزحمة خانقة في صور",
+        "حفر وجرف ضمن أشغال بلدية لتأهيل الطريق",
+        "قطع أشجار ضمن أعمال تنظيف زراعية",
+        "إطلاق نار خلال إشكال فردي في أحد الأحياء",
+        "العثور على جسم مشبوه غير منفجر قرب مكب نفايات",
+        "انفجار اسطوانة غاز داخل محل في النبطية",
+        "Traffic accident caused road closure near Tyre",
+        "Shooting during a personal dispute in Nabatieh",
+    ],
+)
+def test_guardrail_rejects_effect_only_incidents_without_war_context(text: str) -> None:
+    result = relevance_guardrail_result(raw_message_id=17, text=text)
+
+    assert result is not None
+    assert result.verdict == ClassificationVerdict.not_relevant
+    assert "effect-only" in (result.reasoning or "").lower()
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "قطع طريق بعد قصف مدفعي إسرائيلي استهدف الطريق العام",
+        "حفر وجرف نفذته جرافات العدو الإسرائيلي قرب الحدود",
+        "قطع أشجار نفذته قوات العدو خلال توغل بري",
+        "إطلاق نار معاد من موقع للعدو الإسرائيلي باتجاه البلدة",
+        "العثور على قذائف لم تنفجر من مخلفات قصف إسرائيلي",
+        "انفجار عبوة ناسفة زرعتها قوات العدو خلال توغل بري",
+    ],
+)
+def test_guardrail_keeps_effect_only_incidents_with_war_context(text: str) -> None:
+    assert relevance_guardrail_result(raw_message_id=18, text=text) is None
+
+
 def test_guardrail_keeps_fire_with_israeli_war_context_for_classifier() -> None:
     result = relevance_guardrail_result(
         raw_message_id=11,
@@ -303,6 +350,43 @@ def test_guardrail_rejects_palestine_only_locations() -> None:
     result = relevance_guardrail_result(
         raw_message_id=12,
         text="إصابات جراء قصف في رام الله وغزة",
+    )
+
+    assert result is not None
+    assert result.verdict == ClassificationVerdict.not_relevant
+    assert "palestine" in (result.reasoning or "").lower()
+
+
+def test_guardrail_rejects_janine_transliteration() -> None:
+    result = relevance_guardrail_result(
+        raw_message_id=14,
+        text="Bombs reported in Janine after military orders.",
+    )
+
+    assert result is not None
+    assert result.verdict == ClassificationVerdict.not_relevant
+    assert "palestine" in (result.reasoning or "").lower()
+
+
+@pytest.mark.parametrize(
+    "location",
+    [
+        "Jerusalem",
+        "Bethlehem",
+        "Hebron",
+        "Tulkarm",
+        "Qalqilya",
+        "Beit Lahia",
+        "Jabalia",
+        "Deir al Balah",
+        "Nuseirat",
+        "Khan Yunis",
+    ],
+)
+def test_guardrail_rejects_common_palestine_locations(location: str) -> None:
+    result = relevance_guardrail_result(
+        raw_message_id=15,
+        text=f"Bombardment reported in {location}.",
     )
 
     assert result is not None

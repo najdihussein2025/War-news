@@ -530,6 +530,23 @@ def test_cnrs_ordinary_fire_classification_does_not_allow_effect_defined_conditi
     assert result.condition_match_status == MatchResultStatus.unmatched
 
 
+def test_source_hint_cannot_restore_unattributed_effect_defined_condition() -> None:
+    villages = _SimilarRepositoryStub(None, None)
+    conditions = _SimilarRepositoryStub(21, 1.0)
+    service = MatchingService(villages, conditions)
+
+    extraction = _extraction(
+        village=["Aabbassiyet Sour"],
+        action="النيران تلتهم سيارة في العباسية... حريق كبير شرق صور",
+    ).model_copy(update={"source_action_hint": "Mining & Detonation"})
+
+    result = service.match(extraction)
+
+    assert result.matched_condition_id is None
+    assert result.condition_match_status == MatchResultStatus.unmatched
+    assert result.condition_action_source == "unclassified"
+
+
 def test_effect_defined_canonical_cnrs_override_can_still_match() -> None:
     result = MatchingService(
         _SimilarRepositoryStub(None, None),

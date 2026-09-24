@@ -879,6 +879,18 @@ class MatchingService(MatchingServiceInterface):
                 source_hint,
             )
 
+        if (
+            source_available
+            and source_match.matched_id in EFFECT_DEFINED_CONDITION_IDS
+            and text
+            and not self._condition_match_allowed(
+                source_match.matched_id,
+                normalize_arabic_text(text),
+                cnrs_classification=cnrs_classification,
+            )
+        ):
+            source_available = False
+
         if source_available:
             confidence = min(float(source_match.confidence or 0.0), MATCH_THRESHOLD - 0.01)
             return _ConditionResolution(

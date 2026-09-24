@@ -15,7 +15,7 @@ Load when the message appears to name multiple target locations.
 ## Extraction rules
 
 1. Each target village gets its own `village_roles` entry.
-2. Route endpoints (`طريق X - Y` or `بين X و Y`): emit both `X` and `Y` as separate target locations (and inside the same `sub_event.locations` if a single route action occurred).
+2. Route endpoints (`طريق X - Y`, `طريق عام X - Y`, or `طريق بين X و Y`): emit both `X` and `Y` as separate target locations (and inside the same `sub_event.locations` if a single route action occurred). Plain `بين X و Y`, `بين بلدتي X و Y`, and `في المنطقة الواقعة بين X و Y` without a road/route are one fuzzy target attributed to the first village with the other village kept as review context.
 3. For every non-route dash phrase, emit only the left side as the target and preserve the entire right side as `qualifier_text`, including any `و`-joined parts.
 4. Copy per-village deaths/injuries only from that village's sentence or phrase.
 5. If only a shared toll is given covering all villages → `casualty_scope: bulletin_aggregate`.
@@ -51,7 +51,8 @@ Correct output: `action_description="multiple actions across 2 villages"` plus t
 
 **Dash route / endpoints:**
 «استهدف دراجة نارية على طريق عام مرج حاروف - زبدين» → village=["حاروف","زبدين"] (two target endpoints)
-«غارة بين كفرتبنيت وزوطر الشرقية» → village=["كفرتبنيت","زوطر الشرقية"] (two target endpoints)
+«غارة بين كفرتبنيت وزوطر الشرقية» → village=["كفرتبنيت"] with `زوطر الشرقية` as review context (one fuzzy target, not two endpoint incidents)
+«غارة على طريق بين كفرتبنيت وزوطر الشرقية» → village=["كفرتبنيت","زوطر الشرقية"] (two route endpoints in one route event)
 
 **Single target with qualifier / neighborhood:**
 «غارة على بلدة كفررمان - حي الميدان» → village=["كفررمان"], village_roles=[{"village":"كفررمان","role":"target","qualifier_text":"حي الميدان"}]

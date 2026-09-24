@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
@@ -14,6 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.text_normalization import normalize_arabic_text
 from app.core.text_sanitizer import strip_emoji_and_pictographs
 from app.llm.dtos import (
     CasualtyScope,
@@ -322,6 +324,14 @@ class IncidentMaterializationService:
             for village_match in village_matches
             if self._materializes_village_match(village_match)
         ]
+        village_matches, target_matches, extraction = (
+            self._collapse_plain_between_targets(
+                representative.raw_text,
+                village_matches,
+                target_matches,
+                extraction,
+            )
+        )
         is_multi_village = self._distinct_target_village_count(target_matches) > 1
         if self._has_ambiguous_sub_event_scope(
             extraction,
@@ -1087,6 +1097,14 @@ class IncidentMaterializationService:
             for village_match in village_matches
             if self._materializes_village_match(village_match)
         ]
+        village_matches, target_matches, extraction = (
+            self._collapse_plain_between_targets(
+                representative.raw_text,
+                village_matches,
+                target_matches,
+                extraction,
+            )
+        )
         is_multi_village = self._distinct_target_village_count(target_matches) > 1
         category_casualties_suppressed = False
         if is_multi_village:
@@ -1803,6 +1821,107 @@ class IncidentMaterializationService:
             if normalized and normalized not in origin_villages:
                 origin_villages.append(normalized)
         return origin_villages
+
+    @classmethod
+    def _collapse_plain_between_targets(
+        cls,
+        raw_text: str | None,
+        village_matches: list[dict[str, Any]],
+        target_matches: list[dict[str, Any]],
+        extraction: ExtractionResult,
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], ExtractionResult]:
+        """Collapse plain بين/محيط/قرب phrasing to one reviewable target village."""
+        if cls._distinct_target_village_count(target_matches) <= 1:
+            return village_matches, target_matches, extraction
+
+        fuzzy = cls._plain_fuzzy_area_target_order(raw_text, target_matches)
+        if fuzzy is None:
+            return village_matches, target_matches, extraction
+
+        primary, alternate_matches, evidence = fuzzy
+        alternatives = [
+            str(item.get("raw_village_text") or "").strip()
+            for item in alternate_matches
+            if str(item.get("raw_village_text") or "").strip()
+        ]
+        collapsed_primary = {
+            **primary,
+            "village_match_status": "matched_low_confidence",
+            "village_review_required": True,
+            "qualifier_text": primary.get("qualifier_text")
+            or f"fuzzy area; alternate: {', '.join(alternatives)}",
+        }
+        primary_id = id(primary)
+        alternate_ids = {id(item) for item in alternate_matches}
+        collapsed_village_matches: list[dict[str, Any]] = []
+        for item in village_matches:
+            if id(item) == primary_id:
+                collapsed_village_matches.append(collapsed_primary)
+            elif id(item) in alternate_ids:
+                continue
+            else:
+                collapsed_village_matches.append(item)
+
+        merged_alternatives = list(extraction.location_alternatives)
+        merged_alternatives.extend(
+            item for item in alternatives if item not in merged_alternatives
+        )
+        collapsed_extraction = extraction.model_copy(
+            update={
+                "location_ambiguity": True,
+                "location_alternatives": merged_alternatives,
+                "location_ambiguity_evidence": (
+                    extraction.location_ambiguity_evidence or evidence
+                ),
+            }
+        )
+        collapsed_target_matches = [
+            collapsed_primary if id(item) == primary_id else item
+            for item in target_matches
+            if id(item) not in alternate_ids
+        ]
+        return collapsed_village_matches, collapsed_target_matches, collapsed_extraction
+
+    @staticmethod
+    def _plain_fuzzy_area_target_order(
+        raw_text: str | None,
+        target_matches: list[dict[str, Any]],
+    ) -> tuple[dict[str, Any], list[dict[str, Any]], str] | None:
+        normalized_text = normalize_arabic_text(raw_text or "")
+        if not normalized_text:
+            return None
+        marker = re.search(
+            r"(?:^|\s)(?:في\s+)?(?:المنطقه\s+الواقعه\s+)?"
+            r"(?:محيط|قرب|بالقرب\s+من|بين(?:\s+بلدتي)?)\s+",
+            normalized_text,
+        )
+        if marker is None:
+            return None
+        before = normalized_text[max(0, marker.start() - 16) : marker.start()]
+        if "طريق" in before or "مسار" in before:
+            return None
+
+        tail = re.split(r"[،؛:.!؟\n]", normalized_text[marker.end() :], maxsplit=1)[0]
+        ordered = sorted(
+            (
+                (tail.find(name), item, name)
+                for item in target_matches
+                if (
+                    name := normalize_arabic_text(
+                        str(item.get("raw_village_text") or "")
+                    )
+                )
+                and name in tail
+            ),
+            key=lambda value: value[0],
+        )
+        if len(ordered) < 2:
+            return None
+
+        primary = ordered[0][1]
+        alternatives = [ordered[1][1]]
+        evidence = normalized_text[marker.start() :].strip()
+        return primary, alternatives, evidence
 
     @staticmethod
     def _village_display_name(village_match: dict[str, Any]) -> str | None:

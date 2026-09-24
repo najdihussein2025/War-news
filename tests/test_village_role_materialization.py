@@ -207,6 +207,58 @@ def test_fuzzy_area_materializes_one_reviewable_incident_with_alternate_note() -
     assert "بيوت السياد" in (result[0].note or "")
 
 
+def test_plain_between_two_villages_materializes_primary_only_with_alternate_note() -> None:
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    raw_text = "دبابة ميركافا معادية تستهدف بقذيفة المنطقة الواقعة بين بلدتي برعشيت وبيت ياحون"
+    extraction = _extraction_result()
+    extraction["village"] = ["برعشيت", "بيت ياحون"]
+    extraction["village_roles"] = [
+        {"village": "برعشيت", "role": "target"},
+        {"village": "بيت ياحون", "role": "target"},
+    ]
+    match = {
+        "village_matches": [
+            {
+                "raw_village_text": "برعشيت",
+                "matched_village_id": 1001,
+                "village_confidence": 1.0,
+                "village_match_status": "matched",
+                "village_review_required": False,
+                "village_role": "target",
+            },
+            {
+                "raw_village_text": "بيت ياحون",
+                "matched_village_id": 1002,
+                "village_confidence": 1.0,
+                "village_match_status": "matched",
+                "village_review_required": False,
+                "village_role": "target",
+            },
+        ],
+        "any_village_low_confidence": False,
+        "raw_condition_text": "قذائف الدبابات",
+        "condition_confidence": 0.8,
+        "matched_condition_id": 5,
+        "condition_match_status": "matched",
+        "condition_review_required": False,
+    }
+    representative = _representative(match, extraction_result=extraction)
+    representative.raw_text = raw_text
+
+    result = service.materialize(representative)
+
+    assert len(result) == 1
+    assert result[0].village_id == 1001
+    assert result[0].verification_status == "needs_verification"
+    assert "بيت ياحون" in (result[0].note or "")
+    assert not any(
+        incident.village_id == 1002
+        for incident in db.committed
+        if isinstance(incident, Incident)
+    )
+
+
 def test_fast_path_ignores_origin_only_village_when_materializing() -> None:
     db = _SessionStub()
     service = IncidentMaterializationService(db)  # type: ignore[arg-type]
