@@ -483,6 +483,43 @@ def test_effect_defined_conditions_require_conflict_attribution(
     assert positive.condition_match_status == MatchResultStatus.matched
 
 
+def test_cnrs_conflict_classification_allows_effect_defined_condition() -> None:
+    villages = _SimilarRepositoryStub(None, None)
+    conditions = _SimilarRepositoryStub(27, 1.0)
+    service = MatchingService(villages, conditions)
+
+    result = service.match(
+        _extraction(village=[], action="حريق كبير"),
+        cnrs_classification={
+            "include": True,
+            "event_domain": "conflict",
+            "event_subtype": "airstrike",
+        },
+    )
+
+    assert result.matched_condition_id == 27
+    assert result.condition_match_status == MatchResultStatus.matched
+
+
+def test_cnrs_ordinary_fire_classification_does_not_allow_effect_defined_condition() -> None:
+    villages = _SimilarRepositoryStub(None, None)
+    conditions = _SimilarRepositoryStub(27, 1.0)
+    service = MatchingService(villages, conditions)
+
+    result = service.match(
+        _extraction(village=[], action="حريق كبير"),
+        cnrs_classification={
+            "include": True,
+            "event_domain": "fire",
+            "event_subtype": "fire_incident",
+            "mentions_israeli_actor": False,
+        },
+    )
+
+    assert result.matched_condition_id is None
+    assert result.condition_match_status == MatchResultStatus.unmatched
+
+
 def test_effect_defined_canonical_cnrs_override_can_still_match() -> None:
     result = MatchingService(
         _SimilarRepositoryStub(None, None),

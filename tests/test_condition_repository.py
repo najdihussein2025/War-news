@@ -92,9 +92,23 @@ def test_condition_query_includes_evidence_backed_aliases() -> None:
     # Alias similarity must affect both score and bidirectional coverage ranking.
     # SQL repeats score inside coverage_rank, so each alias appears three times:
     # selected score, the score factor in coverage_rank, and alias coverage.
-    assert sql.count("CASE") == 3 * sum(
+    assert sql.count("CASE") == 1 + 3 * sum(
         len(aliases) for aliases in CONDITION_ALIASES.values()
     )
+
+
+def test_condition_query_scores_exact_english_label_as_match() -> None:
+    db = _SessionStub()
+    ConditionRepository(db).find_similar("Burning Properties")
+
+    sql = str(
+        db.statement.compile(  # type: ignore[union-attr]
+            dialect=postgresql.dialect(),
+            compile_kwargs={"literal_binds": True},
+        )
+    )
+    assert "lower(trim(conditions.action_en)) = lower(trim('Burning Properties'))" in sql
+    assert "THEN 1.0" in sql
 
 
 def test_action_aliases_cover_vehicle_movement_detonation_and_sound_bombs() -> None:

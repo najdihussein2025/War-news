@@ -200,14 +200,24 @@ class MatchingService(MatchingServiceInterface):
             else float(geo_context_min_distance_advantage_meters)
         )
 
-    def match(self, extraction_result: ExtractionResult) -> MatchResultDTO:
+    def match(
+        self,
+        extraction_result: ExtractionResult,
+        *,
+        cnrs_classification: dict | None = None,
+    ) -> MatchResultDTO:
         root_condition = self._match_mention(
             extraction_result.action_description,
             self.conditions.find_similar,
             guard_condition_tokens=True,
+            cnrs_classification=cnrs_classification,
         )
         sub_event_matches = [
-            self._match_sub_event(index, sub_event)
+            self._match_sub_event(
+                index,
+                sub_event,
+                cnrs_classification=cnrs_classification,
+            )
             for index, sub_event in enumerate(extraction_result.sub_events)
         ]
         village_mentions = self._event_village_mentions(
@@ -319,11 +329,18 @@ class MatchingService(MatchingServiceInterface):
             sub_event_matches=sub_event_matches,
         )
 
-    def _match_sub_event(self, index: int, sub_event) -> SubEventMatchResult:
+    def _match_sub_event(
+        self,
+        index: int,
+        sub_event,
+        *,
+        cnrs_classification: dict | None = None,
+    ) -> SubEventMatchResult:
         condition = self._match_mention(
             sub_event.action_description,
             self.conditions.find_similar,
             guard_condition_tokens=True,
+            cnrs_classification=cnrs_classification,
         )
         return SubEventMatchResult(
             index=index,
@@ -797,6 +814,7 @@ class MatchingService(MatchingServiceInterface):
         *,
         allow_alias: bool = False,
         guard_condition_tokens: bool = False,
+        cnrs_classification: dict | None = None,
     ) -> _ClassifiedMatch:
         normalized = normalize_arabic_text(mention or "")
         if not normalized:
@@ -825,6 +843,7 @@ class MatchingService(MatchingServiceInterface):
             candidates,
             normalized,
             guard_condition_tokens=guard_condition_tokens,
+            cnrs_classification=cnrs_classification,
         )
 
     def _classify_candidates(
@@ -836,6 +855,7 @@ class MatchingService(MatchingServiceInterface):
         normalized: str,
         *,
         guard_condition_tokens: bool = False,
+        cnrs_classification: dict | None = None,
     ) -> _ClassifiedMatch:
         if not candidates:
             return _ClassifiedMatch(None, None, MatchResultStatus.unmatched)
@@ -844,6 +864,7 @@ class MatchingService(MatchingServiceInterface):
             if guard_condition_tokens and not self._condition_match_allowed(
                 candidate.id,
                 normalized,
+                cnrs_classification=cnrs_classification,
             ):
                 continue
             allowed.append((candidate, score))
@@ -876,7 +897,12 @@ class MatchingService(MatchingServiceInterface):
         return _ClassifiedMatch(None, top_score, MatchResultStatus.unmatched)
 
     @staticmethod
-    def _condition_match_allowed(condition_id: int, normalized_text: str) -> bool:
+    def _condition_match_allowed(
+        condition_id: int,
+        normalized_text: str,
+        *,
+        cnrs_classification: dict | None = None,
+    ) -> bool:
         if _is_exception_match(normalized_text, _condition_match_exceptions()):
             return False
         required_tokens = CONDITION_DISTINGUISHING_TOKENS.get(condition_id)
@@ -885,5 +911,21 @@ class MatchingService(MatchingServiceInterface):
                 return True
             if normalized_text.lower() == EFFECT_DEFINED_CANONICAL_ACTIONS.get(condition_id):
                 return True
-            return has_conflict_attribution_text(normalized_text)
+            return has_conflict_attribution_text(
+                normalized_text
+            ) or MatchingService._cnrs_conflict_attribution(cnrs_classification)
         return any(token in normalized_text for token in required_tokens)
+
+    @staticmethod
+    def _cnrs_conflict_attribution(classification: dict | None) -> bool:
+        if not classification or classification.get("include") is not True:
+            return False
+        if classification.get("mentions_israeli_actor") is True:
+            return True
+        domain = str(classification.get("event_domain") or "").strip().lower()
+        subtype = str(classification.get("event_subtype") or "").strip().lower()
+        return domain == "conflict" or subtype in {
+            "airstrike",
+            "artillery",
+            "direct_attack",
+        }
