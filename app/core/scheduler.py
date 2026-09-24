@@ -6,15 +6,6 @@ from datetime import datetime, timedelta, timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.core.config import settings
 from app.core.database import SessionLocal
-from app.logs.models import IngestionLog
-from app.news.services.pipeline.pipeline_jobs import (
-    drain_one_enqueued_pipeline_sweep_job,
-    enqueue_pipeline_sweep,
-)
-from app.sources.actions import IngestSourceAction
-from app.sources.dtos import IngestSourceData
-from app.sources.repositories import SourceRepository
-from app.sources.services.cnrs_source import CNRSSourceProvider
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -24,74 +15,16 @@ _scheduler_stop_event: threading.Event | None = None
 
 
 def _uses_cnrs_polling(source) -> bool:
-    return source is not None
+    return False
 
 
 def _poll_cnrs() -> None:
-    if not settings.cnrs_api_key:
-        logger.error("CNRS polling skipped: CNRS_API_KEY is not configured")
-        return
-
-    db = SessionLocal()
-    try:
-        repository = SourceRepository(db)
-        source = repository.get_active_by_external_id("cnrs_webhook")
-        if source is None:
-            logger.error("CNRS polling skipped: active cnrs_webhook source was not found")
-            return
-        started_at = datetime.now(timezone.utc)
-
-        result = IngestSourceAction(
-            repository,
-            provider_factory=lambda configured_source: CNRSSourceProvider(
-                config=configured_source.config,
-                api_key=settings.cnrs_api_key or "",
-            ),
-        ).execute(
-            IngestSourceData(
-                source_id=source.id,
-                page_limit=2000,
-                max_batches=10,
-                min_message_datetime=datetime.now(timezone.utc) - timedelta(
-                    hours=settings.cnrs_lookback_hours
-                ),
-            ),
-            write_log=False,
-        )
-        if result.inserted > 0 or result.failed > 0:
-            db.add(
-                IngestionLog(
-                    source_id=source.id,
-                    status="completed",
-                    messages_fetched=result.fetched,
-                    messages_parsed=result.inserted,
-                    messages_failed=result.failed,
-                    messages_blocked=result.skipped_blocked,
-                    started_at=started_at,
-                    finished_at=datetime.now(timezone.utc),
-                )
-            )
-            db.commit()
-        if result.inserted > 0:
-            enqueue_pipeline_sweep(db, use_advisory_lock=False)
-            drain_one_enqueued_pipeline_sweep_job()
-        logger.info("CNRS polling ingestion result=%s", result.model_dump())
-    except Exception as exc:
-        db.rollback()
-        if 'source' in locals() and source is not None:
-            db.add(
-                IngestionLog(
-                    source_id=source.id,
-                    status="failed",
-                    error_message=str(exc)[:2000],
-                    started_at=started_at if 'started_at' in locals() else None,
-                    finished_at=datetime.now(timezone.utc),
-                )
-            )
-            db.commit()
-        logger.exception("CNRS polling ingestion failed")
-    finally:
-        db.close()
+    # CNRS has one authoritative polling path: the dedicated
+    # cnrs-poll-worker container, which owns the numeric resume cursor and logs
+    # "CNRS poll pass complete: {...}" every pass. The backend scheduler must
+    # not also poll this source or both processes can race on cursor updates.
+    # The HTTP webhook handler remains available for any future CNRS push.
+    logger.info("CNRS backend scheduler no-op: cnrs-poll-worker owns polling")
 
 
 def _run_red_alert_loop() -> None:

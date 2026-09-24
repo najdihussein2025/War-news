@@ -24,13 +24,19 @@ class _FakeThread:
         self._alive = False
 
 
-def test_cnrs_polling_runs_for_webhook_source_as_backstop() -> None:
+def test_backend_cnrs_scheduler_is_noop_for_dedicated_poll_worker(monkeypatch) -> None:
+    def fail_provider(*args, **kwargs):
+        raise AssertionError("backend scheduler must not poll CNRS")
+
+    monkeypatch.setattr(scheduler, "CNRSSourceProvider", fail_provider, raising=False)
+
     assert scheduler._uses_cnrs_polling(
         SimpleNamespace(config={"delivery_method": "webhook"})
-    ) is True
+    ) is False
     assert scheduler._uses_cnrs_polling(
         SimpleNamespace(config={"delivery_method": "polling"})
-    ) is True
+    ) is False
+    scheduler._poll_cnrs()
 
 
 def test_start_scheduler_skips_when_red_alert_disabled(monkeypatch) -> None:
