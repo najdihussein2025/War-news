@@ -57,6 +57,30 @@ _BETWEEN_ROUTE_RE = re.compile(
     r"(?P<right>[\u0600-\u06ff][\u0600-\u06ff\s]{1,60}?)"
     r"(?=$|[\n،؛.!؟])"
 )
+MULTI_VILLAGE_NO_SUBEVENTS_REVIEW_REASON = "multi_village_no_subevents"
+_ACTION_FAMILIES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("sweeping", ("تمشيط", "مشط", "مشطت", "sweep", "sweeping")),
+    (
+        "illumination_incendiary",
+        (
+            "قنابل مضيئة",
+            "قنابل حارقة",
+            "مضيئة وحارقة",
+            "انارة",
+            "اناره",
+            "incendiary",
+            "illumination",
+            "flare",
+            "flares",
+        ),
+    ),
+    ("shelling", ("قصف", "قذائف", "مدفعي", "shell", "shelling")),
+    ("airstrike", ("غارة", "اغارة", "استهدفت", "استهداف", "airstrike", "raid", "strike")),
+    ("fire", ("حريق", "احراق", "أحرق", "حرق", "fire", "burn")),
+    ("drone", ("مسيرة", "مسيّرة", "درون", "drone")),
+    ("gunfire", ("اطلاق نار", "رشقات", "رصاص", "gunfire", "shooting")),
+    ("movement", ("تحرك", "آليات", "اليات", "توغل", "دورية", "movement", "incursion")),
+)
 _DASH_QUALIFIER_RE = re.compile(
     r"(?P<prefix>بلدة|مزرعة|خراج)\s+"
     r"(?P<left>[\u0600-\u06ff][\u0600-\u06ff\s]{1,60}?)"
@@ -557,6 +581,11 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 raw_message_id=raw_message_id,
             )
         )
+        needs_review, review_reason = self._multi_village_action_scope_review(
+            post_text,
+            village_roles=village_roles,
+            sub_events=sub_events,
+        )
 
         return ExtractionResult(
             is_relevant=general_response.is_relevant,
@@ -579,11 +608,61 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             casualty_scope_evidence=scope_evidence,
             casualty_scope_needs_review=scope_needs_review,
             casualty_scope_review_reason=scope_reason,
+            needs_review=needs_review,
+            review_reason=review_reason,
             presence_category_keys=list(categories_present),
             extraction_tier=1,
             model=self.client.model,
             extracted_at=datetime.now(timezone.utc),
         )
+
+    @classmethod
+    def _multi_village_action_scope_review(
+        cls,
+        post_text: str,
+        *,
+        village_roles: list[VillageRoleEntry],
+        sub_events: list[ExtractionSubEvent],
+    ) -> tuple[bool, str | None]:
+        if sub_events:
+            return False, None
+        target_names = []
+        seen: set[str] = set()
+        for role in village_roles:
+            if role.role != VillageRole.target:
+                continue
+            key = normalize_arabic_text(role.village, compact=True).lower()
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            target_names.append(role.village)
+        if len(target_names) < 2:
+            return False, None
+
+        families_by_village: dict[str, frozenset[str]] = {}
+        for village in target_names:
+            families = cls._action_families_near_village(post_text, village)
+            if families:
+                families_by_village[village] = families
+        distinct_families = set(families_by_village.values())
+        if len(distinct_families) >= 2:
+            return True, MULTI_VILLAGE_NO_SUBEVENTS_REVIEW_REASON
+        return False, None
+
+    @classmethod
+    def _action_families_near_village(cls, text: str, village: str) -> frozenset[str]:
+        normalized_text = normalize_arabic_text(text).lower()
+        normalized_village = normalize_arabic_text(village).lower()
+        if not normalized_village:
+            return frozenset()
+        families: set[str] = set()
+        for clause in re.split(r"[\n.،؛;!؟]+", normalized_text):
+            if normalized_village not in clause:
+                continue
+            for family, terms in _ACTION_FAMILIES:
+                if any(normalize_arabic_text(term).lower() in clause for term in terms):
+                    families.add(family)
+        return frozenset(families)
 
     def extract_tier2_details(
         self,

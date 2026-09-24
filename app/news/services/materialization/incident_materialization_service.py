@@ -128,6 +128,14 @@ def _incident_event_datetime(value: datetime) -> datetime:
     return value.astimezone(BEIRUT_TIMEZONE)
 
 
+def _extraction_review_reason(extraction: ExtractionResult) -> str | None:
+    if extraction.casualty_scope_needs_review:
+        return extraction.casualty_scope_review_reason
+    if extraction.needs_review:
+        return extraction.review_reason
+    return None
+
+
 EXACT_HASH_CONSTRAINT = "uq_incidents_exact_hash_active"
 AMBIGUOUS_SUB_EVENT_SCOPE_REVIEW_REASON = (
     "Multiple sub-events lack explicit location binding in a multi-village bulletin; "
@@ -494,11 +502,7 @@ class IncidentMaterializationService:
                     deaths=village_deaths,
                     injuries=village_injuries,
                     duplicate_flag=True,
-                    scope_review_reason=(
-                        extraction.casualty_scope_review_reason
-                        if extraction.casualty_scope_needs_review
-                        else None
-                    ),
+                    scope_review_reason=_extraction_review_reason(extraction),
                     low_confidence_village_match=(
                         village_status == "matched_low_confidence"
                     ),
@@ -634,11 +638,7 @@ class IncidentMaterializationService:
                 location_ambiguity_note=self._location_ambiguity_note(extraction),
                 deaths=village_deaths,
                 injuries=village_injuries,
-                scope_review_reason=(
-                    extraction.casualty_scope_review_reason
-                    if extraction.casualty_scope_needs_review
-                    else None
-                ),
+                scope_review_reason=_extraction_review_reason(extraction),
                 low_confidence_village_match=(
                     village_status == "matched_low_confidence"
                 ),
@@ -1255,11 +1255,12 @@ class IncidentMaterializationService:
                     village_status == "matched_low_confidence"
                 ),
             )
-            if category_casualties_suppressed or extraction.casualty_scope_needs_review:
+            extraction_review_reason = _extraction_review_reason(extraction)
+            if category_casualties_suppressed or extraction_review_reason:
                 verification_status = "needs_verification"
             verification_reason = (
-                extraction.casualty_scope_review_reason
-                if extraction.casualty_scope_needs_review
+                extraction_review_reason
+                if extraction_review_reason
                 else "Category casualties require manual per-village confirmation "
                 "for a multi-target bulletin"
                 if category_casualties_suppressed
