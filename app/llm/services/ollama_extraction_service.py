@@ -28,6 +28,7 @@ from app.llm.dtos import (
 from app.llm.interfaces import ExtractionClassifierInterface
 from app.llm.services.ollama_category_detail_service import OllamaCategoryDetailService
 from app.llm.services.ollama_auth_failures import coerce_ollama_auth_failure
+from app.llm.services.transient_llm_errors import Tier2ExtractionFailedError
 from app.llm.services.ollama_presence_gate_service import (
     LOW_TEMPERATURE,
     PRESENCE_GATE_RESPONSE_SCHEMA,
@@ -686,6 +687,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
 
         category_details: dict[str, ExtractionCategory] = {}
         failed_categories: list[str] = []
+        last_error: BaseException | None = None
         for category_key in presence_category_keys:
             try:
                 category_detail = self.category_detail.extract_detail(
@@ -714,6 +716,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                     error,
                 )
                 failed_categories.append(category_key.value)
+                last_error = exc
                 continue
 
             if self._is_empty_category_detail(category_detail):
@@ -734,6 +737,9 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 failed_categories,
                 list(category_details.keys()),
             )
+            # A failed LLM call is not an empty answer: finalizing a partial
+            # result would permanently drop the failed categories.
+            raise Tier2ExtractionFailedError(failed_categories, last_error)
 
         return self._finalize_tier2_categories(
             category_details,
@@ -767,7 +773,10 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 raw_message_id,
                 exc,
             )
-            return {}
+            raise Tier2ExtractionFailedError(
+                [key.value for key in presence_category_keys],
+                exc,
+            ) from exc
 
         category_details: dict[str, ExtractionCategory] = {}
         for category_key in presence_category_keys:

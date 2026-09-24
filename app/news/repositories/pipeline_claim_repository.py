@@ -194,6 +194,7 @@ class PipelineClaimRepository:
                 Incident.details_pending.is_(True),
                 Incident.is_deleted.is_(False),
                 RawMessage.extraction_result.is_not(None),
+                RawMessage.tier2_retry_count < settings.extraction_max_retries,
                 claimable_lease_filter(),
             )
             .order_by(Incident.created_at.desc())

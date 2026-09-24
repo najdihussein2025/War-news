@@ -46,3 +46,15 @@ def is_transient_llm_error(exc: BaseException) -> bool:
         return False
 
     return any(marker in message for marker in TRANSIENT_LLM_ERROR_MARKERS)
+
+
+class Tier2ExtractionFailedError(Exception):
+    """Raised when a Tier-2 category detail LLM call fails (not an empty answer)."""
+
+    def __init__(self, failed_categories: list[str], last_error: BaseException) -> None:
+        self.failed_categories = failed_categories
+        self.last_error = last_error
+        super().__init__(
+            f"tier2: failed categories={failed_categories} "
+            f"last error: {format_llm_error(last_error)}"
+        )

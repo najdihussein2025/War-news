@@ -8,6 +8,7 @@ from app.llm.dtos import ExtractionResult
 from app.llm.services.cnrs_extraction_fallback import trusted_cnrs_action
 from app.llm.services.transient_llm_errors import (
     ExtractionRetryCappedError,
+    Tier2ExtractionFailedError,
     is_transient_llm_error,
 )
 from app.llm.services.ollama_auth_failures import coerce_ollama_auth_failure
@@ -177,12 +178,20 @@ def run_tier2_detail_fill_for_message(raw_message_id: int) -> int:
 
     tier2_categories = None
     if extraction.extraction_tier < 2:
-        tier2_categories = classifier.extract_tier2_details(
-            post_text=post_text,
-            presence_category_keys=extraction.presence_category_keys,
-            root_casualties=extraction.casualties,
-            raw_message_id=raw_message_id,
-        )
+        try:
+            tier2_categories = classifier.extract_tier2_details(
+                post_text=post_text,
+                presence_category_keys=extraction.presence_category_keys,
+                root_casualties=extraction.casualties,
+                raw_message_id=raw_message_id,
+            )
+        except Tier2ExtractionFailedError as exc:
+            with SessionLocal() as db:
+                Tier2DetailFillService(db, classifier).record_tier2_failure(
+                    raw_message_id,
+                    exc,
+                )
+            raise
 
     with SessionLocal() as db:
         incident_repo = IncidentRepository(db)

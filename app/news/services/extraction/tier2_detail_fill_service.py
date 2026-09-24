@@ -307,6 +307,53 @@ class Tier2DetailFillService:
         )
         return updated
 
+    def record_tier2_failure(
+        self,
+        raw_message_id: int,
+        exc: BaseException,
+        *,
+        max_retries: int | None = None,
+    ) -> bool:
+        """
+        Count a failed Tier-2 LLM call without finalizing any incident.
+
+        Incidents keep ``details_pending=True``. Once the retry cap is reached
+        they are flagged ``needs_verification`` and the claim stops picking the
+        message up. Returns True when the cap was reached.
+        """
+        limit = (
+            max_retries
+            if max_retries is not None
+            else settings.extraction_max_retries
+        )
+        raw_message = self.db.get(RawMessage, raw_message_id)
+        if raw_message is None:
+            raise LookupError(f"RawMessage id={raw_message_id} was not found.")
+        raw_message.tier2_retry_count = (raw_message.tier2_retry_count or 0) + 1
+        raw_message.error_message = f"tier2: {exc}"
+        # Keep the lease fresh so the same sweep does not immediately re-claim
+        # the message during an Ollama outage; it expires after the lease window.
+        raw_message.processing_claimed_at = datetime.now(timezone.utc)
+        self.db.add(raw_message)
+        capped = raw_message.tier2_retry_count >= limit
+        if capped:
+            incidents = self.db.scalars(
+                select(Incident).where(
+                    Incident.raw_message_id == raw_message_id,
+                    Incident.details_pending.is_(True),
+                    Incident.is_deleted.is_(False),
+                )
+            ).all()
+            for incident in incidents:
+                incident.verification_status = "needs_verification"
+                incident.verification_reason = (
+                    "Tier 2 detail extraction failed after "
+                    f"{raw_message.tier2_retry_count} retries"
+                )
+                self.db.add(incident)
+        self.db.commit()
+        return capped
+
     @staticmethod
     def _target_village_ids(match_result: dict | None) -> list[int]:
         if not match_result:
