@@ -10,10 +10,10 @@ import app.logs.models  # noqa: F401
 import app.sources.models  # noqa: F401
 
 from sqlalchemy import text
-from sqlalchemy.orm import Session
+from sqlalchemy.engine import Connection
 
 from app.core.config import settings
-from app.core.database import SessionLocal
+from app.core.database import SessionLocal, engine
 from app.news.dtos.pipeline_dto import PipelineSweepResult, StageSweepResult
 from app.news.services.pipeline.pipeline_advisory_lock import PIPELINE_SWEEP_ADVISORY_LOCK_KEY
 from app.news.services.pipeline.pipeline_concurrent_sweeps import (
@@ -45,26 +45,37 @@ def _stage_max_rows(requested_max_rows: int | None, *, llm_backed: bool = False)
     return settings.pipeline_stage_max_rows_per_pass
 
 
-def _try_acquire_pipeline_lock(db: Session) -> bool:
-    acquired = bool(
-        db.execute(
+def _open_pipeline_lock_connection() -> Connection:
+    # The advisory lock is session-level, so acquire and release MUST run on
+    # the same backend. A Session hands its connection back to the pool on
+    # commit, which let the unlock land on a different pooled connection and
+    # leaked the lock on an idle one -- every later manual sweep was then
+    # skipped as "already running". A pinned AUTOCOMMIT connection keeps the
+    # backend fixed without leaving an idle-in-transaction pool slot.
+    return engine.connect().execution_options(isolation_level="AUTOCOMMIT")
+
+
+def _try_acquire_pipeline_lock(conn: Connection) -> bool:
+    return bool(
+        conn.execute(
             text("SELECT pg_try_advisory_lock(:lock_key)"),
             {"lock_key": PIPELINE_SWEEP_ADVISORY_LOCK_KEY},
         ).scalar_one()
     )
-    if acquired:
-        # Session-level advisory locks survive commit; end the idle transaction
-        # so this connection does not permanently occupy a pool slot.
-        db.commit()
-    return acquired
 
 
-def _release_pipeline_lock(db: Session) -> None:
-    db.execute(
-        text("SELECT pg_advisory_unlock(:lock_key)"),
-        {"lock_key": PIPELINE_SWEEP_ADVISORY_LOCK_KEY},
+def _release_pipeline_lock(conn: Connection) -> None:
+    released = bool(
+        conn.execute(
+            text("SELECT pg_advisory_unlock(:lock_key)"),
+            {"lock_key": PIPELINE_SWEEP_ADVISORY_LOCK_KEY},
+        ).scalar_one()
     )
-    db.commit()
+    if not released:
+        logger.warning(
+            "Pipeline advisory lock %s was not held by the releasing connection",
+            PIPELINE_SWEEP_ADVISORY_LOCK_KEY,
+        )
 
 
 def _format_exception(exc: BaseException) -> str:
@@ -179,7 +190,7 @@ async def run_full_pipeline_sweep(
     )
     sweep_started_at = time.monotonic()
     stages: list[StageSweepResult] = []
-    lock_db: Session | None = None
+    lock_db: Connection | None = None
 
     def _record_stage(result: StageSweepResult) -> None:
         stages.append(result)
@@ -197,7 +208,7 @@ async def run_full_pipeline_sweep(
 
     try:
         if use_advisory_lock:
-            lock_db = SessionLocal()
+            lock_db = _open_pipeline_lock_connection()
             if not _try_acquire_pipeline_lock(lock_db):
                 elapsed_seconds = time.monotonic() - sweep_started_at
                 logger.info(

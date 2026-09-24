@@ -6,7 +6,8 @@ still status='pending' with filter_result IS NULL are never revisited by
 the hot path. This script runs the same relevance-filter stage with an
 unpatched session, so it scans the full pending backlog regardless of the
 cursor. Rows it marks parsed are picked up by the live sweep's downstream
-stages, which are not cutoff-gated.
+stages, which must stay un-gated by the cursor (see
+scripts.live_sweep_new_only._apply_downstream_stage_patches).
 
 Intended to run on a much slower cadence than the hot path (see the
 backlog-relevance-worker service in docker-compose.yml).

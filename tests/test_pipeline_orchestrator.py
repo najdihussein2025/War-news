@@ -96,6 +96,57 @@ def _patch_stages(monkeypatch, *, fail_stage: str | None = None) -> list[str]:
     return calls
 
 
+def _lock_connection(*, acquired: bool) -> MagicMock:
+    conn = MagicMock()
+    conn.execute.return_value.scalar_one.return_value = acquired
+    return conn
+
+
+@pytest.mark.asyncio
+async def test_advisory_lock_is_acquired_and_released_on_same_connection(
+    monkeypatch,
+) -> None:
+    # Regression: the lock was taken on a Session that returned its connection
+    # to the pool on commit, so the unlock ran on another backend and the lock
+    # leaked -- every later manual sweep was skipped as "already running".
+    _patch_stages(monkeypatch)
+    conn = _lock_connection(acquired=True)
+    opened: list[MagicMock] = []
+
+    def open_conn() -> MagicMock:
+        opened.append(conn)
+        return conn
+
+    monkeypatch.setattr(orchestrator, "_open_pipeline_lock_connection", open_conn)
+
+    result = await orchestrator.run_full_pipeline_sweep(use_advisory_lock=True)
+
+    assert not result.skipped
+    assert len(opened) == 1
+    statements = [str(call.args[0]) for call in conn.execute.call_args_list]
+    assert statements[0].startswith("SELECT pg_try_advisory_lock")
+    assert statements[-1].startswith("SELECT pg_advisory_unlock")
+    conn.commit.assert_not_called()
+    conn.close.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_advisory_lock_contention_skips_and_closes_connection(
+    monkeypatch,
+) -> None:
+    calls = _patch_stages(monkeypatch)
+    conn = _lock_connection(acquired=False)
+    monkeypatch.setattr(orchestrator, "_open_pipeline_lock_connection", lambda: conn)
+
+    result = await orchestrator.run_full_pipeline_sweep(use_advisory_lock=True)
+
+    assert result.skipped
+    assert result.skip_reason == "pipeline_sweep_already_running"
+    assert calls == []
+    assert conn.execute.call_count == 1
+    conn.close.assert_called_once()
+
+
 def test_default_stage_caps_keep_llm_stages_small() -> None:
     assert orchestrator._stage_max_rows(None) == 100
     assert orchestrator._stage_max_rows(None, llm_backed=True) == 4

@@ -65,20 +65,27 @@ def test_relevance_query_uses_persisted_cursor_not_hardcoded_cutoff() -> None:
     assert "695974" not in sql
 
 
-def test_downstream_claim_queries_use_runtime_cutoff() -> None:
+def test_downstream_claim_queries_do_not_use_cutoff() -> None:
     repo = MagicMock()
     repo.db.scalars.return_value.all.return_value = []
     repo.db.scalar.return_value = None
+    repo._claimable_raw_messages.return_value = select(RawMessage)
 
-    live_sweep._claim_pending_pre_dedup_filtered(
-        repo, cutoff_raw_message_id=42
-    )
+    live_sweep._claim_pending_pre_dedup_filtered(repo)
     pre_dedup_stmt = repo.db.scalar.call_args.args[0]
-    params = _bound_ids(pre_dedup_stmt)
-    sql = str(pre_dedup_stmt.compile())
-    assert 42 in params
-    assert 695974 not in params
-    assert "raw_messages.id >" in sql
+
+    live_sweep._claim_pending_extraction_filtered(repo)
+    extraction_stmt = repo.db.scalar.call_args.args[0]
+
+    live_sweep._claim_pending_match_filtered(repo)
+    matching_stmt = repo.db.scalar.call_args.args[0]
+
+    live_sweep._claim_pending_fast_path_filtered(repo)
+    fast_path_stmt = repo.db.scalar.call_args.args[0]
+
+    for statement in (pre_dedup_stmt, extraction_stmt, matching_stmt, fast_path_stmt):
+        sql = str(statement.compile())
+        assert "raw_messages.id >" not in sql
 
 
 def test_filtered_session_uses_runtime_cursor() -> None:
@@ -516,13 +523,16 @@ async def test_run_stages_persists_live_stage_telemetry(monkeypatch) -> None:
     ]
 
 
-def test_downstream_stage_patches_exclude_parsed_rows_below_new_cutoff() -> None:
+def test_downstream_stage_patches_leave_parsed_rows_visible_below_new_cutoff() -> None:
+    # Regression: a 200-row burst was relevance-filtered in two passes, the
+    # cursor jumped past it, and tier1 (capped at a few rows per pass) never
+    # saw the remaining parsed rows again because downstream was cursor-gated.
     raw_repo = MagicMock()
     raw_repo.db.scalars.return_value.all.return_value = []
     original_claim_pending_extraction = live_sweep.PipelineClaimRepository.claim_pending_extraction
     original_claim_pending_match = live_sweep.PipelineClaimRepository.claim_pending_match
 
-    with live_sweep._apply_downstream_stage_patches(cutoff_raw_message_id=1630):
+    with live_sweep._apply_downstream_stage_patches():
         live_sweep.RawMessageRepository.get_pending_extraction_batch(raw_repo, 10)
         assert live_sweep.PipelineClaimRepository.claim_pending_extraction is not original_claim_pending_extraction
         assert live_sweep.PipelineClaimRepository.claim_pending_match is not original_claim_pending_match
@@ -534,26 +544,47 @@ def test_downstream_stage_patches_exclude_parsed_rows_below_new_cutoff() -> None
             extraction_claim_repo
         )
         extraction_stmt = extraction_claim_repo.db.scalar.call_args.args[0]
-        extraction_params = _bound_ids(extraction_stmt)
-        extraction_sql = str(extraction_stmt.compile())
-        assert 1630 in extraction_params
-        assert "raw_messages.id >" in extraction_sql
 
         claim_repo = MagicMock()
         claim_repo.db.scalar.return_value = None
         live_sweep.PipelineClaimRepository.claim_pending_match(claim_repo)
         match_stmt = claim_repo.db.scalar.call_args.args[0]
-        match_params = _bound_ids(match_stmt)
-        match_sql = str(match_stmt.compile())
-        assert 1630 in match_params
-        assert "raw_messages.id >" in match_sql
 
     batch_stmt = raw_repo.db.scalars.call_args.args[0]
-    params = _bound_ids(batch_stmt)
-    sql = str(batch_stmt.compile())
-    assert 1630 in params
-    assert "raw_messages.id >" in sql
-    assert "status" in sql.lower()
+    for statement in (batch_stmt, extraction_stmt, match_stmt):
+        sql = str(statement.compile())
+        assert "raw_messages.id >" not in sql
+        assert "status" in sql.lower()
+
+
+@pytest.mark.asyncio
+async def test_run_stages_does_not_pass_cutoff_to_downstream_patches(monkeypatch) -> None:
+    calls: list[tuple] = []
+    real_patches = live_sweep._apply_downstream_stage_patches
+
+    def spy_patches(*args, **kwargs):
+        calls.append((args, kwargs))
+        return real_patches(*args, **kwargs)
+
+    async def fake_relevance_stage(*, cutoff_raw_message_id: int):
+        return _stage("relevance_filter"), 2240
+
+    async def fake_async_stage(*args, **kwargs) -> StageSweepResult:
+        return _stage("x", processed=0)
+
+    def fake_sync_stage(*args, **kwargs) -> StageSweepResult:
+        return _stage("x", processed=0)
+
+    monkeypatch.setattr(live_sweep, "_apply_downstream_stage_patches", spy_patches)
+    monkeypatch.setattr(live_sweep, "_run_relevance_stage", fake_relevance_stage)
+    monkeypatch.setattr(live_sweep, "_run_async_stage", fake_async_stage)
+    monkeypatch.setattr(live_sweep, "_run_sync_stage", fake_sync_stage)
+    monkeypatch.setattr(live_sweep, "_persist_cursor", MagicMock())
+    monkeypatch.setattr(live_sweep, "record_stage_run", MagicMock())
+
+    await live_sweep._run_stages(cutoff_raw_message_id=1338)
+
+    assert calls == [((), {})]
 
 
 def test_terminalize_ineligible_fast_path_filtered_preserves_air_violation_status() -> None:
@@ -565,9 +596,7 @@ def test_terminalize_ineligible_fast_path_filtered_preserves_air_violation_statu
     repo = MagicMock()
     repo.db.scalars.return_value.all.return_value = [message]
 
-    updated = live_sweep._terminalize_ineligible_fast_path_filtered(
-        repo, cutoff_raw_message_id=0
-    )
+    updated = live_sweep._terminalize_ineligible_fast_path_filtered(repo)
 
     assert updated == 1
     assert message.status == MessageStatus.routed_air_violation
