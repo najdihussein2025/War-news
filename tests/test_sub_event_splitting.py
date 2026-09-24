@@ -74,6 +74,30 @@ class _ConditionByTextStub:
         return [(SimpleNamespace(id=1), 0.93)]
 
 
+class _TalloussaBeitYahounVillageStub:
+    def find_similar(self, text: str, limit: int = 5):
+        village_id = 1001 if text == "Talloussa" else 1002
+        return [
+            (
+                SimpleNamespace(
+                    id=village_id,
+                    ref_name_ar=text,
+                    caza_ar=None,
+                    caza_en=None,
+                    coord_x=None,
+                    coord_y=None,
+                ),
+                1.0,
+            )
+        ]
+
+
+class _TalloussaBeitYahounConditionStub:
+    def find_similar(self, text: str, limit: int = 5):
+        condition_id = 18 if "sweep" in text.lower() else 46
+        return [(SimpleNamespace(id=condition_id), 1.0)]
+
+
 class _RouteVillageRepositoryStub:
     def find_similar(self, text: str, limit: int = 5):
         village_id = 652 if "حاروف" in text else 1529
@@ -197,6 +221,59 @@ def test_message_10395_creates_only_declared_location_action_pairs() -> None:
     assert {incident.village_id for incident in incidents} == {851}
     male_deaths = {detail.male_d for detail in details}
     assert male_deaths == {1, None}
+
+
+def test_talloussa_beit_yahoun_materializes_distinct_conditions() -> None:
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    extraction = ExtractionResult(
+        is_relevant=True,
+        village=["Talloussa", "Beit Yahoun"],
+        village_roles=[
+            VillageRoleEntry(village="Talloussa"),
+            VillageRoleEntry(village="Beit Yahoun"),
+        ],
+        action_description="multiple actions across 2 villages",
+        sub_events=[
+            ExtractionSubEvent(
+                locations=[VillageRoleEntry(village="Talloussa")],
+                action_text="sweeping operations",
+                casualties=ExtractionCasualties(),
+                evidence_span="Sweeping operations near Talloussa",
+            ),
+            ExtractionSubEvent(
+                locations=[VillageRoleEntry(village="Beit Yahoun")],
+                action_text="illumination and incendiary shelling",
+                casualties=ExtractionCasualties(),
+                evidence_span="Illumination and incendiary shelling near Beit Yahoun",
+            ),
+        ],
+        casualties=ExtractionCasualties(),
+        model="test",
+        extracted_at=datetime.now(timezone.utc),
+    )
+    match_result = MatchingService(
+        _TalloussaBeitYahounVillageStub(),
+        _TalloussaBeitYahounConditionStub(),
+    ).match(extraction)
+    representative = _representative(match_result=match_result.model_dump(mode="json"))
+    representative.extraction_result = extraction.model_dump(mode="json")
+    fast_dedup = SimpleNamespace(
+        decide_for_village=lambda **_kwargs: SimpleNamespace(
+            outcome=FastPathDedupOutcome.materialize,
+            representative_raw_message_id=None,
+            canonical_incident_id=None,
+        )
+    )
+
+    created = service.process_fast_path(representative, fast_dedup)  # type: ignore[arg-type]
+
+    incidents = [value for value in db.committed if isinstance(value, Incident)]
+    assert len(created) == 2
+    assert sorted((incident.village_id, incident.condition_id) for incident in incidents) == [
+        (1001, 18),
+        (1002, 46),
+    ]
 
 
 def test_single_action_extraction_does_not_split() -> None:

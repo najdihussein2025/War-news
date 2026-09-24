@@ -15,7 +15,10 @@ from app.llm.dtos import (
     ExtractionVehicleDetails,
     VillageRoleEntry,
 )
-from app.llm.services.ollama_extraction_service import OllamaExtractionService
+from app.llm.services.ollama_extraction_service import (
+    MULTI_VILLAGE_NO_SUBEVENTS_REVIEW_REASON,
+    OllamaExtractionService,
+)
 from app.llm.services.ollama_presence_gate_service import OllamaPresenceGateService
 
 
@@ -676,3 +679,137 @@ def test_extract_tier1_parses_sub_events() -> None:
     assert result.sub_events[1].casualties.male_deaths == 1
     assert result.sub_events[0].evidence_span is not None
     assert result.casualties.deaths is None
+
+
+def test_extract_tier1_talloussa_beit_yahoun_scopes_actions_to_sub_events() -> None:
+    payload = json.dumps(
+        {
+            "is_relevant": True,
+            "village": ["Talloussa", "Beit Yahoun"],
+            "village_roles": [
+                {
+                    "village": "Talloussa",
+                    "role": "target",
+                    "deaths": None,
+                    "injuries": None,
+                    "evidence_span": None,
+                    "qualifier_text": None,
+                },
+                {
+                    "village": "Beit Yahoun",
+                    "role": "target",
+                    "deaths": None,
+                    "injuries": None,
+                    "evidence_span": None,
+                    "qualifier_text": None,
+                },
+            ],
+            "action_description": "multiple actions across 2 villages",
+            "sub_events": [
+                {
+                    "locations": [
+                        {
+                            "village": "Talloussa",
+                            "role": "target",
+                            "deaths": None,
+                            "injuries": None,
+                            "evidence_span": "Sweeping operations near Talloussa",
+                            "qualifier_text": None,
+                        }
+                    ],
+                    "action_text": "sweeping operations",
+                    "casualties": {},
+                    "evidence_span": "Sweeping operations near Talloussa",
+                    "casualty_evidence": [],
+                },
+                {
+                    "locations": [
+                        {
+                            "village": "Beit Yahoun",
+                            "role": "target",
+                            "deaths": None,
+                            "injuries": None,
+                            "evidence_span": "illumination and incendiary shelling near Beit Yahoun",
+                            "qualifier_text": None,
+                        }
+                    ],
+                    "action_text": "illumination and incendiary shelling",
+                    "casualties": {},
+                    "evidence_span": "illumination and incendiary shelling near Beit Yahoun",
+                    "casualty_evidence": [],
+                },
+            ],
+            "casualties": {},
+            "casualty_evidence": [],
+            "casualty_transitions": [],
+        },
+        ensure_ascii=False,
+    )
+    service = OllamaExtractionService(
+        client=_client_for_model_contents([payload]),
+        presence_gate=_PresenceGateStub(categories=[]),
+        category_detail=_CategoryDetailStub(details={}),
+    )
+
+    result = service.extract_tier1(
+        "Sweeping operations near Talloussa. "
+        "Illumination and incendiary shelling near Beit Yahoun.",
+        raw_message_id=77,
+    )
+
+    assert [event.locations[0].village for event in result.sub_events] == [
+        "Talloussa",
+        "Beit Yahoun",
+    ]
+    assert [event.action_text for event in result.sub_events] == [
+        "sweeping operations",
+        "illumination and incendiary shelling",
+    ]
+    assert result.needs_review is False
+
+
+def test_multi_village_multi_action_without_sub_events_needs_review() -> None:
+    payload = json.dumps(
+        {
+            "is_relevant": True,
+            "village": ["Talloussa", "Beit Yahoun"],
+            "village_roles": [
+                {
+                    "village": "Talloussa",
+                    "role": "target",
+                    "deaths": None,
+                    "injuries": None,
+                    "evidence_span": None,
+                    "qualifier_text": None,
+                },
+                {
+                    "village": "Beit Yahoun",
+                    "role": "target",
+                    "deaths": None,
+                    "injuries": None,
+                    "evidence_span": None,
+                    "qualifier_text": None,
+                },
+            ],
+            "action_description": "sweeping operations",
+            "sub_events": [],
+            "casualties": {},
+            "casualty_evidence": [],
+            "casualty_transitions": [],
+        },
+        ensure_ascii=False,
+    )
+    service = OllamaExtractionService(
+        client=_client_for_model_contents([payload]),
+        presence_gate=_PresenceGateStub(categories=[]),
+        category_detail=_CategoryDetailStub(details={}),
+    )
+
+    result = service.extract_tier1(
+        "Sweeping operations near Talloussa. "
+        "Illumination and incendiary shelling near Beit Yahoun.",
+        raw_message_id=78,
+    )
+
+    assert result.needs_review is True
+    assert result.review_reason == MULTI_VILLAGE_NO_SUBEVENTS_REVIEW_REASON
