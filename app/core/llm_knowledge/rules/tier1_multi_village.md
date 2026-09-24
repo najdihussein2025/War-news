@@ -22,6 +22,10 @@ Load when the message appears to name multiple target locations.
 6. Put shared figures in `casualties.total_deaths` / `total_injuries`; leave `deaths`/`injuries` null.
 7. `casualty_scope_evidence` must be the full clause showing whether the toll is shared or per-village.
 
+8. If the bulletin describes more than one distinct action/condition across the villages, emit one `sub_events` item per distinct action. Each item must have only that action's own `locations`, a condition-matchable `action_text`, and an `evidence_span` from that action's sentence or clause. Do not rely on one root `action_description` plus flat `village_roles` for multi-action bulletins.
+9. For multi-action bulletins, root `action_description` is a bulletin-level summary for humans only, for example "multiple actions across 2 villages". It must not be treated as the per-village condition source when `sub_events` exist or should exist.
+10. A single target village must not appear in two conflicting `sub_events` unless the text explicitly uses revision/follow-up language showing that the later action updates or supersedes the earlier one.
+
 ## Examples
 
 **Per-village exact:**
@@ -37,6 +41,13 @@ Load when the message appears to name multiple target locations.
 
 **Two genuine strikes, distinct-event connector:**
 «...طالت الغارات أطراف بلدة زوطر الشرقية في اتجاه ميفدون... كما طال القصف حرج بلدة عيتا الجبل في قضاء بنت جبيل» → two target villages, `زوطر الشرقية` and `عيتا الجبل`, each with its own village_roles entry (and, if described as separate actions, its own sub_event). Do not drop the second village and do not collapse it the way a محيط/بين phrase is collapsed — «كما طال» explicitly marks it as a second, separately scoped strike.
+
+**Two villages, two different actions:**
+Confirmed failure shape: a CNRS bulletin named Talloussa and Beit Yahoun. Talloussa's sentence described `ØªÙ…Ø´ÙŠØ·` / sweeping operations. Beit Yahoun's sentence described `Ù‚Ù†Ø§Ø¨Ù„ Ù…Ø¶ÙŠØ¦Ø© ÙˆØ­Ø§Ø±Ù‚Ø©` / illumination-incendiary shelling.
+
+Wrong output: `action_description="Sweeping Operations"`, flat `village_roles` containing both Talloussa and Beit Yahoun, and `sub_events=[]`. This incorrectly stamps sweeping onto Beit Yahoun.
+
+Correct output: `action_description="multiple actions across 2 villages"` plus two `sub_events`: one with `locations=[{"village":"Talloussa","role":"target",...}]`, `action_text="ØªÙ…Ø´ÙŠØ·"`, and the Talloussa sentence as `evidence_span`; one with `locations=[{"village":"Beit Yahoun","role":"target",...}]`, `action_text="Ù‚Ù†Ø§Ø¨Ù„ Ù…Ø¶ÙŠØ¦Ø© ÙˆØ­Ø§Ø±Ù‚Ø©"`, and the Beit Yahoun sentence as `evidence_span`.
 
 **Dash route / endpoints:**
 «استهدف دراجة نارية على طريق عام مرج حاروف - زبدين» → village=["حاروف","زبدين"] (two target endpoints)

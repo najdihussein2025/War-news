@@ -11,6 +11,31 @@ class of bug on its own — it only patches the one instance found. Flag
 any such code-only fix as incomplete until a corresponding prompt/rule
 update or a documented rationale for staying code-only is added.
 
+## 2026-09-24 - Per-village action/condition attribution for multi-action bulletins
+
+**Bug / accuracy gap:** A confirmed CNRS bulletin covering Talloussa and Beit
+Yahoun was extracted as one root "Sweeping Operations" action with flat village
+roles. Talloussa's own sentence described sweeping, while Beit Yahoun's sentence
+described illumination/incendiary shelling, so the Beit Yahoun incident row lost
+its actual condition.
+
+**Rule / knowledge files changed:**
+- `rules/tier1_multi_village.md` now requires one `sub_events` entry per
+  distinct action/condition in multi-village bulletins and includes the
+  Talloussa/Beit Yahoun wrong-vs-correct output shape.
+- `rules/combined_tier1_prompt.md` now states that root `action_description` is
+  only a bulletin-level summary when scoped `sub_events` exist or are required.
+
+**Code backstop:**
+- Tier 1 extraction now flags multi-village shortcut responses with
+  `review_reason="multi_village_no_subevents"` when village-local action
+  language differs but the model emitted no `sub_events`.
+
+**Regression coverage:**
+- `tests/test_extraction_service.py::test_extract_tier1_talloussa_beit_yahoun_scopes_actions_to_sub_events`
+- `tests/test_extraction_service.py::test_multi_village_multi_action_without_sub_events_needs_review`
+- `tests/test_sub_event_splitting.py::test_talloussa_beit_yahoun_materializes_distinct_conditions`
+
 ## 2026-09-24 - CNRS conflict-attributed fire action extraction
 
 **Bug / accuracy gap:** Real CNRS fire rows such as raw_message_id=1320
