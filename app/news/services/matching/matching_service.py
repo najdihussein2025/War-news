@@ -158,6 +158,15 @@ class _ClassifiedMatch:
 
 
 @dataclass(frozen=True)
+class _ConditionResolution:
+    match: _ClassifiedMatch
+    review_required: bool
+    review_reason: str | None = None
+    action_source: str | None = "llm_text"
+    source_condition_text: str | None = None
+
+
+@dataclass(frozen=True)
 class _VillageCandidateResolution:
     candidates: tuple[tuple[Village, float], ...]
     classified: _ClassifiedMatch
@@ -206,10 +215,10 @@ class MatchingService(MatchingServiceInterface):
         *,
         cnrs_classification: dict | None = None,
     ) -> MatchResultDTO:
-        root_condition = self._match_mention(
+        root_condition = self._resolve_condition(
             extraction_result.action_description,
-            self.conditions.find_similar,
-            guard_condition_tokens=True,
+            source_hint=extraction_result.source_action_hint,
+            action_source=extraction_result.action_source,
             cnrs_classification=cnrs_classification,
         )
         sub_event_matches = [
@@ -273,15 +282,17 @@ class MatchingService(MatchingServiceInterface):
                     deaths=village_mention.deaths,
                     injuries=village_mention.injuries,
                     evidence_span=village_mention.evidence_span,
-                    matched_condition_id=condition.matched_id,
-                    condition_confidence=condition.confidence,
-                    condition_match_status=condition.status,
-                    condition_review_required=condition.status
-                    != MatchResultStatus.matched,
+                    matched_condition_id=condition.match.matched_id,
+                    condition_confidence=condition.match.confidence,
+                    condition_match_status=condition.match.status,
+                    condition_review_required=condition.review_required,
                     raw_condition_text=self._condition_text_for_event(
                         extraction_result,
                         event_index,
                     ),
+                    condition_review_reason=condition.review_reason,
+                    condition_action_source=condition.action_source,
+                    source_condition_text=condition.source_condition_text,
                     event_index=event_index,
                     event_location_count=event_size,
                     qualifier_text=village_mention.qualifier_text,
@@ -320,12 +331,14 @@ class MatchingService(MatchingServiceInterface):
             location_ambiguity=location_ambiguity,
             location_alternatives=list(extraction_result.location_alternatives),
             location_ambiguity_evidence=extraction_result.location_ambiguity_evidence,
-            matched_condition_id=root_condition.matched_id,
-            condition_confidence=root_condition.confidence,
-            condition_match_status=root_condition.status,
-            condition_review_required=root_condition.status
-            != MatchResultStatus.matched,
+            matched_condition_id=root_condition.match.matched_id,
+            condition_confidence=root_condition.match.confidence,
+            condition_match_status=root_condition.match.status,
+            condition_review_required=root_condition.review_required,
             raw_condition_text=extraction_result.action_description,
+            condition_review_reason=root_condition.review_reason,
+            condition_action_source=root_condition.action_source,
+            source_condition_text=root_condition.source_condition_text,
             sub_event_matches=sub_event_matches,
         )
 
@@ -336,20 +349,23 @@ class MatchingService(MatchingServiceInterface):
         *,
         cnrs_classification: dict | None = None,
     ) -> SubEventMatchResult:
-        condition = self._match_mention(
+        condition = self._resolve_condition(
             sub_event.action_description,
-            self.conditions.find_similar,
-            guard_condition_tokens=True,
+            source_hint=None,
+            action_source=None,
             cnrs_classification=cnrs_classification,
         )
         return SubEventMatchResult(
             index=index,
             action_description=sub_event.action_description,
             evidence_span=sub_event.evidence_span,
-            matched_condition_id=condition.matched_id,
-            condition_confidence=condition.confidence,
-            condition_match_status=condition.status,
-            condition_review_required=condition.status != MatchResultStatus.matched,
+            matched_condition_id=condition.match.matched_id,
+            condition_confidence=condition.match.confidence,
+            condition_match_status=condition.match.status,
+            condition_review_required=condition.review_required,
+            condition_review_reason=condition.review_reason,
+            condition_action_source=condition.action_source,
+            source_condition_text=condition.source_condition_text,
         )
 
     @staticmethod
@@ -367,27 +383,33 @@ class MatchingService(MatchingServiceInterface):
     def _event_village_mentions(
         extraction_result: ExtractionResult,
         sub_event_matches: list[SubEventMatchResult],
-        root_condition: _ClassifiedMatch,
-    ) -> list[tuple[VillageRoleEntry, int | None, int | None, _ClassifiedMatch]]:
+        root_condition: _ConditionResolution,
+    ) -> list[tuple[VillageRoleEntry, int | None, int | None, _ConditionResolution]]:
         items: list[
-            tuple[VillageRoleEntry, int | None, int | None, _ClassifiedMatch]
+            tuple[VillageRoleEntry, int | None, int | None, _ConditionResolution]
         ] = []
         for index, sub_event in enumerate(extraction_result.sub_events):
             if not sub_event.locations:
                 continue
             match = sub_event_matches[index] if index < len(sub_event_matches) else None
             condition = (
-                _ClassifiedMatch(
-                    match.matched_condition_id,
-                    match.condition_confidence,
-                    match.condition_match_status,
+                _ConditionResolution(
+                    _ClassifiedMatch(
+                        match.matched_condition_id,
+                        match.condition_confidence,
+                        match.condition_match_status,
+                    ),
+                    bool(match.condition_review_required),
+                    match.condition_review_reason,
+                    match.condition_action_source,
+                    match.source_condition_text,
                 )
                 if match is not None
                 else root_condition
             )
             if (
-                condition.status == MatchResultStatus.unmatched
-                and root_condition.status
+                condition.match.status == MatchResultStatus.unmatched
+                and root_condition.match.status
                 in {MatchResultStatus.matched, MatchResultStatus.matched_low_confidence}
             ):
                 condition = root_condition
@@ -809,6 +831,107 @@ class MatchingService(MatchingServiceInterface):
         if not distances:
             return float("inf"), anchors[0]
         return min(distances, key=lambda item: item[0])
+
+    def _resolve_condition(
+        self,
+        text: str | None,
+        *,
+        source_hint: str | None,
+        action_source: str | None,
+        cnrs_classification: dict | None = None,
+    ) -> _ConditionResolution:
+        text_match = self._match_mention(
+            text,
+            self.conditions.find_similar,
+            guard_condition_tokens=True,
+            cnrs_classification=cnrs_classification,
+        )
+        source_match = self._match_mention(
+            source_hint,
+            self.conditions.find_similar,
+            guard_condition_tokens=True,
+            cnrs_classification=cnrs_classification,
+        )
+        source_available = source_match.matched_id is not None
+
+        if (
+            text_match.status == MatchResultStatus.matched
+            and source_available
+            and source_match.matched_id != text_match.matched_id
+        ):
+            return _ConditionResolution(
+                text_match,
+                True,
+                (
+                    "Condition text evidence disagrees with source metadata "
+                    f"(text: {text or 'unclassified'}, source: {source_hint})."
+                ),
+                "llm_text",
+                source_hint,
+            )
+
+        if text_match.status == MatchResultStatus.matched:
+            return _ConditionResolution(
+                text_match,
+                False,
+                None,
+                action_source or "llm_text",
+                source_hint,
+            )
+
+        if source_available:
+            confidence = min(float(source_match.confidence or 0.0), MATCH_THRESHOLD - 0.01)
+            return _ConditionResolution(
+                _ClassifiedMatch(
+                    source_match.matched_id,
+                    confidence,
+                    MatchResultStatus.matched_low_confidence,
+                ),
+                True,
+                (
+                    "Source metadata fallback used because no confident "
+                    f"text-grounded condition was available (source: {source_hint})."
+                ),
+                "cnrs_subtype_fallback",
+                source_hint,
+            )
+
+        if text_match.status == MatchResultStatus.matched_low_confidence:
+            return _ConditionResolution(
+                text_match,
+                True,
+                f"Low-confidence condition text match requires review (text: {text}).",
+                "llm_text",
+                source_hint,
+            )
+
+        unclassified = self._match_unclassified_condition()
+        if unclassified.matched_id is not None:
+            unclassified = _ClassifiedMatch(
+                unclassified.matched_id,
+                min(float(unclassified.confidence or 0.0), MATCH_THRESHOLD - 0.01),
+                MatchResultStatus.matched_low_confidence,
+            )
+        return _ConditionResolution(
+            unclassified,
+            True,
+            "No usable text-grounded or source-metadata condition candidate.",
+            "unclassified",
+            source_hint,
+        )
+
+    def _match_unclassified_condition(self) -> _ClassifiedMatch:
+        label = "Unclassified / Needs Review"
+        candidates = tuple(
+            (candidate, max(0.0, min(float(score), 1.0)))
+            for candidate, score in self.conditions.find_similar(
+                label,
+                self.candidate_limit,
+            )
+            if getattr(candidate, "action_en", None) == label
+            or getattr(candidate, "action_ar", None) == "غير مصنف / بحاجة إلى مراجعة"
+        )
+        return self._classify_candidates(candidates, label)
 
     def _match_mention(
         self,

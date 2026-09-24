@@ -28,6 +28,9 @@ class VillageMatchResult(BaseModel):
     condition_match_status: MatchResultStatus | None = None
     condition_review_required: bool | None = None
     raw_condition_text: str | None = None
+    condition_review_reason: str | None = None
+    condition_action_source: str | None = None
+    source_condition_text: str | None = None
     event_index: int | None = None
     event_location_count: int | None = None
     qualifier_text: str | None = None
@@ -50,6 +53,9 @@ class SubEventMatchResult(BaseModel):
     condition_confidence: float | None
     condition_match_status: MatchResultStatus
     condition_review_required: bool
+    condition_review_reason: str | None = None
+    condition_action_source: str | None = None
+    source_condition_text: str | None = None
 
 
 class MatchResultDTO(BaseModel):
@@ -71,4 +77,7 @@ class MatchResultDTO(BaseModel):
     condition_match_status: MatchResultStatus
     condition_review_required: bool
     raw_condition_text: str | None
+    condition_review_reason: str | None = None
+    condition_action_source: str | None = None
+    source_condition_text: str | None = None
     sub_event_matches: list[SubEventMatchResult] = Field(default_factory=list)
