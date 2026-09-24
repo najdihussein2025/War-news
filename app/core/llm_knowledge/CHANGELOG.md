@@ -11,6 +11,20 @@ class of bug on its own — it only patches the one instance found. Flag
 any such code-only fix as incomplete until a corresponding prompt/rule
 update or a documented rationale for staying code-only is added.
 
+## 2026-09-24 - Illumination bombs prefer Flare Bomb over generic Grenades
+
+**Bug / accuracy gap:** A bulletin with `قنابل مضيئة` displayed as generic
+Grenades / `قنابل`, even though the canonical reference table has the more
+specific Flare Bomb condition `قنابل مضيئة وحارقة`.
+
+**Rule / knowledge files changed:**
+- `terminology/condition_labels.yaml` now maps `قنابل مضيئة` and
+  `إلقاء قنابل مضيئة` to `قنابل مضيئة وحارقة`, preventing the generic
+  `قنابل` condition from winning.
+
+**Regression coverage:**
+- `tests/test_condition_repository.py::test_action_aliases_cover_vehicle_movement_detonation_and_bomb_subtypes`
+
 ## 2026-09-24 - Per-village action/condition attribution for multi-action bulletins
 
 **Bug / accuracy gap:** A confirmed CNRS bulletin covering Talloussa and Beit

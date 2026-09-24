@@ -141,6 +141,16 @@
   meaning: "قنابل صوتية"
   notes: "Singular sound-bomb wording."
 
+- term: "قنابل مضيئة"
+  category: condition_alias
+  meaning: "قنابل مضيئة وحارقة"
+  notes: "Specific illumination-bomb wording; must not fall through to generic Grenades."
+
+- term: "إلقاء قنابل مضيئة"
+  category: condition_alias
+  meaning: "قنابل مضيئة وحارقة"
+  notes: "Common CNRS illumination-bomb phrasing."
+
 - term: "تحرك لآليات"
   category: condition_alias
   meaning: "تحرك آليات"

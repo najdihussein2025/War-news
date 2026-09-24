@@ -111,7 +111,7 @@ def test_condition_query_scores_exact_english_label_as_match() -> None:
     assert "THEN 1.0" in sql
 
 
-def test_action_aliases_cover_vehicle_movement_detonation_and_sound_bombs() -> None:
+def test_action_aliases_cover_vehicle_movement_detonation_and_bomb_subtypes() -> None:
     aliases = {
         action_ar: {alias.text for alias in values}
         for action_ar, values in CONDITION_ALIASES.items()
@@ -120,6 +120,9 @@ def test_action_aliases_cover_vehicle_movement_detonation_and_sound_bombs() -> N
     assert {"تحرك لآليات", "تحرك آليات", "تحركت آليات"} <= aliases["تحرك آليات"]
     assert {"تفجير", "تفجيران", "تفجيرات"} <= aliases["تلغيم وتفجير"]
     assert {"إلقاء قنبلة صوتية", "قنبلة صوتية"} <= aliases["قنابل صوتية"]
+    assert {"قنابل مضيئة", "إلقاء قنابل مضيئة"} <= aliases[
+        "قنابل مضيئة وحارقة"
+    ]
 
 
 def test_real_verbose_airstrike_prefers_warplane_over_artillery() -> None:
