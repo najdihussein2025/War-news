@@ -7,7 +7,7 @@ from app.news.services.incidents import imported_incident_enrichment as enrichme
 
 class _SessionContext:
     def __enter__(self):
-        return self
+        return SimpleNamespace()
 
     def __exit__(self, exc_type, exc, traceback):
         return False
@@ -31,6 +31,11 @@ def test_enrich_imported_incidents_runs_each_pipeline_step(monkeypatch) -> None:
     )
     monkeypatch.setattr(
         enrichment,
+        "_materialize_excel_import",
+        lambda _db, raw_id: calls.append(("materialize", raw_id)),
+    )
+    monkeypatch.setattr(
+        enrichment,
         "run_tier2_detail_fill_for_message",
         lambda raw_id: calls.append(("details", raw_id)),
     )
@@ -40,9 +45,11 @@ def test_enrich_imported_incidents_runs_each_pipeline_step(monkeypatch) -> None:
     assert calls == [
         ("extract", 41),
         ("match", 41),
+        ("materialize", 41),
         ("details", 41),
         ("extract", 42),
         ("match", 42),
+        ("materialize", 42),
         ("details", 42),
     ]
 
@@ -62,6 +69,11 @@ def test_enrichment_failure_does_not_block_later_rows(monkeypatch) -> None:
         enrichment,
         "build_match_incident_action",
         lambda _db: SimpleNamespace(execute=lambda _raw_id: None),
+    )
+    monkeypatch.setattr(
+        enrichment,
+        "_materialize_excel_import",
+        lambda _db, _raw_id: None,
     )
     monkeypatch.setattr(
         enrichment,

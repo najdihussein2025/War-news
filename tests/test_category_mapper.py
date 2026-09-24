@@ -256,6 +256,8 @@ def test_rollup_sums_la_hospital_and_root_casualties() -> None:
             )
         ),
         ExtractionCategoryKey.hospital: _cat(
+            did=DidValue.direct,
+            name="مستشفى ميداني",
             casualties=_cas(
                 male_deaths=1, female_deaths=0,
                 male_injuries=2, female_injuries=0,
@@ -293,6 +295,85 @@ def test_vehicles_maps_children_casualties() -> None:
     assert out["car"] is True
     assert out["carc_d"] == 1
     assert out["carc_i"] == 2
+
+
+def test_vehicles_maps_generic_car_casualties_to_car_totals() -> None:
+    categories = {
+        ExtractionCategoryKey.vehicles: _cat(
+            vehicles=ExtractionVehicleDetails(car=True),
+            casualties=_cas(deaths=2, injuries=5),
+        )
+    }
+    mapped = map_categories(categories)
+    td, ti = compute_rollups(mapped, ExtractionCasualties())
+
+    assert mapped["car"] is True
+    assert mapped["cara_d"] == 2
+    assert mapped["cara_i"] == 5
+    assert mapped["card"] == 2
+    assert mapped["cari"] == 5
+    assert mapped["carm_d"] is None
+    assert mapped["carm_i"] is None
+    assert (td, ti) == (2, 5)
+
+
+def test_rollup_does_not_double_count_root_when_entity_has_same_toll() -> None:
+    categories = {
+        ExtractionCategoryKey.vehicles: _cat(
+            vehicles=ExtractionVehicleDetails(car=True),
+            casualties=_cas(deaths=1, injuries=1),
+        )
+    }
+    mapped = map_categories(categories)
+    # Tier 1 also left the toll on root — must not become Total 2/2.
+    td, ti = compute_rollups(mapped, _cas(deaths=1, injuries=1))
+
+    assert mapped["cara_d"] == 1
+    assert mapped["cara_i"] == 1
+    assert mapped["card"] == 1
+    assert mapped["cari"] == 1
+    assert (td, ti) == (1, 1)
+
+
+def test_hospital_without_did_or_name_does_not_take_generic_casualties() -> None:
+    categories = {
+        ExtractionCategoryKey.vehicles: _cat(
+            vehicles=ExtractionVehicleDetails(car=True),
+            casualties=_cas(deaths=1, injuries=1),
+        ),
+        ExtractionCategoryKey.hospital: _cat(
+            casualties=_cas(deaths=1, injuries=1),
+        ),
+    }
+    mapped = map_categories(categories)
+
+    assert mapped["car"] is True
+    assert mapped["cara_d"] == 1
+    assert mapped["cara_i"] == 1
+    assert mapped["card"] == 1
+    assert mapped.get("hosp") is True
+    assert mapped.get("hosd") is None
+    assert mapped.get("hosi") is None
+    assert compute_rollups(mapped, ExtractionCasualties()) == (1, 1)
+
+
+def test_entity_category_maps_generic_casualties_to_entity_totals() -> None:
+    categories = {
+        ExtractionCategoryKey.hospital: _cat(
+            did=DidValue.direct,
+            name="مستشفى ميداني",
+            casualties=_cas(deaths=1, injuries=3),
+        )
+    }
+    mapped = map_categories(categories)
+    td, ti = compute_rollups(mapped, ExtractionCasualties())
+
+    assert mapped["hosp"] is True
+    assert mapped["hosd"] == 1
+    assert mapped["hosi"] == 3
+    assert mapped["hosm_d"] is None
+    assert mapped["hosm_i"] is None
+    assert (td, ti) == (1, 3)
 
 
 def test_road_bridge_maps_road_name_and_blocked() -> None:

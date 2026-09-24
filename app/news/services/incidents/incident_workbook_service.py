@@ -188,6 +188,8 @@ INCIDENT_DETAIL_FIELD_MAP: dict[str, str] = {
     "CarF_I": "carf_i",
     "CarC_D": "carc_d",
     "CarC_I": "carc_i",
+    "Anonymous_CD": "cara_d",
+    "Anonymous_CI": "cara_i",
     "Moto": "moto",
     "Moto_DID": "moto_did",
     "Moto_D": "moto_d",
@@ -237,6 +239,9 @@ OPTIONAL_HEADERS: frozenset[str] = frozenset(
         "Martyrs",
         "Note",
         "Note__2",
+        # Added after genderless car buckets; older study/export workbooks omit them.
+        "Anonymous_CD",
+        "Anonymous_CI",
     }
 )
 
@@ -389,18 +394,10 @@ class IncidentWorkbookService:
 
     @classmethod
     def _extraction_text(cls, row_data: dict[str, Any], khabar: str) -> str:
-        sections = [("Khabar", khabar)]
-        for label, header in (
-            ("NOTE", "NOTE"),
-            ("MOH", "MOH"),
-            ("Martyrs", "Martyrs"),
-            ("Note", "Note"),
-            ("Note 2", "Note__2"),
-        ):
-            value = cls._optional_string(row_data.get(header))
-            if value:
-                sections.append((label, value))
-        return "\n\n".join(f"{label}: {value}" for label, value in sections)
+        # LLM extraction / evidence-span grounding must see the bulletin body
+        # only. Operator tracking tags (NOTE=ACCSTUDY-…) and MOH/Martyrs fields
+        # stay on the Incident row and must not pollute raw_text.
+        return khabar
 
     def _ensure_schema_compatible(self) -> None:
         bind_getter = getattr(self.db, "get_bind", None)

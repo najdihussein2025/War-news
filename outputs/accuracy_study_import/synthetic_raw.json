@@ -1,0 +1,902 @@
+[
+  {
+    "row_id": 1,
+    "external_message_id": "accuracy_study_001",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "استهداف بطائرة مسيّرة إسرائيلية لسيارة في بلدة دبل. أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 1 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 2,
+    "external_message_id": "accuracy_study_002",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف بالقذائف المدفعية على محيط البلدة في بلدة شبعا، أدى الاستهداف إلى إصابة 3 أشخاص دون تسجيل حالات وفاة. كما غارة أخرى في بلدة عيناتا، أدى الاستهداف إلى إصابة 3 أشخاص دون تسجيل حالات وفاة. كما غارة أخرى في بلدة طيرحرفا، أسفر الاستهداف عن استشهاد 2 أشخاص وإصابة 1 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 3,
+    "external_message_id": "accuracy_study_003",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات حولا، مارون الراس، شبعا، دير ميماس، كفررمان، الشقيف، الخردلي ويارون، ما أسفر عن سقوط 3 شهداء و8 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 4,
+    "external_message_id": "accuracy_study_004",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة جوية إسرائيلية استهدفت منزلاً في بلدة الجبين. أسفر الاستهداف عن استشهاد 1 أشخاص دون تسجيل إصابات إضافية.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 5,
+    "external_message_id": "accuracy_study_005",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات القليلة، حولا، عيتا الشعب، دبل، جويا ودير ميماس، ما أسفر عن سقوط 4 شهداء و10 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 6,
+    "external_message_id": "accuracy_study_006",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "استهداف بطائرة مسيّرة إسرائيلية لسيارة في بلدة كفركلا. أدى الاستهداف إلى إصابة 1 أشخاص دون تسجيل حالات وفاة. عدّلت مصادر طبية حصيلة الإصابات لترتفع إلى 2 جريحاً بعضهم في حالة خطرة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 7,
+    "external_message_id": "accuracy_study_007",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات بنت جبيل، مرجعيون، الطيبة، معركة، طير فلسيه والخردلي، ما أسفر عن سقوط 2 شهداء و10 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 8,
+    "external_message_id": "accuracy_study_008",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مزرعة في بلدة كفررمان، أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 2 آخرين بجروح متفاوتة. كما غارة أخرى في بلدة مارون الراس، أدى الاستهداف إلى إصابة 2 أشخاص دون تسجيل حالات وفاة. كما غارة أخرى في بلدة حولا، أدى الاستهداف إلى إصابة 2 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 9,
+    "external_message_id": "accuracy_study_009",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات كفركلا، عيتا الشعب، شبعا، طيرحرفا، ميس الجبل، دير ميماس، الخيام، مارون الراس وجويا، ما أسفر عن سقوط 3 شهداء و10 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 10,
+    "external_message_id": "accuracy_study_010",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف مدفعي إسرائيلي استهدف أطراف البلدة في بلدة الخيام. أدى الاستهداف إلى إصابة 1 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 11,
+    "external_message_id": "accuracy_study_011",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات عيتا الشعب، دير ميماس، برعشيت، رميش وحاصبيا، ما أسفر عن سقوط 3 شهداء و4 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 12,
+    "external_message_id": "accuracy_study_012",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة جوية إسرائيلية استهدفت منزلاً في بلدة معركة. أسفر الاستهداف عن استشهاد 3 أشخاص وإصابة 3 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 13,
+    "external_message_id": "accuracy_study_013",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "صدر تقرير اقتصادي جديد يظهر تحسناً طفيفاً في مؤشرات النمو خلال الربع الأخير.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 14,
+    "external_message_id": "accuracy_study_014",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة جوية إسرائيلية استهدفت منزلاً في بلدة حولا. لم يبلغ عن وقوع إصابات جراء الاستهداف.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 15,
+    "external_message_id": "accuracy_study_015",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف بالقذائف المدفعية على محيط البلدة في بلدة طير فلسيه، أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 3 آخرين بجروح متفاوتة. فيما غارة أخرى في بلدة عيتا الشعب، لم يبلغ عن وقوع إصابات جراء الاستهداف.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 16,
+    "external_message_id": "accuracy_study_016",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات شبعا، ميس الجبل، طير فلسيه، جويا، دبل، كفررمان والنبطية الفوقا، ما أسفر عن سقوط 3 شهداء و6 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 17,
+    "external_message_id": "accuracy_study_017",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة جوية إسرائيلية استهدفت منزلاً في بلدة جويا. أسفر الاستهداف عن استشهاد 3 أشخاص وإصابة 5 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 18,
+    "external_message_id": "accuracy_study_018",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات الشقيف، الطيبة، النبطية الفوقا، الجبين ورميش، ما أسفر عن سقوط 4 شهداء و4 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 19,
+    "external_message_id": "accuracy_study_019",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف بالقذائف المدفعية على محيط البلدة في بلدة دبل. أسفر الاستهداف عن استشهاد 3 أشخاص وإصابة 1 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 20,
+    "external_message_id": "accuracy_study_020",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف مدفعي إسرائيلي استهدف أطراف البلدة في بلدة شبعا، أسفر الاستهداف عن استشهاد 2 أشخاص دون تسجيل إصابات إضافية. فيما غارة أخرى في بلدة الخردلي، لم يبلغ عن وقوع إصابات جراء الاستهداف.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 21,
+    "external_message_id": "accuracy_study_021",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مزرعة في بلدة دبل. أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 4 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 22,
+    "external_message_id": "accuracy_study_022",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة جوية إسرائيلية استهدفت منزلاً في بلدة كفرشوبا. أدى الاستهداف إلى إصابة 5 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 23,
+    "external_message_id": "accuracy_study_023",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "سجلت حركة السياحة في لبنان ارتفاعاً ملحوظاً خلال فصل الصيف مقارنة بالعام الماضي.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 24,
+    "external_message_id": "accuracy_study_024",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات الخردلي، جويا، معركة، كفركلا، الخيام، دبل وكفرشوبا، ما أسفر عن سقوط 1 شهداء و6 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 25,
+    "external_message_id": "accuracy_study_025",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات كفررمان، جويا، رميش، طير فلسيه وكفركلا، ما أسفر عن سقوط 2 شهداء و4 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 26,
+    "external_message_id": "accuracy_study_026",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف بالقذائف المدفعية على محيط البلدة في بلدة عيتا الشعب، لم يبلغ عن وقوع إصابات جراء الاستهداف. كما غارة أخرى في بلدة بليدا، أدى الاستهداف إلى إصابة 2 أشخاص دون تسجيل حالات وفاة. كما غارة أخرى في بلدة كفررمان، أدى الاستهداف إلى إصابة 2 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 27,
+    "external_message_id": "accuracy_study_027",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مزرعة في بلدة عيتا الشعب. أسفر الاستهداف عن استشهاد 3 أشخاص وإصابة 2 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 28,
+    "external_message_id": "accuracy_study_028",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف بالقذائف المدفعية على محيط البلدة في بلدة مارون الراس، أدى الاستهداف إلى إصابة 1 أشخاص دون تسجيل حالات وفاة. كما غارة أخرى في بلدة دير ميماس، لم يبلغ عن وقوع إصابات جراء الاستهداف. كما غارة أخرى في بلدة عيتا الشعب، أدى الاستهداف إلى إصابة 1 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 29,
+    "external_message_id": "accuracy_study_029",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف بالقذائف المدفعية على محيط البلدة في بلدة الغندورية. أدى الاستهداف إلى إصابة 1 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 30,
+    "external_message_id": "accuracy_study_030",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "أعلنت شركة كهرباء لبنان عن جدول تقنين جديد يسري اعتباراً من الأسبوع المقبل.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 31,
+    "external_message_id": "accuracy_study_031",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مبنى سكنياً في بلدة دبل. أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 2 آخرين بجروح متفاوتة. وبحسب حصيلة أولية، ارتفع عدد الجرحى إلى 5 بعد نقل عدد من المصابين إلى المستشفى.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 32,
+    "external_message_id": "accuracy_study_032",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات الخردلي، بنت جبيل، طير فلسيه، عيناتا، كفركلا، طيرحرفا، بليدا والطيبة، ما أسفر عن سقوط 3 شهداء و4 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 33,
+    "external_message_id": "accuracy_study_033",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مزرعة في بلدة يارون. أسفر الاستهداف عن استشهاد 2 أشخاص وإصابة 2 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 34,
+    "external_message_id": "accuracy_study_034",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة جوية إسرائيلية استهدفت منزلاً في بلدة مارون الراس، أسفر الاستهداف عن استشهاد 1 أشخاص دون تسجيل إصابات إضافية. فيما غارة أخرى في بلدة القليلة، أدى الاستهداف إلى إصابة 2 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 35,
+    "external_message_id": "accuracy_study_035",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مبنى سكنياً في بلدة الغندورية. لم يبلغ عن وقوع إصابات جراء الاستهداف.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 36,
+    "external_message_id": "accuracy_study_036",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "أعلنت وزارة التربية عن موعد بدء الامتحانات الرسمية للعام الدراسي الحالي.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 37,
+    "external_message_id": "accuracy_study_037",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "استهداف بطائرة مسيّرة إسرائيلية لسيارة في بلدة شبعا. أسفر الاستهداف عن استشهاد 3 أشخاص وإصابة 5 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 38,
+    "external_message_id": "accuracy_study_038",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "افتتحت بلدية صيدا حديقة عامة جديدة في وسط المدينة بحضور عدد من الفعاليات المحلية.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 39,
+    "external_message_id": "accuracy_study_039",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف بالقذائف المدفعية على محيط البلدة في بلدة الشقيف، أدى الاستهداف إلى إصابة 1 أشخاص دون تسجيل حالات وفاة. فيما غارة أخرى في بلدة مارون الراس، أسفر الاستهداف عن استشهاد 2 أشخاص وإصابة 1 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 40,
+    "external_message_id": "accuracy_study_040",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات بليدا، الشقيف، الجبين، كفرشوبا ومرجعيون، ما أسفر عن سقوط 5 شهداء و10 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 41,
+    "external_message_id": "accuracy_study_041",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة جوية إسرائيلية استهدفت منزلاً في بلدة الخيام. أدى الاستهداف إلى إصابة 5 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 42,
+    "external_message_id": "accuracy_study_042",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "استهداف بطائرة مسيّرة إسرائيلية لسيارة في بلدة طير فلسيه، لم يبلغ عن وقوع إصابات جراء الاستهداف. كما غارة أخرى في بلدة الطيبة، لم يبلغ عن وقوع إصابات جراء الاستهداف. كما غارة أخرى في بلدة القليلة، أدى الاستهداف إلى إصابة 3 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 43,
+    "external_message_id": "accuracy_study_043",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف مدفعي إسرائيلي استهدف أطراف البلدة في بلدة حولا. أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 4 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 44,
+    "external_message_id": "accuracy_study_044",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات الخيام، يارون، القليلة وجويا، ما أسفر عن سقوط 5 شهداء و4 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 45,
+    "external_message_id": "accuracy_study_045",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مبنى سكنياً في بلدة مارون الراس. أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 4 آخرين بجروح متفاوتة. عدّلت مصادر طبية حصيلة الإصابات لترتفع إلى 6 جريحاً بعضهم في حالة خطرة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 46,
+    "external_message_id": "accuracy_study_046",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات مارون الراس، حاصبيا، حولا والشقيف، ما أسفر عن سقوط 3 شهداء و3 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 47,
+    "external_message_id": "accuracy_study_047",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف مدفعي إسرائيلي استهدف أطراف البلدة في بلدة بليدا. أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 1 آخرين بجروح متفاوتة. عدّلت مصادر طبية حصيلة الإصابات لترتفع إلى 2 جريحاً بعضهم في حالة خطرة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 48,
+    "external_message_id": "accuracy_study_048",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة جوية إسرائيلية استهدفت منزلاً في بلدة الخردلي. أدى الاستهداف إلى إصابة 5 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 49,
+    "external_message_id": "accuracy_study_049",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مبنى سكنياً في بلدة دبل، أسفر الاستهداف عن استشهاد 2 أشخاص وإصابة 1 آخرين بجروح متفاوتة. فيما غارة أخرى في بلدة حولا، أسفر الاستهداف عن استشهاد 2 أشخاص دون تسجيل إصابات إضافية.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 50,
+    "external_message_id": "accuracy_study_050",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "فاز المنتخب اللبناني لكرة السلة على نظيره الأردني في مباراة ودية أقيمت مساء أمس.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 51,
+    "external_message_id": "accuracy_study_051",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "استهداف بطائرة مسيّرة إسرائيلية لسيارة في بلدة الجبين. أسفر الاستهداف عن استشهاد 3 أشخاص وإصابة 4 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 52,
+    "external_message_id": "accuracy_study_052",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات كفررمان، الغندورية، يارون، ميس الجبل، النبطية الفوقا، طيرحرفا، الخيام، بنت جبيل وحولا، ما أسفر عن سقوط 1 شهداء و8 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 53,
+    "external_message_id": "accuracy_study_053",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مزرعة في بلدة الخردلي، لم يبلغ عن وقوع إصابات جراء الاستهداف. كما غارة أخرى في بلدة جويا، أسفر الاستهداف عن استشهاد 2 أشخاص وإصابة 2 آخرين بجروح متفاوتة. كما غارة أخرى في بلدة بنت جبيل، أدى الاستهداف إلى إصابة 1 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 54,
+    "external_message_id": "accuracy_study_054",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مزرعة في بلدة كفرشوبا. أسفر الاستهداف عن استشهاد 3 أشخاص وإصابة 4 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 55,
+    "external_message_id": "accuracy_study_055",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مزرعة في بلدة ميس الجبل، أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 3 آخرين بجروح متفاوتة. فيما غارة أخرى في بلدة رميش، أسفر الاستهداف عن استشهاد 1 أشخاص دون تسجيل إصابات إضافية.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 56,
+    "external_message_id": "accuracy_study_056",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف بالقذائف المدفعية على محيط البلدة في بلدة الخيام، أسفر الاستهداف عن استشهاد 2 أشخاص وإصابة 1 آخرين بجروح متفاوتة. كما غارة أخرى في بلدة الغندورية، أدى الاستهداف إلى إصابة 2 أشخاص دون تسجيل حالات وفاة. كما غارة أخرى في بلدة الخردلي، أسفر الاستهداف عن استشهاد 2 أشخاص وإصابة 2 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 57,
+    "external_message_id": "accuracy_study_057",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "احتفلت بلدة جزين بموسم قطاف الزيتون السنوي وسط حضور واسع من الأهالي.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 58,
+    "external_message_id": "accuracy_study_058",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف مدفعي إسرائيلي استهدف أطراف البلدة في بلدة الطيبة. أسفر الاستهداف عن استشهاد 2 أشخاص وإصابة 4 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 59,
+    "external_message_id": "accuracy_study_059",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "افتتح وزير الاقتصاد معرضاً تجارياً في بيروت اليوم بمشاركة عشرات الشركات المحلية.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 60,
+    "external_message_id": "accuracy_study_060",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات الغندورية، عيتا الشعب، شبعا، الشقيف، الجبين ومرجعيون، ما أسفر عن سقوط 1 شهداء و4 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 61,
+    "external_message_id": "accuracy_study_061",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "استهداف بطائرة مسيّرة إسرائيلية لسيارة في بلدة القليلة. أسفر الاستهداف عن استشهاد 2 أشخاص وإصابة 1 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 62,
+    "external_message_id": "accuracy_study_062",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات جويا، بليدا، الجبين، كفرشوبا، حولا والخردلي، ما أسفر عن سقوط 1 شهداء و3 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 63,
+    "external_message_id": "accuracy_study_063",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات الخيام، مرجعيون، كفررمان، طيرحرفا وكفرشوبا، ما أسفر عن سقوط 3 شهداء و4 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 64,
+    "external_message_id": "accuracy_study_064",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف بالقذائف المدفعية على محيط البلدة في بلدة بليدا، أسفر الاستهداف عن استشهاد 2 أشخاص دون تسجيل إصابات إضافية. فيما غارة أخرى في بلدة القليلة، أدى الاستهداف إلى إصابة 1 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 65,
+    "external_message_id": "accuracy_study_065",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "استهداف بطائرة مسيّرة إسرائيلية لسيارة في بلدة شبعا. أدى الاستهداف إلى إصابة 1 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 66,
+    "external_message_id": "accuracy_study_066",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مبنى سكنياً في بلدة يارون، أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 3 آخرين بجروح متفاوتة. فيما غارة أخرى في بلدة شبعا، أسفر الاستهداف عن استشهاد 2 أشخاص وإصابة 3 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 67,
+    "external_message_id": "accuracy_study_067",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مبنى سكنياً في بلدة دبل، أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 3 آخرين بجروح متفاوتة. كما غارة أخرى في بلدة ميس الجبل، أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 3 آخرين بجروح متفاوتة. كما غارة أخرى في بلدة عيتا الشعب، أسفر الاستهداف عن استشهاد 2 أشخاص وإصابة 1 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 68,
+    "external_message_id": "accuracy_study_068",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "استهداف بطائرة مسيّرة إسرائيلية لسيارة في بلدة حولا. أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 1 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 69,
+    "external_message_id": "accuracy_study_069",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "ارتفعت أسعار صرف الذهب عالمياً بنسبة 2% خلال تداولات اليوم.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 70,
+    "external_message_id": "accuracy_study_070",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "استهداف بطائرة مسيّرة إسرائيلية لسيارة في بلدة ميس الجبل. أدى الاستهداف إلى إصابة 1 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 71,
+    "external_message_id": "accuracy_study_071",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف مدفعي إسرائيلي استهدف أطراف البلدة في بلدة طيرحرفا. أسفر الاستهداف عن استشهاد 2 أشخاص وإصابة 4 آخرين بجروح متفاوتة. وبحسب حصيلة أولية، ارتفع عدد الجرحى إلى 5 بعد نقل عدد من المصابين إلى المستشفى.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 72,
+    "external_message_id": "accuracy_study_072",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف بالقذائف المدفعية على محيط البلدة في بلدة القليلة. أدى الاستهداف إلى إصابة 4 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 73,
+    "external_message_id": "accuracy_study_073",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مبنى سكنياً في بلدة الخيام. أسفر الاستهداف عن استشهاد 3 أشخاص وإصابة 2 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 74,
+    "external_message_id": "accuracy_study_074",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة جوية إسرائيلية استهدفت منزلاً في بلدة الشقيف. أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 3 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 75,
+    "external_message_id": "accuracy_study_075",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مبنى سكنياً في بلدة حاصبيا. أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 5 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 76,
+    "external_message_id": "accuracy_study_076",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مبنى سكنياً في بلدة مرجعيون. أدى الاستهداف إلى إصابة 3 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 77,
+    "external_message_id": "accuracy_study_077",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف بالقذائف المدفعية على محيط البلدة في بلدة جويا. أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 4 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 78,
+    "external_message_id": "accuracy_study_078",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة جوية إسرائيلية استهدفت منزلاً في بلدة ميس الجبل. أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 2 آخرين بجروح متفاوتة. عدّلت مصادر طبية حصيلة الإصابات لترتفع إلى 5 جريحاً بعضهم في حالة خطرة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 79,
+    "external_message_id": "accuracy_study_079",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مزرعة في بلدة الخردلي. أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 5 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 80,
+    "external_message_id": "accuracy_study_080",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات دبل، النبطية الفوقا، الخيام، بنت جبيل، يارون، كفررمان، حولا والطيبة، ما أسفر عن سقوط 3 شهداء و6 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 81,
+    "external_message_id": "accuracy_study_081",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "نظمت جامعة أنطونيوس مؤتمراً علمياً حول الذكاء الاصطناعي وتطبيقاته في التعليم.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 82,
+    "external_message_id": "accuracy_study_082",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "استهداف بطائرة مسيّرة إسرائيلية لسيارة في بلدة طيرحرفا. لم يبلغ عن وقوع إصابات جراء الاستهداف.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 83,
+    "external_message_id": "accuracy_study_083",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة جوية إسرائيلية استهدفت منزلاً في بلدة حاصبيا. أسفر الاستهداف عن استشهاد 2 أشخاص وإصابة 5 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 84,
+    "external_message_id": "accuracy_study_084",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف بالقذائف المدفعية على محيط البلدة في بلدة بنت جبيل، لم يبلغ عن وقوع إصابات جراء الاستهداف. كما غارة أخرى في بلدة النبطية الفوقا، أدى الاستهداف إلى إصابة 1 أشخاص دون تسجيل حالات وفاة. كما غارة أخرى في بلدة عيناتا، لم يبلغ عن وقوع إصابات جراء الاستهداف.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 85,
+    "external_message_id": "accuracy_study_085",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات القليلة، مارون الراس، كفركلا والطيبة، ما أسفر عن سقوط 3 شهداء و4 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 86,
+    "external_message_id": "accuracy_study_086",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مزرعة في بلدة القليلة. أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 1 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 87,
+    "external_message_id": "accuracy_study_087",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات طير فلسيه، معركة، الجبين، شبعا، جويا، القليلة وبرعشيت، ما أسفر عن سقوط 2 شهداء و5 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 88,
+    "external_message_id": "accuracy_study_088",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات مرجعيون، شبعا، حولا، دير ميماس، ميس الجبل، كفرشوبا، طير فلسيه، الجبين ورميش، ما أسفر عن سقوط 2 شهداء و6 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 89,
+    "external_message_id": "accuracy_study_089",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة جوية إسرائيلية استهدفت منزلاً في بلدة بليدا، أسفر الاستهداف عن استشهاد 2 أشخاص دون تسجيل إصابات إضافية. كما غارة أخرى في بلدة كفركلا، لم يبلغ عن وقوع إصابات جراء الاستهداف. كما غارة أخرى في بلدة الخردلي، أدى الاستهداف إلى إصابة 1 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 90,
+    "external_message_id": "accuracy_study_090",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف مدفعي إسرائيلي استهدف أطراف البلدة في بلدة طيرحرفا، لم يبلغ عن وقوع إصابات جراء الاستهداف. فيما غارة أخرى في بلدة مرجعيون، أسفر الاستهداف عن استشهاد 1 أشخاص دون تسجيل إصابات إضافية.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 91,
+    "external_message_id": "accuracy_study_091",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "قصف مدفعي إسرائيلي استهدف أطراف البلدة في بلدة الغندورية. أسفر الاستهداف عن استشهاد 2 أشخاص دون تسجيل إصابات إضافية.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 92,
+    "external_message_id": "accuracy_study_092",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات الغندورية، ميس الجبل، شبعا، الشقيف، الجبين، دير ميماس وعيتا الشعب، ما أسفر عن سقوط 1 شهداء و5 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 93,
+    "external_message_id": "accuracy_study_093",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات كفركلا، شبعا، يارون والطيبة، ما أسفر عن سقوط 5 شهداء و6 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 94,
+    "external_message_id": "accuracy_study_094",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات مارون الراس، القليلة، كفرشوبا ورميش، ما أسفر عن سقوط 5 شهداء و3 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 95,
+    "external_message_id": "accuracy_study_095",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مبنى سكنياً في بلدة طيرحرفا، أدى الاستهداف إلى إصابة 3 أشخاص دون تسجيل حالات وفاة. فيما غارة أخرى في بلدة الجبين، أدى الاستهداف إلى إصابة 2 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 96,
+    "external_message_id": "accuracy_study_096",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة جوية إسرائيلية استهدفت منزلاً في بلدة الخيام. أدى الاستهداف إلى إصابة 4 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 97,
+    "external_message_id": "accuracy_study_097",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة جوية إسرائيلية استهدفت منزلاً في بلدة الجبين. أسفر الاستهداف عن استشهاد 3 أشخاص وإصابة 5 آخرين بجروح متفاوتة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 98,
+    "external_message_id": "accuracy_study_098",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة إسرائيلية استهدفت مزرعة في بلدة برعشيت. أسفر الاستهداف عن استشهاد 1 أشخاص دون تسجيل إصابات إضافية.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 99,
+    "external_message_id": "accuracy_study_099",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "غارة جوية إسرائيلية استهدفت منزلاً في بلدة حاصبيا. أدى الاستهداف إلى إصابة 5 أشخاص دون تسجيل حالات وفاة.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  },
+  {
+    "row_id": 100,
+    "external_message_id": "accuracy_study_100",
+    "source_name": "accuracy_study_synthetic",
+    "raw_text": "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات شبعا، حاصبيا، الخردلي، الخيام، الغندورية وعيناتا، ما أسفر عن سقوط 3 شهداء و3 جرحى في حصيلة إجمالية للغارات.",
+    "received_at": null,
+    "channel": null,
+    "status": null
+  }
+]

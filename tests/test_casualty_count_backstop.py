@@ -149,27 +149,41 @@ def test_casualty_digit_must_appear_inside_grounded_evidence_span() -> None:
     assert kept == []
 
 
-def test_missing_evidence_span_nulls_count_and_logs_warning(caplog) -> None:
+def test_missing_evidence_span_keeps_count_when_digit_in_full_text() -> None:
     text = "4 قتلى و10 جرحى في غارة على البلدة"
+
+    result, kept = apply_casualty_count_backstop(
+        text,
+        ExtractionCasualties(deaths=4, injuries=10),
+        [
+            CasualtyCountEvidence(field="deaths", evidence_span="4 قتلى"),
+            # injuries intentionally missing evidence_span
+        ],
+        raw_message_id=777,
+    )
+
+    assert result.deaths == 4
+    assert result.injuries == 10
+    assert {item.field for item in kept} == {"deaths", "injuries"}
+
+
+def test_missing_evidence_span_nulls_when_no_digit_in_source(caplog) -> None:
+    text = "عشرات الجرحى في غارة على البلدة"
 
     with caplog.at_level(logging.WARNING):
         result, kept = apply_casualty_count_backstop(
             text,
-            ExtractionCasualties(deaths=4, injuries=10),
-            [
-                CasualtyCountEvidence(field="deaths", evidence_span="4 قتلى"),
-                # injuries intentionally missing evidence_span
-            ],
-            raw_message_id=777,
+            ExtractionCasualties(injuries=10),
+            [],
+            raw_message_id=778,
         )
 
-    assert result.deaths == 4
     assert result.injuries is None
-    assert [item.field for item in kept] == ["deaths"]
+    assert kept == []
     assert any(
         "casualty_count_backstop nulled field=injuries" in record.message
         and "missing_evidence_span" in record.message
-        and "raw_message_id=777" in record.message
+        and "raw_message_id=778" in record.message
         for record in caplog.records
     )
 

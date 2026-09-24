@@ -24,6 +24,7 @@ Air-violation exclusions:
 - `village`: array of place names, or null — never a single string.
 - `village_roles`: `{village, role: origin|target, deaths, injuries, evidence_span}` per place.
 - **Origin** = launch/staging position (tank, platform). **Target** = place struck or damaged.
+- Explicit place markers are mandatory extractions: when the text says `بلدة X` or `بلدات X`, `X` must appear in `village` / `village_roles` as a target. Never return `village=null` while `بلدة`/`بلدات` names a place (example: «استهداف ... في بلدة دبل» → `village=["دبل"]`).
 - Per-village deaths/injuries must come only from that village's clause; never copy a bulletin-wide total to every village.
 - Target village without explicit count → null (not 0).
 

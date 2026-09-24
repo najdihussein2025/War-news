@@ -20,8 +20,8 @@ def recompute_detail_rollups(detail: IncidentDetail) -> None:
     detail.pressi = _safe_add(detail.pressm_i, detail.pressf_i)
     detail.gbd = _safe_add(detail.gbm_d, detail.gbf_d)
     detail.gbi = _safe_add(detail.gbm_i, detail.gbf_i)
-    detail.card = _safe_add(detail.carm_d, detail.carf_d, detail.carc_d)
-    detail.cari = _safe_add(detail.carm_i, detail.carf_i, detail.carc_i)
+    detail.card = _safe_add(detail.carm_d, detail.carf_d, detail.carc_d, detail.cara_d)
+    detail.cari = _safe_add(detail.carm_i, detail.carf_i, detail.carc_i, detail.cara_i)
 
     construction_flags = (
         detail.excavator,

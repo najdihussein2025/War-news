@@ -138,6 +138,7 @@ export const incidentFieldGroups: FieldGroup[] = [
       deaths("car_m_d"), injuries("car_m_i"),
       deaths("car_f_d"), injuries("car_f_i"),
       deaths("car_c_d"), injuries("car_c_i"),
+      deaths("car_a_d"), injuries("car_a_i"),
       count("moto"), did("moto_did", "moto"),
       deaths("moto_d"), injuries("moto_i"),
       count("con_veh"), deaths("con_d"), injuries("con_i"),

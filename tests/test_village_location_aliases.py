@@ -60,6 +60,12 @@ def test_proposed_aliases_cover_maslakh_recon_mentions() -> None:
     assert len(PROPOSED_VILLAGE_LOCATION_ALIASES) >= 15
 
 
+def test_proposed_aliases_cover_debl_jibbayn_news_forms() -> None:
+    by_text = {row.alias_text: row for row in PROPOSED_VILLAGE_LOCATION_ALIASES}
+    assert by_text["دبل"].parent_acs_code == 72281
+    assert by_text["الجبين"].parent_acs_code == 62292
+
+
 def test_seed_village_location_aliases_inserts_new_rows(monkeypatch, tmp_path) -> None:
     path = tmp_path / "aliases.json"
     path.write_text(

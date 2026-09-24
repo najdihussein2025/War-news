@@ -103,10 +103,16 @@ def has_materializable_village(match_result: dict[str, Any]) -> bool:
             continue
         if _optional_int(village.get("matched_village_id")) is None:
             continue
-        condition_status = village.get("condition_match_status", root_status)
-        condition_id = _optional_int(
-            village.get("matched_condition_id", root_condition_id)
-        )
+        # Prefer per-village condition; fall back to message-level when the
+        # clause was unmatched/null (ACCSTUDY multi-event fan-out).
+        condition_id = _optional_int(village.get("matched_condition_id"))
+        condition_status = village.get("condition_match_status")
+        if (
+            condition_id is None
+            or condition_status not in ELIGIBLE_MATCH_STATUSES
+        ):
+            condition_id = root_condition_id
+            condition_status = root_status
         if condition_status not in ELIGIBLE_MATCH_STATUSES or condition_id is None:
             continue
         if condition_id in AIR_VIOLATION_CONDITION_IDS:

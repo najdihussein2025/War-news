@@ -3,6 +3,16 @@ from __future__ import annotations
 import re
 
 
+_DRONE_TERMS = ("مسير", "مسيرة", "مسيّرة", "طائرة مسيرة")
+_DRONE_STRIKE_TERMS = ("استهداف", "استهدفت", "استهدف")
+
+
+def _is_drone_strike(normalized: str) -> bool:
+    return any(term in normalized for term in _DRONE_TERMS) and any(
+        term in normalized for term in _DRONE_STRIKE_TERMS
+    )
+
+
 _TANK_FIRE_PATTERNS = (
     re.compile(r"قصف.{0,40}(?:دباب[ةه]|ميركافا)"),
     re.compile(r"(?:دباب[ةه]|ميركافا).{0,100}(?:تستهدف|تقصف|تطلق)"),
@@ -34,6 +44,8 @@ def condition_from_explicit_evidence(text: str) -> str | None:
     if _SWEEP.search(normalized):
         return "Sweeping Operations"
     if _AIRSTRIKE.search(normalized):
+        return "Bombs"
+    if _is_drone_strike(normalized):
         return "Bombs"
     return None
 

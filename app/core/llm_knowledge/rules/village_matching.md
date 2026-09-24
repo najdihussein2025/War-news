@@ -21,6 +21,7 @@ No-ACS local/colloquial names that have been confirmed against an ACS parent mus
 Specific collision guards:
 - «وادي السلوقي», «السلوقي», and spelling/Latin variants in recurring south-Lebanon Wadi el-Selouqi bulletins resolve to Touline / تولين (ACS 73282). Do not allow trigram similarity to resolve those mentions to Slouqi/Slouky Baalbek (ACS 53423).
 - Confirmed no-ACS aliases such as «وادي راج» -> Zaoutar Ech-Charqiye (ACS 71367), «الدبشة» and «جبل الرفيع» -> Kfar Roummane (ACS 71133), and «بيوت السياد» -> Mansouri Sour (ACS 62296) must resolve through aliases. Preserve each distinct Arabic news phrase as the displayed village name.
+- News-form ACS spelling gaps: bare «دبل» resolves to Debl (ACS 72281; ACS Arabic is «دبل امية»), and «الجبين» resolves to Jibbayn (ACS 62292; ACS Arabic is «جبين»). Prefer exact aliases over fuzzy for short definite-article or truncated gazetteer forms.
 
 ## Geo-context disambiguation
 

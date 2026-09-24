@@ -13,6 +13,7 @@ import {
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ROLES, type Role } from "../constants/roles";
 import { cn } from "../lib/cn";
+import { incidentsNavTarget } from "../lib/rolePath";
 import { useAuthStore } from "../stores/authStore";
 import { logout as revokeSession } from "../features/auth/api";
 
@@ -267,12 +268,17 @@ const SidebarContent = ({
         <div className="space-y-2">
           {visibleItems.map((item) => {
             const Icon = item.icon;
-            const to = `${roleBase}/${item.path}`;
-            const isActive = location.pathname === to || location.pathname.startsWith(`${to}/`);
+            const to =
+              item.path === "incidents"
+                ? incidentsNavTarget(roleBase, location.pathname, location.search)
+                : `${roleBase}/${item.path}`;
+            const isActive =
+              location.pathname === `${roleBase}/${item.path}` ||
+              location.pathname.startsWith(`${roleBase}/${item.path}/`);
 
             return (
               <NavLink
-                key={to}
+                key={`${roleBase}/${item.path}`}
                 to={to}
                 onClick={onNavigate}
                 aria-current={isActive ? "page" : undefined}
