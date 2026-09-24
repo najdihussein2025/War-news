@@ -341,5 +341,19 @@
         "note": "Confirmed no-ACS local name -> Qlaiaa.",
         "confidence": "confirmed",
         "evidence": "ACS reconciliation spreadsheet; no independent ACS row."
+    },
+    {
+        "alias_text": "دبل",
+        "parent_acs_code": 72281,
+        "note": "Bare news form -> Debl. ACS Arabic is دبل امية.",
+        "confidence": "proposed",
+        "evidence": "ACCSTUDY unknown-village 2026-09-23: khabar said دبل but village_id stayed null."
+    },
+    {
+        "alias_text": "الجبين",
+        "parent_acs_code": 62292,
+        "note": "Definite-article news form -> Jibbayn. ACS Arabic is جبين.",
+        "confidence": "proposed",
+        "evidence": "ACCSTUDY unknown-village 2026-09-23: khabar said الجبين but village_id stayed null."
     }
 ]

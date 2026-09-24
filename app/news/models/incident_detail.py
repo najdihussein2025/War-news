@@ -213,6 +213,8 @@ class IncidentDetail(Base):
     carf_i: Mapped[int | None] = mapped_column(Integer, nullable=True)
     carc_d: Mapped[int | None] = mapped_column(Integer, nullable=True)
     carc_i: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    cara_d: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    cara_i: Mapped[int | None] = mapped_column(Integer, nullable=True)
     moto: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     moto_did: Mapped[DidValue | None] = mapped_column(
         SqlEnum(DidValue, name="did_value"),

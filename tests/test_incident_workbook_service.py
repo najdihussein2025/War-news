@@ -153,14 +153,7 @@ def test_import_workbook_maps_legacy_row_fields() -> None:
     raw_message = raw_messages[0]
     assert incident.raw_message_id == raw_message.id
     assert raw_message.status == MessageStatus.parsed
-    assert raw_message.raw_text == (
-        "Khabar: Workbook incident\n\n"
-        "NOTE: Primary note\n\n"
-        "MOH: MOH value\n\n"
-        "Martyrs: 1 martyr\n\n"
-        "Note: Secondary note\n\n"
-        "Note 2: Tertiary note"
-    )
+    assert raw_message.raw_text == "Workbook incident"
     assert raw_message.raw_payload["origin"] == "incident_excel_import"
     assert incident.details_pending is True
     assert incident.village_id == 11

@@ -88,12 +88,34 @@ _DASH_QUALIFIER_RE = re.compile(
     r"(?P<right>[\u0600-\u06ff][\u0600-\u06ff\s]{1,80}?)"
     r"(?=$|[\n،؛.!؟])"
 )
+_BALDA_VILLAGE_RE = re.compile(
+    r"(?:^|[^\u0600-\u06ff])"
+    r"(?:بلدة|بلدات)\s+"
+    r"(?P<village>[\u0600-\u06ff][\u0600-\u06ff\s]{0,40}?)"
+    r"(?=\s*(?:[،؛.!؟\n]|$)|(?:\s+(?:أسفر|أدى|مما|في\s+قضاء)))"
+)
+# Shared-toll bulletin lists: «بلدات حولا، مارون الراس، … ويارون»
+_BALDAT_LIST_RE = re.compile(
+    r"بلدات\s+"
+    r"(?P<body>[\u0600-\u06ff][\u0600-\u06ff\s،,]{2,200}?)"
+    r"(?=\s*(?:،\s*)?(?:ما\s+)?(?:أسفر|أدى|مما)|[\n.!؟]|$)"
+)
 _SECONDARY_STRIKE_RE = re.compile(
     r"كما\s+طال(?:ت)?\s+(?:القصف|الغارة|الاستهداف)\s+"
     r"(?:حرج|خراج|أطراف|محيط)?\s*"
     r"بلدة\s+"
     r"(?P<village>[؀-ۿ][؀-ۿ\s]{1,40}?)"
     r"(?=\s+(?:في\s+)?قضاء|[\n،؛.!؟]|$)"
+)
+# Accuracy-study / bulletin connectors: «كما غارة أخرى في بلدة X»
+_SECONDARY_EVENT_CONNECTOR_RE = re.compile(
+    r"(?:كما|أيضا|بالإضافة(?:\s+إلى)?|من\s+جهة\s+أخرى|وفي\s+سياق\s+متصل)\s+"
+    r"(?:غارة|قصف|استهداف|قصفًا|غارات)?\s*"
+    r"(?:أخرى\s+)?"
+    r"(?:في\s+|على\s+)?"
+    r"بلدة\s+"
+    r"(?P<village>[\u0600-\u06ff][\u0600-\u06ff\s]{1,40}?)"
+    r"(?=\s*(?:[،؛.!؟\n]|$)|(?:\s+(?:أدى|أسفر|مما|في\s+قضاء)))"
 )
 _ROUTE_AREA_PREFIXES = terms_by_category(
     "terminology/role_terms.yaml",
@@ -1194,7 +1216,160 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             villages,
             village_roles,
         )
+        villages, village_roles = cls._recover_connector_event_villages(
+            post_text,
+            villages,
+            village_roles,
+        )
+        villages, village_roles = cls._recover_baldat_list_villages(
+            post_text,
+            villages,
+            village_roles,
+        )
+        villages, village_roles = cls._recover_missing_balda_villages(
+            post_text,
+            villages,
+            village_roles,
+        )
         return villages, village_roles
+
+    @staticmethod
+    def _merge_recovered_villages(
+        villages: list[str] | None,
+        village_roles: list[VillageRoleEntry],
+        recovered: list[str],
+    ) -> tuple[list[str] | None, list[VillageRoleEntry]]:
+        if not recovered:
+            return villages, village_roles
+        existing_names = list(villages or [])
+        existing_names.extend(entry.village for entry in village_roles)
+        existing_norms = {
+            normalize_arabic_text(name)
+            for name in existing_names
+            if normalize_arabic_text(name)
+        }
+        merged_villages = list(villages or [])
+        merged_roles = list(village_roles)
+        for village in recovered:
+            normalized = normalize_arabic_text(village)
+            if not normalized or normalized in existing_norms:
+                continue
+            if normalized in {"البلدة", "بلدة", "بلدات"}:
+                continue
+            existing_norms.add(normalized)
+            merged_villages.append(village)
+            merged_roles.append(
+                VillageRoleEntry(village=village, role=VillageRole.target)
+            )
+        return merged_villages or villages, merged_roles
+
+    @staticmethod
+    def _split_arabic_place_list(body: str) -> list[str]:
+        text = body.strip().strip("،,")
+        if not text:
+            return []
+        # Final «و» before the last place: «الخردلي ويارون» (often no space after و)
+        text = re.sub(r"\s+و\s*", "، ", text)
+        parts: list[str] = []
+        seen: set[str] = set()
+        for raw in re.split(r"[،,]", text):
+            place = raw.strip().strip("،,")
+            normalized = normalize_arabic_text(place)
+            if not normalized or normalized in seen:
+                continue
+            if normalized in {"البلدة", "بلدة", "بلدات"}:
+                continue
+            seen.add(normalized)
+            parts.append(place)
+        return parts
+
+    @classmethod
+    def _recover_baldat_list_villages(
+        cls,
+        post_text: str,
+        villages: list[str] | None,
+        village_roles: list[VillageRoleEntry],
+    ) -> tuple[list[str] | None, list[VillageRoleEntry]]:
+        """Recover every named place in a «بلدات A، B، C وD» bulletin list.
+
+        ACCSTUDY-003-style aggregates name many villages in one ``بلدات`` clause;
+        the model (and the single-balda backstop) often keep only the first.
+        """
+        match = _BALDAT_LIST_RE.search(post_text or "")
+        if match is None:
+            return villages, village_roles
+        recovered = cls._split_arabic_place_list(match.group("body"))
+        if len(recovered) < 2:
+            return villages, village_roles
+        return cls._merge_recovered_villages(villages, village_roles, recovered)
+
+    @classmethod
+    def _recover_connector_event_villages(
+        cls,
+        post_text: str,
+        villages: list[str] | None,
+        village_roles: list[VillageRoleEntry],
+    ) -> tuple[list[str] | None, list[VillageRoleEntry]]:
+        """Recover villages introduced by كما/أيضا-style event connectors.
+
+        ACCSTUDY-002: «كما غارة أخرى في بلدة عيناتا» / «كما غارة أخرى في بلدة طيرحرفا».
+        """
+        recovered = [
+            match.group("village").strip()
+            for match in _SECONDARY_EVENT_CONNECTOR_RE.finditer(post_text or "")
+            if match.group("village") and match.group("village").strip()
+        ]
+        return cls._merge_recovered_villages(villages, village_roles, recovered)
+
+    @staticmethod
+    def _recover_missing_balda_villages(
+        post_text: str,
+        villages: list[str] | None,
+        village_roles: list[VillageRoleEntry],
+    ) -> tuple[list[str] | None, list[VillageRoleEntry]]:
+        """Recover explicit «بلدة/بلدات X» when the model left village null/empty.
+
+        ACCSTUDY-001: the model returned village=null for
+        «استهداف ... لسيارة في بلدة دبل» even though the place phrase is
+        unambiguous. Matching cannot alias a missing extraction.
+        """
+        if villages:
+            return villages, village_roles
+        if any(entry.village.strip() for entry in village_roles):
+            return villages, village_roles
+
+        recovered: list[str] = []
+        seen: set[str] = set()
+        for match in _BALDA_VILLAGE_RE.finditer(post_text):
+            village = match.group("village").strip().strip("،؛")
+            # Truncate list connectors: «بلدات حولا ومارون» -> حولا only here;
+            # multi-village fan-out remains a Tier-1 model responsibility.
+            for connector in (" و", "،", " و "):
+                if connector in village:
+                    village = village.split(connector, 1)[0].strip()
+            normalized = normalize_arabic_text(village)
+            if not normalized or normalized in seen:
+                continue
+            # Skip bare administrative words mistaken for place names.
+            if normalized in {"البلدة", "بلدة", "بلدات"}:
+                continue
+            seen.add(normalized)
+            recovered.append(village)
+
+        if not recovered:
+            return villages, village_roles
+
+        merged_roles = list(village_roles)
+        existing_role_norms = {
+            normalize_arabic_text(entry.village) for entry in merged_roles
+        }
+        for village in recovered:
+            if normalize_arabic_text(village) in existing_role_norms:
+                continue
+            merged_roles.append(
+                VillageRoleEntry(village=village, role=VillageRole.target)
+            )
+        return recovered, merged_roles
 
     @staticmethod
     def _recover_secondary_strike_location(

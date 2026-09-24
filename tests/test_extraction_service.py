@@ -232,6 +232,38 @@ def test_between_route_phrase_keeps_both_endpoints() -> None:
     assert [entry.village for entry in roles] == ["كفرتبنيت", "زوطر الشرقية"]
 
 
+def test_missing_balda_village_is_recovered_when_model_returns_null() -> None:
+    """ACCSTUDY-001: model returned village=null despite «بلدة دبل»."""
+    post_text = (
+        "استهداف بطائرة مسيرة إسرائيلية لسيارة في بلدة دبل. "
+        "أسفر الاستهداف عن استشهاد 1 أشخاص وإصابة 1 آخرين بجروح متفاوتة."
+    )
+    villages, roles = OllamaExtractionService._apply_dash_compound_location_rules(
+        post_text,
+        None,
+        [],
+    )
+
+    assert villages == ["دبل"]
+    assert [entry.village for entry in roles] == ["دبل"]
+    assert roles[0].role.value == "target"
+
+
+def test_missing_balda_jibbayn_is_recovered_when_model_returns_null() -> None:
+    post_text = (
+        "غارة جوية إسرائيلية استهدفت منزلاً في بلدة الجبين. "
+        "أسفر الاستهداف عن استشهاد 1 أشخاص دون تسجيل إصابات إضافية."
+    )
+    villages, roles = OllamaExtractionService._apply_dash_compound_location_rules(
+        post_text,
+        None,
+        [],
+    )
+
+    assert villages == ["الجبين"]
+    assert [entry.village for entry in roles] == ["الجبين"]
+
+
 def test_fuzzy_area_phrase_collapses_to_first_village_with_alternate() -> None:
     villages, roles, alternatives, evidence = (
         OllamaExtractionService._collapse_fuzzy_area_locations(
@@ -283,6 +315,51 @@ def test_kama_tal_qasf_connector_does_not_duplicate_already_extracted_village() 
 
     assert villages == ["زوطر الشرقية", "عيتا الجبل"]
     assert len(roles) == 2
+
+
+def test_kama_ghara_ukhra_connector_recovers_accstudy_multi_event_villages() -> None:
+    """ACCSTUDY-002: connector-led clauses with separate tolls."""
+    post_text = (
+        "قصف بالقذائف المدفعية على محيط البلدة في بلدة شبعا، أدى الاستهداف إلى "
+        "إصابة 3 أشخاص دون تسجيل حالات وفاة. كما غارة أخرى في بلدة عيناتا، أدى "
+        "الاستهداف إلى إصابة 3 أشخاص دون تسجيل حالات وفاة. كما غارة أخرى في "
+        "بلدة طيرحرفا، أسفر الاستهداف عن استشهاد 2 أشخاص وإصابة 1 آخرين بجروح متفاوتة."
+    )
+    villages, roles = OllamaExtractionService._apply_dash_compound_location_rules(
+        post_text,
+        ["شبعا"],
+        [VillageRoleEntry(village="شبعا")],
+    )
+
+    assert set(villages or []) == {"شبعا", "عيناتا", "طيرحرفا"}
+    assert {entry.village for entry in roles} == {"شبعا", "عيناتا", "طيرحرفا"}
+
+
+def test_baldat_list_recovers_all_bulletin_aggregate_villages() -> None:
+    """ACCSTUDY-003: shared-toll bulletin naming many بلدات."""
+    post_text = (
+        "شنت طائرات العدو الإسرائيلي سلسلة غارات متزامنة طالت بلدات حولا، "
+        "مارون الراس، شبعا، دير ميماس، كفررمان، الشقيف، الخردلي ويارون، ما أسفر "
+        "عن سقوط 3 شهداء و8 جرحى في حصيلة إجمالية للغارات."
+    )
+    villages, roles = OllamaExtractionService._apply_dash_compound_location_rules(
+        post_text,
+        ["حولا"],
+        [VillageRoleEntry(village="حولا")],
+    )
+
+    expected = {
+        "حولا",
+        "مارون الراس",
+        "شبعا",
+        "دير ميماس",
+        "كفررمان",
+        "الشقيف",
+        "الخردلي",
+        "يارون",
+    }
+    assert set(villages or []) == expected
+    assert {entry.village for entry in roles} == expected
 
 
 def test_kama_tal_qasf_connector_coexists_with_fuzzy_area_collapse() -> None:

@@ -27,6 +27,7 @@ from app.news.models.bulletin_casualty_group import CasualtyScope as StoredCasua
 from app.news.services.incident_details.category_mapper import (
     compute_rollups,
     map_categories,
+    reconcile_root_vs_entity_casualties,
     suppress_category_casualties,
 )
 from app.news.services.incident_details.casualty_demographic_consistency import reconcile_root_demographics
@@ -153,6 +154,16 @@ class Tier2DetailFillService:
         mapped_fields = map_categories(
             extraction.categories,
             emergency_org_matcher=self.emergency_org_matcher,
+        )
+        # Entity-attributed tolls must not remain on root Death/Injuries or
+        # Total_D/Total_Inj double-count them (accuracy-study car/hospital rows).
+        extraction = extraction.model_copy(
+            update={
+                "casualties": reconcile_root_vs_entity_casualties(
+                    mapped_fields,
+                    extraction.casualties,
+                )
+            }
         )
         target_village_ids = self._target_village_ids(raw_message.match_result)
         is_multi_village = len(target_village_ids) > 1
@@ -412,6 +423,8 @@ class Tier2DetailFillService:
     ) -> None:
         if self.dedup_service is None or embedding is None:
             return
+        if incident.village_id is None or incident.condition_id is None:
+            return
 
         existing, score = self.dedup_service.find_best_match(
             village_id=incident.village_id,
@@ -434,22 +447,32 @@ class Tier2DetailFillService:
                 "mapped_fields": mapped_fields,
                 "casualty_transitions": casualty_transitions,
             }
-            canonicalize = getattr(
-                self.dedup_service, "canonicalize_existing_incident", None
-            )
-            if canonicalize is not None:
-                canonicalize(
-                    canonical=existing,
-                    duplicate=incident,
-                    new_candidate_data=candidate_data,
-                    similarity_score=score,
+            try:
+                canonicalize = getattr(
+                    self.dedup_service, "canonicalize_existing_incident", None
                 )
-            else:
-                self.dedup_service.merge_into_incident(
-                    existing=existing,
-                    new_candidate_data=candidate_data,
-                    raw_message_id=raw_message_id,
+                if canonicalize is not None:
+                    canonicalize(
+                        canonical=existing,
+                        duplicate=incident,
+                        new_candidate_data=candidate_data,
+                        similarity_score=score,
+                    )
+                else:
+                    self.dedup_service.merge_into_incident(
+                        existing=existing,
+                        new_candidate_data=candidate_data,
+                        raw_message_id=raw_message_id,
+                    )
+            except ValueError:
+                logger.warning(
+                    "tier2 dedup canonicalize skipped incident_id=%s "
+                    "matched_incident_id=%s",
+                    incident.id,
+                    existing.id,
+                    exc_info=True,
                 )
+                return
             logger.info(
                 "tier2 dedup canonicalized incident_id=%s into incident_id=%s score=%.3f",
                 incident.id,
@@ -459,14 +482,24 @@ class Tier2DetailFillService:
             return
 
         if score >= settings.dedup_low_threshold:
-            incident.duplicate_flag = True
-            incident.verification_status = "needs_verification"
-            incident.verification_reason = "Possible duplicate detected during detail extraction"
-            self.dedup_service.record_possible_duplicate(
-                incident=incident,
-                matched_incident=existing,
-                similarity_score=score,
-            )
+            try:
+                incident.duplicate_flag = True
+                incident.verification_status = "needs_verification"
+                incident.verification_reason = (
+                    "Possible duplicate detected during detail extraction"
+                )
+                self.dedup_service.record_possible_duplicate(
+                    incident=incident,
+                    matched_incident=existing,
+                    similarity_score=score,
+                )
+            except ValueError:
+                logger.warning(
+                    "tier2 dedup possible-duplicate record skipped incident_id=%s",
+                    incident.id,
+                    exc_info=True,
+                )
+                return
             logger.info(
                 "tier2 dedup flagged incident_id=%s possible_duplicate_of=%s score=%.3f",
                 incident.id,

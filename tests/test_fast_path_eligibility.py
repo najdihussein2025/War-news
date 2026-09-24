@@ -112,6 +112,35 @@ def test_event_condition_can_materialize_when_root_condition_is_unmatched() -> N
     )
 
 
+def test_root_condition_fallback_when_village_conditions_unmatched() -> None:
+    """ACCSTUDY-003/005: sub-event conditions unmatched but root Bombs matched."""
+    assert (
+        permanent_ineligibility_reason(
+            {
+                "condition_match_status": "matched",
+                "matched_condition_id": 1,
+                "village_matches": [
+                    {
+                        "matched_village_id": 701,
+                        "village_match_status": "matched",
+                        "matched_condition_id": None,
+                        "condition_match_status": "unmatched",
+                        "event_index": 0,
+                    },
+                    {
+                        "matched_village_id": 994,
+                        "village_match_status": "matched",
+                        "matched_condition_id": None,
+                        "condition_match_status": "unmatched",
+                        "event_index": 1,
+                    },
+                ],
+            }
+        )
+        is None
+    )
+
+
 def test_claim_sql_excludes_air_violations_and_requires_village() -> None:
     compiled = str(
         select(RawMessage)

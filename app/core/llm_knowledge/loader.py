@@ -42,6 +42,19 @@ def is_multi_village_candidate(text: str) -> bool:
     normalized = normalize_arabic_text(text or "")
     if not normalized:
         return False
+    # Connector-led second events: «كما غارة أخرى في بلدة Y»
+    # After normalize_arabic_text, ة → ه so match بلده as well as بلدة.
+    if re.search(
+        r"(?:كما|ايضا|بالاضافه|وفي\s+سياق\s+متصل).{0,60}بلد[ةه]\s+[\u0600-\u06ff]{2,}",
+        normalized,
+    ):
+        return True
+    # Shared bulletin list: «بلدات A، B، C»
+    if re.search(
+        r"بلدات\s+[\u0600-\u06ff].{0,80}[،,]",
+        normalized,
+    ):
+        return True
     fuzzy_match = _FUZZY_AREA_RE.search(normalized)
     if fuzzy_match and not (
         normalized[max(0, fuzzy_match.start() - 12) : fuzzy_match.start()].find(

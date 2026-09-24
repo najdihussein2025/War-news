@@ -124,23 +124,34 @@ def apply_casualty_count_backstop(
                 value,
             )
         )
-        if not span_is_grounded or not has_explicit_count:
-            reason = (
-                "missing_evidence_span"
-                if field_evidence is None
-                else "digit_not_in_source"
+        # When the model omits evidence_span but the count digit/word is
+        # explicitly present in the full source, keep the value (import/LLM
+        # evidence gaps). Vague quantifiers like «عشرات» still fail this check.
+        # Wrong grounded spans that lack the digit stay nulled even if another
+        # clause in the message has that digit.
+        full_text_has_count = _evidence_contains_explicit_count(text, field, value)
+        if span_is_grounded and has_explicit_count:
+            kept_evidence.append(field_evidence)
+            continue
+        if (not span_is_grounded) and full_text_has_count:
+            kept_evidence.append(
+                CasualtyCountEvidence(field=field, evidence_span=text.strip()[:240])
             )
-            logger.warning(
-                "casualty_count_backstop nulled field=%s value=%s reason=%s "
-                "raw_message_id=%s",
-                field,
-                value,
-                reason,
-                raw_message_id,
-            )
-            values[field] = None
             continue
 
-        kept_evidence.append(field_evidence)
+        reason = (
+            "missing_evidence_span"
+            if field_evidence is None
+            else "digit_not_in_source"
+        )
+        logger.warning(
+            "casualty_count_backstop nulled field=%s value=%s reason=%s "
+            "raw_message_id=%s",
+            field,
+            value,
+            reason,
+            raw_message_id,
+        )
+        values[field] = None
 
     return ExtractionCasualties.model_validate(values), kept_evidence

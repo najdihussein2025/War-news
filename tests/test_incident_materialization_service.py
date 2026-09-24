@@ -747,6 +747,128 @@ def test_two_village_match_produces_two_incidents() -> None:
     assert representative.status == MessageStatus.materialized
 
 
+def test_sub_event_villages_fall_back_to_root_condition_when_unmatched() -> None:
+    """ACCSTUDY-002: event_index set + unmatched per-village condition still fans out."""
+    match_result = {
+        "village_matches": [
+            {
+                "raw_village_text": "شبعا",
+                "matched_village_id": 1529,
+                "village_confidence": 1.0,
+                "village_match_status": "matched",
+                "village_review_required": False,
+                "matched_condition_id": 5,
+                "condition_match_status": "matched",
+                "event_index": 0,
+            },
+            {
+                "raw_village_text": "عيناتا",
+                "matched_village_id": 980,
+                "village_confidence": 0.95,
+                "village_match_status": "matched",
+                "village_review_required": False,
+                "matched_condition_id": None,
+                "condition_match_status": "unmatched",
+                "event_index": 1,
+            },
+            {
+                "raw_village_text": "طيرحرفا",
+                "matched_village_id": 981,
+                "village_confidence": 0.94,
+                "village_match_status": "matched",
+                "village_review_required": False,
+                "matched_condition_id": None,
+                "condition_match_status": "unmatched",
+                "event_index": 2,
+            },
+        ],
+        "any_village_low_confidence": False,
+        "raw_condition_text": "قصف مدفعي",
+        "condition_confidence": 0.8,
+        "matched_condition_id": 1,
+        "condition_match_status": "matched",
+        "condition_review_required": False,
+    }
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+
+    result = service.materialize(_representative(match_result=match_result))
+
+    assert len(result) == 3
+    assert service.stats.inserted == 3
+    assert service.stats.skipped_ineligible == 0
+    by_village = {inc.village_id: inc.condition_id for inc in result}
+    assert by_village == {1529: 5, 980: 1, 981: 1}
+
+
+def test_cartesian_sub_event_locations_dedupe_to_one_row_per_village() -> None:
+    """ACCSTUDY-005: duplicated locations across sub-events must not multiply rows."""
+    villages = [
+        ("القليلة", 101),
+        ("حولا", 102),
+        ("عيتا الشعب", 103),
+        ("دبل", 104),
+        ("جويا", 105),
+        ("دير ميماس", 106),
+    ]
+    # Simulate N villages × N sub-events cartesian village_matches.
+    village_matches = []
+    for event_index, (name, village_id) in enumerate(villages):
+        for other_name, other_id in villages:
+            village_matches.append(
+                {
+                    "raw_village_text": other_name,
+                    "matched_village_id": other_id,
+                    "village_confidence": 1.0,
+                    "village_match_status": "matched",
+                    "village_review_required": False,
+                    "matched_condition_id": None,
+                    "condition_match_status": "unmatched",
+                    "event_index": event_index,
+                    "village_role": "target",
+                }
+            )
+    match_result = {
+        "village_matches": village_matches,
+        "any_village_low_confidence": False,
+        "raw_condition_text": "غارات",
+        "condition_confidence": 0.9,
+        "matched_condition_id": 1,
+        "condition_match_status": "matched",
+        "condition_review_required": False,
+    }
+    extraction = {
+        "is_relevant": True,
+        "village": [name for name, _ in villages],
+        "action_description": "غارات متزامنة",
+        "sub_events": [
+            {
+                "locations": [{"village": name, "role": "target"}],
+                "action_text": f"غارة على {name}",
+                "casualties": {},
+            }
+            for name, _ in villages
+        ],
+        "categories": {},
+        "casualties": {"total_deaths": 4, "total_injuries": 10},
+        "model": "test-model",
+        "extracted_at": "2026-08-17T10:00:00Z",
+    }
+    db = _SessionStub()
+    service = IncidentMaterializationService(db)  # type: ignore[arg-type]
+    representative = _representative(match_result=match_result)
+    representative.extraction_result = extraction
+
+    result = service.materialize(representative)
+
+    assert len(result) == 6
+    assert service.stats.inserted == 6
+    assert {inc.village_id for inc in result} == {vid for _, vid in villages}
+    story_ids = {inc.story_group_id for inc in result}
+    assert len(story_ids) == 1
+    assert story_ids.pop() is not None
+
+
 def test_old_flat_match_result_is_backward_compatible() -> None:
     """Pre-Task-4 flat match_result (without village_matches) still works."""
     old_match_result = {

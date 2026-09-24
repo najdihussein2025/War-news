@@ -333,6 +333,8 @@ def test_wadi_selouqi_alias_overrides_baalbek_slouqi_similarity() -> None:
         ("وادي راج", 71367),
         ("الدبشة", 71133),
         ("جبل الرفيع", 71133),
+        ("دبل", 72281),
+        ("الجبين", 62292),
     ],
 )
 def test_confirmed_no_acs_aliases_override_similarity(raw_name: str, expected_id: int) -> None:

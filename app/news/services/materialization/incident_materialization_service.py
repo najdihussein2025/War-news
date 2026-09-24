@@ -319,6 +319,7 @@ class IncidentMaterializationService:
 
         village_matches: list[dict[str, Any]] = match_result.get("village_matches", [])
         origin_villages = self._origin_village_names(village_matches)
+<<<<<<< HEAD
         target_matches = [
             village_match
             for village_match in village_matches
@@ -333,6 +334,17 @@ class IncidentMaterializationService:
             )
         )
         is_multi_village = self._distinct_target_village_count(target_matches) > 1
+=======
+        target_matches = self._dedupe_village_matches_by_village(
+            [
+                village_match
+                for village_match in village_matches
+                if self._materializes_village_match(village_match)
+            ],
+            extraction=extraction,
+        )
+        is_multi_village = self._distinct_target_village_count(target_matches) > 1
+>>>>>>> ac9dd46 (Add scripts for ACCSTUDY enrichment and scoring)
         if self._has_ambiguous_sub_event_scope(
             extraction,
             target_matches,
@@ -1092,6 +1104,7 @@ class IncidentMaterializationService:
 
         village_matches: list[dict[str, Any]] = match_result.get("village_matches", [])
         origin_villages = self._origin_village_names(village_matches)
+<<<<<<< HEAD
         target_matches = [
             village_match
             for village_match in village_matches
@@ -1106,6 +1119,17 @@ class IncidentMaterializationService:
             )
         )
         is_multi_village = self._distinct_target_village_count(target_matches) > 1
+=======
+        target_matches = self._dedupe_village_matches_by_village(
+            [
+                village_match
+                for village_match in village_matches
+                if self._materializes_village_match(village_match)
+            ],
+            extraction=extraction,
+        )
+        is_multi_village = self._distinct_target_village_count(target_matches) > 1
+>>>>>>> ac9dd46 (Add scripts for ACCSTUDY enrichment and scoring)
         category_casualties_suppressed = False
         if is_multi_village:
             mapped_fields, category_casualties_suppressed = (
@@ -1136,7 +1160,7 @@ class IncidentMaterializationService:
             if len(event_indexes) >= 2 or (event_indexes and len(target_matches) >= 2)
             else None
         )
-        for village_match in village_matches:
+        for village_match in target_matches:
             if not self._materializes_village_match(village_match):
                 logger.info(
                     "raw_message_id=%s village suppressed from materialization: role=%r text=%r",
@@ -1608,11 +1632,16 @@ class IncidentMaterializationService:
         village_match: dict[str, Any],
         fallback: int,
     ) -> int | None:
+        """Prefer a per-village/sub-event condition; otherwise use message-level.
+
+        Sub-events often carry ``event_index`` even when condition matching for
+        that clause failed (``unmatched``). Dropping those villages left
+        multi-event bulletins (ACCSTUDY-002) as a single row. Falling back to
+        the message-level matched condition keeps one row per village.
+        """
         condition_id = cls._optional_int(village_match.get("matched_condition_id"))
         if condition_id is not None:
             return condition_id
-        if village_match.get("event_index") is not None:
-            return None
         return fallback
 
     @staticmethod
@@ -1648,6 +1677,87 @@ class IncidentMaterializationService:
                 is not None
             }
         )
+
+    @classmethod
+    def _dedupe_village_matches_by_village(
+        cls,
+        village_matches: list[dict[str, Any]],
+        *,
+        extraction: ExtractionResult | None = None,
+    ) -> list[dict[str, Any]]:
+        """Drop Cartesian duplicates without collapsing distinct same-village actions.
+
+        ACCSTUDY-005-style extractions put every list village into each
+        sub-event's ``locations``, so matching emits the same village under
+        many ``event_index`` values. Keep every match whose sub-event action
+        names that village (distinct actions on one place stay), otherwise
+        prefer sole-location clauses, else the first occurrence.
+        """
+        if len(village_matches) < 2:
+            return list(village_matches)
+
+        sub_events = extraction.sub_events if extraction is not None else []
+
+        def _action_mentions(match: dict[str, Any]) -> bool:
+            raw = match.get("raw_village_text")
+            if not isinstance(raw, str) or not raw.strip():
+                return False
+            index = cls._optional_int(match.get("event_index"))
+            if index is None or not 0 <= index < len(sub_events):
+                return False
+            action = (
+                getattr(sub_events[index], "action_text", None)
+                or getattr(sub_events[index], "action_description", None)
+                or ""
+            ).strip()
+            return bool(action) and raw.strip() in action
+
+        def _is_sole_location(match: dict[str, Any]) -> bool:
+            location_count = cls._optional_int(match.get("event_location_count"))
+            if location_count is not None:
+                return location_count <= 1
+            index = cls._optional_int(match.get("event_index"))
+            if index is None:
+                return True
+            same_event = sum(
+                1
+                for other in village_matches
+                if cls._optional_int(other.get("event_index")) == index
+            )
+            return same_event <= 1
+
+        groups: dict[str, list[dict[str, Any]]] = {}
+        order: list[str] = []
+        for match in village_matches:
+            village_id = cls._optional_int(match.get("matched_village_id"))
+            if village_id is not None:
+                key = f"id:{village_id}"
+            else:
+                raw = match.get("raw_village_text")
+                if not isinstance(raw, str) or not raw.strip():
+                    continue
+                key = f"text:{raw.strip()}"
+            if key not in groups:
+                groups[key] = []
+                order.append(key)
+            groups[key].append(match)
+
+        deduped: list[dict[str, Any]] = []
+        for key in order:
+            group = groups[key]
+            if len(group) == 1:
+                deduped.append(group[0])
+                continue
+            mentioned = [match for match in group if _action_mentions(match)]
+            if mentioned:
+                deduped.extend(mentioned)
+                continue
+            sole = [match for match in group if _is_sole_location(match)]
+            if sole:
+                deduped.extend(sole)
+                continue
+            deduped.append(group[0])
+        return deduped
 
     @classmethod
     def _event_casualties_for_match(
@@ -1809,16 +1919,25 @@ class IncidentMaterializationService:
         )
 
     @staticmethod
+<<<<<<< HEAD
     def _origin_village_names(village_matches: list[dict[str, Any]]) -> list[str]:
         origin_villages: list[str] = []
         for village_match in village_matches:
             if village_match.get("village_role") != VillageRole.origin.value:
                 continue
+=======
+    def _origin_village_names(village_matches: list[dict[str, Any]]) -> list[str]:
+        origin_villages: list[str] = []
+        for village_match in village_matches:
+            if village_match.get("village_role") != VillageRole.origin.value:
+                continue
+>>>>>>> ac9dd46 (Add scripts for ACCSTUDY enrichment and scoring)
             raw_text = village_match.get("raw_village_text")
             if not isinstance(raw_text, str):
                 continue
             normalized = raw_text.strip()
             if normalized and normalized not in origin_villages:
+<<<<<<< HEAD
                 origin_villages.append(normalized)
         return origin_villages
 
@@ -1932,6 +2051,20 @@ class IncidentMaterializationService:
             return None
         normalized = raw_text.strip()
         return normalized or None
+=======
+                origin_villages.append(normalized)
+        return origin_villages
+
+    @staticmethod
+    def _village_display_name(village_match: dict[str, Any]) -> str | None:
+        if not village_match.get("alias_matched"):
+            return None
+        raw_text = village_match.get("raw_village_text")
+        if not isinstance(raw_text, str):
+            return None
+        normalized = raw_text.strip()
+        return normalized or None
+>>>>>>> ac9dd46 (Add scripts for ACCSTUDY enrichment and scoring)
 
     @staticmethod
     def _origin_village_note(origin_villages: list[str]) -> str | None:

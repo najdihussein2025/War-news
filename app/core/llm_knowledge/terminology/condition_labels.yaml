@@ -316,3 +316,13 @@
   category: exclusion_note
   meaning: "Burning Properties"
   notes: "Do not classify ordinary civilian fires, car fires, electrical faults, traffic accidents, or property fires as Burning Properties unless the text explicitly ties the damage to Israeli, military, or security action."
+
+- term: "استهداف بطائرة مسيرة / مسيّرة استهدفت"
+  category: evidence_override
+  meaning: "Bombs"
+  notes: "Drone-strike wording is an attack/strike condition. Do not map it to Drone Failure; Drone Failure is only for a drone falling/crashing in our territory, e.g. سقوط مسيرة."
+
+- term: "سقوط مسيرة"
+  category: condition_id_label
+  meaning: "Drone Failure"
+  notes: "Use only when the text says a drone fell/crashed, not when a drone targeted or struck a car, building, road, or people."

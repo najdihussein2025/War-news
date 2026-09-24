@@ -59,6 +59,24 @@ def test_is_multi_village_candidate_between_route_is_true() -> None:
     assert is_multi_village_candidate("غارة على طريق بين كفرتبنيت وزوطر الشرقية") is True
 
 
+def test_is_multi_village_candidate_kama_ghara_connector() -> None:
+    assert (
+        is_multi_village_candidate(
+            "قصف في بلدة شبعا. كما غارة أخرى في بلدة عيناتا"
+        )
+        is True
+    )
+
+
+def test_is_multi_village_candidate_baldat_list() -> None:
+    assert (
+        is_multi_village_candidate(
+            "غارات طالت بلدات حولا، مارون الراس، شبعا ويارون"
+        )
+        is True
+    )
+
+
 def test_is_multi_village_candidate_single_village_false() -> None:
     assert is_multi_village_candidate("غارة على عيتا الشعب") is False
 

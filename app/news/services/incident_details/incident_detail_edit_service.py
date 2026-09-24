@@ -170,6 +170,8 @@ _COUNT_DB_COLUMNS = frozenset(
         "carf_i",
         "carc_d",
         "carc_i",
+        "cara_d",
+        "cara_i",
         "moto_d",
         "moto_i",
         "con_d",

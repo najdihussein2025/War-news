@@ -63,6 +63,8 @@ CATEGORY_CASUALTY_FIELDS = frozenset(
         "carf_i",
         "carc_d",
         "carc_i",
+        "cara_d",
+        "cara_i",
         "card",
         "cari",
         "moto_d",
@@ -159,6 +161,16 @@ def _safe_add(*values: int | None) -> int | None:
     return sum(non_null) if non_null else None
 
 
+def _casualty_total(
+    explicit_total: int | None,
+    *demographic_values: int | None,
+) -> int | None:
+    """Use explicit entity totals when present; otherwise sum demographics."""
+    if explicit_total is not None:
+        return explicit_total
+    return _safe_add(*demographic_values)
+
+
 # ---------------------------------------------------------------------------
 # Per-category handler functions
 # ---------------------------------------------------------------------------
@@ -173,8 +185,12 @@ def _map_lebanese_army(cat: ExtractionCategory, out: dict[str, Any]) -> None:
         out["lam_i"] = c.male_injuries
         out["laf_d"] = c.female_deaths
         out["laf_i"] = c.female_injuries
-        out["la_td"] = _safe_add(c.male_deaths, c.female_deaths)
-        out["la_ti"] = _safe_add(c.male_injuries, c.female_injuries)
+        out["la_td"] = _casualty_total(
+            c.deaths, c.male_deaths, c.female_deaths, c.children_deaths
+        )
+        out["la_ti"] = _casualty_total(
+            c.injuries, c.male_injuries, c.female_injuries, c.children_injuries
+        )
 
 
 def _map_unifil(cat: ExtractionCategory, out: dict[str, Any]) -> None:
@@ -186,8 +202,12 @@ def _map_unifil(cat: ExtractionCategory, out: dict[str, Any]) -> None:
         out["unm_i"] = c.male_injuries
         out["unf_d"] = c.female_deaths
         out["unf_i"] = c.female_injuries
-        out["un_td"] = _safe_add(c.male_deaths, c.female_deaths)
-        out["un_ti"] = _safe_add(c.male_injuries, c.female_injuries)
+        out["un_td"] = _casualty_total(
+            c.deaths, c.male_deaths, c.female_deaths, c.children_deaths
+        )
+        out["un_ti"] = _casualty_total(
+            c.injuries, c.male_injuries, c.female_injuries, c.children_injuries
+        )
 
 
 def _map_municipality(cat: ExtractionCategory, out: dict[str, Any]) -> None:
@@ -199,8 +219,31 @@ def _map_municipality(cat: ExtractionCategory, out: dict[str, Any]) -> None:
         out["munim_i"] = c.male_injuries
         out["munif_d"] = c.female_deaths
         out["munif_i"] = c.female_injuries
-        out["muni_td"] = _safe_add(c.male_deaths, c.female_deaths)
-        out["muni_ti"] = _safe_add(c.male_injuries, c.female_injuries)
+        out["muni_td"] = _casualty_total(
+            c.deaths, c.male_deaths, c.female_deaths, c.children_deaths
+        )
+        out["muni_ti"] = _casualty_total(
+            c.injuries, c.male_injuries, c.female_injuries, c.children_injuries
+        )
+
+
+def _hospital_casualty_attribution_allowed(cat: ExtractionCategory) -> bool:
+    """Require DID or an explicit hospital-like name before writing HosD/HosI.
+
+    Presence alone can still gate ``hosp=True`` elsewhere; bare generic deaths
+    on a nameless hospital category are usually vehicle/civilian bleed.
+    """
+    if cat.did is not None:
+        return True
+    name = (cat.name or "").strip()
+    if not name:
+        return False
+    return _contains_any(name, _HOSPITAL_NAME_KEYWORDS)
+
+
+_HOSPITAL_NAME_KEYWORDS: frozenset[str] = frozenset(
+    {"مستشفى", "مشفى", "hospital", "عيادة", "مستوصف"}
+)
 
 
 def _map_hospital(cat: ExtractionCategory, out: dict[str, Any]) -> None:
@@ -208,13 +251,17 @@ def _map_hospital(cat: ExtractionCategory, out: dict[str, Any]) -> None:
     out["hos_did"] = _did_str(cat)
     out["hos_n"] = cat.name
     c = cat.casualties
-    if c is not None:
+    if c is not None and _hospital_casualty_attribution_allowed(cat):
         out["hosm_d"] = c.male_deaths
         out["hosm_i"] = c.male_injuries
         out["hosf_d"] = c.female_deaths
         out["hosf_i"] = c.female_injuries
-        out["hosd"] = _safe_add(c.male_deaths, c.female_deaths)
-        out["hosi"] = _safe_add(c.male_injuries, c.female_injuries)
+        out["hosd"] = _casualty_total(
+            c.deaths, c.male_deaths, c.female_deaths, c.children_deaths
+        )
+        out["hosi"] = _casualty_total(
+            c.injuries, c.male_injuries, c.female_injuries, c.children_injuries
+        )
 
 
 def _map_health_center(cat: ExtractionCategory, out: dict[str, Any]) -> None:
@@ -226,8 +273,12 @@ def _map_health_center(cat: ExtractionCategory, out: dict[str, Any]) -> None:
         out["hcm_i"] = c.male_injuries
         out["hcf_d"] = c.female_deaths
         out["hcf_i"] = c.female_injuries
-        out["hcd"] = _safe_add(c.male_deaths, c.female_deaths)
-        out["hci"] = _safe_add(c.male_injuries, c.female_injuries)
+        out["hcd"] = _casualty_total(
+            c.deaths, c.male_deaths, c.female_deaths, c.children_deaths
+        )
+        out["hci"] = _casualty_total(
+            c.injuries, c.male_injuries, c.female_injuries, c.children_injuries
+        )
 
 
 def _map_press(cat: ExtractionCategory, out: dict[str, Any]) -> None:
@@ -240,8 +291,12 @@ def _map_press(cat: ExtractionCategory, out: dict[str, Any]) -> None:
         out["pressm_i"] = c.male_injuries
         out["pressf_d"] = c.female_deaths
         out["pressf_i"] = c.female_injuries
-        out["pressd"] = _safe_add(c.male_deaths, c.female_deaths)
-        out["pressi"] = _safe_add(c.male_injuries, c.female_injuries)
+        out["pressd"] = _casualty_total(
+            c.deaths, c.male_deaths, c.female_deaths, c.children_deaths
+        )
+        out["pressi"] = _casualty_total(
+            c.injuries, c.male_injuries, c.female_injuries, c.children_injuries
+        )
 
 
 def _map_government_building(cat: ExtractionCategory, out: dict[str, Any]) -> None:
@@ -254,8 +309,12 @@ def _map_government_building(cat: ExtractionCategory, out: dict[str, Any]) -> No
         out["gbm_i"] = c.male_injuries
         out["gbf_d"] = c.female_deaths
         out["gbf_i"] = c.female_injuries
-        out["gbd"] = _safe_add(c.male_deaths, c.female_deaths)
-        out["gbi"] = _safe_add(c.male_injuries, c.female_injuries)
+        out["gbd"] = _casualty_total(
+            c.deaths, c.male_deaths, c.female_deaths, c.children_deaths
+        )
+        out["gbi"] = _casualty_total(
+            c.injuries, c.male_injuries, c.female_injuries, c.children_injuries
+        )
 
 
 def _map_vehicles(cat: ExtractionCategory, out: dict[str, Any]) -> None:
@@ -319,8 +378,32 @@ def _map_car_casualties(cat: ExtractionCategory, out: dict[str, Any]) -> None:
     out["carf_i"] = c.female_injuries
     out["carc_d"] = c.children_deaths
     out["carc_i"] = c.children_injuries
-    out["card"] = _safe_add(c.male_deaths, c.female_deaths)
-    out["cari"] = _safe_add(c.male_injuries, c.female_injuries)
+    # Genderless vehicle tolls belong in the anonymous buckets (spreadsheet
+    # Anonymous_CD / Anonymous_CI). CarD / CarI remain the automated sum.
+    has_death_demographics = any(
+        value is not None
+        for value in (c.male_deaths, c.female_deaths, c.children_deaths)
+    )
+    has_injury_demographics = any(
+        value is not None
+        for value in (c.male_injuries, c.female_injuries, c.children_injuries)
+    )
+    if c.deaths is not None and not has_death_demographics:
+        out["cara_d"] = c.deaths
+    if c.injuries is not None and not has_injury_demographics:
+        out["cara_i"] = c.injuries
+    out["card"] = _safe_add(
+        out.get("carm_d"),
+        out.get("carf_d"),
+        out.get("carc_d"),
+        out.get("cara_d"),
+    )
+    out["cari"] = _safe_add(
+        out.get("carm_i"),
+        out.get("carf_i"),
+        out.get("carc_i"),
+        out.get("cara_i"),
+    )
 
 
 def _extract_vehicle_count(text: str) -> int | None:
@@ -604,6 +687,73 @@ def map_categories(
     return out
 
 
+_ENTITY_DEATH_FIELDS: tuple[str, ...] = (
+    "la_td",
+    "un_td",
+    "muni_td",
+    "hosd",
+    "hcd",
+    "pressd",
+    "gbd",
+    "card",
+    "emer_d",
+)
+_ENTITY_INJURY_FIELDS: tuple[str, ...] = (
+    "la_ti",
+    "un_ti",
+    "muni_ti",
+    "hosi",
+    "hci",
+    "pressi",
+    "gbi",
+    "cari",
+    "emer_i",
+)
+
+
+def _sum_mapped(mapped: dict[str, Any], fields: tuple[str, ...]) -> int | None:
+    values = [mapped.get(field) for field in fields]
+    if all(value is None for value in values):
+        return None
+    return sum(int(value) for value in values if isinstance(value, int))
+
+
+def reconcile_root_vs_entity_casualties(
+    mapped: dict[str, Any],
+    root_casualties: ExtractionCasualties,
+) -> ExtractionCasualties:
+    """Drop root deaths/injuries that duplicate gated-entity subtotals.
+
+    ``Total_D`` / ``Total_Inj`` sum root + entity fields. When Tier 1 kept the
+    same toll on root while Tier 2 also wrote it into ``CarD``/``HosD``/etc.,
+    clear the root copy so rollups do not double-count.
+
+    Only exact duplicates are cleared (root == entity sum). A larger or
+    smaller root is treated as additional/unrelated general casualties.
+    """
+    entity_deaths = _sum_mapped(mapped, _ENTITY_DEATH_FIELDS)
+    entity_injuries = _sum_mapped(mapped, _ENTITY_INJURY_FIELDS)
+    deaths = root_casualties.deaths
+    injuries = root_casualties.injuries
+    if (
+        isinstance(deaths, int)
+        and isinstance(entity_deaths, int)
+        and entity_deaths > 0
+        and deaths == entity_deaths
+    ):
+        deaths = None
+    if (
+        isinstance(injuries, int)
+        and isinstance(entity_injuries, int)
+        and entity_injuries > 0
+        and injuries == entity_injuries
+    ):
+        injuries = None
+    if deaths == root_casualties.deaths and injuries == root_casualties.injuries:
+        return root_casualties
+    return root_casualties.model_copy(update={"deaths": deaths, "injuries": injuries})
+
+
 def compute_rollups(
     mapped: dict[str, Any],
     root_casualties: ExtractionCasualties,
@@ -614,8 +764,9 @@ def compute_rollups(
     already written to Incident.deaths / Incident.injuries.  Returns (None, None)
     when no casualty data is present anywhere.
     """
+    root = reconcile_root_vs_entity_casualties(mapped, root_casualties)
     total_deaths = _safe_add(
-        root_casualties.deaths,
+        root.deaths,
         mapped.get("la_td"),
         mapped.get("un_td"),
         mapped.get("muni_td"),
@@ -627,7 +778,7 @@ def compute_rollups(
         mapped.get("emer_d"),
     )
     total_injuries = _safe_add(
-        root_casualties.injuries,
+        root.injuries,
         mapped.get("la_ti"),
         mapped.get("un_ti"),
         mapped.get("muni_ti"),

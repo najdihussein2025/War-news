@@ -343,6 +343,75 @@ def test_raw_9302_route_scoped_casualty_is_not_copied_to_both_endpoints() -> Non
     assert created[0].story_group_id is not None
 
 
+def test_bulletin_aggregate_materializes_one_row_per_target_village() -> None:
+    extraction = ExtractionResult(
+        is_relevant=True,
+        village=["ميس الجبل", "يارون", "رامية"],
+        village_roles=[
+            VillageRoleEntry(village="ميس الجبل"),
+            VillageRoleEntry(village="يارون"),
+            VillageRoleEntry(village="رامية"),
+        ],
+        action_description="سلسلة غارات متزامنة",
+        casualty_scope=CasualtyScope.bulletin_aggregate,
+        casualty_scope_evidence=(
+            "سلسلة غارات طالت بلدات ميس الجبل ويارون ورامية، ما أسفر عن "
+            "شهيدين و6 جرحى في حصيلة إجمالية"
+        ),
+        casualties=ExtractionCasualties(total_deaths=2, total_injuries=6),
+        model="test",
+        extracted_at=datetime.now(timezone.utc),
+    )
+    match_result = {
+        "matched_condition_id": 1,
+        "condition_match_status": "matched",
+        "village_matches": [
+            {
+                "matched_village_id": 101,
+                "village_match_status": "matched",
+                "village_role": "target",
+                "raw_village_text": "ميس الجبل",
+            },
+            {
+                "matched_village_id": 102,
+                "village_match_status": "matched",
+                "village_role": "target",
+                "raw_village_text": "يارون",
+            },
+            {
+                "matched_village_id": 103,
+                "village_match_status": "matched",
+                "village_role": "target",
+                "raw_village_text": "رامية",
+            },
+        ],
+    }
+    representative = _representative(match_result=match_result)
+    representative.raw_text = extraction.casualty_scope_evidence
+    representative.extraction_result = extraction.model_dump(mode="json")
+    db = _SessionStub()
+
+    created = IncidentMaterializationService(db).process_fast_path(  # type: ignore[arg-type]
+        representative,
+        SimpleNamespace(
+            decide_for_village=lambda **_kwargs: SimpleNamespace(
+                outcome=FastPathDedupOutcome.materialize,
+                representative_raw_message_id=None,
+                canonical_incident_id=None,
+            )
+        ),
+    )
+
+    assert len(created) == 3
+    assert {incident.village_id for incident in created} == {101, 102, 103}
+    assert {(incident.deaths, incident.injuries) for incident in created} == {
+        (None, None)
+    }
+    assert {
+        (incident.total_deaths, incident.total_injuries) for incident in created
+    } == {(None, None)}
+
+
 def test_locationless_multi_village_sub_events_are_flagged_not_multiplied() -> None:
     extraction = ExtractionResult(
         is_relevant=True,

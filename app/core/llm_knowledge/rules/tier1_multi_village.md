@@ -7,7 +7,8 @@ Load when the message appears to name multiple target locations.
 - Two or more place names in separate clauses (semicolon, colon, or list).
 - Explicit route/path endpoints only: `طريق … X - Y`, `طريق عام X - Y`, or `طريق بين X و Y` → two distinct villages/endpoints.
 - Fuzzy area references are one location, not a village list: `في محيط X وY`, `محيط X وY`, `قرب X وY`, `بالقرب من X وY`, or plain `بين X وY` when no route/path is named. Keep the first-mentioned village as the primary attribution and mark the location low-confidence with the other village as reviewable context.
-- A distinct-event connector introduces a genuinely separate second target, not a qualifier: `كما طال القصف/الغارة/الاستهداف ... بلدة Y` after an already-described strike on `X` means two separately scoped locations, each with its own action/evidence — this is the opposite of a محيط/بين vicinity phrase describing one fuzzy place.
+- A distinct-event connector introduces a genuinely separate second target, not a qualifier: `كما طال القصف/الغارة/الاستهداف ... بلدة Y`, `كما غارة أخرى في بلدة Y`, `أيضا استهداف في Y`, `بالإضافة إلى غارة على Y`, `وفي سياق متصل ... Y`, or `من جهة أخرى ... Y` after an already-described strike on `X` means two separately scoped locations, each with its own action/evidence — this is the opposite of a محيط/بين vicinity phrase describing one fuzzy place.
+- If each connector-led clause has its own explicit casualty figures and its own village, emit one `sub_event` per clause and set `casualty_scope: per_village_exact`; do not merge the clauses into one incident-level casualty count.
 - Every other dash phrase defaults to one target on the left and qualifier context on the right: `بلدة X - حي Y`, `مزرعة X - Y`, `بلدة X - قضاء Y`, or `بلدة X - [neighborhood/hamlet]`.
 - In `مزرعة X - Y وZ`, the complete `Y وZ` tail is qualifier context, not two additional targets.
 - Multiple `target` entries in expected extraction.
@@ -21,6 +22,7 @@ Load when the message appears to name multiple target locations.
 5. If only a shared toll is given covering all villages → `casualty_scope: bulletin_aggregate`.
 6. Put shared figures in `casualties.total_deaths` / `total_injuries`; leave `deaths`/`injuries` null.
 7. `casualty_scope_evidence` must be the full clause showing whether the toll is shared or per-village.
+8. A genuine bulletin aggregate still keeps every named target village as its own `village_roles` entry. Downstream materialization must create one incident row per named target village, linked by the same bulletin casualty group; never collapse an aggregate bulletin to only the first village.
 
 8. If the bulletin describes more than one distinct action/condition across the villages, emit one `sub_events` item per distinct action. Each item must have only that action's own `locations`, a condition-matchable `action_text`, and an `evidence_span` from that action's sentence or clause. Do not rely on one root `action_description` plus flat `village_roles` for multi-action bulletins.
 9. For multi-action bulletins, root `action_description` is a bulletin-level summary for humans only, for example "multiple actions across 2 villages". It must not be treated as the per-village condition source when `sub_events` exist or should exist.
@@ -49,6 +51,12 @@ Wrong output: `action_description="Sweeping Operations"`, flat `village_roles` c
 
 Correct output: `action_description="multiple actions across 2 villages"` plus two `sub_events`: one with `locations=[{"village":"Talloussa","role":"target",...}]`, `action_text="ØªÙ…Ø´ÙŠØ·"`, and the Talloussa sentence as `evidence_span`; one with `locations=[{"village":"Beit Yahoun","role":"target",...}]`, `action_text="Ù‚Ù†Ø§Ø¨Ù„ Ù…Ø¶ÙŠØ¦Ø© ÙˆØ­Ø§Ø±Ù‚Ø©"`, and the Beit Yahoun sentence as `evidence_span`.
 
+**Several connector-led events with separate tolls:**
+«قصف في بلدة ميس الجبل أدى إلى إصابة 4 أشخاص دون وفيات. أيضا غارة أخرى في بلدة ياطر أسفرت عن شهيد و2 جرحى. وفي سياق متصل استهداف في بلدة عيترون أدى إلى إصابة 1» → three `sub_events`, one for each village, with local casualties only for that village.
+
+**Shared aggregate across a list:**
+«سلسلة غارات طالت بلدات عيتا الشعب ورامية ورميش، ما أسفر عن سقوط شهيدين و6 جرحى في حصيلة إجمالية» → three target `village_roles`, `casualty_scope=bulletin_aggregate`, `casualties.total_deaths=2`, `casualties.total_injuries=6`, and no per-village `deaths`/`injuries`.
+
 **Dash route / endpoints:**
 «استهدف دراجة نارية على طريق عام مرج حاروف - زبدين» → village=["حاروف","زبدين"] (two target endpoints)
 «غارة بين كفرتبنيت وزوطر الشرقية» → village=["كفرتبنيت"] with `زوطر الشرقية` as review context (one fuzzy target, not two endpoint incidents)
@@ -65,4 +73,4 @@ Correct output: `action_description="multiple actions across 2 villages"` plus t
 
 ## Materialization note (downstream)
 
-Multi-village bulletins suppress per-category casualty fields at Tier 2 until manually confirmed per village.
+Multi-village bulletins suppress per-category casualty fields at Tier 2 until manually confirmed per village. Materialization still fans out one incident row per target village for both per-village-exact and bulletin-aggregate scopes; aggregate totals live on the shared bulletin casualty group, not duplicated onto every village row.
