@@ -167,6 +167,9 @@ class ExtractionResult(BaseModel):
     location_alternatives: list[str] = Field(default_factory=list)
     location_ambiguity_evidence: str | None = None
     action_description: str | None = None
+    action_source: str | None = None
+    source_event_subtype: str | None = None
+    source_action_hint: str | None = None
     sub_events: list[ExtractionSubEvent] = Field(default_factory=list)
 
     @field_validator("village", mode="before")

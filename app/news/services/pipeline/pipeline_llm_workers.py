@@ -27,10 +27,16 @@ def _final_action_description(
     extracted_action: str | None,
     cnrs_classification: dict | None,
 ) -> str | None:
-    cnrs_action = trusted_cnrs_action(cnrs_classification, post_text)
-    if cnrs_action is not None:
-        return cnrs_action
-    return apply_condition_evidence_override(post_text, extracted_action)
+    text_action = apply_condition_evidence_override(post_text, extracted_action)
+    if (
+        extracted_action
+        and extracted_action not in {"Bombs", "Unknown"}
+        and text_action == "Bombs"
+    ):
+        return extracted_action
+    if text_action:
+        return text_action
+    return trusted_cnrs_action(cnrs_classification, post_text)
 
 
 def run_tier1_extraction_for_message(raw_message_id: int) -> None:
@@ -62,13 +68,29 @@ def run_tier1_extraction_for_message(raw_message_id: int) -> None:
             raw_message_id=raw_message_id,
         )
         result = apply_casualty_gender_backstops(post_text, result)
+        cnrs_action = trusted_cnrs_action(cnrs_classification, post_text)
+        subtype = (
+            str((cnrs_classification or {}).get("event_subtype") or "").strip().lower()
+            or None
+        )
+        final_action = _final_action_description(
+            post_text,
+            result.action_description,
+            cnrs_classification,
+        )
+        action_source = (
+            "llm_text"
+            if final_action and final_action != cnrs_action
+            else "cnrs_subtype_fallback"
+            if final_action and cnrs_action
+            else result.action_source
+        )
         result = result.model_copy(
             update={
-                "action_description": _final_action_description(
-                    post_text,
-                    result.action_description,
-                    cnrs_classification,
-                ),
+                "action_description": final_action,
+                "action_source": action_source,
+                "source_event_subtype": subtype,
+                "source_action_hint": cnrs_action,
             }
         )
     except Exception as exc:

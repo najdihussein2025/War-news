@@ -75,6 +75,16 @@ def trusted_cnrs_action(
     return SUBTYPE_ACTIONS.get(subtype)
 
 
+def _has_text_grounded_action(result: ExtractionResult) -> bool:
+    if (result.action_description or "").strip():
+        return True
+    return any(
+        (sub_event.action_text or "").strip()
+        or (sub_event.evidence_span or "").strip()
+        for sub_event in result.sub_events
+    )
+
+
 class CnrsExtractionFallback(ExtractionClassifierInterface):
     """Overlay trusted CNRS fields on complete LLM extraction."""
 
@@ -133,8 +143,10 @@ class CnrsExtractionFallback(ExtractionClassifierInterface):
         post_text: str,
     ) -> ExtractionResult:
         location = str(classification.get("location") or "").strip()
+        subtype = str(classification.get("event_subtype") or "").strip().lower() or None
         action = trusted_cnrs_action(classification, post_text)
         villages, village_roles = cls._merge_location(result, location)
+        has_text_grounded_action = _has_text_grounded_action(result)
 
         categories = dict(result.categories)
         presence_keys = list(result.presence_category_keys)
@@ -161,7 +173,20 @@ class CnrsExtractionFallback(ExtractionClassifierInterface):
                 ),
                 "village": villages,
                 "village_roles": village_roles,
-                "action_description": action or result.action_description,
+                "action_description": (
+                    result.action_description
+                    if has_text_grounded_action
+                    else action or result.action_description
+                ),
+                "action_source": (
+                    "llm_text"
+                    if has_text_grounded_action
+                    else "cnrs_subtype_fallback"
+                    if action is not None
+                    else result.action_source
+                ),
+                "source_event_subtype": subtype,
+                "source_action_hint": action,
                 "categories": categories,
                 "presence_category_keys": presence_keys,
             }
