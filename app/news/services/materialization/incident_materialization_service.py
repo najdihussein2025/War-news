@@ -77,6 +77,7 @@ def _initial_verification_status(
     duplicate_flag: bool = False,
     insufficient_score: bool = False,
     low_confidence_village_match: bool = False,
+    condition_review_required: bool = False,
 ) -> str:
     """Return the initial review state for materialized incidents.
 
@@ -87,7 +88,12 @@ def _initial_verification_status(
     """
     return (
         "needs_verification"
-        if (duplicate_flag or insufficient_score or low_confidence_village_match)
+        if (
+            duplicate_flag
+            or insufficient_score
+            or low_confidence_village_match
+            or condition_review_required
+        )
         else "auto_processed"
     )
 
@@ -174,7 +180,7 @@ def _new_incident_payload(incident: Incident) -> str:
         ),
         "condition_id": incident.condition_id,
         "village": (
-            incident.village_display_name
+            getattr(incident, "village_display_name", None)
             or (village.ref_name_en or village.cad_name if village is not None else None)
         ),
         "condition": condition.action_en if condition is not None else None,
@@ -506,6 +512,12 @@ class IncidentMaterializationService:
                     low_confidence_village_match=(
                         village_status == "matched_low_confidence"
                     ),
+                    condition_review_required=bool(
+                        village_match.get("condition_review_required")
+                    ),
+                    condition_review_reason=village_match.get(
+                        "condition_review_reason"
+                    ),
                     hash_suffix=unit.hash_suffix,
                     story_group_id=unit.story_group_id,
                 )
@@ -642,6 +654,10 @@ class IncidentMaterializationService:
                 low_confidence_village_match=(
                     village_status == "matched_low_confidence"
                 ),
+                condition_review_required=bool(
+                    village_match.get("condition_review_required")
+                ),
+                condition_review_reason=village_match.get("condition_review_reason"),
                 hash_suffix=unit.hash_suffix,
                 story_group_id=unit.story_group_id,
             )
@@ -897,6 +913,8 @@ class IncidentMaterializationService:
         duplicate_flag: bool = False,
         scope_review_reason: str | None = None,
         low_confidence_village_match: bool = False,
+        condition_review_required: bool = False,
+        condition_review_reason: str | None = None,
         hash_suffix: str | None = None,
         story_group_id: UUID | None = None,
     ) -> Incident | None:
@@ -924,6 +942,7 @@ class IncidentMaterializationService:
             # duplicate flag, before its audit record is persisted.
             insufficient_score=duplicate_flag,
             low_confidence_village_match=low_confidence_village_match,
+            condition_review_required=condition_review_required,
         )
         if scope_review_reason:
             verification_status = "needs_verification"
@@ -933,6 +952,7 @@ class IncidentMaterializationService:
                 duplicate_flag=duplicate_flag,
                 insufficient_score=duplicate_flag,
                 low_confidence_village_match=low_confidence_village_match,
+                condition_review_reason=condition_review_reason,
             )
             if verification_status == "needs_verification"
             else None
@@ -1254,6 +1274,9 @@ class IncidentMaterializationService:
                 low_confidence_village_match=(
                     village_status == "matched_low_confidence"
                 ),
+                condition_review_required=bool(
+                    village_match.get("condition_review_required")
+                ),
             )
             extraction_review_reason = _extraction_review_reason(extraction)
             if category_casualties_suppressed or extraction_review_reason:
@@ -1271,6 +1294,9 @@ class IncidentMaterializationService:
                     duplicate_similarity_score=duplicate_score,
                     low_confidence_village_match=(
                         village_status == "matched_low_confidence"
+                    ),
+                    condition_review_reason=village_match.get(
+                        "condition_review_reason"
                     ),
                 )
                 if verification_status == "needs_verification"

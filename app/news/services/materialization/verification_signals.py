@@ -14,8 +14,11 @@ def _verification_reason(
     duplicate_similarity_score: float | None = None,
     insufficient_score: bool = False,
     low_confidence_village_match: bool = False,
+    condition_review_reason: str | None = None,
 ) -> str | None:
     """Return a plain-language review reason for unresolved review signals."""
+    if condition_review_reason:
+        return condition_review_reason
     if low_confidence_village_match:
         return LOW_CONFIDENCE_VILLAGE_REVIEW_REASON
     if duplicate_flag:
