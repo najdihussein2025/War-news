@@ -25,6 +25,10 @@ from app.news.repositories.condition_repository import ConditionRepository
 from app.news.repositories.village_repository import VillageRepository
 from app.news.services.matching.matching_service import MatchingService
 from app.llm.dtos import ExtractionResult
+from app.llm.services.action_finalization import FLARE_GUARD_REVIEW_REASON
+from app.llm.services.ollama_extraction_service import (
+    MULTI_VILLAGE_NO_SUBEVENTS_REVIEW_REASON as MULTI_VILLAGE_NO_SUBEVENTS_MARKER,
+)
 from app.news.services.materialization.verification_signals import (
     VerificationSignals,
     decide_verification,
@@ -205,8 +209,19 @@ def recompute(
     extraction = dict(raw.extraction_result or {})
 
     governance_hard_reasons = _preserved_governance_reasons(incident.verification_reason)
-    if extraction.get("needs_review") and extraction.get("review_reason"):
-        governance_hard_reasons.append(str(extraction["review_reason"]))
+    # `extraction.review_reason` is a multiplexed field: it can hold the rule
+    # 1 casualty text (decide_verification recomputes that fresh from the
+    # same extraction dict, so it's not re-added here), the flare/strike
+    # wording guard, or the multi_village_no_subevents marker. Only the
+    # latter two are extracted here, and only as quality flags — neither is
+    # a rule 1/2/3 review reason under the new policy.
+    extraction_review_reason = str(extraction.get("review_reason") or "")
+    flare_wording_detail = (
+        extraction_review_reason if FLARE_GUARD_REVIEW_REASON in extraction_review_reason else None
+    )
+    multi_village_no_subevents = (
+        MULTI_VILLAGE_NO_SUBEVENTS_MARKER in extraction_review_reason
+    )
 
     # The candidate this incident was flagged as a possible duplicate of is
     # not re-queried here (this script only reruns village/condition
@@ -222,6 +237,8 @@ def recompute(
             tier2_retry_count=raw.tier2_retry_count or 0,
             tier2_retry_limit=settings.extraction_max_retries,
             governance_hard_reasons=tuple(governance_hard_reasons),
+            flare_wording_detail=flare_wording_detail,
+            multi_village_no_subevents=multi_village_no_subevents,
             duplicate_similarity_score=(
                 incident.duplicate_similarity_score
                 if incident.duplicate_flag
