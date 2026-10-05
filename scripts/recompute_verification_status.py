@@ -26,13 +26,8 @@ from app.news.repositories.village_repository import VillageRepository
 from app.news.services.matching.matching_service import MatchingService
 from app.llm.dtos import ExtractionResult
 from app.news.services.materialization.verification_signals import (
-    CONDITION_REVIEW,
-    LOW_CONFIDENCE_VILLAGE,
-    LOW_CONFIDENCE_VILLAGE_REVIEW_REASON,
-    TIER2_RETRY_CAP,
-    active_non_duplicate_verification_reasons,
-    casualty_review_reason,
-    _verification_reason,
+    VerificationSignals,
+    decide_verification,
 )
 
 
@@ -41,6 +36,7 @@ class Recomputed:
     status: str
     reason: str | None
     condition_id: int | None
+    quality_flags: list[dict]
 
 
 def _reason_bucket(reason: str | None) -> str:
@@ -60,6 +56,24 @@ def _reason_bucket(reason: str | None) -> str:
     if value.startswith("Possible cross-source duplicate"):
         return "Cross-source duplicate"
     return value
+
+
+def _rule_bucket(reason: str | None) -> str:
+    """Classify an active review reason into rule 1/2/3 for the Part E report."""
+    value = (reason or "").strip().casefold()
+    if not value:
+        return "[none]"
+    if (
+        "casualty count conflict" in value
+        or "casualty transition" in value
+        or "unconfirmed story revision" in value
+        or "pipeline merged raw message" in value
+        or "story revision from raw message" in value
+    ):
+        return "rule 3: governance safeguard"
+    if "similar to an existing incident" in value or "possible duplicate" in value or "possible cross-source duplicate" in value:
+        return "rule 2: likely duplicate"
+    return "rule 1: casualty attribution"
 
 
 def _latest_status_change_is_manual(db, incident_id) -> bool:
@@ -146,24 +160,38 @@ def _rerun_match(
     return match
 
 
-def _preserved_hard_reasons(reason: str | None) -> list[str]:
+def _preserved_governance_reasons(reason: str | None) -> list[str]:
+    """Reasons this script preserves verbatim rather than recomputing.
+
+    Rule 3 (governance safeguards) — casualty-count conflicts/transitions on
+    merge, an unconfirmed heuristic story revision, a pipeline write that
+    changed a verified incident — always survives, since those safeguards
+    own their own state and this script doesn't re-derive them.
+
+    "Possible cross-source duplicate" (SegmentReviewDedupService) also
+    survives: it's a rule 2 (likely duplicate) decision this script cannot
+    recompute, since doing so would require re-running segment-level dedup,
+    not just village/condition matching. The village-level dedup duplicate
+    text (plain "possible duplicate") is NOT preserved — decide_verification
+    recomputes that one fresh from the stored duplicate_similarity_score.
+
+    Everything else (flare wording, multi_village_no_subevents, tier-2 retry
+    cap, low-confidence village/condition) is dropped here and recomputed as
+    a quality flag instead, never carried over as review-reason text.
+    """
     value = (reason or "").strip()
     lower = value.casefold()
     if not value:
         return []
-    hard_markers = (
+    preserved_markers = (
         "possible cross-source duplicate",
-        "possible duplicate",
-        "flare wording",
-        "multi_village_no_subevents",
         "casualty count conflict",
         "casualty transition",
         "unconfirmed story revision",
         "pipeline merged raw message",
         "story revision from raw message",
-        "tier 2 detail extraction failed",
     )
-    return [value] if any(marker in lower for marker in hard_markers) else []
+    return [value] if any(marker in lower for marker in preserved_markers) else []
 
 
 def recompute(
@@ -174,74 +202,40 @@ def recompute(
     match = _rerun_match(matcher, raw)
     own = _incident_match(match, incident.village_id) or {}
     condition_id = own.get("matched_condition_id") or match.get("matched_condition_id")
-    # Scoped to this incident's own village/sub-event match only — never a
-    # sibling's or the bulletin-root reason, which would leak onto an
-    # incident whose own condition resolved cleanly (Bug 1).
-    condition_hint = own.get("condition_review_reason")
-    match = dict(raw.match_result or {})
     extraction = dict(raw.extraction_result or {})
-    own = _incident_match(match, incident.village_id) or {}
-    target_ids = {
-        item.get("matched_village_id")
-        for item in match.get("village_matches") or []
-        if isinstance(item, dict)
-        and item.get("village_role", "target") == "target"
-        and isinstance(item.get("matched_village_id"), int)
-    }
 
-    hard_reasons = _preserved_hard_reasons(incident.verification_reason)
-    casualty_reason = casualty_review_reason(
-        extraction,
-        target_count=len(target_ids),
-        category_casualties_suppressed=bool(
-            extraction.get("category_casualties_suppressed")
+    governance_hard_reasons = _preserved_governance_reasons(incident.verification_reason)
+    if extraction.get("needs_review") and extraction.get("review_reason"):
+        governance_hard_reasons.append(str(extraction["review_reason"]))
+
+    # The candidate this incident was flagged as a possible duplicate of is
+    # not re-queried here (this script only reruns village/condition
+    # matching, not dedup search) — default same_condition/same_casualties
+    # to False so a recompute never silently auto-links; it only ever
+    # narrows the review band down from the stored duplicate_flag.
+    status, reasons, quality_flags = decide_verification(
+        incident,
+        VerificationSignals(
+            match_result=match,
+            extraction_result=extraction,
+            village_id=incident.village_id,
+            tier2_retry_count=raw.tier2_retry_count or 0,
+            tier2_retry_limit=settings.extraction_max_retries,
+            governance_hard_reasons=tuple(governance_hard_reasons),
+            duplicate_similarity_score=(
+                incident.duplicate_similarity_score
+                if incident.duplicate_flag
+                else None
+            ),
+            duplicate_same_village=True,
         ),
     )
-    if casualty_reason:
-        hard_reasons.append(casualty_reason)
-    if extraction.get("needs_review") and extraction.get("review_reason"):
-        hard_reasons.append(str(extraction["review_reason"]))
-    if (raw.tier2_retry_count or 0) >= settings.extraction_max_retries:
-        hard_reasons.append(
-            f"Tier 2 detail extraction failed after {raw.tier2_retry_count} retries"
-        )
-
-    active = active_non_duplicate_verification_reasons(
-        match_result=match,
-        extraction_result=extraction,
-        tier2_retry_count=raw.tier2_retry_count or 0,
-        tier2_retry_limit=settings.extraction_max_retries,
-        verification_reason=None,
-        village_id=incident.village_id,
-    )
-    village_hard = LOW_CONFIDENCE_VILLAGE in active
-    unresolved_condition = CONDITION_REVIEW in active or condition_id in (None, 87)
-    if unresolved_condition:
-        hard_reasons.append(
-            condition_hint
-            or "No usable text-grounded or source-metadata condition candidate."
-        )
-    if TIER2_RETRY_CAP in active and not any(
-        reason.startswith("Tier 2 detail extraction failed") for reason in hard_reasons
-    ):
-        hard_reasons.append("Tier 2 detail extraction failed after retry cap")
-
-    reason = _verification_reason(
-        match,
-        duplicate_flag=bool(incident.duplicate_flag),
-        duplicate_level=incident.duplicate_level,
-        duplicate_similarity_score=incident.duplicate_similarity_score,
-        low_confidence_village_match=village_hard,
-        condition_review_reason=(condition_hint if not unresolved_condition else None),
-        hard_reasons=tuple(hard_reasons),
-    )
-    needs_review = bool(
-        incident.duplicate_flag or village_hard or hard_reasons or unresolved_condition
-    )
+    reason = "; ".join(reasons) or None
     return Recomputed(
-        status="needs_verification" if needs_review else "auto_processed",
+        status=status,
         reason=reason,
         condition_id=condition_id or incident.condition_id,
+        quality_flags=quality_flags,
     )
 
 
@@ -257,6 +251,8 @@ def main() -> int:
     processed = succeeded = failed = skipped = 0
     transitions: Counter[tuple[str, str, str]] = Counter()
     samples: dict[tuple[str, str, str], list[str]] = defaultdict(list)
+    rule_counts: Counter[str] = Counter()
+    quality_flag_counts: Counter[str] = Counter()
     matcher = MatchingService(VillageRepository(db), ConditionRepository(db))
     try:
         incidents = list(
@@ -290,10 +286,15 @@ def main() -> int:
                 transitions[key] += 1
                 if len(samples[key]) < 10:
                     samples[key].append(str(incident.id))
+                if outcome.status == "needs_verification":
+                    rule_counts[_rule_bucket(outcome.reason)] += 1
+                for flag in outcome.quality_flags:
+                    quality_flag_counts[str(flag.get("flag"))] += 1
                 if args.apply:
                     incident.verification_status = outcome.status
                     incident.verification_reason = outcome.reason
                     incident.condition_id = outcome.condition_id
+                    incident.quality_flags = outcome.quality_flags or None
                     db.add(raw)
                     db.add(incident)
                     if succeeded and succeeded % args.batch_size == 0:
@@ -315,6 +316,19 @@ def main() -> int:
                 f"| {key[0]} | {key[1]} | {key[2]} | {count} | "
                 f"{', '.join(samples[key])} |"
             )
+
+        print("\n## Projected review queue, by rule")
+        print("| Rule | Incidents |")
+        print("|---|---:|")
+        for rule, count in sorted(rule_counts.items(), key=lambda item: -item[1]):
+            print(f"| {rule} | {count} |")
+
+        print("\n## Quality flags (developer-facing, not the review queue)")
+        print("| Flag | Incidents |")
+        print("|---|---:|")
+        for flag, count in sorted(quality_flag_counts.items(), key=lambda item: -item[1]):
+            print(f"| {flag} | {count} |")
+
         mode = "apply" if args.apply else "dry-run"
         print(
             f"mode={mode} processed={processed} succeeded={succeeded} "
