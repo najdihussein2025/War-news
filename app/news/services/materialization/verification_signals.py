@@ -144,6 +144,63 @@ def _is_weak_village(item: object) -> bool:
     )
 
 
+def unresolved_village_casualty_flags(match: dict | None) -> list[dict]:
+    """Quality flags for village mentions that carry casualties but never
+    resolved to a village id. These never gate verification (see
+    [[data-quality-list]]); they only surface in the data-quality list.
+    """
+    village_matches = (match or {}).get("village_matches") or []
+    flags = []
+    for item in village_matches:
+        if not isinstance(item, dict):
+            continue
+        if item.get("matched_village_id") is not None:
+            continue
+        if item.get("deaths") or item.get("injuries"):
+            flags.append(
+                {
+                    "flag": "unresolved_village_with_casualties",
+                    "raw_village_text": item.get("raw_village_text"),
+                    "deaths": item.get("deaths"),
+                    "injuries": item.get("injuries"),
+                }
+            )
+    return flags
+
+
+def _condition_signal(
+    match: dict,
+    village_matches: list,
+    village_id: int | None,
+) -> str | None:
+    """Return the ungrounded-condition review reason for THIS incident's own
+    village/sub-event only — never a sibling's, and never the bulletin root
+    reason when this incident's own match resolved its condition cleanly.
+    """
+    if village_id is None:
+        candidates = [match.get("condition_review_reason")] + [
+            item.get("condition_review_reason")
+            for item in village_matches
+            if isinstance(item, dict)
+        ]
+    else:
+        own = [
+            item
+            for item in village_matches
+            if isinstance(item, dict) and item.get("matched_village_id") == village_id
+        ]
+        candidates = (
+            [item.get("condition_review_reason") for item in own]
+            if own
+            else [match.get("condition_review_reason")]
+        )
+    for reason in candidates:
+        reason = str(reason or "")
+        if reason.startswith("No usable text-grounded or source-metadata condition"):
+            return reason
+    return None
+
+
 def _village_signal(
     match: dict,
     village_matches: list,
@@ -163,14 +220,13 @@ def _village_signal(
     # resolved confidently.
     if own and all(_is_weak_village(item) for item in own):
         return True
-    # A village with no id never gets an incident of its own, so if it carries
-    # casualties the bulletin's incidents stay flagged rather than losing it.
-    return any(
-        isinstance(item, dict)
-        and item.get("matched_village_id") is None
-        and (item.get("deaths") or item.get("injuries"))
-        for item in village_matches
-    )
+    # A village with no id never gets an incident of its own. Casualties on an
+    # unresolved village mention are a data-quality problem for that mention,
+    # not a reason to flag a sibling incident whose own village resolved
+    # confidently — that leaked the review flag across unrelated incidents in
+    # the same bulletin. Callers surface the unresolved mention separately
+    # (see unresolved_village_casualty_flags).
+    return False
 
 
 def active_non_duplicate_verification_reasons(
@@ -199,22 +255,7 @@ def active_non_duplicate_verification_reasons(
         match, village_matches, village_id
     ):
         reasons.add(LOW_CONFIDENCE_VILLAGE)
-    condition_reasons = [
-        str(reason)
-        for reason in [
-            match.get("condition_review_reason"),
-            *[
-                item.get("condition_review_reason")
-                for item in village_matches
-                if isinstance(item, dict)
-            ],
-        ]
-        if reason
-    ]
-    if any(
-        reason.startswith("No usable text-grounded or source-metadata condition")
-        for reason in condition_reasons
-    ):
+    if _condition_signal(match, village_matches, village_id):
         reasons.add(CONDITION_REVIEW)
     target_ids = {
         item.get("matched_village_id")

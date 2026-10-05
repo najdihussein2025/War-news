@@ -174,9 +174,10 @@ def recompute(
     match = _rerun_match(matcher, raw)
     own = _incident_match(match, incident.village_id) or {}
     condition_id = own.get("matched_condition_id") or match.get("matched_condition_id")
-    condition_hint = own.get("condition_review_reason") or match.get(
-        "condition_review_reason"
-    )
+    # Scoped to this incident's own village/sub-event match only — never a
+    # sibling's or the bulletin-root reason, which would leak onto an
+    # incident whose own condition resolved cleanly (Bug 1).
+    condition_hint = own.get("condition_review_reason")
     match = dict(raw.match_result or {})
     extraction = dict(raw.extraction_result or {})
     own = _incident_match(match, incident.village_id) or {}
