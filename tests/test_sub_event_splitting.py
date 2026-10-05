@@ -628,5 +628,6 @@ def test_plain_between_clause_does_not_collapse_unrelated_action_villages() -> N
     ]
     assert all(incident.village_id != 6 for incident in created)
     mining = next(incident for incident in created if incident.condition_id == 21)
-    assert mining.verification_status == "needs_verification"
+    assert mining.verification_status == "auto_processed"
+    assert {"flag": "low_confidence_village"} in (mining.quality_flags or [])
     assert "كونين" in (mining.note or "")

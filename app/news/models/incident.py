@@ -109,6 +109,12 @@ class Incident(Base):
     casualty_deaths_status: Mapped[str | None] = mapped_column(String(24), nullable=True)
     casualty_injuries_status: Mapped[str | None] = mapped_column(String(24), nullable=True)
     casualty_status_remaining_total: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    # Pipeline-accuracy signals that no longer gate needs_verification (Phase 4
+    # policy): low-confidence village, unresolved condition, tier2 retry cap,
+    # multi_village_no_subevents, flare/strike wording, an unresolved village
+    # mention with casualties. Developer-facing only (Data quality list);
+    # never read by the verification queue.
+    quality_flags: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     casualty_is_preliminary: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     casualty_status_evidence: Mapped[str | None] = mapped_column(Text, nullable=True)
     deaths: Mapped[int | None] = mapped_column(Integer, nullable=True)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, Literal
 
 
 LOW_CONFIDENCE_VILLAGE_REVIEW_REASON = (
@@ -336,3 +337,189 @@ def _verification_reason(
     if condition_review_reason:
         reasons.append(condition_review_reason)
     return "; ".join(dict.fromkeys(reasons)) or None
+
+
+# --- New verification policy (Phase 4, decided 2026-10-05) -----------------
+#
+# Only two things may put an incident in the human review queue:
+#   rule 1 — casualty attribution (handled by casualty_review_reason above)
+#   rule 2 — a likely duplicate that cannot be auto-linked safely
+# Rule 3 (governance safeguards: a verified incident changed by a pipeline
+# write, a casualty-count conflict/transition detected on merge, admin
+# restore from rejected) is implemented at the call sites that already own
+# that state and is passed straight through as `governance_hard_reasons`.
+# Everything else this module used to treat as a review reason — low-
+# confidence village, an ungrounded condition, the tier-2 retry cap,
+# multi_village_no_subevents, flare/strike wording — becomes a quality flag
+# for the developer-facing data-quality list instead (see
+# `app/core/llm_knowledge/CHANGELOG.md`).
+
+DuplicateOutcome = Literal["none", "review", "auto_link"]
+
+
+def decide_duplicate_outcome(
+    similarity_score: float | None,
+    *,
+    same_village: bool = False,
+    same_condition: bool = False,
+    same_casualties: bool = False,
+    event_gap_hours: float | None = None,
+    review_threshold: float | None = None,
+    autolink_threshold: float | None = None,
+    autolink_max_gap_hours: float | None = None,
+) -> DuplicateOutcome:
+    """Classify one duplicate candidate's similarity score.
+
+    ``review_threshold``/``autolink_threshold``/``autolink_max_gap_hours``
+    default to ``settings.duplicate_review_threshold`` /
+    ``duplicate_autolink_threshold`` / ``duplicate_autolink_max_event_gap_hours``
+    so the bands stay env/settings-driven, never hardcoded by a caller.
+    """
+    if similarity_score is None:
+        return "none"
+    if review_threshold is None or autolink_threshold is None or autolink_max_gap_hours is None:
+        from app.core.config import settings as _settings
+
+        review_threshold = (
+            review_threshold
+            if review_threshold is not None
+            else _settings.duplicate_review_threshold
+        )
+        autolink_threshold = (
+            autolink_threshold
+            if autolink_threshold is not None
+            else _settings.duplicate_autolink_threshold
+        )
+        autolink_max_gap_hours = (
+            autolink_max_gap_hours
+            if autolink_max_gap_hours is not None
+            else _settings.duplicate_autolink_max_event_gap_hours
+        )
+    if similarity_score >= autolink_threshold:
+        safe_gap = event_gap_hours is not None and event_gap_hours <= autolink_max_gap_hours
+        if same_village and same_condition and same_casualties and safe_gap:
+            return "auto_link"
+        return "review"
+    if similarity_score >= review_threshold:
+        return "review"
+    return "none"
+
+
+@dataclass(frozen=True)
+class VerificationSignals:
+    """Everything `decide_verification` needs, gathered by the caller."""
+
+    match_result: dict | None = None
+    extraction_result: dict | None = None
+    village_id: int | None = None
+    tier2_retry_count: int = 0
+    tier2_retry_limit: int | None = None
+    # Rule 2 inputs — the strongest duplicate candidate found by the existing
+    # dedup services (fast-path, full materialization, or the tier-2 backstop).
+    duplicate_similarity_score: float | None = None
+    duplicate_candidate_id: Any = None
+    duplicate_same_village: bool = False
+    duplicate_same_condition: bool = False
+    duplicate_same_casualties: bool = False
+    duplicate_event_gap_hours: float | None = None
+    # Rule 3 — pre-formed governance-safeguard reason strings from the call
+    # site that owns that state (see module docstring above). Passed through
+    # verbatim; never re-derived here.
+    governance_hard_reasons: tuple[str, ...] = ()
+    # Pipeline-accuracy signals that must NOT gate review under the new
+    # policy — captured as quality flags only.
+    multi_village_no_subevents: bool = False
+    flare_wording_detail: str | None = None
+    # Some call sites (the fast materialization path) only have the already
+    # product-approved casualty_review_reason string on hand, not the full
+    # ExtractionResult dict `casualty_review_reason` needs. When set, this
+    # short-circuits rule 1's own recomputation.
+    precomputed_casualty_reason: str | None = None
+    # Likewise: some callers (e.g. the plain-"between X and Y" village
+    # collapse) already know their own match is low-confidence from a
+    # locally-rewritten village_match that isn't reflected in the raw
+    # message's stored match_result. Forces the quality flag either way.
+    low_confidence_village_override: bool = False
+
+
+def decide_verification(
+    incident: object | None,
+    signals: VerificationSignals,
+) -> tuple[str, list[str], list[dict]]:
+    """The single gate for `needs_verification` (rules 1-3 above).
+
+    Returns ``(status, reasons, quality_flags)``. ``status`` is
+    ``"needs_verification"`` or ``"auto_processed"``; ``reasons`` is the
+    ordered, de-duplicated list of display strings for
+    ``incident.verification_reason``; ``quality_flags`` is the list of
+    structured flags for the data-quality list (Part D) — never stored on
+    ``verification_reason`` and never used to decide ``status``.
+    """
+    match = signals.match_result or {}
+    extraction = signals.extraction_result or {}
+    village_matches = match.get("village_matches") or []
+    village_id = (
+        signals.village_id
+        if incident is None
+        else getattr(incident, "village_id", signals.village_id)
+    )
+
+    reasons: list[str] = list(signals.governance_hard_reasons)
+
+    target_ids = {
+        item.get("matched_village_id")
+        for item in village_matches
+        if isinstance(item, dict)
+        and item.get("village_role", "target") == "target"
+        and isinstance(item.get("matched_village_id"), int)
+    }
+    casualty_reason = signals.precomputed_casualty_reason or casualty_review_reason(
+        extraction,
+        target_count=len(target_ids),
+        category_casualties_suppressed=bool(
+            extraction.get("category_casualties_suppressed")
+        ),
+    )
+    if casualty_reason:
+        reasons.append(casualty_reason)
+
+    duplicate_outcome = decide_duplicate_outcome(
+        signals.duplicate_similarity_score,
+        same_village=signals.duplicate_same_village,
+        same_condition=signals.duplicate_same_condition,
+        same_casualties=signals.duplicate_same_casualties,
+        event_gap_hours=signals.duplicate_event_gap_hours,
+    )
+    if duplicate_outcome == "review":
+        score = signals.duplicate_similarity_score or 0.0
+        reasons.append(
+            f"{round(score * 100)}% similar to an existing incident from "
+            "another source — confirm whether this is a duplicate."
+        )
+
+    quality_flags: list[dict] = []
+    if _condition_signal(match, village_matches, village_id):
+        quality_flags.append({"flag": "unresolved_condition"})
+    if (
+        signals.low_confidence_village_override
+        or _village_signal(match, village_matches, village_id)
+        or bool(match.get("any_village_low_confidence"))
+    ):
+        quality_flags.append({"flag": "low_confidence_village"})
+    quality_flags.extend(unresolved_village_casualty_flags(match))
+    if (
+        signals.tier2_retry_limit is not None
+        and signals.tier2_retry_count >= signals.tier2_retry_limit
+    ):
+        quality_flags.append(
+            {"flag": "tier2_retry_cap", "retry_count": signals.tier2_retry_count}
+        )
+    if signals.multi_village_no_subevents:
+        quality_flags.append({"flag": "multi_village_no_subevents"})
+    if signals.flare_wording_detail:
+        quality_flags.append(
+            {"flag": "flare_wording", "detail": signals.flare_wording_detail}
+        )
+
+    status = "needs_verification" if reasons else "auto_processed"
+    return status, list(dict.fromkeys(reasons)), quality_flags

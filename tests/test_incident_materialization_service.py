@@ -308,7 +308,10 @@ def test_eligible_representative_inserts_incident_and_detail() -> None:
     assert representative.status == MessageStatus.materialized
 
 
-def test_low_confidence_village_match_materializes_needing_review() -> None:
+def test_low_confidence_village_match_is_auto_processed_with_a_quality_flag() -> None:
+    """Phase 4 policy: low-confidence village alone is no longer a review
+    reason — only casualty attribution and likely duplicates are. It still
+    surfaces as a quality flag for the data-quality list."""
     db = _SessionStub()
     service = IncidentMaterializationService(db)  # type: ignore[arg-type]
     match_result = _match_result(village_status="matched_low_confidence")
@@ -317,8 +320,9 @@ def test_low_confidence_village_match_materializes_needing_review() -> None:
 
     assert len(result) == 1
     incident = next(value for value in db.committed if isinstance(value, Incident))
-    assert incident.verification_status == "needs_verification"
-    assert incident.verification_reason == LOW_CONFIDENCE_VILLAGE_REVIEW_REASON
+    assert incident.verification_status == "auto_processed"
+    assert incident.verification_reason is None
+    assert incident.quality_flags == [{"flag": "low_confidence_village"}]
     assert incident.duplicate_flag is False
     assert service.stats.inserted == 1
 

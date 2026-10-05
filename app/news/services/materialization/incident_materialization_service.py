@@ -5,7 +5,7 @@ import json
 import logging
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, time, timezone
 from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo
 from typing import Any
@@ -90,9 +90,11 @@ from app.news.services.dedup.fast_path_eligibility import (
     permanent_ineligibility_reason,
 )
 from app.news.services.materialization.verification_signals import (
+    VerificationSignals,
     _verification_reason,
     active_non_duplicate_verification_reasons,
     casualty_review_reason,
+    decide_verification,
 )
 
 
@@ -545,6 +547,7 @@ class IncidentMaterializationService:
             if decision.outcome == FastPathDedupOutcome.possible_duplicate:
                 # Flag for human review: materialize the row and link it to the
                 # matched active incident with a pending duplicate_matches entry.
+                matched = decision.matched_incident
                 incident = self._insert_fast_incident(
                     representative=representative,
                     casualty_status_values=self._casualty_status_values(
@@ -576,6 +579,18 @@ class IncidentMaterializationService:
                     ),
                     hash_suffix=unit.hash_suffix,
                     story_group_id=unit.story_group_id,
+                    duplicate_similarity_score=decision.similarity_score,
+                    duplicate_same_condition=(
+                        matched is not None and matched.condition_id == condition_id
+                    ),
+                    duplicate_same_casualties=(
+                        matched is not None
+                        and matched.deaths == village_deaths
+                        and matched.injuries == village_injuries
+                    ),
+                    duplicate_event_gap_hours=self._event_gap_hours(
+                        matched, event_datetime
+                    ),
                 )
                 if incident is not None and decision.matched_incident is not None:
                     fast_dedup.incidents.create_duplicate_match(
@@ -1113,6 +1128,10 @@ class IncidentMaterializationService:
         condition_review_reason: str | None = None,
         hash_suffix: str | None = None,
         story_group_id: UUID | None = None,
+        duplicate_similarity_score: float | None = None,
+        duplicate_same_condition: bool = False,
+        duplicate_same_casualties: bool = False,
+        duplicate_event_gap_hours: float | None = None,
     ) -> Incident | None:
         if village_id is None:
             self.fast_stats.skipped_ineligible += 1
@@ -1131,30 +1150,23 @@ class IncidentMaterializationService:
             hash_suffix=hash_suffix,
         )
 
-        verification_status = _initial_verification_status(
-            representative.match_result,
-            duplicate_flag=duplicate_flag,
-            # An insufficient-score duplicate is always created with the
-            # duplicate flag, before its audit record is persisted.
-            insufficient_score=duplicate_flag,
-            low_confidence_village_match=low_confidence_village_match,
-            condition_review_required=condition_review_required,
-            village_id=village_id,
+        verification_status, verification_reasons, quality_flags = decide_verification(
+            None,
+            VerificationSignals(
+                match_result=representative.match_result,
+                village_id=village_id,
+                precomputed_casualty_reason=scope_review_reason,
+                low_confidence_village_override=low_confidence_village_match,
+                duplicate_similarity_score=(
+                    duplicate_similarity_score if duplicate_flag else None
+                ),
+                duplicate_same_village=True,
+                duplicate_same_condition=duplicate_same_condition,
+                duplicate_same_casualties=duplicate_same_casualties,
+                duplicate_event_gap_hours=duplicate_event_gap_hours,
+            ),
         )
-        if scope_review_reason:
-            verification_status = "needs_verification"
-        verification_reason = (
-            _verification_reason(
-                representative.match_result,
-                duplicate_flag=duplicate_flag,
-                insufficient_score=duplicate_flag,
-                low_confidence_village_match=low_confidence_village_match,
-                condition_review_reason=condition_review_reason,
-                hard_reasons=(scope_review_reason,) if scope_review_reason else (),
-            )
-            if verification_status == "needs_verification" or condition_review_reason
-            else None
-        )
+        verification_reason = "; ".join(verification_reasons) or None
 
         incident = Incident(
             raw_message_id=representative.id,
@@ -1181,6 +1193,7 @@ class IncidentMaterializationService:
             details_pending=True,
             verification_status=verification_status,
             verification_reason=verification_reason,
+            quality_flags=quality_flags or None,
             story_group_id=story_group_id,
             created_by=None,
         )
@@ -1483,39 +1496,37 @@ class IncidentMaterializationService:
                     duplicate_level = "low"
                     duplicate_score = score
 
-            verification_status = _initial_verification_status(
-                representative.match_result,
-                duplicate_flag=duplicate_flag,
-                low_confidence_village_match=(
-                    village_status == "matched_low_confidence"
-                ),
-                condition_review_required=bool(
-                    village_match.get("condition_review_required")
-                ),
-                village_id=village_id,
-            )
-            if extraction_review_reason:
-                verification_status = "needs_verification"
-            verification_reason = (
-                _verification_reason(
-                    representative.match_result,
-                    duplicate_flag=duplicate_flag,
-                    duplicate_level=duplicate_level,
-                    duplicate_similarity_score=duplicate_score,
-                    low_confidence_village_match=(
+            verification_status, verification_reasons, quality_flags = decide_verification(
+                None,
+                VerificationSignals(
+                    match_result=representative.match_result,
+                    village_id=village_id,
+                    precomputed_casualty_reason=extraction_review_reason,
+                    low_confidence_village_override=(
                         village_status == "matched_low_confidence"
                     ),
-                    condition_review_reason=village_match.get(
-                        "condition_review_reason"
+                    duplicate_similarity_score=(
+                        duplicate_score if duplicate_flag else None
                     ),
-                    hard_reasons=(extraction_review_reason,)
-                    if extraction_review_reason
-                    else (),
-                )
-                if verification_status == "needs_verification"
-                or village_match.get("condition_review_reason")
-                else None
+                    duplicate_same_village=True,
+                    duplicate_same_condition=(
+                        duplicate_candidate is not None
+                        and getattr(duplicate_candidate, "condition_id", None)
+                        == village_condition_id
+                    ),
+                    duplicate_same_casualties=(
+                        duplicate_candidate is not None
+                        and getattr(duplicate_candidate, "deaths", None)
+                        == village_deaths
+                        and getattr(duplicate_candidate, "injuries", None)
+                        == village_injuries
+                    ),
+                    duplicate_event_gap_hours=self._event_gap_hours(
+                        duplicate_candidate, event_datetime
+                    ),
+                ),
             )
+            verification_reason = "; ".join(verification_reasons) or None
 
             incident = Incident(
                 raw_message_id=representative.id,
@@ -1545,6 +1556,7 @@ class IncidentMaterializationService:
                 duplicate_similarity_score=duplicate_score,
                 verification_status=verification_status,
                 verification_reason=verification_reason,
+                quality_flags=quality_flags or None,
                 story_group_id=shared_story_group_id,
                 created_by=None,
             )
@@ -2266,6 +2278,20 @@ class IncidentMaterializationService:
         if location_ambiguity_note:
             parts.append(location_ambiguity_note)
         return "\n".join(part for part in parts if part) or None
+
+    @staticmethod
+    def _event_gap_hours(matched: Incident | None, event_datetime: datetime) -> float | None:
+        """Hours between a duplicate candidate's stored event time and this
+        incident's. Used only by rule 2's auto-link safety window — a naive
+        gap is adequate since it only needs to tell "close" from "not"."""
+        matched_date = getattr(matched, "event_date", None) if matched is not None else None
+        if matched_date is None:
+            return None
+        matched_dt = datetime.combine(
+            matched_date, getattr(matched, "event_time", None) or time(0, 0)
+        )
+        candidate_dt = event_datetime.replace(tzinfo=None)
+        return abs((candidate_dt - matched_dt).total_seconds()) / 3600.0
 
     @staticmethod
     def _location_ambiguity_note(extraction: ExtractionResult) -> str | None:

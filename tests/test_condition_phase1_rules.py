@@ -63,6 +63,10 @@ def test_no_usable_condition_still_requires_review() -> None:
                 "village_role": "target",
                 "village_match_status": "matched",
                 "village_review_required": False,
+                "condition_review_required": True,
+                "condition_review_reason": (
+                    "No usable text-grounded or source-metadata condition candidate."
+                ),
             }
         ],
     }

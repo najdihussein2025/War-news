@@ -203,7 +203,11 @@ def test_fuzzy_area_materializes_one_reviewable_incident_with_alternate_note() -
 
     assert len(result) == 1
     assert result[0].village_id == 976
-    assert result[0].verification_status == "needs_verification"
+    # Phase 4 policy: fuzzy-area ambiguity alone is no longer a review
+    # reason, just a data-quality flag (resolved/confirmed via Part C's LLM
+    # check, or left as a quality flag — never blocks on human review).
+    assert result[0].verification_status == "auto_processed"
+    assert {"flag": "low_confidence_village"} in (result[0].quality_flags or [])
     assert "بيوت السياد" in (result[0].note or "")
 
 
@@ -250,7 +254,8 @@ def test_plain_between_two_villages_materializes_primary_only_with_alternate_not
 
     assert len(result) == 1
     assert result[0].village_id == 1001
-    assert result[0].verification_status == "needs_verification"
+    assert result[0].verification_status == "auto_processed"
+    assert {"flag": "low_confidence_village"} in (result[0].quality_flags or [])
     assert "بيت ياحون" in (result[0].note or "")
     assert not any(
         incident.village_id == 1002

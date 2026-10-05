@@ -148,6 +148,15 @@ class Settings(BaseSettings):
     segment_dedup_review_max_event_gap_hours: int = 24
     segment_dedup_review_min_informative_tokens: int = 4
     segment_dedup_review_max_candidates: int = 20
+    # New verification policy (Phase 4): band for the "likely duplicate"
+    # review reason, applied on top of the existing dedup verdicts above.
+    # similarity >= autolink and same village/condition/casualties/time ->
+    # silently auto-linked, no review. review <= similarity < autolink (or
+    # >= autolink with a mismatch) -> needs_verification. < review -> no
+    # duplicate signal at all.
+    duplicate_review_threshold: float = 0.85
+    duplicate_autolink_threshold: float = 0.98
+    duplicate_autolink_max_event_gap_hours: float = 3.0
     bulletin_reconciliation_window_hours: int = 60
     bulletin_reconciliation_sweep_interval_seconds: int = 1800
     bulletin_reconciliation_village_set_min_overlap: float = 1.0
