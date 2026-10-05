@@ -1150,7 +1150,7 @@ class IncidentMaterializationService:
             hash_suffix=hash_suffix,
         )
 
-        verification_status, verification_reasons, quality_flags = decide_verification(
+        verification_status, verification_reasons, quality_flags, verification_payload = decide_verification(
             None,
             VerificationSignals(
                 match_result=representative.match_result,
@@ -1193,7 +1193,7 @@ class IncidentMaterializationService:
             details_pending=True,
             verification_status=verification_status,
             verification_reason=verification_reason,
-            quality_flags=quality_flags or None,
+            quality_flags=verification_payload,
             story_group_id=story_group_id,
             created_by=None,
         )
@@ -1496,7 +1496,7 @@ class IncidentMaterializationService:
                     duplicate_level = "low"
                     duplicate_score = score
 
-            verification_status, verification_reasons, quality_flags = decide_verification(
+            verification_status, verification_reasons, quality_flags, verification_payload = decide_verification(
                 None,
                 VerificationSignals(
                     match_result=representative.match_result,
@@ -1556,7 +1556,7 @@ class IncidentMaterializationService:
                 duplicate_similarity_score=duplicate_score,
                 verification_status=verification_status,
                 verification_reason=verification_reason,
-                quality_flags=quality_flags or None,
+                quality_flags=verification_payload,
                 story_group_id=shared_story_group_id,
                 created_by=None,
             )

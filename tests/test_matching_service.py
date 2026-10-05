@@ -106,6 +106,25 @@ def test_classifies_village_thresholds(
     assert villages.calls == [("ايتا الشعب", 5)]
 
 
+def test_wadi_phrase_does_not_confidently_fuzzy_match_unrelated_ouadi_village() -> None:
+    village = SimpleNamespace(
+        id=1200,
+        ref_name_ar="وادي الدير",
+        acs_name=None,
+        cad_name=None,
+    )
+    villages = _TextSimilarRepositoryStub({"وادي الحجير": [(village, 0.91)]})
+    conditions = _SimilarRepositoryStub(None, None)
+    service = MatchingService(villages, conditions)
+
+    result = service.match(_extraction(village=["وادي الحجير"], action=None))
+
+    vm = result.village_matches[0]
+    assert vm.matched_village_id == 1200
+    assert vm.village_match_status == MatchResultStatus.matched_low_confidence
+    assert vm.village_review_required is True
+
+
 def test_matches_condition_and_preserves_raw_mentions() -> None:
     villages = _SimilarRepositoryStub(None, None)
     conditions = _SimilarRepositoryStub(22, 0.81)

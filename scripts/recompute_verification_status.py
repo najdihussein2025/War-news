@@ -41,6 +41,7 @@ class Recomputed:
     reason: str | None
     condition_id: int | None
     quality_flags: list[dict]
+    quality_payload: dict | list[dict] | None
 
 
 def _reason_bucket(reason: str | None) -> str:
@@ -188,7 +189,6 @@ def _preserved_governance_reasons(reason: str | None) -> list[str]:
     if not value:
         return []
     preserved_markers = (
-        "possible cross-source duplicate",
         "casualty count conflict",
         "casualty transition",
         "unconfirmed story revision",
@@ -228,7 +228,7 @@ def recompute(
     # matching, not dedup search) — default same_condition/same_casualties
     # to False so a recompute never silently auto-links; it only ever
     # narrows the review band down from the stored duplicate_flag.
-    status, reasons, quality_flags = decide_verification(
+    status, reasons, quality_flags, quality_payload = decide_verification(
         incident,
         VerificationSignals(
             match_result=match,
@@ -253,6 +253,7 @@ def recompute(
         reason=reason,
         condition_id=condition_id or incident.condition_id,
         quality_flags=quality_flags,
+        quality_payload=quality_payload,
     )
 
 
@@ -311,7 +312,7 @@ def main() -> int:
                     incident.verification_status = outcome.status
                     incident.verification_reason = outcome.reason
                     incident.condition_id = outcome.condition_id
-                    incident.quality_flags = outcome.quality_flags or None
+                    incident.quality_flags = outcome.quality_payload
                     db.add(raw)
                     db.add(incident)
                     if succeeded and succeeded % args.batch_size == 0:

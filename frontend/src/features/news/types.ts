@@ -27,6 +27,7 @@ export type Incident = {
   verification_reason: string | null;
   verification_types?: Array<"duplicate" | "casualty_missing_number" | "casualty_aggregate_toll">;
   open_flags?: Array<{ flag_id: string; reason_code: string; label: string; severity: string; summary: string; evidence_sentence: string | null }>;
+  quality_flags?: Array<{ flag: string; message?: string; detail?: string; [key: string]: unknown }>;
   verified_by_user_id: string | null;
   verified_at: string | null;
   duplicate_flag: "none" | "possible";

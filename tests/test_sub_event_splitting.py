@@ -20,6 +20,9 @@ from app.news.services.matching.matching_service import MatchingService
 from app.news.services.materialization.incident_materialization_service import (
     IncidentMaterializationService,
 )
+from app.news.services.materialization.verification_signals import (
+    extract_quality_flags,
+)
 from tests.test_incident_materialization_service import (
     _SessionStub,
     _representative,
@@ -629,5 +632,5 @@ def test_plain_between_clause_does_not_collapse_unrelated_action_villages() -> N
     assert all(incident.village_id != 6 for incident in created)
     mining = next(incident for incident in created if incident.condition_id == 21)
     assert mining.verification_status == "auto_processed"
-    assert {"flag": "low_confidence_village"} in (mining.quality_flags or [])
+    assert {"flag": "low_confidence_village"} in extract_quality_flags(mining.quality_flags)
     assert "كونين" in (mining.note or "")

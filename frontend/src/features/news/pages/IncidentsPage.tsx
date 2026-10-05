@@ -18,7 +18,6 @@ import { formatDate } from "../../../lib/formatters";
 import { getBeirutDate, normalizeDateInputValue } from "../../../lib/localDate";
 import { roleBaseFromPath } from "../../../lib/rolePath";
 import { ConditionSelect } from "../components/ConditionSelect";
-import { DuplicateBadge } from "../components/DuplicateBadge";
 import { useConditionsQuery, useIncidentStream, useIncidentsQuery, useVillagesQuery } from "../hooks";
 import { createIncident, reviewIncident } from "../api";
 import { useContentSourcesQuery } from "../../sources/hooks";
@@ -97,6 +96,26 @@ const villageResolutionNote = (row: Incident) => {
 const openVerificationTypes = (row: Incident) => row.verification_types ?? [];
 
 const openVerificationFlags = (row: Incident) => row.open_flags ?? [];
+
+const reviewRuleBadge = (row: Incident) => {
+  const types = openVerificationTypes(row);
+  if (types.includes("duplicate")) return { label: "Duplicate?", variant: "warning" as const };
+  if (types.includes("casualty_missing_number") || types.includes("casualty_aggregate_toll")) {
+    return { label: "Casualties unassigned", variant: "danger" as const };
+  }
+  if (row.verification_status === "needs_verification") {
+    return { label: "Changed after verification", variant: "info" as const };
+  }
+  if (row.verification_status === "verified") return { label: "Verified", variant: "success" as const };
+  if (row.verification_status === "rejected") return { label: "Rejected", variant: "danger" as const };
+  return null;
+};
+
+const qualityFlagText = (row: Incident) =>
+  (row.quality_flags ?? [])
+    .map((flag) => flag.message || flag.detail || String(flag.flag || "Quality flag").replaceAll("_", " "))
+    .filter(Boolean)
+    .join("\n");
 
 const PlusIcon = () => (
   <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none">
@@ -280,8 +299,8 @@ export const IncidentsPage = () => {
             <span className="font-semibold text-text-primary">
               {row.village || "Unknown village"}
             </span>
-            {row.duplicate_flag === "possible" ? (
-              <DuplicateBadge isDuplicate />
+            {row.duplicate_flag === "possible" && row.verification_status !== "needs_verification" ? (
+              <StatusBadge label="Possible duplicate" variant="warning" />
             ) : null}
             {row.duplicate_level === "low" ? (
               <StatusBadge
@@ -340,9 +359,30 @@ export const IncidentsPage = () => {
       cellClassName: "w-[9.5rem]",
       render: (row) => (
         <div className="space-y-1">
-          {verificationBadge(row) ? <StatusBadge {...verificationBadge(row)!} /> : null}
-          <div className="flex flex-wrap gap-1">{openVerificationTypes(row).map((type) => <StatusBadge key={type} label={verificationTypeLabel(type)} variant="neutral" />)}</div>
-          {row.verification_reason ? <p className="text-caption text-text-muted">{row.verification_reason}</p> : null}
+          {reviewRuleBadge(row) ? <StatusBadge {...reviewRuleBadge(row)!} /> : verificationBadge(row) ? <StatusBadge {...verificationBadge(row)!} /> : null}
+          {row.verification_reason ? (
+            <p className={`${twoLineClampClass} text-caption leading-5 text-text-muted`} title={row.verification_reason}>
+              {row.verification_reason}
+            </p>
+          ) : null}
+          {openVerificationTypes(row).includes("duplicate") && row.id ? (
+            <button
+              type="button"
+              className="text-caption font-semibold text-primary hover:underline"
+              onClick={() => navigate(`${roleBase}/incidents/${row.id}${location.search}`)}
+            >
+              Compare with match
+            </button>
+          ) : null}
+          {qualityFlagText(row) ? (
+            <span
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border text-caption text-text-muted"
+              title={qualityFlagText(row)}
+              aria-label="Quality flags"
+            >
+              i
+            </span>
+          ) : null}
         </div>
       ),
     },
@@ -384,15 +424,21 @@ export const IncidentsPage = () => {
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-semibold text-text-primary">Raw #{group.raw_message_id}</span>
-            {group.verification_types.map((type) => (
-              <StatusBadge key={type} label={verificationTypeLabel(type)} variant="neutral" />
-            ))}
+            {group.verification_types.includes("duplicate") ? (
+              <StatusBadge label="Duplicate?" variant="warning" />
+            ) : group.verification_types.some((type) => type === "casualty_missing_number" || type === "casualty_aggregate_toll") ? (
+              <StatusBadge label="Casualties unassigned" variant="danger" />
+            ) : (
+              <StatusBadge label="Changed after verification" variant="info" />
+            )}
           </div>
           <p className={`${twoLineClampClass} break-words text-small leading-6 text-text-primary`} dir="auto">
             {group.khabar}
           </p>
           {group.verification_reasons.length ? (
-            <p className="text-caption text-text-muted">{group.verification_reasons.join(" | ")}</p>
+            <p className={`${twoLineClampClass} text-caption leading-5 text-text-muted`} title={group.verification_reasons[0]}>
+              {group.verification_reasons[0]}
+            </p>
           ) : null}
         </div>
       ),

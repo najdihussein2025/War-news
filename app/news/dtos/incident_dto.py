@@ -45,6 +45,7 @@ class IncidentListItemDTO(BaseModel):
     verification_reason: str | None = None
     verification_types: list[str] = Field(default_factory=list)
     open_flags: list[dict[str, Any]] = Field(default_factory=list)
+    quality_flags: list[dict[str, Any]] = Field(default_factory=list)
     verified_by_user_id: UUID | None = None
     verified_at: datetime | None = None
     duplicate_flag: Literal["none", "possible"]
@@ -230,6 +231,7 @@ class IncidentDetailDTO(BaseModel):
     verification_reason: str | None = None
     verification_types: list[str] = Field(default_factory=list)
     open_flags: list[dict[str, Any]] = Field(default_factory=list)
+    quality_flags: list[dict[str, Any]] = Field(default_factory=list)
     verified_by_user_id: UUID | None = None
     verified_at: datetime | None = None
     duplicate_flag: Literal["none", "possible"]

@@ -18,6 +18,7 @@ recon/
 *.session-journal
 Data/*.dump
 war_news_dev.dump
+war_news_before_phase4.dump
 Data/pgadmin4-*.db
 scripts/output/historical_incident_reconcile/
 backups/

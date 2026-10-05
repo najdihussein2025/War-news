@@ -1,6 +1,17 @@
 # llm_knowledge CHANGELOG
 
-## 2026-10-05 — Village phrase normalization and geo-context audit
+## 2026-10-05 - Wadi fuzzy village guard and verification reason cleanup
+
+`Wadi ...` place mentions no longer confidently resolve through fuzzy matching
+to an unrelated ACS village whose name also starts with `Wadi`. They must resolve
+by exact/compact name or an explicit location alias; otherwise the match is kept
+low-confidence for data-quality review. This prevents Wadi el-Houjeir text from
+materializing as Ouadi Ed-Deir when the alias path is stale or missing.
+
+Verification recompute also stops preserving legacy cross-source duplicate
+reason text below the configured duplicate review threshold. Human-facing
+`verification_reason` is now one short review sentence; additional review data
+and developer quality flags are stored structurally in `incidents.quality_flags`.## 2026-10-05 — Village phrase normalization and geo-context audit
 
 Tier 1 guidance now asks for cleaner village strings for descriptor prefixes
 (`خراج`, `أطراف`, `محيط`, `بلدة`, `مدينة`, `قرية`, `سهل`, `تلة`, `أحراج`),
@@ -955,3 +966,4 @@ Updated:
 - `rules/combined_tier1_prompt.md`
 - `rules/tier1_core.md`
 - `terminology/condition_labels.yaml`
+

@@ -29,6 +29,7 @@ from app.news.services.materialization.incident_materialization_service import (
 )
 from app.news.services.materialization.verification_signals import (
     LOW_CONFIDENCE_VILLAGE_REVIEW_REASON,
+    extract_quality_flags,
 )
 
 
@@ -322,7 +323,9 @@ def test_low_confidence_village_match_is_auto_processed_with_a_quality_flag() ->
     incident = next(value for value in db.committed if isinstance(value, Incident))
     assert incident.verification_status == "auto_processed"
     assert incident.verification_reason is None
-    assert incident.quality_flags == [{"flag": "low_confidence_village"}]
+    assert extract_quality_flags(incident.quality_flags) == [
+        {"flag": "low_confidence_village"}
+    ]
     assert incident.duplicate_flag is False
     assert service.stats.inserted == 1
 

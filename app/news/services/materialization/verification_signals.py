@@ -355,6 +355,41 @@ def _verification_reason(
 # `app/core/llm_knowledge/CHANGELOG.md`).
 
 DuplicateOutcome = Literal["none", "review", "auto_link"]
+ReviewRule = Literal["duplicate", "casualty_attribution", "governance"]
+
+
+def review_quality_payload(
+    *,
+    review_rule: ReviewRule | None,
+    review_message: str | None,
+    review_data: dict[str, Any] | None = None,
+    quality_flags: list[dict] | None = None,
+) -> dict[str, Any] | list[dict] | None:
+    flags = quality_flags or []
+    if review_rule is None and not flags:
+        return None
+    payload: dict[str, Any] = {"quality_flags": flags}
+    if review_rule is not None and review_message:
+        payload["review"] = {
+            "rule": review_rule,
+            "message": review_message,
+            "data": review_data or {},
+        }
+    return payload
+
+
+def extract_quality_flags(value: Any) -> list[dict]:
+    if isinstance(value, dict):
+        flags = value.get("quality_flags")
+        return flags if isinstance(flags, list) else []
+    return value if isinstance(value, list) else []
+
+
+def extract_review_payload(value: Any) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        return None
+    review = value.get("review")
+    return review if isinstance(review, dict) else None
 
 
 def decide_duplicate_outcome(
@@ -445,7 +480,7 @@ class VerificationSignals:
 def decide_verification(
     incident: object | None,
     signals: VerificationSignals,
-) -> tuple[str, list[str], list[dict]]:
+) -> tuple[str, list[str], list[dict], dict[str, Any] | list[dict] | None]:
     """The single gate for `needs_verification` (rules 1-3 above).
 
     Returns ``(status, reasons, quality_flags)``. ``status`` is
@@ -521,5 +556,30 @@ def decide_verification(
             {"flag": "flare_wording", "detail": signals.flare_wording_detail}
         )
 
-    status = "needs_verification" if reasons else "auto_processed"
-    return status, list(dict.fromkeys(reasons)), quality_flags
+    selected_reason = next(iter(dict.fromkeys(reasons)), None)
+    status = "needs_verification" if selected_reason else "auto_processed"
+    review_rule: ReviewRule | None = None
+    if selected_reason:
+        lowered = selected_reason.casefold()
+        if "similar to an existing incident" in lowered or "possible duplicate" in lowered:
+            review_rule = "duplicate"
+        elif selected_reason in signals.governance_hard_reasons:
+            review_rule = "governance"
+        else:
+            review_rule = "casualty_attribution"
+    structured_payload = review_quality_payload(
+        review_rule=review_rule,
+        review_message=selected_reason,
+        review_data={
+            "candidate_id": (
+                str(signals.duplicate_candidate_id)
+                if signals.duplicate_candidate_id is not None
+                else None
+            ),
+            "similarity": signals.duplicate_similarity_score,
+        }
+        if review_rule == "duplicate"
+        else {},
+        quality_flags=quality_flags,
+    )
+    return status, ([selected_reason] if selected_reason else []), quality_flags, structured_payload

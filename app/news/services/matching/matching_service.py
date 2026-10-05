@@ -879,6 +879,21 @@ class MatchingService(MatchingServiceInterface):
                 classified.confidence,
                 MatchResultStatus.matched_low_confidence,
             )
+        wadi_partial = (
+            classified.status == MatchResultStatus.matched
+            and exact_winner is None
+            and not district_resolved
+            and village_match_key(search_text).split()[:1] == ["وادي"]
+            and bool(lexical_candidates)
+            and _village_match_method(search_text, lexical_candidates[0][0])
+            not in {"exact", "compact"}
+        )
+        if wadi_partial:
+            classified = _ClassifiedMatch(
+                classified.matched_id,
+                classified.confidence,
+                MatchResultStatus.matched_low_confidence,
+            )
         if exact_winner is not None:
             collision_like = False
         elif len(exact_candidates) > 1:

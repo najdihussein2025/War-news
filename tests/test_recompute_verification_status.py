@@ -26,11 +26,11 @@ def test_village_dedup_duplicate_text_is_not_preserved_verbatim() -> None:
     ) == []
 
 
-def test_governance_and_cross_source_duplicate_reasons_are_preserved() -> None:
+def test_governance_reasons_are_preserved_but_cross_source_duplicate_is_recomputed() -> None:
     cross = "Possible cross-source duplicate segment; human confirmation required"
     merge = "Possible duplicate — casualty count conflict detected during merge"
     revision = "Unconfirmed story revision would lower deaths; review before applying"
-    assert _preserved_governance_reasons(cross) == [cross]
+    assert _preserved_governance_reasons(cross) == []
     assert _preserved_governance_reasons(merge) == [merge]
     assert _preserved_governance_reasons(revision) == [revision]
 
@@ -55,3 +55,4 @@ def test_rule_bucket_classifies_reasons_into_rules_1_2_3() -> None:
     assert _rule_bucket(
         "Possible duplicate — casualty count conflict detected during merge."
     ) == "rule 3: governance safeguard"
+

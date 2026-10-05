@@ -88,6 +88,7 @@ from app.news.services.dedup.text_similarity import (
 )
 from app.news.services.materialization.verification_signals import (
     active_non_duplicate_verification_reasons,
+    extract_quality_flags,
 )
 from app.news.services.incidents.incident_change_log import (
     changed_fields,
@@ -321,6 +322,7 @@ class IncidentRepository(IncidentRepositoryInterface):
             Incident.edit_lock_expires_at,
             Incident.village_id,
             Incident.story_group_id,
+            Incident.quality_flags,
             RawMessage.match_result,
         )
         base_query = (
@@ -419,6 +421,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                             row._mapping["khabar"]
                         ).strip(),
                         **self._list_village_match_payload(row._mapping),
+                        "quality_flags": extract_quality_flags(row.quality_flags),
                     }
                 )
                 for row in page_rows
@@ -669,6 +672,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                 incident.verification_reason, flags_by_incident,
             ),
             "duplicate_flag": row.duplicate_flag,
+            "quality_flags": extract_quality_flags(incident.quality_flags),
             "duplicate_level": incident.duplicate_level,
             "duplicate_similarity_score": incident.duplicate_similarity_score,
             "village_review_required": bool(
