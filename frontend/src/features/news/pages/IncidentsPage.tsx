@@ -23,13 +23,18 @@ import { createIncident, reviewIncident } from "../api";
 import { useContentSourcesQuery } from "../../sources/hooks";
 import type { Incident, IncidentBulletinGroup } from "../types";
 import { CasualtyCheckPanel } from "../../casualtyChecks/components/CasualtyCheckPanel";
+import { ReasonChips, summarizeVerificationReasons } from "../verificationReasons";
+import {
+  CompactIncidentList,
+  IncidentBulletinActions,
+  IncidentBulletinHeading,
+} from "../components/IncidentBulletinRow";
 import {
   ALL_DATES_RANGE,
   hasNonDefaultFilters,
   isVerificationView,
   outsideRangeNotice,
   verificationTypeFromSearch,
-  verificationTypeLabel,
 } from "../verificationLogic";
 
 const DEFAULT_PAGE_SIZE = 150;
@@ -104,7 +109,7 @@ const reviewRuleBadge = (row: Incident) => {
     return { label: "Casualties unassigned", variant: "danger" as const };
   }
   if (row.verification_status === "needs_verification") {
-    return { label: "Changed after verification", variant: "info" as const };
+    return { label: "Changed after verification", variant: "neutral" as const };
   }
   if (row.verification_status === "verified") return { label: "Verified", variant: "success" as const };
   if (row.verification_status === "rejected") return { label: "Rejected", variant: "danger" as const };
@@ -361,9 +366,7 @@ export const IncidentsPage = () => {
         <div className="space-y-1">
           {reviewRuleBadge(row) ? <StatusBadge {...reviewRuleBadge(row)!} /> : verificationBadge(row) ? <StatusBadge {...verificationBadge(row)!} /> : null}
           {row.verification_reason ? (
-            <p className={`${twoLineClampClass} text-caption leading-5 text-text-muted`} title={row.verification_reason}>
-              {row.verification_reason}
-            </p>
+            <ReasonChips summaries={summarizeVerificationReasons(row.verification_reason)} />
           ) : null}
           {openVerificationTypes(row).includes("duplicate") && row.id ? (
             <button
@@ -418,63 +421,26 @@ export const IncidentsPage = () => {
     {
       key: "bulletin",
       header: "Bulletin",
-      headerClassName: "min-w-[24rem]",
-      cellClassName: "min-w-[24rem]",
-      render: (group) => (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-semibold text-text-primary">Raw #{group.raw_message_id}</span>
-            {group.verification_types.includes("duplicate") ? (
-              <StatusBadge label="Duplicate?" variant="warning" />
-            ) : group.verification_types.some((type) => type === "casualty_missing_number" || type === "casualty_aggregate_toll") ? (
-              <StatusBadge label="Casualties unassigned" variant="danger" />
-            ) : (
-              <StatusBadge label="Changed after verification" variant="info" />
-            )}
-          </div>
-          <p className={`${twoLineClampClass} break-words text-small leading-6 text-text-primary`} dir="auto">
-            {group.khabar}
-          </p>
-          {group.verification_reasons.length ? (
-            <p className={`${twoLineClampClass} text-caption leading-5 text-text-muted`} title={group.verification_reasons[0]}>
-              {group.verification_reasons[0]}
-            </p>
-          ) : null}
-        </div>
-      ),
+      headerClassName: "w-[40%] min-w-[20rem]",
+      cellClassName: "w-[40%] min-w-[20rem]",
+      render: (group) => <IncidentBulletinHeading group={group} />,
     },
     {
       key: "children",
       header: "Incidents",
-      headerClassName: "min-w-[22rem]",
-      cellClassName: "min-w-[22rem]",
-      render: (group) => (
-        <div className="space-y-2">
-          {group.incidents.map((incident) => (
-            <div key={incident.id ?? `${group.raw_message_id}-${incident.village}-${incident.condition}`} className="rounded-md border border-border bg-surface px-3 py-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-semibold text-text-primary">{incident.village || "Unknown village"}</span>
-                <span className="text-caption text-text-muted">{incident.condition || "No condition"}</span>
-              </div>
-              <p className="text-caption text-text-muted">
-                Deaths {incident.total_deaths ?? 0} | Injuries {incident.total_injuries ?? 0}
-              </p>
-            </div>
-          ))}
-        </div>
-      ),
+      headerClassName: "w-[32%] min-w-[18rem]",
+      cellClassName: "w-[32%] min-w-[18rem]",
+      render: (group) => <CompactIncidentList group={group} />,
     },
     {
       key: "event",
       header: "Event",
-      headerClassName: "w-[10rem]",
-      cellClassName: "w-[10rem]",
+      headerClassName: "w-[9rem]",
+      cellClassName: "w-[9rem]",
       render: (group) => (
-        <div className="space-y-1 whitespace-nowrap">
-          <p>{formatDate(group.event_date)}</p>
-          <p className="text-caption text-text-muted">
-            {group.event_time ? group.event_time.slice(0, 5) : "Time not recorded"}
-          </p>
+        <div className="whitespace-nowrap text-small">
+          <span>{formatDate(group.event_date)}</span>
+          <span className="text-text-muted"> · {group.event_time ? group.event_time.slice(0, 5) : "Time not recorded"}</span>
         </div>
       ),
     },
@@ -778,16 +744,20 @@ export const IncidentsPage = () => {
                 loading={isLoading}
                 error={isError}
                 clientSort={false}
-                minWidth="980px"
+                minWidth="1050px"
+                density="compact"
+                actionsClassName="w-[17rem]"
                 emptyState={<EmptyState title="No review bulletins" description="No grouped verification items match these filters." />}
                 errorState={<EmptyState title="Could not load incidents" description="The incidents list could not be loaded. Please try again." />}
                 actions={(group) => (
-                  <div className="flex flex-wrap justify-end gap-2">
-                    <Button
-                      type="button"
-                      className="h-9 whitespace-nowrap"
-                      disabled={isReviewing}
-                      onClick={async () => {
+                  <IncidentBulletinActions
+                    disabled={isReviewing}
+                    onOpen={() => {
+                      const first = group.incidents.find((incident) => incident.id);
+                      if (first?.id) navigate(`${roleBase}/incidents/${first.id}${location.search}`);
+                    }}
+                    onReject={() => { setReviewError(""); setReviewGroup(group); }}
+                    onVerify={async () => {
                         setIsReviewing(true);
                         setReviewError("");
                         try {
@@ -798,30 +768,8 @@ export const IncidentsPage = () => {
                         } finally {
                           setIsReviewing(false);
                         }
-                      }}
-                    >
-                      Verify all
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="h-9 whitespace-nowrap"
-                      onClick={() => { setReviewError(""); setReviewGroup(group); }}
-                    >
-                      Reject all
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="h-9 whitespace-nowrap"
-                      onClick={() => {
-                        const first = group.incidents.find((incident) => incident.id);
-                        if (first?.id) navigate(`${roleBase}/incidents/${first.id}${location.search}`);
-                      }}
-                    >
-                      Open
-                    </Button>
-                  </div>
+                    }}
+                  />
                 )}
               />
             ) : (
