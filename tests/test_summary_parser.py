@@ -37,6 +37,39 @@ def test_d2_merge_and_deterministic_key():
     text='القصف المدفعي: ميفدون، اطراف ميفدون'
     a=parse(text); b=parse(text)
     assert len(a.items)==1 and len(a.items[0].location_texts)==2 and a.items[0].item_key==b.items[0].item_key
+
+def test_header_grammar_fillers_and_compound_plus():
+    p=parse('القصف المدفعي التي نفذها العدو في البلدات الجنوبيه: الخيام\nمدفعي+فوسفوري: المنصوري')
+    assert {(i.condition_id,i.primary_village.name_ar) for i in p.items}=={(5,'الخيام'),(5,'المنصوري'),(7,'المنصوري')}
+
+def test_d4_headers_are_now_approved():
+    p=parse('غارات مسيره: الخيام\nغالونات متفجره: المنصوري\nقنابل لانشر: ميفدون\nالقنابل المتفجره: شقرا')
+    assert {i.condition_id for i in p.items}=={46,21,13}
+
+def test_unknown_header_extra_word_and_prose_stay_unresolved():
+    p=parse('القصف المدفعي مفاجاه: الخيام\nباخلاء مبني عند اطراف البلده و قام بعد ذلك بتدميره: المنصوري')
+    assert p.unresolved_headers and not p.auto_acceptable
+
+def test_noise_signature_url_and_count_words():
+    p=parse('القصف المدفعي: الخيام بقذيفتين، المنصوري بثلاث قذائف «كرار»، https://t.me/example')
+    assert {(i.primary_village.name_ar,i.reported_count) for i in p.items}=={('الخيام',2),('المنصوري',3)}
+
+def test_headerless_inline_action_line_and_prose_section():
+    inline=parse('قصف مدفعي يستهدف المنصوري')
+    assert [(i.condition_id,i.primary_village.name_ar) for i in inline.items]==[(5,'المنصوري')]
+    prose=parse('القصف المدفعي: الخيام\nاعتداءات اخري: تقدم معاد من بلده حداثا باتجاه اطراف عيتا الجبل')
+    assert prose.out_of_scope_lines and not prose.leftover_tokens
+
+def test_embedded_between_is_parsed_only_with_action_grammar():
+    good=parse('قصف مدفعي بين حداثا وحاريص')
+    assert len(good.items)==1 and good.items[0].secondary_village.name_ar=='حاريص'
+    narrative=parse('مواد حارقه بين حداثا وحاريص')
+    assert narrative.out_of_scope_lines and not narrative.items
+
+def test_no_fuzzy_matching_in_production_summary_package():
+    forbidden=('similarity','difflib','rapidfuzz','levenshtein','word_similarity')
+    source='\n'.join(path.read_text(encoding='utf-8').lower() for path in Path('app/news/services/summaries').glob('*.py'))
+    assert not any(term in source for term in forbidden)
 def test_pure_imports_do_not_load_sqlalchemy_or_settings():
     files=['normalize.py','detection.py','window.py','parser.py','headers.py']
     source='\n'.join((Path('app/news/services/summaries')/name).read_text(encoding='utf-8') for name in files)
