@@ -28,3 +28,15 @@ def test_dst_local_boundaries():
     assert w.start.tzinfo.key=='Asia/Beirut' and w.start.utcoffset()!=w.end.utcoffset()
 def test_naive_rejected():
     with pytest.raises(ValueError): resolve_window('ملخص',datetime(2026,1,1))
+
+def test_stale_explicit_date_real_late_post_and_early_post():
+    late=resolve_window('ملخص بتاريخ ١٥/٩/٢٠٢٦',datetime(2026,9,16,23,58,tzinfo=TZ))
+    early=resolve_window('ملخص بتاريخ ١٥/٩/٢٠٢٦',datetime(2026,9,16,0,2,tzinfo=TZ))
+    assert late.rule=='explicit_date:stale_suspect' and late.end.day==16 and late.note=='stale_explicit_date'
+    assert early.rule=='explicit_date' and early.end.day==16 and early.note is None
+
+def test_old_and_future_explicit_date_notes():
+    old=resolve_window('ملخص بتاريخ ١٣/٩/٢٠٢٦',datetime(2026,9,16,12,tzinfo=TZ))
+    future=resolve_window('ملخص بتاريخ ١٧/٩/٢٠٢٦',datetime(2026,9,16,12,tzinfo=TZ))
+    assert old.note=='old_summary_reshared'
+    assert future.note=='future_date_ignored' and future.start.day==16
