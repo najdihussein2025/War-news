@@ -74,70 +74,14 @@
         "location_texts": [
           "وادي السلوقي"
         ]
-      },
-      {
-        "condition_id": 18,
-        "primary": "نبطية الفوقا",
-        "secondary": null,
-        "qualifiers": [],
-        "reported_count": 1,
-        "location_texts": [
-          "- حي الدير في بلده النبطيه الفوقا"
-        ]
-      },
-      {
-        "condition_id": 18,
-        "primary": "كفر تبنيت",
-        "secondary": null,
-        "qualifiers": [],
-        "reported_count": 1,
-        "location_texts": [
-          "- بلده كفرتبنيت"
-        ]
-      },
-      {
-        "condition_id": 18,
-        "primary": "علي الطاهر",
-        "secondary": null,
-        "qualifiers": [],
-        "reported_count": 1,
-        "location_texts": [
-          "- مرتفع علي الطاهر"
-        ]
-      },
-      {
-        "condition_id": 18,
-        "primary": "بيت ياحون",
-        "secondary": null,
-        "qualifiers": [],
-        "reported_count": 1,
-        "location_texts": [
-          "العدو يضرم النيران في الممتلكات في بلده بيت ياحون"
-        ]
       }
     ],
     "leftover_tokens": [
       "تحركات",
       "اليات",
-      "العدو",
-      "غارات",
-      "الطيران",
-      "الحربي",
-      "-",
-      "حي",
-      "الدير",
-      "بلده",
-      "-",
-      "بلده",
-      "-",
-      "مرتفع",
-      "العدو",
-      "يضرم",
-      "النيران",
-      "الممتلكات",
-      "بلده",
-      "https://t.me/hashemsayed"
+      "العدو"
     ],
+    "out_of_scope_lines": [],
     "auto_acceptable": false
   },
   "reviewer_notes": ""

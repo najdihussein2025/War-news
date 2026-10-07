@@ -92,6 +92,16 @@
         ]
       },
       {
+        "condition_id": 46,
+        "primary": "حروف",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "مرج حاروف"
+        ]
+      },
+      {
         "condition_id": 5,
         "primary": "نبطية الفوقا",
         "secondary": null,
@@ -313,7 +323,10 @@
         ]
       }
     ],
-    "leftover_tokens": [],
+    "leftover_tokens": [
+      "مرج"
+    ],
+    "out_of_scope_lines": [],
     "auto_acceptable": false
   },
   "reviewer_notes": ""

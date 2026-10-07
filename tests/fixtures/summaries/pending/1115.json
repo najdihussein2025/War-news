@@ -96,15 +96,12 @@
     "leftover_tokens": [
       "مزرعه",
       "بسطره",
-      "قنابل",
-      "«لانشر»",
       "مزرعه",
       "بسطره",
-      "T.me/mehwaralmokawma",
-      "‏",
-      "«جھ",
-      "اد𓂆»"
+      "جھ",
+      "اد"
     ],
+    "out_of_scope_lines": [],
     "auto_acceptable": false
   },
   "reviewer_notes": ""

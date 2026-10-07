@@ -96,12 +96,10 @@
     "leftover_tokens": [
       "مزرعه",
       "بسطره",
-      "قنابل",
-      "«لانشر»",
       "مزرعه",
-      "بسطره",
-      "https://t.me/hashemsayed"
+      "بسطره"
     ],
+    "out_of_scope_lines": [],
     "auto_acceptable": false
   },
   "reviewer_notes": ""

@@ -257,11 +257,10 @@
       }
     ],
     "leftover_tokens": [
-      "مجري",
-      "نهر",
       "الخردله",
       "القصير"
     ],
+    "out_of_scope_lines": [],
     "auto_acceptable": false
   },
   "reviewer_notes": ""

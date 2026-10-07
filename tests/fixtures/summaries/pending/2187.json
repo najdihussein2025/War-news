@@ -81,11 +81,9 @@
         ]
       }
     ],
-    "leftover_tokens": [
-      "T.me/mehwaralmokawma",
-      "«ميثم𓂆»"
-    ],
-    "auto_acceptable": false
+    "leftover_tokens": [],
+    "out_of_scope_lines": [],
+    "auto_acceptable": true
   },
   "reviewer_notes": ""
 }
