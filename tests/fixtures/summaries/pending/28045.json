@@ -1,13 +1,16 @@
 {
   "message_id": 28045,
+  "siblings": [],
   "channel": "mehwaralmokawma",
   "raw_text": "🔵 ملخص الإعتداءات الإسرائيلية على الأراضي اللبنانية بتاريخ ١٥/٩/٢٠٢٦: \n🟠 الغارات التي نفذها الطيران الحربي المعادي:\nالمنصوري\nالنبطية الفوقا \nاطراف زوطر الشرقية\nالقنطرة\nوادي زبقين\n\n🟠 القصف المدفعي المعادي:\nوادي زبقين \nالمنصوري \nكفرتبنيت \nميس الجبل \nصريين\nوادي السلوقي \nبيت ليف\nبين برعشيت و كونين\nمجرى نهر الخردلة\nحداثا\nحاريص\nالقصير\nاطراف تولين \n\n🟠 التفجيرات التي نفذها العدو في البلدات الجنوبية: \nبين كونين و برعشيت\nالمنصوري\nمجدلزون \nوادي السلوقي \n\n🟠 القنابل الصوتية:\nدبين\nT.me/mehwaralmokawma                     «☫نـصـراللّه☫»",
   "posted_at": "2026-09-15 21:02:43+00:00",
+  "badge": "blocked by parser",
   "expected": {
     "window": {
       "start": "2026-09-15T00:00:00+03:00",
       "end": "2026-09-16T00:00:00+03:00",
-      "rule": "explicit_date"
+      "rule": "explicit_date",
+      "note": null
     },
     "items": [
       {
@@ -18,7 +21,9 @@
         "reported_count": 1,
         "location_texts": [
           "المنصوري"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
@@ -28,7 +33,9 @@
         "reported_count": 1,
         "location_texts": [
           "النبطيه الفوقا"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
@@ -40,7 +47,9 @@
         "reported_count": 1,
         "location_texts": [
           "اطراف زوطر الشرقيه"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
@@ -50,7 +59,9 @@
         "reported_count": 1,
         "location_texts": [
           "القنطره"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
@@ -60,7 +71,9 @@
         "reported_count": 1,
         "location_texts": [
           "وادي زبقين"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -70,7 +83,9 @@
         "reported_count": 1,
         "location_texts": [
           "وادي زبقين"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -80,7 +95,9 @@
         "reported_count": 1,
         "location_texts": [
           "المنصوري"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -90,7 +107,9 @@
         "reported_count": 1,
         "location_texts": [
           "كفرتبنيت"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -100,7 +119,9 @@
         "reported_count": 1,
         "location_texts": [
           "ميس الجبل"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -113,7 +134,9 @@
         "location_texts": [
           "وادي السلوقي",
           "اطراف تولين"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -123,7 +146,9 @@
         "reported_count": 1,
         "location_texts": [
           "بيت ليف"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -133,7 +158,9 @@
         "reported_count": 1,
         "location_texts": [
           "بين برعشيت و كونين"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -143,7 +170,9 @@
         "reported_count": 1,
         "location_texts": [
           "حداثا"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -153,7 +182,9 @@
         "reported_count": 1,
         "location_texts": [
           "حاريص"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -163,7 +194,9 @@
         "reported_count": 1,
         "location_texts": [
           "بين كونين و برعشيت"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -173,7 +206,9 @@
         "reported_count": 1,
         "location_texts": [
           "المنصوري"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -183,7 +218,9 @@
         "reported_count": 1,
         "location_texts": [
           "مجدلزون"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -193,7 +230,9 @@
         "reported_count": 1,
         "location_texts": [
           "وادي السلوقي"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 10,
@@ -203,14 +242,18 @@
         "reported_count": 1,
         "location_texts": [
           "دبين"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       }
     ],
     "leftover_tokens": [
       "صريين",
       "الخردله",
       "القصير",
-      "نصرالله"
+      "T",
+      "me",
+      "mehwaralmokawma"
     ],
     "out_of_scope_lines": [],
     "auto_acceptable": false

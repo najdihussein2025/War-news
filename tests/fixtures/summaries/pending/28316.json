@@ -1,13 +1,18 @@
 {
   "message_id": 28316,
+  "siblings": [
+    27977
+  ],
   "channel": "nabatiehchannel",
   "raw_text": "🏴ملخص الإعتداءات الإسرائيلية على الأراضي اللبنانية بتاريخ ١٥/٩/٢٠٢٦:\n\nالغارات التي نفذها الطيران الحربي المعادي:\nالنبطية الفوقا \nالمنصوري\nالقنطرة \nوادي السلوقي \nبين زوطر الشرقية و كفرتبنيت \n\nالقصف المدفعي المعادي:\nالخيام\nكفرتبنيت \nبرعشيت\nبيت ليف \nالنبطية الفوقا \nزوطر الشرقية \nالمنصوري\nسهل الخيام \nحداثا\nحلتا\nميس الجبل \nوادي زبقين \nوادي السلوقي \nعدشيت القصير \nبيت ياحون \n\nالتفجيرات التي نفذها العدو في البلدات الجنوبية:\nالمنصوري\nحلتا\nالطيري\nبيت ياحون \nزوطر الشرقية \nنهر زوطر الشرقية \nوادي مظلم-بيت ليف\n\nتوغل قوة معادية الى الحي الغربي في بلدة حلتا و عملو على تفتيش المنازل و أخضع بعض المواطنين من نساء و رجال الى التحقيق، بالإضافة  الى قيامه بأعمال جرف في الاراضي عند اطراف البلدة، كما أقدم العدو على اعتقال شخصين من ابناء البلدة",
   "posted_at": "2026-09-16 20:58:12+00:00",
+  "badge": "blocked by parser",
   "expected": {
     "window": {
       "start": "2026-09-15T00:00:00+03:00",
-      "end": "2026-09-16T00:00:00+03:00",
-      "rule": "explicit_date"
+      "end": "2026-09-16T23:58:12+03:00",
+      "rule": "explicit_date:stale_suspect",
+      "note": "stale_explicit_date"
     },
     "items": [
       {
@@ -18,7 +23,9 @@
         "reported_count": 1,
         "location_texts": [
           "النبطيه الفوقا"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
@@ -28,7 +35,9 @@
         "reported_count": 1,
         "location_texts": [
           "المنصوري"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
@@ -38,7 +47,9 @@
         "reported_count": 1,
         "location_texts": [
           "القنطره"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
@@ -48,7 +59,9 @@
         "reported_count": 1,
         "location_texts": [
           "وادي السلوقي"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
@@ -58,7 +71,9 @@
         "reported_count": 1,
         "location_texts": [
           "بين زوطر الشرقيه و كفرتبنيت"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -71,7 +86,9 @@
         "location_texts": [
           "الخيام",
           "سهل الخيام"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -81,7 +98,9 @@
         "reported_count": 1,
         "location_texts": [
           "كفرتبنيت"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -91,7 +110,9 @@
         "reported_count": 1,
         "location_texts": [
           "برعشيت"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -101,7 +122,9 @@
         "reported_count": 1,
         "location_texts": [
           "بيت ليف"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -111,7 +134,9 @@
         "reported_count": 1,
         "location_texts": [
           "النبطيه الفوقا"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -121,7 +146,9 @@
         "reported_count": 1,
         "location_texts": [
           "زوطر الشرقيه"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -131,7 +158,9 @@
         "reported_count": 1,
         "location_texts": [
           "المنصوري"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -141,7 +170,9 @@
         "reported_count": 1,
         "location_texts": [
           "حداثا"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -151,7 +182,9 @@
         "reported_count": 1,
         "location_texts": [
           "ميس الجبل"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -161,7 +194,9 @@
         "reported_count": 1,
         "location_texts": [
           "وادي زبقين"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -171,7 +206,9 @@
         "reported_count": 1,
         "location_texts": [
           "وادي السلوقي"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -181,7 +218,9 @@
         "reported_count": 1,
         "location_texts": [
           "عدشيت القصير"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -191,7 +230,9 @@
         "reported_count": 1,
         "location_texts": [
           "بيت ياحون"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -201,7 +242,9 @@
         "reported_count": 1,
         "location_texts": [
           "المنصوري"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -211,7 +254,9 @@
         "reported_count": 1,
         "location_texts": [
           "الطيري"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -221,24 +266,29 @@
         "reported_count": 1,
         "location_texts": [
           "بيت ياحون"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
         "primary": "زوطر الشرقية",
         "secondary": null,
-        "qualifiers": [],
+        "qualifiers": [
+          "نهر"
+        ],
         "reported_count": 1,
         "location_texts": [
           "زوطر الشرقيه",
           "نهر زوطر الشرقيه"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       }
     ],
     "leftover_tokens": [
       "حلتا",
       "حلتا",
-      "نهر",
       "وادي",
       "مظلم-بيت",
       "ليف"

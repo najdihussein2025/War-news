@@ -1,13 +1,19 @@
 {
   "message_id": 27993,
+  "siblings": [
+    28010,
+    28022
+  ],
   "channel": "nabatiehchannel",
   "raw_text": "🔵ملخص الإعتداءات الإسرائيلية على الأراضي اللبنانية بتاريخ ٩/٩/٢٠٢٦:\n\n🟠الغارات التي نفذها الطيران الحربي المعادي:\nبين النبطية الفوقا-كفرتبنيت \nوادي زبقين \nوادي السلوقي \nالخيام\nبين حداثا و حاريص\nصربين\nالنبطية الفوقا\nالقنطرة \nالمنصوري\n\n🟠الغارات التي نفذها الطيران المسير المعادي:\nمرج حاروف \n\n🟠القصف المدفعي المعادي:\nالنبطية الفوقا \nدوحة كفررمان \nوادي السلوقي \nزوطر الشرقية \nحداثا\nمجدل سلم \nميس الجبل \nبيت ياحون \nبرعشيت\nالمنصوري \nحولا\nقبريخا\n\n🟠التفجيرات التي نفذها العدو في البلدات الجنوبية:\nالمنصوري \nمركبا\nبني حيان \nالخيام\nطير حرفا \nالقنطرة\nبين القنطرة و عدشيت القصير \nالطيري\nمجدلزون \n\n🟠القنابل الصوتية:\nالمنصوري \nحداثا\n\n🟠غالونات متفجرة:\nالمنصوري\nبني حيان",
   "posted_at": "2026-09-09 20:59:33+00:00",
+  "badge": "auto_acceptable",
   "expected": {
     "window": {
       "start": "2026-09-09T00:00:00+03:00",
       "end": "2026-09-09T23:59:33+03:00",
-      "rule": "explicit_date"
+      "rule": "explicit_date",
+      "note": null
     },
     "items": [
       {
@@ -19,7 +25,9 @@
         "location_texts": [
           "بين النبطيه الفوقا-كفرتبنيت",
           "النبطيه الفوقا"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
@@ -29,7 +37,9 @@
         "reported_count": 1,
         "location_texts": [
           "وادي زبقين"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
@@ -39,7 +49,9 @@
         "reported_count": 1,
         "location_texts": [
           "وادي السلوقي"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
@@ -49,7 +61,9 @@
         "reported_count": 1,
         "location_texts": [
           "الخيام"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
@@ -59,7 +73,9 @@
         "reported_count": 1,
         "location_texts": [
           "بين حداثا و حاريص"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
@@ -69,7 +85,9 @@
         "reported_count": 1,
         "location_texts": [
           "صربين"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
@@ -79,7 +97,9 @@
         "reported_count": 1,
         "location_texts": [
           "القنطره"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
@@ -89,17 +109,23 @@
         "reported_count": 1,
         "location_texts": [
           "المنصوري"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 46,
         "primary": "حروف",
         "secondary": null,
-        "qualifiers": [],
+        "qualifiers": [
+          "مرج"
+        ],
         "reported_count": 1,
         "location_texts": [
           "مرج حاروف"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -109,7 +135,9 @@
         "reported_count": 1,
         "location_texts": [
           "النبطيه الفوقا"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -119,7 +147,9 @@
         "reported_count": 1,
         "location_texts": [
           "دوحه كفررمان"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -129,7 +159,9 @@
         "reported_count": 1,
         "location_texts": [
           "وادي السلوقي"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -139,7 +171,9 @@
         "reported_count": 1,
         "location_texts": [
           "زوطر الشرقيه"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -149,7 +183,9 @@
         "reported_count": 1,
         "location_texts": [
           "حداثا"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -159,7 +195,9 @@
         "reported_count": 1,
         "location_texts": [
           "مجدل سلم"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -169,7 +207,9 @@
         "reported_count": 1,
         "location_texts": [
           "ميس الجبل"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -179,7 +219,9 @@
         "reported_count": 1,
         "location_texts": [
           "بيت ياحون"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -189,7 +231,9 @@
         "reported_count": 1,
         "location_texts": [
           "برعشيت"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -199,7 +243,9 @@
         "reported_count": 1,
         "location_texts": [
           "المنصوري"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -209,7 +255,9 @@
         "reported_count": 1,
         "location_texts": [
           "حولا"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -219,7 +267,9 @@
         "reported_count": 1,
         "location_texts": [
           "قبريخا"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -229,7 +279,9 @@
         "reported_count": 1,
         "location_texts": [
           "المنصوري"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -239,7 +291,9 @@
         "reported_count": 1,
         "location_texts": [
           "مركبا"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -249,7 +303,9 @@
         "reported_count": 1,
         "location_texts": [
           "بني حيان"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -259,7 +315,9 @@
         "reported_count": 1,
         "location_texts": [
           "الخيام"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -269,7 +327,9 @@
         "reported_count": 1,
         "location_texts": [
           "طير حرفا"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -280,7 +340,9 @@
         "location_texts": [
           "القنطره",
           "بين القنطره و عدشيت القصير"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -290,7 +352,9 @@
         "reported_count": 1,
         "location_texts": [
           "الطيري"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -300,7 +364,9 @@
         "reported_count": 1,
         "location_texts": [
           "مجدلزون"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 10,
@@ -310,7 +376,9 @@
         "reported_count": 1,
         "location_texts": [
           "المنصوري"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 10,
@@ -320,14 +388,14 @@
         "reported_count": 1,
         "location_texts": [
           "حداثا"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       }
     ],
-    "leftover_tokens": [
-      "مرج"
-    ],
+    "leftover_tokens": [],
     "out_of_scope_lines": [],
-    "auto_acceptable": false
+    "auto_acceptable": true
   },
   "reviewer_notes": ""
 }

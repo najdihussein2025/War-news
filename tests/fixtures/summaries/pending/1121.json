@@ -1,13 +1,19 @@
 {
   "message_id": 1121,
+  "siblings": [
+    1278,
+    35665
+  ],
   "channel": "Janoubana",
   "raw_text": "ملخص الاعتداءات الإسرائيلية من منتصف الليل حتى الساعة\n\nالقصف المدفعي المعادي :\n\n • القنطرة لجهة تولين\n• وادي السلوقي\n• علي الطاهر\n\nالتفجيرات :\n\n• المنصوري\n\nالقنابل المضيئة :\n\n• وادي السلوقي\n• حولا\n\nالتمشيط بالأسلحة الرشاشة :\n\n• حولا\n• مزرعة بسطرة عند أطراف كفرشوبا\nالخيام\n\nقنابل «لانشر» :\n\n• مزرعة بسطرة عند أطراف كفرشوبا",
   "posted_at": "2026-09-22 06:26:56+00:00",
+  "badge": "blocked by parser",
   "expected": {
     "window": {
       "start": "2026-09-22T00:00:00+03:00",
       "end": "2026-09-22T09:26:56+03:00",
-      "rule": "overnight:end_time_ignored"
+      "rule": "overnight:end_time_ignored",
+      "note": null
     },
     "items": [
       {
@@ -20,7 +26,9 @@
         "reported_count": 1,
         "location_texts": [
           "القنطره لجهه تولين"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -30,7 +38,9 @@
         "reported_count": 1,
         "location_texts": [
           "وادي السلوقي"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -40,7 +50,9 @@
         "reported_count": 1,
         "location_texts": [
           "علي الطاهر"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -50,7 +62,9 @@
         "reported_count": 1,
         "location_texts": [
           "المنصوري"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 9,
@@ -60,7 +74,9 @@
         "reported_count": 1,
         "location_texts": [
           "وادي السلوقي"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 9,
@@ -70,7 +86,9 @@
         "reported_count": 1,
         "location_texts": [
           "حولا"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 18,
@@ -80,7 +98,9 @@
         "reported_count": 1,
         "location_texts": [
           "حولا"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 18,
@@ -90,12 +110,15 @@
         "reported_count": 1,
         "location_texts": [
           "الخيام"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       }
     ],
     "leftover_tokens": [
       "مزرعه",
       "بسطره",
+      "قنابل",
       "مزرعه",
       "بسطره"
     ],

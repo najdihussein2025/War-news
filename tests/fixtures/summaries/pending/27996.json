@@ -1,13 +1,16 @@
 {
   "message_id": 27996,
+  "siblings": [],
   "channel": "hashemsayed",
   "raw_text": "ملخص الاعتداءات الإسرائيلية من منتصف الليل حتى الساعة\n\n القصف المدفعي :\nوادي السلوقي\nأطراف زوطر الشرقية وميفدون.\nزوطر الشرقية\n\n التفجيرات :\nبيت ياحون\n\n التمشيط بالأسلحة الرشاشة:\nزوطر الشرقية\n\n تحركات آليات العدو:\nوادي السلوقي\n\nغارات من الطيران الحربي:\n\n- حي الدير في بلدة النبطية الفوقا\n- بلدة كفرتبنيت\n- مرتفع علي الطاهر\n\nالعدو يضرم النيران في الممتلكات في بلدة بيت ياحون\nhttps://t.me/hashemsayed",
   "posted_at": "2026-09-13 08:31:37+00:00",
+  "badge": "blocked by parser",
   "expected": {
     "window": {
       "start": "2026-09-13T00:00:00+03:00",
       "end": "2026-09-13T11:31:37+03:00",
-      "rule": "overnight:end_time_ignored"
+      "rule": "overnight:end_time_ignored",
+      "note": null
     },
     "items": [
       {
@@ -18,7 +21,9 @@
         "reported_count": 1,
         "location_texts": [
           "وادي السلوقي"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -31,7 +36,9 @@
         "location_texts": [
           "اطراف زوطر الشرقيه وميفدون",
           "زوطر الشرقيه"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 5,
@@ -43,7 +50,9 @@
         "reported_count": 1,
         "location_texts": [
           "اطراف زوطر الشرقيه وميفدون"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 21,
@@ -53,7 +62,9 @@
         "reported_count": 1,
         "location_texts": [
           "بيت ياحون"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 18,
@@ -63,7 +74,9 @@
         "reported_count": 1,
         "location_texts": [
           "زوطر الشرقيه"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
       },
       {
         "condition_id": 18,
@@ -73,15 +86,67 @@
         "reported_count": 1,
         "location_texts": [
           "وادي السلوقي"
-        ]
+        ],
+        "event_time": null,
+        "origin_text": null
+      },
+      {
+        "condition_id": 46,
+        "primary": "نبطية الفوقا",
+        "secondary": null,
+        "qualifiers": [
+          "حي"
+        ],
+        "reported_count": 1,
+        "location_texts": [
+          "- حي الدير في بلده النبطيه الفوقا"
+        ],
+        "event_time": null,
+        "origin_text": null
+      },
+      {
+        "condition_id": 46,
+        "primary": "كفر تبنيت",
+        "secondary": null,
+        "qualifiers": [
+          "بلده"
+        ],
+        "reported_count": 1,
+        "location_texts": [
+          "- بلده كفرتبنيت"
+        ],
+        "event_time": null,
+        "origin_text": null
+      },
+      {
+        "condition_id": 46,
+        "primary": "علي الطاهر",
+        "secondary": null,
+        "qualifiers": [
+          "مرتفع"
+        ],
+        "reported_count": 1,
+        "location_texts": [
+          "- مرتفع علي الطاهر"
+        ],
+        "event_time": null,
+        "origin_text": null
       }
     ],
     "leftover_tokens": [
       "تحركات",
       "اليات",
-      "العدو"
+      "العدو",
+      "الدير",
+      "بلده",
+      "https",
+      "t",
+      "me",
+      "hashemsayed"
     ],
-    "out_of_scope_lines": [],
+    "out_of_scope_lines": [
+      "العدو يضرم النيران في الممتلكات في بلده بيت ياحون"
+    ],
     "auto_acceptable": false
   },
   "reviewer_notes": ""

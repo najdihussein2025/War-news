@@ -1,56 +1,81 @@
-"""Draft pending golden fixtures and a DB-free corpus coverage report."""
+"""Regenerate deduplicated fixtures and current/simulated coverage."""
 from __future__ import annotations
-import argparse, json, sys, yaml
-from collections import Counter
-from dataclasses import asdict
-from pathlib import Path
+import csv,json,sys,yaml
+from collections import Counter,defaultdict
 from datetime import datetime
+from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from app.news.services.summaries.detection import detect_summary
+from app.news.services.summaries.dtos import VillageRef
 from app.news.services.summaries.gazetteer import GazetteerSnapshot
 from app.news.services.summaries.headers import default_header_dictionary
+from app.news.services.summaries.normalize import normalize_summary_text
 from app.news.services.summaries.parser import parse_summary
 from app.news.services.summaries.window import resolve_window
 
 ROOT=Path("tests/fixtures/summaries")
+
 def load():
     gaz=GazetteerSnapshot.from_dict(json.loads((ROOT/"gazetteer_snapshot.json").read_text(encoding="utf-8")))
     lex=yaml.safe_load(Path("app/core/llm_knowledge/terminology/summary_location_lexicon.yaml").read_text(encoding="utf-8"))
     return gaz,default_header_dictionary(),lex
+
+def simulated(gaz):
+    names={k:list(v) for k,v in gaz.names.items()}; refs={v.id:v for values in gaz.names.values() for v in values}
+    for row in csv.DictReader(Path("recon_output/alias_proposals.csv").open(encoding="utf-8-sig")):
+        if row["approve"].strip().lower()!="yes" or not row["recommended_id"]: continue
+        ref=refs.get(int(row["recommended_id"]))
+        if ref:
+            names[row["unresolved_text"]]=[VillageRef(ref.id,ref.name_ar,ref.caza,ref.coord_x,ref.coord_y,row["place_detail"] or None)]
+    return GazetteerSnapshot(names,gaz.descriptors)
+
 def simple_item(i):
-    return {"condition_id":i.condition_id,"primary":i.primary_village.name_ar,"secondary":i.secondary_village.name_ar if i.secondary_village else None,"qualifiers":list(i.qualifiers),"reported_count":i.reported_count,"location_texts":list(i.location_texts)}
+    return {"condition_id":i.condition_id,"primary":i.primary_village.name_ar,"secondary":i.secondary_village.name_ar if i.secondary_village else None,"qualifiers":list(i.qualifiers),"reported_count":i.reported_count,"location_texts":list(i.location_texts),"event_time":i.event_time.isoformat() if i.event_time else None,"origin_text":i.origin_text}
+
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument('--after-aliases',action='store_true'); args=ap.parse_args()
-    gaz,headers,lex=load(); rows=[json.loads(x) for x in Path("recon_output/summary_bulletins.jsonl").open(encoding="utf-8")]
-    selected=[]; channels=Counter()
-    # Deterministic diverse sample; 40279 is mandatory.
-    for r in sorted(rows,key=lambda x:(x["message_id"]!=40279,x["message_id"])):
-        ch=r.get("origin_account") or r.get("source")
-        early=datetime.fromisoformat(r["message_datetime"]).astimezone().hour<3
-        useful=channels[ch]<5 or (":" in r["text"] and "\n" not in r["text"][:250]) or "بين" in r["text"] or early
-        if useful and len(selected)<30: selected.append(r); channels[ch]+=1
-    pending=ROOT/"pending"; pending.mkdir(parents=True,exist_ok=True)
-    leftovers=Counter(); unresolved_places=Counter(); unresolved_headers=Counter(); rules=Counter(); blockers=Counter(); accepted=0
-    sectioned=sectioned_ok=prose_total=prose_ok=0
+    gaz,headers,lex=load(); sim=simulated(gaz)
+    rows=[json.loads(x) for x in Path("recon_output/summary_bulletins.jsonl").open(encoding="utf-8")]
+    current=[]; proposed=[]; rules=Counter(); blockers=Counter(); leftovers=Counter(); unresolved_places=Counter(); unresolved_headers=Counter()
+    sectioned=sectioned_ok=sim_sectioned_ok=timeline=timeline_ok=sim_timeline_ok=0
+    by_id={r["message_id"]:r for r in rows}
     for r in rows:
         posted=datetime.fromisoformat(r["message_datetime"]); window=resolve_window(r["text"],posted)
-        result=parse_summary(r["text"],gaz,headers,lex); accepted+=result.auto_acceptable
-        if result.out_of_scope_lines: prose_total+=1; prose_ok+=result.auto_acceptable
-        else: sectioned+=1; sectioned_ok+=result.auto_acceptable
-        leftovers.update(result.leftover_tokens); unresolved_places.update(result.unresolved_places); unresolved_headers.update(result.unresolved_headers); rules[window.rule]+=1
-        if result.leftover_tokens: blockers['leftover tokens']+=1
-        if result.unresolved_places: blockers['unresolved places']+=1
-        if result.unresolved_headers: blockers['unresolved headers']+=1
-        if result.ambiguous_places: blockers['ambiguous places']+=1
-        if result.out_of_scope_lines: blockers['prose/timeline']+=1
-        if r in selected and r["message_id"]!=40279:
-            payload={"message_id":r["message_id"],"channel":r.get("origin_account"),"raw_text":r["text"],"posted_at":r["message_datetime"],"expected":{"window":{"start":window.start.isoformat(),"end":window.end.isoformat(),"rule":window.rule},"items":[simple_item(i) for i in result.items],"leftover_tokens":list(result.leftover_tokens),"out_of_scope_lines":list(result.out_of_scope_lines),"auto_acceptable":result.auto_acceptable},"reviewer_notes":""}
-            (pending/f"{r['message_id']}.json").write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding="utf-8")
-    report=["# Step 1b parser coverage","",f"- Corpus: {len(rows)}",f"- Detected summaries: {sum(detect_summary(r['text']).is_summary for r in rows)}/{len(rows)}",f"- Before Step 1b: 19/{len(rows)} ({19/len(rows):.1%})",f"- After Step 1b{' and approved aliases' if args.after_aliases else ''}: {accepted}/{len(rows)} ({accepted/len(rows):.1%})",f"- Sectioned/non-prose: {sectioned_ok}/{sectioned} ({sectioned_ok/sectioned:.1%})",f"- Prose/timeline: {prose_ok}/{prose_total} ({prose_ok/prose_total:.1%})" if prose_total else "- Prose/timeline: 0/0","","## Remaining blockers by class",""]
-    report += [f"- {k}: {v}" for k,v in blockers.most_common()]
-    report += ["","## Window rules",""]
-    report += [f"- {k}: {v}" for k,v in rules.most_common()]
+        a=parse_summary(r["text"],gaz,headers,lex,window.anchor_date); b=parse_summary(r["text"],sim,headers,lex,window.anchor_date)
+        current.append(a); proposed.append(b); rules[window.rule]+=1
+        is_timeline=any(i.event_time for i in a.items) or bool(a.out_of_scope_lines)
+        if is_timeline: timeline+=1; timeline_ok+=a.auto_acceptable; sim_timeline_ok+=b.auto_acceptable
+        else: sectioned+=1; sectioned_ok+=a.auto_acceptable; sim_sectioned_ok+=b.auto_acceptable
+        leftovers.update(a.leftover_tokens); unresolved_places.update(a.unresolved_places); unresolved_headers.update(a.unresolved_headers)
+        for label,value in (("leftover tokens",a.leftover_tokens),("unresolved places",a.unresolved_places),("unresolved headers",a.unresolved_headers),("ambiguous places",a.ambiguous_places),("prose/timeline",a.out_of_scope_lines)):
+            if value: blockers[label]+=1
+
+    # Start from a diverse deterministic sample, force the three Step 1c cases,
+    # then retain one representative for byte-normalised repost families.
+    selected=[]; channels=Counter()
+    for r in sorted(rows,key=lambda x:x["message_id"]):
+        ch=r.get("origin_account") or r.get("source")
+        if channels[ch]<5 and len(selected)<30: selected.append(r); channels[ch]+=1
+    for message_id in (2083,28169,28316):
+        if by_id[message_id] not in selected: selected.append(by_id[message_id])
+    families=defaultdict(list)
+    for r in rows: families[normalize_summary_text(r["text"]).text].append(r["message_id"])
+    unique={normalize_summary_text(by_id[x]["text"]).text:by_id[x] for x in (2083,28169,28316)}
+    for r in selected: unique.setdefault(normalize_summary_text(r["text"]).text,r)
+    pending=ROOT/"pending"; pending.mkdir(parents=True,exist_ok=True)
+    for old in pending.glob("*.json"): old.unlink()
+    index={r["message_id"]:i for i,r in enumerate(rows)}
+    for key,r in unique.items():
+        if r["message_id"]==40279: continue
+        i=index[r["message_id"]]; a=current[i]; b=proposed[i]; window=resolve_window(r["text"],datetime.fromisoformat(r["message_datetime"]))
+        badge="auto_acceptable" if a.auto_acceptable else "blocked by aliases" if b.auto_acceptable else "blocked by parser"
+        payload={"message_id":r["message_id"],"siblings":[x for x in families[key] if x!=r["message_id"]],"channel":r.get("origin_account"),"raw_text":r["text"],"posted_at":r["message_datetime"],"badge":badge,"expected":{"window":{"start":window.start.isoformat(),"end":window.end.isoformat(),"rule":window.rule,"note":window.note},"items":[simple_item(x) for x in a.items],"leftover_tokens":list(a.leftover_tokens),"out_of_scope_lines":list(a.out_of_scope_lines),"auto_acceptable":a.auto_acceptable},"reviewer_notes":""}
+        (pending/f"{r['message_id']}.json").write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding="utf-8")
+
+    n=len(rows); cur=sum(x.auto_acceptable for x in current); simok=sum(x.auto_acceptable for x in proposed)
+    report=["# Step 1c parser coverage","","| stage | all bulletins | sectioned | timeline/prose |","|---|---:|---:|---:|",f"| after 1b | 30/{n} (13.6%) | 30/138 (21.7%) | 0/83 (0.0%) |",f"| after 1c, current snapshot | {cur}/{n} ({cur/n:.1%}) | {sectioned_ok}/{sectioned} ({sectioned_ok/sectioned:.1%}) | {timeline_ok}/{timeline} ({timeline_ok/timeline:.1%}) |",f"| after 1c, approved aliases simulated | {simok}/{n} ({simok/n:.1%}) | {sim_sectioned_ok}/{sectioned} ({sim_sectioned_ok/sectioned:.1%}) | {sim_timeline_ok}/{timeline} ({sim_timeline_ok/timeline:.1%}) |","",f"- Timeline/prose lines still out of scope: {sum(len(x.out_of_scope_lines) for x in current)}","","## Remaining blockers by class",""]
+    report += [f"- {k}: {v}" for k,v in blockers.most_common()]+["","## Window rules",""]+[f"- {k}: {v}" for k,v in rules.most_common()]
     for title,data in (("Top leftover tokens",leftovers),("Top unresolved places",unresolved_places),("Unresolved headers",unresolved_headers)):
         report += ["",f"## {title}",""]+[f"- `{k}`: {v}" for k,v in data.most_common(30)]
     Path("recon_output/step1_parser_coverage.md").write_text("\n".join(report)+"\n",encoding="utf-8")
+
 if __name__=="__main__": main()

@@ -1,0 +1,109 @@
+{
+  "message_id": 31010,
+  "siblings": [],
+  "channel": "hashemsayed",
+  "raw_text": "ملخص الاعتداءات الصهيونية منذ منتصف الليل حتى الثامنة صباحا:\n\n● غارات جوية\n○سلسلة غارات استهدفت منطقة علي الطاهر، الدبشة، دوحة كفررمان.\n\n\n ● قصف مدفعي  \n ○ المنصوري .\n○ علي الطاهر.\n○ دوحة كفرمان.\n○ حداثا.\n○القنطرة لجهة وادي الحجير.\n\n● قصف بالقذائف الفسفورية\n\n○ علي الطاهر.\n\n○تمشيط بالاسلحة الرشاشة\n\n○ حداثا.\n\n\nhttps://t.me/hashemsayed",
+  "posted_at": "2026-08-23 05:26:26+00:00",
+  "badge": "blocked by parser",
+  "expected": {
+    "window": {
+      "start": "2026-08-23T00:00:00+03:00",
+      "end": "2026-08-23T08:00:00+03:00",
+      "rule": "overnight",
+      "note": null
+    },
+    "items": [
+      {
+        "condition_id": 46,
+        "primary": "كفر رمان",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "الدبشه",
+          "دوحه كفررمان"
+        ],
+        "event_time": null,
+        "origin_text": null
+      },
+      {
+        "condition_id": 5,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "المنصوري"
+        ],
+        "event_time": null,
+        "origin_text": null
+      },
+      {
+        "condition_id": 5,
+        "primary": "علي الطاهر",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "علي الطاهر"
+        ],
+        "event_time": null,
+        "origin_text": null
+      },
+      {
+        "condition_id": 5,
+        "primary": "حداثا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "حداثا"
+        ],
+        "event_time": null,
+        "origin_text": null
+      },
+      {
+        "condition_id": 5,
+        "primary": "قنطرة",
+        "secondary": null,
+        "qualifiers": [
+          "لجهه وادي الحجير"
+        ],
+        "reported_count": 1,
+        "location_texts": [
+          "القنطره لجهه وادي الحجير"
+        ],
+        "event_time": null,
+        "origin_text": null
+      },
+      {
+        "condition_id": 18,
+        "primary": "حداثا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "حداثا"
+        ],
+        "event_time": null,
+        "origin_text": null
+      }
+    ],
+    "leftover_tokens": [
+      "دوحه",
+      "كفرمان",
+      "قصف",
+      "بالقذائف",
+      "الفسفوريه",
+      "https",
+      "t",
+      "me",
+      "hashemsayed"
+    ],
+    "out_of_scope_lines": [
+      "سلسله غارات استهدفت منطقه علي الطاهر"
+    ],
+    "auto_acceptable": false
+  },
+  "reviewer_notes": ""
+}

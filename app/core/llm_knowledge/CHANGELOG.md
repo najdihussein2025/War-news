@@ -1,5 +1,14 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-07 - Summary parser Step 1c
+
+Summary parsing now normalises bidi/Persian marks and bullet punctuation before
+header and place lookup, so the bullet-prefixed air-raid section in message
+27996 is recognised. Parenthetical action text can override its section (2083),
+timeline lines carry Beirut-aware event times and origins (28169), and stale
+copied explicit dates widen safely to posting time (28316). Approved aliases
+remain reviewable SQL and are never written automatically.
+
 ## 2026-10-07 - Deterministic summary bulletin grammar
 
 Summary parsing now uses YAML-backed action cores and fillers, expanded location
