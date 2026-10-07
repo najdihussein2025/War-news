@@ -28,6 +28,8 @@ type DataTableProps<T> = {
   errorState?: ReactNode;
   initialSort?: { key: string; direction: SortDirection };
   clientSort?: boolean;
+  density?: "default" | "compact";
+  actionsClassName?: string;
 };
 
 const SortIcon = ({ active, direction }: { active: boolean; direction: SortDirection }) => (
@@ -88,6 +90,8 @@ export const DataTable = <T,>({
   errorState,
   initialSort,
   clientSort = true,
+  density = "default",
+  actionsClassName,
 }: DataTableProps<T>) => {
   const firstSortable = columns.find((column) => column.sortValue);
   const [sort, setSort] = useState<{ key: string; direction: SortDirection } | null>(
@@ -186,14 +190,14 @@ export const DataTable = <T,>({
                 >
                   {columns.map((column) => (
                     <td
-                      className={cn("px-4 py-4 align-top text-small", column.className, column.cellClassName)}
+                      className={cn("px-4 align-top text-small", density === "compact" ? "py-3" : "py-4", column.className, column.cellClassName)}
                       key={column.key}
                     >
                       {column.render(row, rowIndex)}
                     </td>
                   ))}
                   {actions ? (
-                    <td className="relative px-4 py-4 text-right align-top" onClick={(event) => event.stopPropagation()}>
+                    <td className={cn("relative px-4 text-right align-top", density === "compact" ? "py-3" : "py-4", actionsClassName)} onClick={(event) => event.stopPropagation()}>
                       {actions(row)}
                     </td>
                   ) : null}
