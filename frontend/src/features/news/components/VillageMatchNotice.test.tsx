@@ -29,7 +29,7 @@ describe("VillageMatchNotice", () => {
 
     expect(html).toContain("Nearby-location match");
     expect(html).toContain(
-      "Village confirmed via nearby location match (Harouf En-Nabatiyeh)",
+      "Village resolved from nearby location (Harouf En-Nabatiyeh).",
     );
   });
 

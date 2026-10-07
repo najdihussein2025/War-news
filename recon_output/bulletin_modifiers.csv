@@ -1,0 +1,14 @@
+﻿modifier,occurrences
+segments total,4309
+segments fully gazetteer-matched,3595
+unmatched segment,706
+modifier اطراف,209
+between X and Y (one location),151
+connector (لجهة/عند/قرب),143
+dash compound (A-B),84
+matched after descriptor strip,45
+between X-Y (dash form),38
+count_marker (N),35
+modifier محيط,16
+modifier خراج,4
+space-separated list split by gazetteer,3

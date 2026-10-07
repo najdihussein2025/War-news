@@ -13,6 +13,7 @@ import { IncidentCategorySectionEditForm } from "../components/IncidentCategoryS
 import { VillageMatchNotice } from "../components/VillageMatchNotice";
 import { useIncidentCasualtyFlags } from "../../casualtyChecks/hooks";
 import { CasualtyCheckPanel } from "../../casualtyChecks/components/CasualtyCheckPanel";
+import { WhyNeedsReviewSection } from "../verificationReasons";
 import { fieldGroupForSection, incidentCategorySections } from "../incidentCategorySections";
 import type { IncidentCategorySectionKey } from "../incidentCategorySections";
 import { reportedCount } from "../incidentSchema";
@@ -279,6 +280,8 @@ export const IncidentDetailPage = () => {
           </div>
         </dl>
       </section>
+
+      <WhyNeedsReviewSection incident={incident} roleBase={roleBase} search={location.search} />
 
       {casualtyFlags.data?.map((flag) => (
         <CasualtyCheckPanel

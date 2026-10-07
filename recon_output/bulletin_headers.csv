@@ -1,0 +1,49 @@
+﻿header_normalized,frequency,actions_in_header,compound_has_و,example_message_id,example_raw_header,sources,suggested_condition_heuristic
+القصف المدفعي المعادي,122,1,False,1115,القصف المدفعي المعادي,alichoeib1970=28;nabatiehchannel=27;mehwaralmokawma=23;sameralhajali=20,5 Artillery Shelling
+التفجيرات التي نفذها العدو في البلدات الجنوبيه,99,1,False,27977,التفجيرات التي نفذها العدو في البلدات الجنوبية,alichoeib1970=27;nabatiehchannel=25;sameralhajali=21;mehwaralmokawma=17,21 Mining & Detonation
+الغارات التي نفذها الطيران الحربي المعادي,98,1,False,27977,الغارات التي نفذها الطيران الحربي المعادي,alichoeib1970=27;nabatiehchannel=25;sameralhajali=21;mehwaralmokawma=17,46 Bombs
+القصف المدفعي,57,1,False,1239,القصف المدفعي,nabatiehchannel=16;alichoeib1970=12;Janoubana=12;mehwaralmokawma=10,5 Artillery Shelling
+التفجيرات,42,1,False,1115,التفجيرات,mehwaralmokawma=11;nabatiehchannel=8;alichoeib1970=7;Janoubana=6,21 Mining & Detonation
+القنابل المضيئه,41,1,False,1115,القنابل المضيئة,nabatiehchannel=9;mehwaralmokawma=8;Janoubana=8;alichoeib1970=8,9 Flare Bomb
+التمشيط بالاسلحه الرشاشه,29,1,False,1115,التمشيط بالأسلحة الرشاشة,mehwaralmokawma=7;nabatiehchannel=6;hashemsayed=5;Janoubana=4,18 Sweeping Operations
+القنابل الصوتيه,26,1,False,27993,القنابل الصوتية,alichoeib1970=7;nabatiehchannel=6;sameralhajali=5;Janoubana=4,10 Sound Bombs
+الغارات الحربيه,26,1,False,28385,الغارات الحربية,nabatiehchannel=7;mehwaralmokawma=6;alichoeib1970=6;sameralhajali=4,46 Bombs
+الغارات التي نفذها الطيران المسير المعادي,22,1,False,27993,الغارات التي نفذها الطيران المسير المعادي,alichoeib1970=6;nabatiehchannel=5;sameralhajali=5;Janoubana=3,46 Bombs (drone strike; no dedicated condition) | 46 Bombs
+التفجيرات المعاديه,16,1,False,1239,التفجيرات المعادية,nabatiehchannel=6;mehwaralmokawma=4;alichoeib1970=4;hashemsayed=1,21 Mining & Detonation
+غالونات متفجره,16,1,False,27993,غالونات متفجرة,nabatiehchannel=4;alichoeib1970=4;sameralhajali=3;Janoubana=3,UNMAPPED (explosive gallons)
+الغارات من الطيران الحربي,15,1,False,28588,الغارات من الطيران الحربي,Janoubana=11;nabatiehchannel=3;hashemsayed=1,46 Bombs
+تمشيط بالاسلحه الرشاشه,11,1,False,2083,تمشيط بالأسلحة الرشاشة,alichoeib1970=4;sameralhajali=2;mehwaralmokawma=2;nabatiehchannel=1,18 Sweeping Operations
+قنابل صوتيه,10,1,False,1239,قنابل صوتية,mehwaralmokawma=3;alichoeib1970=3;nabatiehchannel=2;Janoubana=2,10 Sound Bombs
+قنابل «لانشر»,9,1,False,1115,قنابل «لانشر»,mehwaralmokawma=3;hashemsayed=3;Janoubana=3,UNMAPPED (launcher bombs)
+عمليات التفجير,8,1,False,28588,عمليات التفجير,Janoubana=5;nabatiehchannel=3,21 Mining & Detonation
+التمشيط,7,1,False,29232,التمشيط,nabatiehchannel=3;Janoubana=1;sameralhajali=1;alichoeib1970=1,18 Sweeping Operations
+قنابل مضيئه,7,1,False,29456,قنابل مضيئة,mehwaralmokawma=3;alichoeib1970=3;Janoubana=1,9 Flare Bomb
+التفجيرات التي نفذها العدو,7,1,False,36062,التفجيرات التي نفذها العدو,Janoubana=7,21 Mining & Detonation
+غارات حربيه,6,1,False,29232,غارات حربية,nabatiehchannel=2;Janoubana=1;sameralhajali=1;alichoeib1970=1,46 Bombs
+غارات مسيره,6,1,False,29232,غارات مسيّرة,nabatiehchannel=2;Janoubana=1;sameralhajali=1;alichoeib1970=1,46 Bombs (drone strike; no dedicated condition) | 46 Bombs
+قصف مدفعي,6,1,False,29456,قصف مدفعي,hashemsayed=2;mehwaralmokawma=1;sameralhajali=1;alichoeib1970=1,5 Artillery Shelling
+القنابل المتفجره,5,1,False,36362,القنابل المتفجرة,alichoeib1970=1;sameralhajali=1;mehwaralmokawma=1;nabatiehchannel=1,UNMAPPED
+الغارات من الطيران الحربي المعادي,5,1,False,36376,الغارات من الطيران الحربي المعادي,Janoubana=5,46 Bombs
+القصف الفوسفوري,4,1,False,28514,القصف الفوسفوري,mehwaralmokawma=1;sameralhajali=1;alichoeib1970=1;nabatiehchannel=1,7 Phosphorus Bombs
+اغار الطيران الحربي المعادي مستهدفا,4,1,False,29070,أغار الطيران الحربي المعادي مستهدفاً,sameralhajali=1;nabatiehchannel=1;mehwaralmokawma=1;alichoeib1970=1,46 Bombs
+قصف مدفعي معاد استهدف,4,1,False,29070,قصف مدفعي معادٍ استهدف,sameralhajali=1;nabatiehchannel=1;mehwaralmokawma=1;alichoeib1970=1,5 Artillery Shelling
+تفجيرات معاديه,4,1,False,29070,تفجيرات معادية,sameralhajali=1;nabatiehchannel=1;mehwaralmokawma=1;alichoeib1970=1,21 Mining & Detonation
+القصف من مروحيات اباتشي,4,1,False,38081,القصف من مروحيات آباتشي,alichoeib1970=1;sameralhajali=1;mehwaralmokawma=1;nabatiehchannel=1,UNMAPPED
+الغارات الحربيه المعاديه,4,1,False,38575,الغارات الحربية المعادية,alichoeib1970=2;mehwaralmokawma=2,46 Bombs
+القصف المدفعي و الفوسفوري,3,2,True,28453,القصف المدفعي و الفوسفوري,alichoeib1970=1;nabatiehchannel=1;sameralhajali=1,7 Phosphorus Bombs | 5 Artillery Shelling
+تمشيط بالاسلحهالرشاشه,3,1,False,28453,تمشيط بالأسلحةالرشاشة,alichoeib1970=1;nabatiehchannel=1;sameralhajali=1,18 Sweeping Operations
+الطيران المسير,3,1,False,29090,الطيران المسيّر,Janoubana=1;mehwaralmokawma=1;alichoeib1970=1,46 Bombs (drone strike; no dedicated condition) | 46 Bombs
+قذائف مضيئه,3,1,False,34548,قذائف مضيئة,alichoeib1970=1;sameralhajali=1;nabatiehchannel=1,9 Flare Bomb
+الغارات من الطائرات الحربيه,3,1,False,36101,الغارات من الطائرات الحربية,hashemsayed=1;mehwaralmokawma=1;almanarnews=1,46 Bombs
+غارات من الطيران الحربي,2,1,False,27996,غارات من الطيران الحربي,hashemsayed=2,46 Bombs
+الغارات من الطيران المسير,2,1,False,28588,الغارات من الطيران المسير,Janoubana=2,46 Bombs (drone strike; no dedicated condition) | 46 Bombs
+تمشيط,2,1,False,32877,تمشيط,Janoubana=1;hashemsayed=1,18 Sweeping Operations
+غارات الطيران الحربي,2,1,False,34995,غارات الطيران الحربي,mehwaralmokawma=1;Janoubana=1,46 Bombs
+قصف المدفعي,1,1,False,28539,قصف المدفعي,nabatiehchannel=1,5 Artillery Shelling
+القصف المدفعي و قد طال المناطق التاليه,1,1,True,28776,القصف المدفعي و قد طال المناطق التالية,Janoubana=1,5 Artillery Shelling
+عمليات التمشيط التي قام بها العدو وقد طالت بلدات,1,1,False,28776,عمليات التمشيط التي قام بها العدو وقد طالت بلدات,Janoubana=1,18 Sweeping Operations
+قصف مدفعي اسرائيلي طال,1,1,False,31204,قصف مدفعي إسرائيلي طال,mehwaralmokawma=1,5 Artillery Shelling
+التفجير,1,1,False,32355,التفجير,nabatiehchannel=1,21 Mining & Detonation
+تفجيرات,1,1,False,35645,تفجيرات,Janoubana=1,21 Mining & Detonation
+قصف مدفعي معاد استهدف بلدات,1,1,False,36205,قصف مدفعي معادٍ استهدف بلدات,nabatiehchannel=1,5 Artillery Shelling
+قنابل مضيئه و فسفوريه,1,2,True,40279,قنابل مضيئة و فسفورية,nabatiehchannel=1,9 Flare Bomb | 7 Phosphorus Bombs
