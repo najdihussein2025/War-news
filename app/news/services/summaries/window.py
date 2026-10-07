@@ -55,12 +55,15 @@ def resolve_window(text: str, posted_at: datetime, previous_summary_end: datetim
         if year < 100: year += 2000
         candidate = datetime(year, int(explicit.group(2)), int(explicit.group(1)), tzinfo=BEIRUT)
         if not explicit.group(3) and candidate > posted: candidate = candidate.replace(year=year-1)
-        delta=(posted.date()-candidate.date()).days
+        delta=(anchor-candidate.date()).days
         if candidate.date() > posted.date():
             start=datetime.combine(posted.date(),time.min,BEIRUT)
             return SummaryWindow(start,posted,"explicit_date:future_ignored",explicit.group(0),posted.date(),"future_date_ignored")
-        if delta == 1 and posted.hour >= 12:
-            return SummaryWindow(candidate,posted,"explicit_date:stale_suspect",explicit.group(0),candidate.date(),"stale_explicit_date")
+        # Staleness is measured against the anchor day, not the posting date: a
+        # 00:00:51 post on 17/9 summarises 16/9, so a 15/9 header is one day old.
+        if delta == 1:
+            # Content is the anchor day's; timed events must land on that day.
+            return SummaryWindow(candidate,posted,"explicit_date:stale_suspect",explicit.group(0),anchor,"stale_explicit_date")
         end = posted if candidate.date() == posted.date() else candidate + timedelta(days=1)
         return SummaryWindow(candidate, end, "explicit_date", explicit.group(0), candidate.date(),"old_summary_reshared" if delta>=2 else None)
     start = datetime.combine(anchor, time.min, BEIRUT)

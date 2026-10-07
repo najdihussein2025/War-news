@@ -40,3 +40,30 @@ def test_old_and_future_explicit_date_notes():
     future=resolve_window('ملخص بتاريخ ١٧/٩/٢٠٢٦',datetime(2026,9,16,12,tzinfo=TZ))
     assert old.note=='old_summary_reshared'
     assert future.note=='future_date_ignored' and future.start.day==16
+
+
+# Stale-date rule is measured against the anchor day, not the posting date.
+def test_28327_posted_00_00_51_with_previous_days_date_is_stale_against_anchor():
+    posted = datetime(2026, 9, 17, 0, 0, 51, tzinfo=TZ)
+    w = resolve_window('ملخص بتاريخ ١٥/٩', posted)
+    assert w.rule == 'explicit_date:stale_suspect' and w.note == 'stale_explicit_date'
+    assert w.start == datetime(2026, 9, 15, tzinfo=TZ) and w.end == posted
+    assert w.anchor_date.isoformat() == '2026-09-16'  # timed events belong to the 16th
+
+def test_28316_family_posted_23_58_is_stale_suspect():
+    posted = datetime(2026, 9, 16, 23, 58, 12, tzinfo=TZ)
+    w = resolve_window('ملخص بتاريخ ١٥/٩/٢٠٢٦', posted)
+    assert w.rule == 'explicit_date:stale_suspect' and w.end == posted and w.anchor_date.isoformat() == '2026-09-16'
+
+def test_28017_posted_00_02_for_previous_day_is_normal():
+    w = resolve_window('ملخص بتاريخ ١٥/٩/٢٠٢٦', datetime(2026, 9, 16, 0, 2, 54, tzinfo=TZ))
+    assert w.rule == 'explicit_date' and w.note is None
+    assert (w.start, w.end) == (datetime(2026, 9, 15, tzinfo=TZ), datetime(2026, 9, 16, tzinfo=TZ))
+
+def test_explicit_date_equal_to_anchor_is_normal_and_older_is_reshared():
+    posted = datetime(2026, 9, 16, 12, tzinfo=TZ)
+    assert resolve_window('ملخص بتاريخ ١٦/٩/٢٠٢٦', posted).note is None
+    assert resolve_window('ملخص بتاريخ ١٤/٩/٢٠٢٦', posted).note == 'old_summary_reshared'
+    # Early morning: anchor is the 16th, so the 14th is two days stale, not one.
+    assert resolve_window('ملخص بتاريخ ١٤/٩/٢٠٢٦', datetime(2026, 9, 17, 0, 30, tzinfo=TZ)).note == 'old_summary_reshared'
+    assert resolve_window('ملخص بتاريخ ١٥/٩/٢٠٢٦', datetime(2026, 9, 17, 0, 30, tzinfo=TZ)).note == 'stale_explicit_date'
