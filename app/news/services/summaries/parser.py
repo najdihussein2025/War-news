@@ -3,7 +3,9 @@ from __future__ import annotations
 import hashlib
 import re
 from dataclasses import replace
+from datetime import date, datetime, time
 from typing import Iterable
+from zoneinfo import ZoneInfo
 
 from .dtos import EvidenceSpan, HeaderEntry, ParseResult, ParsedSection, ParsedSummaryItem, VillageRef
 from .gazetteer import GazetteerSnapshot
@@ -17,6 +19,8 @@ _DASH = re.compile(r"^(.+?)\s*[-–—]\s*(.+)$")
 _CONJ = re.compile(r"^(.+?)\s+و\s*(.+)$")
 _SUFFIX = re.compile(r"\s+(لجهه|جهه|عند|قرب|باتجاه)\s+(.+)$")
 _PROSE_HEADER = re.compile(r"^(?:اعتداءات\s+اخري|التحركات\s+الاسرائيليه)$")
+_TIMELINE = re.compile(r"^(?:الساعه\s+)?(\d{1,2})[:٫](\d{1,2})\s*(صباحا|فجرا|ظهرا|عصرا|مساء|ليلا)?\s+(.+)$")
+BEIRUT = ZoneInfo("Asia/Beirut")
 
 
 def _resolve(gazetteer: GazetteerSnapshot, value: str) -> tuple[VillageRef | None, bool]:
@@ -57,8 +61,43 @@ def _span(normalized, phrase: str, search_start: int) -> tuple[EvidenceSpan, int
     return normalized.original_span(pos,pos+len(needle)), pos+len(needle)
 
 
+def _timeline_parts(line: str, gazetteer: GazetteerSnapshot, headers: HeaderDictionarySnapshot,
+                    anchor_date: date | None):
+    hit=_TIMELINE.match(normalize_token(line))
+    if not hit or anchor_date is None: return None
+    hour,minute=int(hit.group(1)),int(hit.group(2)); period=hit.group(3) or ""
+    if period in {"عصرا","مساء"} and hour<12: hour+=12
+    if period in {"صباحا","فجرا"} and hour==12: hour=0
+    body=re.sub(r"[-–—]", " ", hit.group(4))
+    body=re.sub(r"^(?:للمره\s+(?:الثالثه|الرابعه)\s+)?", "", body)
+    body=body.replace(" جديد "," ")
+    origin=None
+    origin_hit=re.search(r"\s+من\s+(.+?)\s+(?=باتجاه|نحو|استهدف|علي|في)",body)
+    if origin_hit:
+        origin=origin_hit.group(1).strip(); body=(body[:origin_hit.start()]+" "+body[origin_hit.end():]).strip()
+    places,unused=_dp_places(body,gazetteer)
+    if not places: return None
+    target=places[-1]
+    leftovers=[u for u in unused if normalize_token(u) not in {"في","علي","باتجاه","نحو","بلده","مدينه","استهدف","طال"}]
+    qualifiers=[]
+    qualifier_words={"وسط","البلده","جامع","الحي","الرابع","المشاع"}
+    action_words=[u for u in leftovers if normalize_token(u) not in qualifier_words]
+    qualifiers=[normalize_token(u) for u in leftovers if normalize_token(u) in qualifier_words]
+    action=headers.match_grammar(" ".join(action_words))
+    if not action: return None
+    event=datetime.combine(anchor_date,time(hour%24,minute),BEIRUT)
+    return action.condition_ids,target,tuple(qualifiers),origin,event
+
+
+def _inline_parts(line: str, gazetteer: GazetteerSnapshot, headers: HeaderDictionarySnapshot):
+    places,unused=_dp_places(normalize_token(line),gazetteer)
+    action=headers.match_grammar(" ".join(unused)) if places else None
+    return (action.condition_ids,places[-1]) if action else None
+
+
 def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictionarySnapshot,
-                  lexicon: dict) -> ParseResult:
+                  lexicon: dict, anchor_date: date | None = None) -> ParseResult:
+    text=re.sub(r"«.*?»",lambda m:m.group(0) if gazetteer.lookup(m.group(0)[1:-1]) else " "*len(m.group(0)),text,flags=re.S)
     normalized = normalize_summary_text(text)
     flat = normalized.text
     header_hits: list[tuple[int,int,object,str]]=[]
@@ -82,6 +121,15 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
         elif _PROSE_HEADER.match(normalize_token(before)):
             entry=HeaderEntry(normalize_token(before),(),"prose","section-level prose")
             header_hits.append((boundary,colon.end(),entry,before))
+    offset=0
+    for line in flat.splitlines(keepends=True):
+        candidate=normalize_token(line.rstrip("\n:"))
+        entry,_=headers.resolve(candidate)
+        if entry and candidate and not any(start==offset for start,_,_,_ in header_hits):
+            header_hits.append((offset,offset+len(line),entry,candidate))
+        elif _PROSE_HEADER.match(candidate):
+            header_hits.append((offset,offset+len(line),HeaderEntry(candidate,(),"prose","section-level prose"),candidate))
+        offset+=len(line)
     # Prefer the longest dictionary match at a shared colon, then remove overlaps.
     chosen=[]
     for item in sorted(header_hits,key=lambda x:(x[1],-(x[1]-x[0]))):
@@ -101,21 +149,52 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
         stop=chosen[index+1][0] if index+1<len(chosen) else len(flat)
         location_block=flat[end:stop].strip()
         if entry.status == "prose":
-            prose.extend(p.strip() for p in re.split(r"[\n،,؛;]+",location_block) if p.strip())
+            for prose_line in (p.strip() for p in re.split(r"[\n،,؛;]+",location_block) if p.strip()):
+                parsed=_timeline_parts(prose_line,gazetteer,headers,anchor_date)
+                if parsed:
+                    conditions,primary,timeline_quals,origin,event_time=parsed
+                    evidence,cursor=_span(normalized,prose_line,cursor)
+                    for condition_id in conditions:
+                        key_material=f"{condition_id}|{primary.id}|{event_time.isoformat()}"
+                        raw_items.append(ParsedSummaryItem(condition_id,primary,None,timeline_quals,primary.place_detail,1,(prose_line,),(evidence,),"timeline",hashlib.sha256(key_material.encode()).hexdigest(),event_time,origin))
+                else:
+                    inline=_inline_parts(prose_line,gazetteer,headers)
+                    if inline:
+                        conditions,primary=inline; evidence,cursor=_span(normalized,prose_line,cursor)
+                        for condition_id in conditions:
+                            key_material=f"{condition_id}|{primary.id}|"
+                            raw_items.append(ParsedSummaryItem(condition_id,primary,None,(),primary.place_detail,1,(prose_line,),(evidence,),"inline prose",hashlib.sha256(key_material.encode()).hexdigest()))
+                    else: prose.append(prose_line)
             continue
         if entry.status != "approved":
             unresolved_headers.append(candidate); continue
         section=ParsedSection(candidate,entry.condition_ids,location_block); sections.append(section)
-        parts=[p.strip(" .:؛;,\n") for p in re.split(r"[\n،,؛;]+",location_block) if p.strip(" .:؛;,\n")]
+        parts=[p.strip(" .:؛;,\n") for p in re.split(r"[\n،,؛;/]+",location_block) if p.strip(" .:؛;,\n")]
         if not parts and location_block: parts=[location_block]
         for original_part in parts:
             item_conditions=entry.condition_ids
+            timeline=_timeline_parts(original_part,gazetteer,headers,anchor_date)
+            if timeline:
+                conditions,primary,timeline_quals,origin,event_time=timeline
+                evidence,cursor=_span(normalized,original_part,cursor)
+                for condition_id in conditions:
+                    key_material=f"{condition_id}|{primary.id}|{event_time.isoformat()}"
+                    raw_items.append(ParsedSummaryItem(condition_id,primary,None,timeline_quals,primary.place_detail,1,(original_part,),(evidence,),"timeline",hashlib.sha256(key_material.encode()).hexdigest(),event_time,origin))
+                continue
             part=re.sub(r"https?://\S+|(?:www\.)?t\.me/\S+", "", original_part, flags=re.I)
-            part=re.sub(r"«[^»]{1,40}»\s*$", "", part).strip()
+            part=re.sub(r"«.*?»\s*$", "", part, flags=re.S).strip()
             for phrase in lexicon.get("noise_phrases",[]):
                 part=part.replace(normalize_token(phrase)," ")
             part=re.sub(r"[^\u0600-\u06ffA-Za-z0-9\s()×x+\-–—]", " ", part)
-            part,count=_count(part); quals=[]
+            part=re.sub(r"^\s*[-–—]+\s*", "", part).strip(" .،؛;:")
+            part,count=_count(part)
+            parenthetical=re.search(r"\(([^()]*)\)\s*$",part)
+            quals=[]
+            if parenthetical:
+                override=headers.match_grammar(parenthetical.group(1))
+                if override: item_conditions=override.condition_ids
+                else: quals.append(normalize_token(parenthetical.group(1)))
+                part=part[:parenthetical.start()].strip()
             direct,direct_ambiguous=_resolve(gazetteer,part)
             pairs=[(direct,None)] if direct else []
             tokens=part.split()
@@ -179,6 +258,15 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
     # header-grammar expression; anything else remains fail-closed.
     if not chosen:
         for original_line in (x.strip() for x in flat.splitlines() if x.strip()):
+            if "ملخص" in original_line and "اعتداءات" in original_line: continue
+            timeline=_timeline_parts(original_line,gazetteer,headers,anchor_date)
+            if timeline:
+                conditions,primary,timeline_quals,origin,event_time=timeline
+                evidence,cursor=_span(normalized,original_line,cursor)
+                for condition_id in conditions:
+                    key_material=f"{condition_id}|{primary.id}|{event_time.isoformat()}"
+                    raw_items.append(ParsedSummaryItem(condition_id,primary,None,timeline_quals,primary.place_detail,1,(original_line,),(evidence,),"timeline",hashlib.sha256(key_material.encode()).hexdigest(),event_time,origin))
+                continue
             line=re.sub(r"https?://\S+|(?:www\.)?t\.me/\S+", "", original_line, flags=re.I)
             line=re.sub(r"«[^»]{1,40}»\s*$", "", line).strip()
             line,count=_count(line)
@@ -207,7 +295,7 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
                     raw_items.append(ParsedSummaryItem(condition_id,primary,None,(),primary.place_detail,count,(original_line,),(evidence,),inline.normalized_header,hashlib.sha256(key_material.encode()).hexdigest()))
     merged={}
     for item in raw_items:
-        k=(item.condition_id,item.primary_village.id)
+        k=(item.condition_id,item.primary_village.id,item.event_time)
         if k not in merged: merged[k]=item; continue
         old=merged[k]
         quals=list(dict.fromkeys(old.qualifiers+item.qualifiers))

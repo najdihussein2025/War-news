@@ -30,7 +30,10 @@ class HeaderDictionarySnapshot:
         condition_ids: list[int] = []
         for core in sorted(self.action_cores, key=lambda x: len(normalize_token(x.normalized_header)), reverse=True):
             phrase = normalize_token(core.normalized_header)
-            pattern = rf"(?<![\u0600-\u06ff]){re.escape(phrase)}(?![\u0600-\u06ff])"
+            words=phrase.split()
+            first=words[0][2:] if words[0].startswith("ال") and len(words[0])>3 else words[0]
+            flexible=" ".join([rf"(?:ال)?{re.escape(first)}",*(re.escape(x) for x in words[1:])])
+            pattern = rf"(?<![\u0600-\u06ff]){flexible}(?![\u0600-\u06ff])"
             if re.search(pattern, value):
                 value = re.sub(pattern, " ", value)
                 condition_ids.extend(core.condition_ids)
@@ -44,9 +47,10 @@ class HeaderDictionarySnapshot:
 
     def resolve(self, candidate: str) -> tuple[HeaderEntry | None, str]:
         exact, note = self.match(candidate)
-        if exact is not None:
+        if exact is not None and exact.status == "approved":
             return exact, note
-        return self.match_grammar(candidate), ""
+        grammatical=self.match_grammar(candidate)
+        return (grammatical, "") if grammatical is not None else (exact,note)
 
     def suffix_match(self, before_colon: str) -> tuple[int, HeaderEntry, str] | None:
         words = before_colon.split()

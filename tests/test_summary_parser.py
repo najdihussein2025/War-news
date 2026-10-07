@@ -8,7 +8,7 @@ from app.news.services.summaries.parser import parse_summary
 
 LEX=yaml.safe_load(Path('app/core/llm_knowledge/terminology/summary_location_lexicon.yaml').read_text(encoding='utf-8'))
 def gaz():
-    names={n:[VillageRef(i,n,'Nabatiye',i*1000.0,0)] for i,n in enumerate(['الخيام','المنصوري','ميفدون','حداثا','حاريص','شقرا','كفرتبنيت'],1)}
+    names={n:[VillageRef(i,n,'Nabatiye',i*1000.0,0)] for i,n in enumerate(['الخيام','المنصوري','ميفدون','حداثا','حاريص','شقرا','كفرتبنيت','علي الطاهر','النبطية الفوقا'],1)}
     return GazetteerSnapshot(names,LEX['qualifiers'])
 def parse(text,g=None,h=None): return parse_summary(text,g or gaz(),h or default_header_dictionary(),LEX)
 
@@ -70,6 +70,33 @@ def test_no_fuzzy_matching_in_production_summary_package():
     forbidden=('similarity','difflib','rapidfuzz','levenshtein','word_similarity')
     source='\n'.join(path.read_text(encoding='utf-8').lower() for path in Path('app/news/services/summaries').glob('*.py'))
     assert not any(term in source for term in forbidden)
+
+def test_real_27996_bullet_header_and_exact_places():
+    p=parse('● غارات من الطيران الحربي:\n- حي الدير في بلدة النبطية الفوقا\n- مرتفع علي الطاهر')
+    assert {i.condition_id for i in p.items}=={46}
+    assert {i.primary_village.name_ar for i in p.items}=={'علي الطاهر','النبطية الفوقا'}
+
+def test_split_decorative_signatures_are_noise():
+    p=parse('القصف المدفعي:\nالخيام\n«جـھ,آد𓂆»\n«مـيّـثـمـ𓂆»')
+    assert p.auto_acceptable and not p.leftover_tokens
+
+def test_parenthetical_action_overrides_section_header():
+    p=parse('القصف المدفعي:\nكفرتبنيت(قذائف دخانية)')
+    assert [(i.condition_id,i.primary_village.name_ar) for i in p.items]==[(8,'كفرتبنيت')]
+
+def test_timeline_target_time_origin_and_distinct_events():
+    from datetime import date
+    p=parse_summary('- الساعة ٦:٢٨ صباحاً تفجير في بلدة المنصوري\n- الساعة ٧:٤٨ صباحاً قصف مدفعي من البياضة باتجاه المنصوري\n- الساعة ١٠:٣٠ صباحاً قصف مدفعي استهدف المنصوري -المشاع',gaz(),default_header_dictionary(),LEX,date(2026,9,13))
+    assert len(p.items)==3 and [i.event_time.hour for i in p.items]==[6,7,10]
+    assert p.items[1].origin_text=='البياضه' and all(i.primary_village.name_ar=='المنصوري' for i in p.items)
+
+def test_every_action_core_accepts_article_and_fillers():
+    h=default_header_dictionary()
+    for core in h.action_cores:
+        raw=core.normalized_header
+        bare=raw[2:] if raw.startswith('ال') else raw
+        for variant in (bare,'ال'+bare,f'{bare} المعادي',f'التي نفذها العدو {bare}',f'{bare} من قصف مدفعي'):
+            assert h.match_grammar(variant), (raw,variant)
 def test_pure_imports_do_not_load_sqlalchemy_or_settings():
     files=['normalize.py','detection.py','window.py','parser.py','headers.py']
     source='\n'.join((Path('app/news/services/summaries')/name).read_text(encoding='utf-8') for name in files)
