@@ -1,0 +1,50 @@
+- {normalized_header: "القصف المدفعي", condition_ids: [5], status: approved, note: ""}
+- {normalized_header: "القصف المدفعي المعادي", condition_ids: [5], status: approved, note: ""}
+- {normalized_header: "قصف مدفعي", condition_ids: [5], status: approved, note: ""}
+- {normalized_header: "قصف المدفعي", condition_ids: [5], status: approved, note: "corpus variant"}
+- {normalized_header: "التفجيرات", condition_ids: [21], status: approved, note: ""}
+- {normalized_header: "عمليات التفجير", condition_ids: [21], status: approved, note: ""}
+- {normalized_header: "التفجيرات التي نفذها العدو في البلدات الجنوبيه", condition_ids: [21], status: approved, note: ""}
+- {normalized_header: "التفجيرات المعاديه", condition_ids: [21], status: approved, note: ""}
+- {normalized_header: "الغارات من الطيران الحربي", condition_ids: [46], status: approved, note: ""}
+- {normalized_header: "الغارات من الطيران الحربي المعادي", condition_ids: [46], status: approved, note: "corpus variant"}
+- {normalized_header: "الغارات التي نفذها الطيران الحربي المعادي", condition_ids: [46], status: approved, note: ""}
+- {normalized_header: "الغارات الحربيه", condition_ids: [46], status: approved, note: ""}
+- {normalized_header: "غارات جويه", condition_ids: [46], status: approved, note: ""}
+- {normalized_header: "القنابل المضيئه", condition_ids: [9], status: approved, note: ""}
+- {normalized_header: "قنابل مضيئه", condition_ids: [9], status: approved, note: ""}
+- {normalized_header: "قنابل مضيئه و فسفوريه", condition_ids: [9, 7], status: approved, note: ""}
+- {normalized_header: "القصف الفوسفوري", condition_ids: [7], status: approved, note: ""}
+- {normalized_header: "القصف المدفعي و الفوسفوري", condition_ids: [5, 7], status: approved, note: ""}
+- {normalized_header: "القنابل الصوتيه", condition_ids: [10], status: approved, note: ""}
+- {normalized_header: "قنابل صوتيه", condition_ids: [10], status: approved, note: ""}
+- {normalized_header: "التمشيط بالاسلحه الرشاشه", condition_ids: [18], status: approved, note: ""}
+- {normalized_header: "تمشيط بالاسلحه الرشاشه", condition_ids: [18], status: approved, note: ""}
+- {normalized_header: "غالونات متفجره", condition_ids: [], status: unknown, note: "D4"}
+- {normalized_header: "قنابل لانشر", condition_ids: [], status: unknown, note: "D4"}
+- {normalized_header: "قنابل «لانشر»", condition_ids: [], status: unknown, note: "D4 corpus spelling"}
+- {normalized_header: "القصف من مروحيات اباتشي", condition_ids: [], status: unknown, note: "D4"}
+- {normalized_header: "الغارات التي نفذها الطيران المسير المعادي", condition_ids: [], status: unknown, note: "D4"}
+- {normalized_header: "القنابل المتفجره", condition_ids: [], status: unknown, note: "D4"}
+- {normalized_header: "التمشيط", condition_ids: [18], status: proposed, note: "corpus header"}
+- {normalized_header: "غارات حربيه", condition_ids: [46], status: proposed, note: "corpus header"}
+- {normalized_header: "غارات مسيره", condition_ids: [], status: proposed, note: "drone strike pending"}
+- {normalized_header: "التفجيرات التي نفذها العدو", condition_ids: [21], status: proposed, note: "corpus header"}
+- {normalized_header: "قذائف مضيئه", condition_ids: [9], status: proposed, note: "corpus header"}
+- {normalized_header: "الغارات من الطائرات الحربيه", condition_ids: [46], status: proposed, note: "corpus header"}
+- {normalized_header: "غارات من الطيران الحربي", condition_ids: [46], status: proposed, note: "corpus header"}
+- {normalized_header: "الغارات من الطيران المسير", condition_ids: [], status: proposed, note: "drone strike pending"}
+- {normalized_header: "تمشيط", condition_ids: [18], status: proposed, note: "corpus header"}
+- {normalized_header: "غارات الطيران الحربي", condition_ids: [46], status: proposed, note: "corpus header"}
+- {normalized_header: "القصف المدفعي و قد طال المناطق التاليه", condition_ids: [5], status: proposed, note: "trailing prose"}
+- {normalized_header: "عمليات التمشيط التي قام بها العدو وقد طالت بلدات", condition_ids: [18], status: proposed, note: "trailing prose"}
+- {normalized_header: "قصف مدفعي اسرائيلي طال", condition_ids: [5], status: proposed, note: "trailing prose"}
+- {normalized_header: "التفجير", condition_ids: [21], status: proposed, note: "corpus header"}
+- {normalized_header: "تفجيرات", condition_ids: [21], status: proposed, note: "corpus header"}
+- {normalized_header: "قصف مدفعي معاد استهدف بلدات", condition_ids: [5], status: proposed, note: "trailing prose"}
+- {normalized_header: "اغار الطيران الحربي المعادي مستهدفا", condition_ids: [46], status: proposed, note: "sentence-like header"}
+- {normalized_header: "قصف مدفعي معاد استهدف", condition_ids: [5], status: proposed, note: "sentence-like header"}
+- {normalized_header: "تفجيرات معاديه", condition_ids: [21], status: proposed, note: "corpus header"}
+- {normalized_header: "الغارات الحربيه المعاديه", condition_ids: [46], status: proposed, note: "corpus header"}
+- {normalized_header: "تمشيط بالاسلحهالرشاشه", condition_ids: [18], status: proposed, note: "spacing variant"}
+- {normalized_header: "الطيران المسير", condition_ids: [], status: proposed, note: "air presence/action ambiguity"}
