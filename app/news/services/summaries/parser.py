@@ -234,7 +234,7 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
             if inline and left and right:
                 for condition_id in inline.condition_ids:
                     key_material=f"{condition_id}|{left.id}|"
-                    raw_items.append(ParsedSummaryItem(condition_id,left,right,(),left.place_detail,count,(original_line,),(evidence,),inline.normalized_header,hashlib.sha256(key_material.encode()).hexdigest(),header_spans=(None,),condition_source="inline"))
+                    raw_items.append(ParsedSummaryItem(condition_id,left,right if right.id!=left.id else None,(),left.place_detail,count,(original_line,),(evidence,),inline.normalized_header,hashlib.sha256(key_material.encode()).hexdigest(),header_spans=(None,),condition_source="inline"))
                 return True
         places,unused=_dp_places(line,gazetteer)
         significant=[u for u in unused if normalize_token(u) not in noise]
@@ -360,6 +360,7 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
                 left,right=pair.group(1).strip(),pair.group(2).strip()
                 lv,la=_resolve(gazetteer,left); rv,ra=_resolve(gazetteer,right)
                 if lv and rv:
+                    if lv.id == rv.id: rv=None
                     pairs=[(lv,rv if between or dash else None)] if between or dash else [(lv,None),(rv,None)]
                 elif la or ra: ambiguous.append(original_part); located.append(("ambiguous_place",original_part,part_start,part_end))
             if not pairs:

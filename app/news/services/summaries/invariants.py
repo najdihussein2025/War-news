@@ -54,3 +54,8 @@ def residual_header_violations(text: str, result: ParseResult, gazetteer: Gazett
         if entry.section_header != expected:
             violations.append(f"{entry.kind} {entry.text!r} labelled {entry.section_header!r}, nearest header is {expected!r}")
     return violations
+
+
+def secondary_violations(result: ParseResult) -> list[str]:
+    return [f"condition {i.condition_id} at {i.primary_village.name_ar!r} has itself as secondary"
+            for i in result.items if i.secondary_village and i.secondary_village.id == i.primary_village.id]
