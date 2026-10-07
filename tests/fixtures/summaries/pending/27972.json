@@ -24,7 +24,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -37,7 +39,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -52,7 +56,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -65,7 +71,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -78,7 +86,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات المعاديه",
+        "condition_source": "header"
       }
     ],
     "residual": [

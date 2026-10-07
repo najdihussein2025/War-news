@@ -26,7 +26,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "اغار الطيران الحربي المعادي مستهدفا",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -41,7 +43,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "اغار الطيران الحربي المعادي مستهدفا",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -54,7 +58,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "اغار الطيران الحربي المعادي مستهدفا",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -69,7 +75,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "اغار الطيران الحربي المعادي مستهدفا",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -84,7 +92,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "اغار الطيران الحربي المعادي مستهدفا",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -97,7 +107,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "قصف مدفعي معاد استهدف",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -113,7 +125,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "قصف مدفعي معاد استهدف",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -128,7 +142,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "قصف مدفعي معاد استهدف",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -141,7 +157,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "قصف مدفعي معاد استهدف",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -154,7 +172,39 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "قصف مدفعي معاد استهدف",
+        "condition_source": "header"
+      },
+      {
+        "condition_id": 5,
+        "primary": "علي الطاهر",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "علي الطاهر+فوسفوري"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved",
+        "source_header": "قصف مدفعي معاد استهدف",
+        "condition_source": "header+inline"
+      },
+      {
+        "condition_id": 7,
+        "primary": "علي الطاهر",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "علي الطاهر+فوسفوري"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved",
+        "source_header": "قصف مدفعي معاد استهدف",
+        "condition_source": "header+inline"
       },
       {
         "condition_id": 21,
@@ -167,7 +217,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "تفجيرات معاديه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -180,7 +232,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "تفجيرات معاديه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -193,7 +247,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "تفجيرات معاديه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -208,7 +264,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "تفجيرات معاديه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -221,7 +279,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "تفجيرات معاديه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -236,12 +296,14 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "تفجيرات معاديه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
         "primary": "المنصوري",
-        "secondary": "المنصوري",
+        "secondary": null,
         "qualifiers": [
           "مشاع"
         ],
@@ -253,7 +315,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "تفجيرات معاديه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -266,7 +330,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "تمشيط بالاسلحه الرشاشه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -279,7 +345,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "تمشيط بالاسلحه الرشاشه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -294,7 +362,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "تمشيط بالاسلحه الرشاشه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -307,41 +377,46 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "تمشيط بالاسلحه الرشاشه",
+        "condition_source": "header"
+      },
+      {
+        "condition_id": 27,
+        "primary": "بيت ياحون",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "احراق منازل في بيت ياحون"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved",
+        "source_header": "inline prose",
+        "condition_source": "inline"
+      },
+      {
+        "condition_id": 10,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "قنبله صوتيه باتجاه المنصوري"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved",
+        "source_header": "inline prose",
+        "condition_source": "inline"
       }
     ],
     "residual": [
       {
-        "kind": "leftover_token",
-        "text": "الطاهر+فوسفوري",
-        "section_header": "تمشيط بالاسلحه الرشاشه",
-        "offsets": [
-          291,
-          305
-        ]
-      },
-      {
-        "kind": "unresolved_place",
-        "text": "علي الطاهر+فوسفوري",
-        "section_header": "تمشيط بالاسلحه الرشاشه",
-        "offsets": [
-          287,
-          305
-        ]
-      },
-      {
-        "kind": "out_of_scope",
-        "text": "احراق منازل في بيت ياحون",
-        "section_header": "تمشيط بالاسلحه الرشاشه",
-        "offsets": [
-          571,
-          595
-        ]
-      },
-      {
         "kind": "out_of_scope",
         "text": "قنبله صوتيه باتجاه احد رعاه المواشي في شبعا",
-        "section_header": "تمشيط بالاسلحه الرشاشه",
+        "section_header": "اعتداءات اخري",
         "offsets": [
           598,
           641
@@ -349,17 +424,8 @@
       },
       {
         "kind": "out_of_scope",
-        "text": "قنبله صوتيه باتجاه المنصوري",
-        "section_header": "تمشيط بالاسلحه الرشاشه",
-        "offsets": [
-          644,
-          671
-        ]
-      },
-      {
-        "kind": "out_of_scope",
         "text": "دبابه ميركافا معاديه استهدفت اطراف تبنين",
-        "section_header": "تمشيط بالاسلحه الرشاشه",
+        "section_header": "اعتداءات اخري",
         "offsets": [
           674,
           714
@@ -368,7 +434,7 @@
       {
         "kind": "out_of_scope",
         "text": "دبابه ميركافا معاديه استهدفت وادي المنصوري",
-        "section_header": "تمشيط بالاسلحه الرشاشه",
+        "section_header": "اعتداءات اخري",
         "offsets": [
           717,
           759
@@ -376,13 +442,9 @@
       }
     ],
     "disposition": "partial",
-    "leftover_tokens": [
-      "الطاهر+فوسفوري"
-    ],
+    "leftover_tokens": [],
     "out_of_scope_lines": [
-      "احراق منازل في بيت ياحون",
       "قنبله صوتيه باتجاه احد رعاه المواشي في شبعا",
-      "قنبله صوتيه باتجاه المنصوري",
       "دبابه ميركافا معاديه استهدفت اطراف تبنين",
       "دبابه ميركافا معاديه استهدفت وادي المنصوري"
     ],

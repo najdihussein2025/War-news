@@ -28,7 +28,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "الغارات الحربيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -41,7 +43,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "الغارات الحربيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -54,7 +58,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "الغارات الحربيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -69,7 +75,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "الغارات الحربيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -82,7 +90,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -95,7 +105,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -108,7 +120,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -121,7 +135,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -137,7 +153,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -152,7 +170,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -167,7 +187,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -182,7 +204,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -197,7 +221,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -210,7 +236,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -223,7 +251,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -239,7 +269,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -252,7 +284,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -265,7 +299,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -278,7 +314,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -291,7 +329,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -304,7 +344,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -317,7 +359,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التمشيط بالاسلحه الرشاشه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -330,7 +374,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التمشيط بالاسلحه الرشاشه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -343,7 +389,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التمشيط بالاسلحه الرشاشه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -356,7 +404,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التمشيط بالاسلحه الرشاشه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -369,7 +419,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التمشيط بالاسلحه الرشاشه",
+        "condition_source": "header"
       },
       {
         "condition_id": 10,
@@ -382,14 +434,16 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "inline prose",
+        "condition_source": "inline"
       }
     ],
     "residual": [
       {
         "kind": "leftover_token",
         "text": "سدانه",
-        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "section_header": "القصف المدفعي",
         "offsets": [
           239,
           244
@@ -409,14 +463,14 @@
         "text": "الجبل",
         "section_header": "التمشيط بالاسلحه الرشاشه",
         "offsets": [
-          204,
-          209
+          509,
+          514
         ]
       },
       {
         "kind": "unresolved_place",
         "text": "سدانه عند اطراف الهباريه",
-        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "section_header": "القصف المدفعي",
         "offsets": [
           239,
           263
@@ -434,7 +488,7 @@
       {
         "kind": "out_of_scope",
         "text": "تقدم دبابتي «ميركافا» الي منطقه مشاع المنصوري",
-        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "section_header": "التحركات الاسرائيليه",
         "offsets": [
           565,
           611
@@ -443,7 +497,7 @@
       {
         "kind": "out_of_scope",
         "text": "بالتزامن مع اعمال جرف وهدم واحراق عدد من المنازل.",
-        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "section_header": "التحركات الاسرائيليه",
         "offsets": [
           613,
           662
@@ -452,7 +506,7 @@
       {
         "kind": "out_of_scope",
         "text": "تقدم معاد من بلده حداثا باتجاه اطراف عيتا الجبل.",
-        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "section_header": "التحركات الاسرائيليه",
         "offsets": [
           665,
           715
@@ -461,7 +515,7 @@
       {
         "kind": "out_of_scope",
         "text": "دبابه «ميركافا» استهدفت مدينه الخيام.",
-        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "section_header": "اعتداءات اخري",
         "offsets": [
           736,
           773

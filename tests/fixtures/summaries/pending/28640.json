@@ -24,7 +24,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-الغارات التي نفذها الطيران الحربي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -37,7 +39,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-الغارات التي نفذها الطيران الحربي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -50,7 +54,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-الغارات التي نفذها الطيران الحربي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -63,7 +69,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-الغارات التي نفذها الطيران الحربي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -76,7 +84,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-الغارات التي نفذها الطيران الحربي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -89,7 +99,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-الغارات التي نفذها الطيران الحربي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -102,7 +114,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 7,
@@ -115,7 +129,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -128,7 +144,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 7,
@@ -141,7 +159,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -154,7 +174,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 7,
@@ -167,7 +189,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 7,
@@ -180,7 +204,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "inline"
       },
       {
         "condition_id": 5,
@@ -193,7 +219,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "inline"
       },
       {
         "condition_id": 7,
@@ -206,7 +234,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "inline"
       },
       {
         "condition_id": 5,
@@ -219,7 +249,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "inline"
       },
       {
         "condition_id": 5,
@@ -232,7 +264,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 7,
@@ -245,7 +279,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -258,7 +294,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 7,
@@ -271,7 +309,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -284,7 +324,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 7,
@@ -297,7 +339,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -310,7 +354,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 7,
@@ -323,7 +369,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -336,7 +384,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 7,
@@ -349,7 +399,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -362,7 +414,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 7,
@@ -375,7 +429,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -388,7 +444,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 7,
@@ -401,7 +459,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -414,7 +474,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 7,
@@ -427,7 +489,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -440,7 +504,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 7,
@@ -453,12 +519,14 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-القصف المدفعي و الفوسفوري",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
         "primary": "نبطية التحتا",
-        "secondary": "نبطية التحتا",
+        "secondary": null,
         "qualifiers": [
           "حي"
         ],
@@ -468,7 +536,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-الغارات التي نفذها الطيران المسير المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -481,7 +551,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -494,7 +566,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -507,7 +581,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -520,7 +596,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -533,7 +611,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -546,7 +626,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -559,10 +641,12 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "condition_source": "header"
       },
       {
-        "condition_id": 21,
+        "condition_id": 27,
         "primary": "أرنون",
         "secondary": null,
         "qualifiers": [],
@@ -572,10 +656,12 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-احراق المنازل",
+        "condition_source": "header"
       },
       {
-        "condition_id": 21,
+        "condition_id": 27,
         "primary": "طلوسة",
         "secondary": null,
         "qualifiers": [],
@@ -585,7 +671,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-احراق المنازل",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -598,7 +686,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-تمشيط بالاسلحهالرشاشه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -611,7 +701,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-تمشيط بالاسلحهالرشاشه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -624,7 +716,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-تمشيط بالاسلحهالرشاشه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -637,7 +731,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-تمشيط بالاسلحهالرشاشه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -650,7 +746,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-تمشيط بالاسلحهالرشاشه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -663,35 +761,19 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "-تمشيط بالاسلحهالرشاشه",
+        "condition_source": "header"
       }
     ],
     "residual": [
       {
         "kind": "leftover_token",
         "text": "الرويس-النبطيه",
-        "section_header": "-تمشيط بالاسلحهالرشاشه",
+        "section_header": "-الغارات التي نفذها الطيران المسير المعادي",
         "offsets": [
           470,
           484
-        ]
-      },
-      {
-        "kind": "leftover_token",
-        "text": "احراق",
-        "section_header": "-تمشيط بالاسلحهالرشاشه",
-        "offsets": [
-          595,
-          600
-        ]
-      },
-      {
-        "kind": "leftover_token",
-        "text": "المنازل",
-        "section_header": "-تمشيط بالاسلحهالرشاشه",
-        "offsets": [
-          601,
-          608
         ]
       },
       {
@@ -715,19 +797,10 @@
       {
         "kind": "unresolved_place",
         "text": "حي الرويس-النبطيه",
-        "section_header": "-تمشيط بالاسلحهالرشاشه",
+        "section_header": "-الغارات التي نفذها الطيران المسير المعادي",
         "offsets": [
           467,
           484
-        ]
-      },
-      {
-        "kind": "unresolved_place",
-        "text": "-احراق المنازل",
-        "section_header": "-تمشيط بالاسلحهالرشاشه",
-        "offsets": [
-          594,
-          608
         ]
       },
       {
@@ -743,8 +816,6 @@
     "disposition": "partial",
     "leftover_tokens": [
       "الرويس-النبطيه",
-      "احراق",
-      "المنازل",
       "عيتا",
       "الجبل"
     ],

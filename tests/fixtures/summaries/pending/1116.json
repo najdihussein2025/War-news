@@ -29,7 +29,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -42,7 +44,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -55,7 +59,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -68,7 +74,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات",
+        "condition_source": "header"
       },
       {
         "condition_id": 9,
@@ -81,7 +89,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القنابل المضيئه",
+        "condition_source": "header"
       },
       {
         "condition_id": 9,
@@ -94,7 +104,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القنابل المضيئه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -107,7 +119,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التمشيط بالاسلحه الرشاشه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -120,14 +134,16 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التمشيط بالاسلحه الرشاشه",
+        "condition_source": "header"
       }
     ],
     "residual": [
       {
         "kind": "leftover_token",
         "text": "مزرعه",
-        "section_header": "قنابل «لانشر»",
+        "section_header": "التمشيط بالاسلحه الرشاشه",
         "offsets": [
           225,
           230
@@ -136,10 +152,37 @@
       {
         "kind": "leftover_token",
         "text": "بسطره",
-        "section_header": "قنابل «لانشر»",
+        "section_header": "التمشيط بالاسلحه الرشاشه",
         "offsets": [
           231,
           236
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "مزرعه",
+        "section_header": "قنابل «لانشر»",
+        "offsets": [
+          281,
+          286
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "بسطره",
+        "section_header": "قنابل «لانشر»",
+        "offsets": [
+          287,
+          292
+        ]
+      },
+      {
+        "kind": "unresolved_place",
+        "text": "مزرعه بسطره عند اطراف كفرشوبا",
+        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          225,
+          254
         ]
       },
       {
@@ -147,8 +190,8 @@
         "text": "مزرعه بسطره عند اطراف كفرشوبا",
         "section_header": "قنابل «لانشر»",
         "offsets": [
-          225,
-          254
+          281,
+          310
         ]
       }
     ],

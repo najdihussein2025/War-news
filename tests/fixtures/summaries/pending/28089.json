@@ -24,7 +24,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "الغارات التي نفذها الطيران الحربي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -37,7 +39,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "الغارات التي نفذها الطيران الحربي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -52,7 +56,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "الغارات التي نفذها الطيران الحربي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -65,7 +71,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "الغارات التي نفذها الطيران الحربي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 46,
@@ -78,7 +86,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "الغارات التي نفذها الطيران الحربي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -91,7 +101,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -104,7 +116,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -117,7 +131,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -130,7 +146,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -143,7 +161,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -159,7 +179,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -172,7 +194,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -185,7 +209,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -198,7 +224,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -211,7 +239,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -224,7 +254,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -237,7 +269,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القصف المدفعي المعادي",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -250,7 +284,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -263,7 +299,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -276,7 +314,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -289,7 +329,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -302,7 +344,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 21,
@@ -315,7 +359,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "condition_source": "header"
       },
       {
         "condition_id": 10,
@@ -328,14 +374,16 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "القنابل الصوتيه",
+        "condition_source": "header"
       }
     ],
     "residual": [
       {
         "kind": "leftover_token",
         "text": "الخردله",
-        "section_header": "القنابل الصوتيه",
+        "section_header": "القصف المدفعي المعادي",
         "offsets": [
           350,
           357
@@ -344,7 +392,7 @@
       {
         "kind": "leftover_token",
         "text": "القصير",
-        "section_header": "القنابل الصوتيه",
+        "section_header": "القصف المدفعي المعادي",
         "offsets": [
           376,
           382
@@ -353,7 +401,7 @@
       {
         "kind": "unresolved_place",
         "text": "مجري نهر الخردله",
-        "section_header": "القنابل الصوتيه",
+        "section_header": "القصف المدفعي المعادي",
         "offsets": [
           341,
           357
@@ -362,7 +410,7 @@
       {
         "kind": "unresolved_place",
         "text": "القصير",
-        "section_header": "القنابل الصوتيه",
+        "section_header": "القصف المدفعي المعادي",
         "offsets": [
           376,
           382

@@ -1,5 +1,45 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-07 - Summary parser Step 1e: silent-error fixes
+
+A manual review of the regenerated fixtures found resolved items carrying the
+wrong condition. Fixes, with the real examples:
+
+- **Header barrier.** A header-like line (ends with `:`, or starts with a
+  section bullet and has at most six tokens and no place, or carries an action
+  core and no place) always starts a section. If it does not resolve, every
+  place under it goes to residual as `place_under_unresolved_header` and never
+  inherits the previous header. 28640: `-احراق المنازل:` was unrecognised, so
+  `ارنون` and `طلوسة` were read as Mining & Detonation (21); they are now
+  Burning Properties (27). 35645: `قنابل مضيئة فوق` did not resolve and six
+  places were silently read as 21 or 5; they now go to residual.
+- **Vocabulary.** `احراق المنازل/منازل/ممتلكات`, `يضرم النيران` -> 27;
+  `قصف بالقذائف الفسفورية`, `القذائف الفسفورية` -> 7; singular `قنبلة صوتية`
+  -> 10 and `قنبلة مضيئة` -> 9. 31010: `● قصف بالقذائف الفسفورية` (no colon)
+  was merged into artillery (5); `علي الطاهر` under it is now 7. 29072:
+  `علي الطاهر+فوسفوري` under the artillery header keeps 5 and adds 7, while a
+  full inline action (`مدفعي+فوسفوري`) still replaces the header's condition.
+- **Standalone lines.** A line that names its own action and place inherits
+  nothing, so it still parses under an unresolved header and above the first
+  header; clock-time event lines are never headers. Lines above the first
+  header were previously dropped silently once any header existed (34606,
+  36943).
+- **Residual header.** Each residual entry carries the header of the section
+  its offsets fall in, taken from real positions rather than a text search. In
+  28017, `صريين` sits under `القصف المدفعي المعادي`, not the last section.
+- **Secondary != primary.** 28640 `حي المسلخ- النبطية` and 29072
+  `بين بيوت السياد والمنصوري` resolve to one village on both sides; one item is
+  kept with no secondary and the phrase stays in `location_texts`.
+- **Stale date vs anchor day.** 28327 was posted 00:00:51 on 17/9 with
+  `بتاريخ ١٥/٩`; its anchor day is 16/9, so 15/9 is one day stale
+  (`explicit_date:stale_suspect`, window 15/9 00:00 -> posting time, timed events
+  on 16/9) instead of `old_summary_reshared`. 28017 (00:02 on 16/9 for 15/9)
+  stays normal.
+- **Provenance.** Items record `header_spans` and `condition_source`
+  (`header`, `inline`, `header+inline`, `parenthetical`, `timeline`), and
+  `summaries/invariants.py` checks header provenance, residual headers and
+  secondary != primary over the whole corpus.
+
 ## 2026-10-07 - Summary parser Step 1d closure
 
 URLs and decorative tail signatures are removed before segmentation without

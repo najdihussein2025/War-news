@@ -25,7 +25,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "غارات جويه",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -38,7 +40,9 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "قصف مدفعي",
+        "condition_source": "header"
       },
       {
         "condition_id": 5,
@@ -51,35 +55,24 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "قصف مدفعي",
+        "condition_source": "header"
       },
       {
-        "condition_id": 5,
-        "primary": "حداثا",
+        "condition_id": 7,
+        "primary": "علي الطاهر",
         "secondary": null,
         "qualifiers": [],
         "reported_count": 1,
         "location_texts": [
-          "حداثا"
+          "علي الطاهر"
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
-      },
-      {
-        "condition_id": 5,
-        "primary": "قنطرة",
-        "secondary": null,
-        "qualifiers": [
-          "لجهه وادي الحجير"
-        ],
-        "reported_count": 1,
-        "location_texts": [
-          "القنطره لجهه وادي الحجير"
-        ],
-        "event_time": null,
-        "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "قصف بالقذائف الفسفوريه",
+        "condition_source": "header"
       },
       {
         "condition_id": 18,
@@ -92,91 +85,51 @@
         ],
         "event_time": null,
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "تمشيط بالاسلحه الرشاشه",
+        "condition_source": "header"
       }
     ],
     "residual": [
       {
-        "kind": "leftover_token",
-        "text": "دوحه",
-        "section_header": "تمشيط بالاسلحه الرشاشه",
-        "offsets": [
-          122,
-          126
-        ]
-      },
-      {
-        "kind": "leftover_token",
-        "text": "كفرمان",
-        "section_header": "تمشيط بالاسلحه الرشاشه",
-        "offsets": [
-          188,
-          194
-        ]
-      },
-      {
-        "kind": "leftover_token",
-        "text": "قصف",
-        "section_header": "تمشيط بالاسلحه الرشاشه",
-        "offsets": [
-          141,
-          144
-        ]
-      },
-      {
-        "kind": "leftover_token",
-        "text": "بالقذائف",
-        "section_header": "تمشيط بالاسلحه الرشاشه",
-        "offsets": [
-          239,
-          247
-        ]
-      },
-      {
-        "kind": "leftover_token",
-        "text": "الفسفوريه",
-        "section_header": "تمشيط بالاسلحه الرشاشه",
-        "offsets": [
-          248,
-          257
-        ]
-      },
-      {
-        "kind": "unresolved_place",
+        "kind": "unresolved_header",
         "text": "دوحه كفرمان",
-        "section_header": "تمشيط بالاسلحه الرشاشه",
+        "section_header": "دوحه كفرمان",
         "offsets": [
           183,
-          194
-        ]
-      },
-      {
-        "kind": "unresolved_place",
-        "text": "قصف بالقذائف الفسفوريه",
-        "section_header": "تمشيط بالاسلحه الرشاشه",
-        "offsets": [
-          235,
-          257
+          196
         ]
       },
       {
         "kind": "out_of_scope",
         "text": "سلسله غارات استهدفت منطقه علي الطاهر",
-        "section_header": "تمشيط بالاسلحه الرشاشه",
+        "section_header": "غارات جويه",
         "offsets": [
           76,
           112
         ]
+      },
+      {
+        "kind": "place_under_unresolved_header",
+        "text": "حداثا.",
+        "section_header": "دوحه كفرمان",
+        "offsets": [
+          198,
+          204
+        ]
+      },
+      {
+        "kind": "place_under_unresolved_header",
+        "text": "القنطره لجهه وادي الحجير.",
+        "section_header": "دوحه كفرمان",
+        "offsets": [
+          206,
+          231
+        ]
       }
     ],
     "disposition": "partial",
-    "leftover_tokens": [
-      "دوحه",
-      "كفرمان",
-      "قصف",
-      "بالقذائف",
-      "الفسفوريه"
-    ],
+    "leftover_tokens": [],
     "out_of_scope_lines": [
       "سلسله غارات استهدفت منطقه علي الطاهر"
     ],

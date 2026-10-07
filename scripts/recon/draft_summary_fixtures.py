@@ -8,6 +8,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from app.news.services.summaries.detection import detect_summary
 from app.news.services.summaries.dtos import VillageRef
 from app.news.services.summaries.gazetteer import GazetteerSnapshot
+from app.news.services.summaries import invariants
 from app.news.services.summaries.headers import default_header_dictionary
 from app.news.services.summaries.normalize import normalize_summary_text
 from app.news.services.summaries.parser import parse_summary
@@ -30,7 +31,7 @@ def simulated(gaz):
     return GazetteerSnapshot(names,gaz.descriptors)
 
 def simple_item(i):
-    return {"condition_id":i.condition_id,"primary":i.primary_village.name_ar,"secondary":i.secondary_village.name_ar if i.secondary_village else None,"qualifiers":list(i.qualifiers),"reported_count":i.reported_count,"location_texts":list(i.location_texts),"event_time":i.event_time.isoformat() if i.event_time else None,"origin_text":i.origin_text,"status":i.status}
+    return {"condition_id":i.condition_id,"primary":i.primary_village.name_ar,"secondary":i.secondary_village.name_ar if i.secondary_village else None,"qualifiers":list(i.qualifiers),"reported_count":i.reported_count,"location_texts":list(i.location_texts),"event_time":i.event_time.isoformat() if i.event_time else None,"origin_text":i.origin_text,"status":i.status,"source_header":i.header_text,"condition_source":i.condition_source}
 
 def main():
     gaz,headers,lex=load(); sim=simulated(gaz)
@@ -56,11 +57,11 @@ def main():
     for r in sorted(rows,key=lambda x:x["message_id"]):
         ch=r.get("origin_account") or r.get("source")
         if channels[ch]<5 and len(selected)<30: selected.append(r); channels[ch]+=1
-    for message_id in (2083,28169,28316):
+    for message_id in (2083,28169,28316,28640,31010):
         if by_id[message_id] not in selected: selected.append(by_id[message_id])
     families=defaultdict(list)
     for r in rows: families[normalize_summary_text(r["text"]).text].append(r["message_id"])
-    unique={normalize_summary_text(by_id[x]["text"]).text:by_id[x] for x in (2083,28169,28316)}
+    unique={normalize_summary_text(by_id[x]["text"]).text:by_id[x] for x in (2083,28169,28316,28640,31010)}
     for r in selected: unique.setdefault(normalize_summary_text(r["text"]).text,r)
     pending=ROOT/"pending"; pending.mkdir(parents=True,exist_ok=True)
     for old in pending.glob("*.json"): old.unlink()
@@ -78,12 +79,20 @@ def main():
     def places(values): return sum(any(x.kind in {'unresolved_place','ambiguous_place'} for x in r.residual) for r in values)
     times=sum(1 for r in current for x in r.items if x.event_time)
     sizes=sorted(len(x.residual) for x in current); median=sizes[len(sizes)//2]; p90=sizes[min(len(sizes)-1,int(len(sizes)*.9))]
-    report=["# Step 1d parser coverage","","| metric | current DB | aliases simulated |","|---|---:|---:|",f"| bulletins complete | {count('complete',current)} | {count('complete',proposed)} |",f"| bulletins partial | {count('partial',current)} | {count('partial',proposed)} |",f"| bulletins residual_only | {count('residual_only',current)} | {count('residual_only',proposed)} |",f"| **resolved items / all item candidates** | {sum(len(x.items) for x in current)}/{candidates(current)} | {sum(len(x.items) for x in proposed)}/{candidates(proposed)} |",f"| residual entries total, by kind | {sum(residuals.values())}: {dict(residuals)} | {sum(len(x.residual) for x in proposed)} |",f"| residual entries per bulletin (median, p90) | {median}, {p90} | — |",f"| timeline events with exact time | {times} | {sum(1 for r in proposed for x in r.items if x.event_time)} |","",f"- S4 workload: {places(current)} bulletins have a place-like residual under an approved header.","","## Top residual texts by kind",""]
+    report=["# Step 1e parser coverage","","| metric | current DB | aliases simulated |","|---|---:|---:|",f"| bulletins complete | {count('complete',current)} | {count('complete',proposed)} |",f"| bulletins partial | {count('partial',current)} | {count('partial',proposed)} |",f"| bulletins residual_only | {count('residual_only',current)} | {count('residual_only',proposed)} |",f"| **resolved items / all item candidates** | {sum(len(x.items) for x in current)}/{candidates(current)} | {sum(len(x.items) for x in proposed)}/{candidates(proposed)} |",f"| residual entries total, by kind | {sum(residuals.values())}: {dict(residuals)} | {sum(len(x.residual) for x in proposed)} |",f"| residual entries per bulletin (median, p90) | {median}, {p90} | — |",f"| timeline events with exact time | {times} | {sum(1 for r in proposed for x in r.items if x.event_time)} |","",f"- S4 workload: {places(current)} bulletins have a place-like residual under an approved header.","","## Top residual texts by kind",""]
     report += [f"- `{kind}` / `{text}`: {count}" for (kind,text),count in residual_texts.most_common(20)]
     report += ["","## Remaining blockers by class",""]
     report += [f"- {k}: {v}" for k,v in blockers.most_common()]+["","## Window rules",""]+[f"- {k}: {v}" for k,v in rules.most_common()]
     for title,data in (("Top leftover tokens",leftovers),("Top unresolved places",unresolved_places),("Unresolved headers",unresolved_headers)):
         report += ["",f"## {title}",""]+[f"- `{k}`: {v}" for k,v in data.most_common(30)]
+    # Real invariant counts: each check recomputes header-like lines from the text.
+    violations={"header provenance":{},"residual header":{},"secondary != primary":{}}
+    for r,result in zip(rows,current):
+        found={"header provenance":invariants.header_provenance_violations(r["text"],result,gaz,headers),"residual header":invariants.residual_header_violations(r["text"],result,gaz,headers),"secondary != primary":invariants.secondary_violations(result)}
+        for name,values in found.items():
+            if values: violations[name][r["message_id"]]=values[0]
+    report += ["","## Invariant violations","",f"Checked over {len(rows)} bulletins."]
+    report += [f"- {name}: {len(bad)}"+(f" (message ids: {sorted(bad)})" if bad else "") for name,bad in violations.items()]
     Path("recon_output/step1_parser_coverage.md").write_text("\n".join(report)+"\n",encoding="utf-8")
 
 if __name__=="__main__": main()

@@ -26,7 +26,9 @@
         ],
         "event_time": "2026-09-13T06:28:00+03:00",
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "timeline",
+        "condition_source": "timeline"
       },
       {
         "condition_id": 21,
@@ -42,7 +44,9 @@
         ],
         "event_time": "2026-09-13T06:30:00+03:00",
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "timeline",
+        "condition_source": "timeline"
       },
       {
         "condition_id": 21,
@@ -58,7 +62,9 @@
         ],
         "event_time": "2026-09-13T07:34:00+03:00",
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "timeline",
+        "condition_source": "timeline"
       },
       {
         "condition_id": 5,
@@ -71,7 +77,9 @@
         ],
         "event_time": "2026-09-13T07:48:00+03:00",
         "origin_text": "البياضه",
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "timeline",
+        "condition_source": "timeline"
       },
       {
         "condition_id": 21,
@@ -87,7 +95,9 @@
         ],
         "event_time": "2026-09-13T07:50:00+03:00",
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "timeline",
+        "condition_source": "timeline"
       },
       {
         "condition_id": 5,
@@ -103,7 +113,9 @@
         ],
         "event_time": "2026-09-13T10:00:00+03:00",
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "timeline",
+        "condition_source": "timeline"
       },
       {
         "condition_id": 5,
@@ -118,7 +130,9 @@
         ],
         "event_time": "2026-09-13T10:30:00+03:00",
         "origin_text": null,
-        "status": "resolved"
+        "status": "resolved",
+        "source_header": "timeline",
+        "condition_source": "timeline"
       }
     ],
     "residual": [
