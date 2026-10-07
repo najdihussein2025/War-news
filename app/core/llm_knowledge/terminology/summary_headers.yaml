@@ -48,11 +48,13 @@
 - {normalized_header: "الغارات الحربيه المعاديه", condition_ids: [46], status: proposed, note: "corpus header"}
 - {normalized_header: "تمشيط بالاسلحهالرشاشه", condition_ids: [18], status: proposed, note: "spacing variant"}
 - {normalized_header: "الطيران المسير", condition_ids: [46], status: approved, note: "D4 approved step 1b"}
+- {normalized_header: "تمشيط بالاسلحهالرشاشه", condition_ids: [18], status: approved, note: "literal source typo"}
 - action_cores:
   - {core: "غارات", condition_ids: [46]}
   - {core: "الغارات", condition_ids: [46]}
   - {core: "اغار", condition_ids: [46]}
   - {core: "غارات حربيه", condition_ids: [46]}
+  - {core: "الغارات الحربيه", condition_ids: [46]}
   - {core: "الطيران الحربي", condition_ids: [46]}
   - {core: "الطائرات الحربيه", condition_ids: [46]}
   - {core: "الطيران المسير", condition_ids: [46]}

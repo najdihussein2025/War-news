@@ -38,7 +38,10 @@ class HeaderDictionarySnapshot:
                 value = re.sub(pattern, " ", value)
                 condition_ids.extend(core.condition_ids)
         for filler in self.header_fillers:
-            value = re.sub(rf"(?<![\u0600-\u06ff]){re.escape(filler)}(?![\u0600-\u06ff])", " ", value)
+            words=filler.split()
+            first=words[0][2:] if words[0].startswith("ال") and len(words[0])>3 else words[0]
+            flexible=" ".join([rf"(?:ال)?{re.escape(first)}",*(re.escape(x) for x in words[1:])])
+            value = re.sub(rf"(?<![\u0600-\u06ff]){flexible}(?![\u0600-\u06ff])", " ", value)
         value = re.sub(r"[+\s]+", " ", value).strip()
         value = re.sub(r"(^| )و(?= |$)", " ", value).strip(" -–— ")
         if not condition_ids or value:
