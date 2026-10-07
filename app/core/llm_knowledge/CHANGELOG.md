@@ -1,5 +1,13 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-07 - Deterministic summary bulletin grammar
+
+Summary parsing now uses YAML-backed action cores and fillers, expanded location
+qualifiers and noise phrases, deterministic count and inline-action handling,
+and explicit prose-section routing. D4 mappings were approved as documented.
+Production parsing remains exact and contains no fuzzy or similarity matching;
+fuzzy one-edit suggestions exist only in the read-only alias review script.
+
 ## 2026-10-05 - Wadi fuzzy village guard and verification reason cleanup
 
 `Wadi ...` place mentions no longer confidently resolve through fuzzy matching
