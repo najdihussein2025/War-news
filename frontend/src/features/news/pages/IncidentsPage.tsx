@@ -421,15 +421,15 @@ export const IncidentsPage = () => {
     {
       key: "bulletin",
       header: "Bulletin",
-      headerClassName: "w-[40%] min-w-[20rem]",
-      cellClassName: "w-[40%] min-w-[20rem]",
+      headerClassName: "w-[38%] min-w-[18rem]",
+      cellClassName: "w-[38%] min-w-[18rem]",
       render: (group) => <IncidentBulletinHeading group={group} />,
     },
     {
       key: "children",
       header: "Incidents",
-      headerClassName: "w-[32%] min-w-[18rem]",
-      cellClassName: "w-[32%] min-w-[18rem]",
+      headerClassName: "w-[28%] min-w-[15rem]",
+      cellClassName: "w-[28%] min-w-[15rem]",
       render: (group) => <CompactIncidentList group={group} />,
     },
     {
@@ -744,9 +744,9 @@ export const IncidentsPage = () => {
                 loading={isLoading}
                 error={isError}
                 clientSort={false}
-                minWidth="1050px"
+                minWidth="940px"
                 density="compact"
-                actionsClassName="w-[17rem]"
+                actionsClassName="w-[16rem] min-w-[16rem]"
                 emptyState={<EmptyState title="No review bulletins" description="No grouped verification items match these filters." />}
                 errorState={<EmptyState title="Could not load incidents" description="The incidents list could not be loaded. Please try again." />}
                 actions={(group) => (

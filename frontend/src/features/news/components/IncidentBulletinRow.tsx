@@ -128,7 +128,7 @@ type BulletinActionsProps = {
   onVerify: () => void;
 };
 
-const actionButtonClass = "h-8 whitespace-nowrap px-3 text-caption shadow-none hover:shadow-none";
+const actionButtonClass = "h-8 whitespace-nowrap px-2.5 text-caption shadow-none hover:shadow-none";
 
 export const IncidentBulletinActions = ({ disabled, onOpen, onReject, onVerify }: BulletinActionsProps) => (
   <div className="flex items-center justify-end gap-1.5 whitespace-nowrap" dir="ltr">
