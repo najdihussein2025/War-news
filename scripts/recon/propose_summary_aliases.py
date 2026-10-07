@@ -3,7 +3,7 @@ import argparse,csv,json,re,sys
 from collections import Counter,defaultdict
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
-from app.news.services.summaries.normalize import normalize_token
+from app.news.services.summaries.normalize import normalize_token,village_key
 
 def edit(a,b):
  prev=list(range(len(b)+1))
@@ -22,9 +22,9 @@ def main():
  corpus=[json.loads(x) for x in Path('recon_output/summary_bulletins.jsonl').open(encoding='utf-8')]
  out=[]
  for raw,count in gaps:
-  key=normalize_token(raw); candidates=[]
+  key=village_key(raw); candidates=[]
   for vid,(name,caza) in villages.items():
-   nk=normalize_token(name)
+   nk=village_key(name)
    if key in nk or nk in key or edit(key.replace(' ',''),nk.replace(' ',''))<=1: candidates.append((vid,name,caza))
   candidates=list(dict.fromkeys(candidates))[:3]
   ids=[str(r['message_id']) for r in corpus if raw in r['text'] or raw.replace('ه','ة') in r['text']][:5]

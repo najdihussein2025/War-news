@@ -1,2 +1,10 @@
 BEGIN;
+INSERT INTO village_location_aliases (alias_text, alias_normalized, village_id, note, requires_geo_context, is_active) VALUES ('عيتا الجبل', 'عيتا الجبل', 78, 'approved by Hussein', false, true) ON CONFLICT (alias_normalized) DO NOTHING;
+INSERT INTO village_location_aliases (alias_text, alias_normalized, village_id, note, requires_geo_context, is_active) VALUES ('القصير', 'القصير', 18, 'approved by Hussein', false, true) ON CONFLICT (alias_normalized) DO NOTHING;
+INSERT INTO village_location_aliases (alias_text, alias_normalized, village_id, note, requires_geo_context, is_active) VALUES ('وادي مظلم', 'وادي مظلم', 269, 'وادي مظلم', false, true) ON CONFLICT (alias_normalized) DO NOTHING;
+INSERT INTO village_location_aliases (alias_text, alias_normalized, village_id, note, requires_geo_context, is_active) VALUES ('صريين', 'صريين', 1412, 'approved by Hussein', false, true) ON CONFLICT (alias_normalized) DO NOTHING;
+INSERT INTO village_location_aliases (alias_text, alias_normalized, village_id, note, requires_geo_context, is_active) VALUES ('سدانه', 'سدانه', 672, 'سدانه', false, true) ON CONFLICT (alias_normalized) DO NOTHING;
+INSERT INTO village_location_aliases (alias_text, alias_normalized, village_id, note, requires_geo_context, is_active) VALUES ('دوحه كفرمان', 'دوحه كفرمان', 851, 'approved by Hussein; same village as دوحه كفررمان', false, true) ON CONFLICT (alias_normalized) DO NOTHING;
+INSERT INTO village_location_aliases (alias_text, alias_normalized, village_id, note, requires_geo_context, is_active) VALUES ('حي الدير', 'حي الدير', 1153, 'حي الدير', false, true) ON CONFLICT (alias_normalized) DO NOTHING;
+INSERT INTO village_location_aliases (alias_text, alias_normalized, village_id, note, requires_geo_context, is_active) VALUES ('حانين', 'حانين', 616, 'approved by Hussein after DB identity verification', false, true) ON CONFLICT (alias_normalized) DO NOTHING;
 COMMIT;
