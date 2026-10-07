@@ -1,0 +1,15 @@
+{
+  "message_id": 40279,
+  "posted_at": "2026-10-05 20:36:41+00:00",
+  "raw_text": "🚨ملخص الاعتداءات التي طالت بلدات و قرى جنوبية منذ ليل امس (بعد الساعة ١٢ ليلاً) و حتى الساعة ١١:١٣ ليلاً وقد توزعت على القرى و البلدات التالية :\n⭕️الغارات من الطيران الحـربي :\n🔸وادي الحجير 🔸كفرتبنيت 🔸وادي السلوقي (٢) 🔸بين محيبيب و برعشيت\n⭕️القصف المدفعي :\n🔸ميفدون 🔸المنصوري 🔸بين حداثا و حاريص 🔸اطراف شقرا 🔸النبطية الفوقا 🔸بيت ياحون 🔸وادي زبقين 🔸اطراف ميفدون 🔸حداثا 🔸اطراف برعشيت\n⭕️عمليات التفجير :\n🔸ارنون 🔸الخيام\n⭕️ قنابل مضيئة و فسفورية :\n🔸مجدل زون 🔸المنصوري",
+  "expected": {
+    "window": {"start": "2026-10-05T00:00:00+03:00", "end": "2026-10-05T23:13:00+03:00"},
+    "items": [
+      {"condition_id":46,"primary":"قبريخا"},{"condition_id":46,"primary":"كفر تبنيت"},{"condition_id":46,"primary":"تولين","reported_count":2},{"condition_id":46,"primary":"محيبيب","secondary":"برعشيت"},
+      {"condition_id":5,"primary":"ميفدون","qualifiers":["اطراف"]},{"condition_id":5,"primary":"المنصوري"},{"condition_id":5,"primary":"حداثا","secondary":"حاريص"},{"condition_id":5,"primary":"شقرا","qualifiers":["اطراف"]},{"condition_id":5,"primary":"نبطية الفوقا"},{"condition_id":5,"primary":"بيت ياحون"},{"condition_id":5,"primary":"زبقين"},{"condition_id":5,"primary":"برعشيت","qualifiers":["اطراف"]},
+      {"condition_id":21,"primary":"أرنون"},{"condition_id":21,"primary":"الخيام"},{"condition_id":9,"primary":"مجدل زون"},{"condition_id":7,"primary":"مجدل زون"},{"condition_id":9,"primary":"المنصوري"},{"condition_id":7,"primary":"المنصوري"}
+    ],
+    "leftover_tokens": [], "auto_acceptable": true
+  },
+  "reviewer_notes": "Approved reference. Wadi aliases resolve to parent villages Qabrikha/Touline/Zebqine."
+}

@@ -1,0 +1,333 @@
+{
+  "message_id": 28444,
+  "channel": "alichoeib1970",
+  "raw_text": "صفحة الإعلامي الشهيد علي شعيب :\n\nملخص الاعتداءات الإسرائيلية على جنوب لبنان لهذا اليوم:\n\n● الغارات الحربية: \n• علي الطاهر\n• دوحة كفررمان\n• بين القنطرة ودير سريان\n• مشاع المنصوري\n\n● القصف المدفعي: \n• علي الطاهر\n• دوحة كفررمان\n• حداثا\n• ميس الجبل\n• المنصوري\n• مشاع المنصوري\n• سدانة عند أطراف الهبارية\n• أطراف شقرا\n• أطراف ميفدون\n• أطراف برعشيت\n• أطراف بيت ياحون\n\n● التفجيرات: \n• حداثا\n• برعشيت\n• بيوت السياد\n• مشاع المنصوري\n• كفرتبنيت\n• حولا\n• طلوسة\n• زوطر الشرقية\n• الخيام\n\n● التمشيط بالأسلحة الرشاشة: \n• المنصوري\n• ميس الجبل\n• حداثا\n• أطراف عيتا الجبل\n• زوطر الشرقية\n• صربين\n\n● التحركات الإسرائيلية: \n• تقدّم دبابتي «ميركافا» إلى منطقة مشاع المنصوري، بالتزامن مع أعمال جرف وهدم وإحراق عدد من المنازل.\n• تقدّم معادٍ من بلدة حداثا باتجاه أطراف عيتا الجبل.\n\n● اعتداءات أخرى: \n• دبابة «ميركافا» استهدفت مدينة الخيام.\n• محلقة معادية ألقت قنابل صوتية على بلدة المنصوري.",
+  "posted_at": "2026-08-19 21:09:54+00:00",
+  "expected": {
+    "window": {
+      "start": "2026-08-19T00:00:00+03:00",
+      "end": "2026-08-20T00:09:54+03:00",
+      "rule": "default"
+    },
+    "items": [
+      {
+        "condition_id": 46,
+        "primary": "علي الطاهر",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "علي الطاهر"
+        ]
+      },
+      {
+        "condition_id": 46,
+        "primary": "كفر رمان",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "دوحه كفررمان"
+        ]
+      },
+      {
+        "condition_id": 46,
+        "primary": "قنطرة",
+        "secondary": "دير سريان",
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "بين القنطره ودير سريان"
+        ]
+      },
+      {
+        "condition_id": 46,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "مشاع المنصوري"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "علي الطاهر",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "علي الطاهر"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "كفر رمان",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "دوحه كفررمان"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "حداثا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "حداثا"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "ميس الجبل",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "ميس الجبل"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "المنصوري",
+          "مشاع المنصوري"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "شقرا",
+        "secondary": null,
+        "qualifiers": [
+          "اطراف"
+        ],
+        "reported_count": 1,
+        "location_texts": [
+          "اطراف شقرا"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "ميفدون",
+        "secondary": null,
+        "qualifiers": [
+          "اطراف"
+        ],
+        "reported_count": 1,
+        "location_texts": [
+          "اطراف ميفدون"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "برعشيت",
+        "secondary": null,
+        "qualifiers": [
+          "اطراف"
+        ],
+        "reported_count": 1,
+        "location_texts": [
+          "اطراف برعشيت"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "بيت ياحون",
+        "secondary": null,
+        "qualifiers": [
+          "اطراف"
+        ],
+        "reported_count": 1,
+        "location_texts": [
+          "اطراف بيت ياحون"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "حداثا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "حداثا"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "برعشيت",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "برعشيت"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "بيوت السياد",
+          "مشاع المنصوري"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "كفر تبنيت",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "كفرتبنيت"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "حولا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "حولا"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "طلوسة",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "طلوسه"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "زوطر الشرقية",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "زوطر الشرقيه"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "الخيام",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "الخيام"
+        ]
+      },
+      {
+        "condition_id": 18,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "المنصوري",
+          "تقدم دبابتي «ميركافا» الي منطقه مشاع المنصوري",
+          "محلقه معاديه القت قنابل صوتيه علي بلده المنصوري"
+        ]
+      },
+      {
+        "condition_id": 18,
+        "primary": "ميس الجبل",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "ميس الجبل"
+        ]
+      },
+      {
+        "condition_id": 18,
+        "primary": "حداثا",
+        "secondary": null,
+        "qualifiers": [
+          "باتجاه اطراف عيتا الجبل"
+        ],
+        "reported_count": 1,
+        "location_texts": [
+          "حداثا",
+          "تقدم معاد من بلده حداثا باتجاه اطراف عيتا الجبل"
+        ]
+      },
+      {
+        "condition_id": 18,
+        "primary": "زوطر الشرقية",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "زوطر الشرقيه"
+        ]
+      },
+      {
+        "condition_id": 18,
+        "primary": "صربين",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "صربين"
+        ]
+      },
+      {
+        "condition_id": 18,
+        "primary": "الخيام",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "دبابه «ميركافا» استهدفت مدينه الخيام"
+        ]
+      }
+    ],
+    "leftover_tokens": [
+      "مشاع",
+      "مشاع",
+      "سدانه",
+      "مشاع",
+      "عيتا",
+      "الجبل",
+      "التحركات",
+      "الاسرائيليه",
+      "تقدم",
+      "دبابتي",
+      "«ميركافا»",
+      "الي",
+      "منطقه",
+      "مشاع",
+      "تقدم",
+      "معاد",
+      "بلده",
+      "اعتداءات",
+      "اخري",
+      "دبابه",
+      "«ميركافا»",
+      "استهدفت",
+      "مدينه",
+      "محلقه",
+      "معاديه",
+      "القت",
+      "قنابل",
+      "صوتيه",
+      "بلده"
+    ],
+    "auto_acceptable": false
+  },
+  "reviewer_notes": ""
+}

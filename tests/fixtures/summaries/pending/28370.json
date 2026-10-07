@@ -1,0 +1,251 @@
+{
+  "message_id": 28370,
+  "channel": "mehwaralmokawma",
+  "raw_text": "🔵ملخص الإعتداءات الإسرائيلية على الأراضي اللبنانية بتاريخ ١٥/٩/٢٠٢٦:\n\n🟠الغارات التي نفذها الطيران الحربي المعادي:\nالنبطية الفوقا \nالمنصوري\nالقنطرة \nوادي السلوقي \nبين زوطر الشرقية و كفرتبنيت \n\n🟠القصف المدفعي المعادي:\nالخيام\nكفرتبنيت \nبرعشيت\nبيت ليف \nالنبطية الفوقا \nزوطر الشرقية \nالمنصوري\nسهل الخيام \nحداثا\nحلتا\nميس الجبل \nوادي زبقين \nوادي السلوقي \nعدشيت القصير \nبيت ياحون \n\n🟠التفجيرات التي نفذها العدو في البلدات الجنوبية:\nالمنصوري\nحلتا\nالطيري\nبيت ياحون \nزوطر الشرقية \nنهر زوطر الشرقية \nوادي مظلم-بيت ليف\n\n🟠توغل قوة معادية الى الحي الغربي في بلدة حلتا و عملو على تفتيش المنازل و أخضع بعض المواطنين من نساء و رجال الى التحقيق، بالإضافة  الى قيامه بأعمال جرف في الاراضي عند اطراف البلدة، كما أقدم العدو على اعتقال شخصين من ابناء البلدة\n\nT.me/mehwaralmokawma\n                                 «مـيّـثـمـ𓂆»",
+  "posted_at": "2026-09-16 20:58:24+00:00",
+  "expected": {
+    "window": {
+      "start": "2026-09-15T00:00:00+03:00",
+      "end": "2026-09-16T00:00:00+03:00",
+      "rule": "explicit_date"
+    },
+    "items": [
+      {
+        "condition_id": 46,
+        "primary": "نبطية الفوقا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "النبطيه الفوقا"
+        ]
+      },
+      {
+        "condition_id": 46,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "المنصوري"
+        ]
+      },
+      {
+        "condition_id": 46,
+        "primary": "قنطرة",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "القنطره"
+        ]
+      },
+      {
+        "condition_id": 46,
+        "primary": "تولين",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "وادي السلوقي"
+        ]
+      },
+      {
+        "condition_id": 46,
+        "primary": "زوطر الشرقية",
+        "secondary": "كفر تبنيت",
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "بين زوطر الشرقيه و كفرتبنيت"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "الخيام",
+        "secondary": null,
+        "qualifiers": [
+          "سهل"
+        ],
+        "reported_count": 1,
+        "location_texts": [
+          "الخيام",
+          "سهل الخيام"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "كفر تبنيت",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "كفرتبنيت"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "برعشيت",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "برعشيت"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "بيت ليف",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "بيت ليف"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "نبطية الفوقا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "النبطيه الفوقا"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "زوطر الشرقية",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "زوطر الشرقيه"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "المنصوري"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "حداثا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "حداثا"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "ميس الجبل",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "ميس الجبل"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "زبقين",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "وادي زبقين"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "تولين",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "وادي السلوقي"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "عدشيت القصير",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "عدشيت القصير"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "بيت ياحون",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "بيت ياحون"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "المنصوري"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "طيري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "الطيري"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "بيت ياحون",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "بيت ياحون"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "زوطر الشرقية",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "زوطر الشرقيه",
+          "نهر زوطر الشرقيه"
+        ]
+      }
+    ],
+    "leftover_tokens": [
+      "حلتا",
+      "حلتا",
+      "نهر",
+      "وادي",
+      "مظلم-بيت",
+      "ليف",
+      "T.me/mehwaralmokawma",
+      "«ميثم𓂆»"
+    ],
+    "auto_acceptable": false
+  },
+  "reviewer_notes": ""
+}

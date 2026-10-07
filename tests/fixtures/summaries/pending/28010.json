@@ -1,0 +1,320 @@
+{
+  "message_id": 28010,
+  "channel": "sameralhajali",
+  "raw_text": "🔵ملخص الإعتداءات الإسرائيلية على الأراضي اللبنانية بتاريخ ٩/٩/٢٠٢٦:\n\n🟠الغارات التي نفذها الطيران الحربي المعادي:\nبين النبطية الفوقا-كفرتبنيت \nوادي زبقين \nوادي السلوقي \nالخيام\nبين حداثا و حاريص\nصربين\nالنبطية الفوقا\nالقنطرة \nالمنصوري\n\n🟠الغارات التي نفذها الطيران المسير المعادي:\nمرج حاروف \n\n🟠القصف المدفعي المعادي:\nالنبطية الفوقا \nدوحة كفررمان \nوادي السلوقي \nزوطر الشرقية \nحداثا\nمجدل سلم \nميس الجبل \nبيت ياحون \nبرعشيت\nالمنصوري \nحولا\nقبريخا\n\n🟠التفجيرات التي نفذها العدو في البلدات الجنوبية:\nالمنصوري \nمركبا\nبني حيان \nالخيام\nطير حرفا \nالقنطرة\nبين القنطرة و عدشيت القصير \nالطيري\nمجدلزون \n\n🟠القنابل الصوتية:\nالمنصوري \nحداثا\n\n🟠غالونات متفجرة:\nالمنصوري\nبني حيان",
+  "posted_at": "2026-09-09 20:59:44+00:00",
+  "expected": {
+    "window": {
+      "start": "2026-09-09T00:00:00+03:00",
+      "end": "2026-09-09T23:59:44+03:00",
+      "rule": "explicit_date"
+    },
+    "items": [
+      {
+        "condition_id": 46,
+        "primary": "نبطية الفوقا",
+        "secondary": "كفر تبنيت",
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "بين النبطيه الفوقا-كفرتبنيت",
+          "النبطيه الفوقا"
+        ]
+      },
+      {
+        "condition_id": 46,
+        "primary": "زبقين",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "وادي زبقين"
+        ]
+      },
+      {
+        "condition_id": 46,
+        "primary": "تولين",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "وادي السلوقي"
+        ]
+      },
+      {
+        "condition_id": 46,
+        "primary": "الخيام",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "الخيام"
+        ]
+      },
+      {
+        "condition_id": 46,
+        "primary": "حداثا",
+        "secondary": "حاريص",
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "بين حداثا و حاريص"
+        ]
+      },
+      {
+        "condition_id": 46,
+        "primary": "صربين",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "صربين"
+        ]
+      },
+      {
+        "condition_id": 46,
+        "primary": "قنطرة",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "القنطره"
+        ]
+      },
+      {
+        "condition_id": 46,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "المنصوري"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "نبطية الفوقا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "النبطيه الفوقا"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "كفر رمان",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "دوحه كفررمان"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "تولين",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "وادي السلوقي"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "زوطر الشرقية",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "زوطر الشرقيه"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "حداثا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "حداثا"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "مجدل سلم",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "مجدل سلم"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "ميس الجبل",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "ميس الجبل"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "بيت ياحون",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "بيت ياحون"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "برعشيت",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "برعشيت"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "المنصوري"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "حولا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "حولا"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "قبريخا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "قبريخا"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "المنصوري"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "مركبا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "مركبا"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "بني حيان",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "بني حيان"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "الخيام",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "الخيام"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "طير حرفا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "طير حرفا"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "قنطرة",
+        "secondary": "عدشيت القصير",
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "القنطره",
+          "بين القنطره و عدشيت القصير"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "طيري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "الطيري"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "مجدل زون",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "مجدلزون"
+        ]
+      },
+      {
+        "condition_id": 10,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "المنصوري"
+        ]
+      },
+      {
+        "condition_id": 10,
+        "primary": "حداثا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "حداثا"
+        ]
+      }
+    ],
+    "leftover_tokens": [],
+    "auto_acceptable": false
+  },
+  "reviewer_notes": ""
+}

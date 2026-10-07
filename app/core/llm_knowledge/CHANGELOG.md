@@ -956,6 +956,12 @@ stays scripts-only until harness update.
 ## 2026-09-14 — Phase 2 architecture (additive seed)
 
 Initial structure under `app/core/llm_knowledge/`. See earlier commits.
+
+## 2026-10-07 — Summary bulletin deterministic parser (step 1)
+
+- Added pure detector, Beirut-aware window resolver, exact southern gazetteer snapshot, header dictionary, and deterministic parser.
+- Added `summary_headers.yaml` and `summary_location_lexicon.yaml` terminology catalogs.
+- Added the approved 40279 reference fixture (18 action/location items), 29 pending corpus fixtures, focused unit tests, and a 221-bulletin coverage report.
 ## 2026-09-21 - Burning Properties relevance guard
 
 Added explicit LLM knowledge that ordinary civilian fires, car fires, traffic accidents, electrical faults, and property fires are not war-news incidents and must not map to `Burning Properties` unless the text explicitly ties the damage to Israeli, military, or security action.

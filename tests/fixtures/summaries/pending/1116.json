@@ -1,0 +1,108 @@
+{
+  "message_id": 1116,
+  "channel": "hashemsayed",
+  "raw_text": "ملخص الاعتداءات الإسرائيلية منذ ما منتصف الليل:\n\nالقصف المدفعي المعادي :\n • القنطرة لجهة تولين\n• وادي السلوقي\n• علي الطاهر\n\nالتفجيرات :\n• المنصوري\n\nالقنابل المضيئة :\n• وادي السلوقي\n• حولا\n\nالتمشيط بالأسلحة الرشاشة :\n• حولا\n• مزرعة بسطرة عند أطراف كفرشوبا\nالخيام\n\nقنابل «لانشر» :\n• مزرعة بسطرة عند أطراف كفرشوبا.\n\nhttps://t.me/hashemsayed",
+  "posted_at": "2026-09-22 05:28:08+00:00",
+  "expected": {
+    "window": {
+      "start": "2026-09-22T00:00:00+03:00",
+      "end": "2026-09-22T08:28:08+03:00",
+      "rule": "overnight"
+    },
+    "items": [
+      {
+        "condition_id": 5,
+        "primary": "قنطرة",
+        "secondary": null,
+        "qualifiers": [
+          "لجهه تولين"
+        ],
+        "reported_count": 1,
+        "location_texts": [
+          "القنطره لجهه تولين"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "تولين",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "وادي السلوقي"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "علي الطاهر",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "علي الطاهر"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "المنصوري"
+        ]
+      },
+      {
+        "condition_id": 9,
+        "primary": "تولين",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "وادي السلوقي"
+        ]
+      },
+      {
+        "condition_id": 9,
+        "primary": "حولا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "حولا"
+        ]
+      },
+      {
+        "condition_id": 18,
+        "primary": "حولا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "حولا"
+        ]
+      },
+      {
+        "condition_id": 18,
+        "primary": "الخيام",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "الخيام"
+        ]
+      }
+    ],
+    "leftover_tokens": [
+      "مزرعه",
+      "بسطره",
+      "قنابل",
+      "«لانشر»",
+      "مزرعه",
+      "بسطره",
+      "https://t.me/hashemsayed"
+    ],
+    "auto_acceptable": false
+  },
+  "reviewer_notes": ""
+}

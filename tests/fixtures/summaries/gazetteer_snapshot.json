@@ -1,0 +1,7993 @@
+{
+  "descriptors": [
+    "احراج",
+    "اراضي",
+    "اطراف",
+    "بلدات",
+    "بلده",
+    "تلال",
+    "تله",
+    "جرود",
+    "حي",
+    "خراج",
+    "ساحه",
+    "سهل",
+    "ضواحي",
+    "قريه",
+    "محيط",
+    "مدينه",
+    "مرتفعات",
+    "مشارف",
+    "منطقه"
+  ],
+  "names": {
+    "نبطيه تحتا": [
+      {
+        "id": 1152,
+        "name_ar": "نبطية التحتا",
+        "caza": "Nabatiye",
+        "coord_x": 731030.701166,
+        "coord_y": 3695918.9202,
+        "place_detail": null
+      }
+    ],
+    "Nabatieh Et-Tahta": [
+      {
+        "id": 1152,
+        "name_ar": "نبطية التحتا",
+        "caza": "Nabatiye",
+        "coord_x": 731030.701166,
+        "coord_y": 3695918.9202,
+        "place_detail": null
+      }
+    ],
+    "نبطيه": [
+      {
+        "id": 1152,
+        "name_ar": "نبطية التحتا",
+        "caza": "Nabatiye",
+        "coord_x": 731030.701166,
+        "coord_y": 3695918.9202,
+        "place_detail": "Bare city/caza-seat mention → Nabatieh Et-Tahta (not a new village row)."
+      }
+    ],
+    "مدينه نبطيه": [
+      {
+        "id": 1152,
+        "name_ar": "نبطية التحتا",
+        "caza": "Nabatiye",
+        "coord_x": 731030.701166,
+        "coord_y": 3695918.9202,
+        "place_detail": "Explicit city phrasing → Nabatieh Et-Tahta."
+      }
+    ],
+    "حي مسلخ": [
+      {
+        "id": 1152,
+        "name_ar": "نبطية التحتا",
+        "caza": "Nabatiye",
+        "coord_x": 731030.701166,
+        "coord_y": 3695918.9202,
+        "place_detail": "Nabatiyeh-city neighborhood → parent city seat (Et-Tahta), not Masqa."
+      }
+    ],
+    "مسلخ": [
+      {
+        "id": 1152,
+        "name_ar": "نبطية التحتا",
+        "caza": "Nabatiye",
+        "coord_x": 731030.701166,
+        "coord_y": 3695918.9202,
+        "place_detail": "Extractor often strips حي; same parent as حي المسلخ."
+      }
+    ],
+    "نبطيه فوقا": [
+      {
+        "id": 1153,
+        "name_ar": "نبطية الفوقا",
+        "caza": "Nabatiye",
+        "coord_x": 732203.152161,
+        "coord_y": 3693642.56977,
+        "place_detail": null
+      }
+    ],
+    "Nabatiyeh El-Faouka": [
+      {
+        "id": 1153,
+        "name_ar": "نبطية الفوقا",
+        "caza": "Nabatiye",
+        "coord_x": 732203.152161,
+        "coord_y": 3693642.56977,
+        "place_detail": null
+      }
+    ],
+    "محيط نبطيه فوقا": [
+      {
+        "id": 1153,
+        "name_ar": "نبطية الفوقا",
+        "caza": "Nabatiye",
+        "coord_x": 732203.152161,
+        "coord_y": 3693642.56977,
+        "place_detail": "Descriptor+name compound seen splitting Houmine vs Douair; pin to El-Faouka."
+      }
+    ],
+    "كفر رمان": [
+      {
+        "id": 851,
+        "name_ar": "كفر رمان",
+        "caza": "Nabatiye",
+        "coord_x": 734102.86272,
+        "coord_y": 3698123.36265,
+        "place_detail": null
+      }
+    ],
+    "Kfar Roummane": [
+      {
+        "id": 851,
+        "name_ar": "كفر رمان",
+        "caza": "Nabatiye",
+        "coord_x": 734102.86272,
+        "coord_y": 3698123.36265,
+        "place_detail": null
+      }
+    ],
+    "دوحه كفررمان": [
+      {
+        "id": 851,
+        "name_ar": "كفر رمان",
+        "caza": "Nabatiye",
+        "coord_x": 734102.86272,
+        "coord_y": 3698123.36265,
+        "place_detail": "Neighborhood/compound of Kfar Roummane (دوحة …)."
+      }
+    ],
+    "زبقين": [
+      {
+        "id": 1523,
+        "name_ar": "زبقين",
+        "caza": "Sour",
+        "coord_x": 712072.8767,
+        "coord_y": 3670720.79009,
+        "place_detail": null
+      }
+    ],
+    "Zebqine": [
+      {
+        "id": 1523,
+        "name_ar": "زبقين",
+        "caza": "Sour",
+        "coord_x": 712072.8767,
+        "coord_y": 3670720.79009,
+        "place_detail": null
+      }
+    ],
+    "وادي زبقين": [
+      {
+        "id": 1523,
+        "name_ar": "زبقين",
+        "caza": "Sour",
+        "coord_x": 712072.8767,
+        "coord_y": 3670720.79009,
+        "place_detail": "Valley-of-village compound → Zebqine."
+      }
+    ],
+    "كونين": [
+      {
+        "id": 919,
+        "name_ar": "كونين",
+        "caza": "Bint Jubail",
+        "coord_x": 728725.00807,
+        "coord_y": 3670271.49056,
+        "place_detail": null
+      }
+    ],
+    "Kounine": [
+      {
+        "id": 919,
+        "name_ar": "كونين",
+        "caza": "Bint Jubail",
+        "coord_x": 728725.00807,
+        "coord_y": 3670271.49056,
+        "place_detail": null
+      }
+    ],
+    "حرش كونين": [
+      {
+        "id": 919,
+        "name_ar": "كونين",
+        "caza": "Bint Jubail",
+        "coord_x": 728725.00807,
+        "coord_y": 3670271.49056,
+        "place_detail": "Grove descriptor + village → Kounine."
+      }
+    ],
+    "علي طاهر": [
+      {
+        "id": 87,
+        "name_ar": "علي الطاهر",
+        "caza": "Nabatiye",
+        "coord_x": 734221.533667,
+        "coord_y": 3694639.74059,
+        "place_detail": null
+      }
+    ],
+    "Aali Et-Taher": [
+      {
+        "id": 87,
+        "name_ar": "علي الطاهر",
+        "caza": "Nabatiye",
+        "coord_x": 734221.533667,
+        "coord_y": 3694639.74059,
+        "place_detail": null
+      }
+    ],
+    "حرش علي طاهر": [
+      {
+        "id": 87,
+        "name_ar": "علي الطاهر",
+        "caza": "Nabatiye",
+        "coord_x": 734221.533667,
+        "coord_y": 3694639.74059,
+        "place_detail": "Grove descriptor + village → Aali Et-Taher."
+      }
+    ],
+    "منصوري": [
+      {
+        "id": 976,
+        "name_ar": "المنصوري",
+        "caza": "Sour",
+        "coord_x": 705662.930609,
+        "coord_y": 3672605.79877,
+        "place_detail": null
+      }
+    ],
+    "Mansouri Sour": [
+      {
+        "id": 976,
+        "name_ar": "المنصوري",
+        "caza": "Sour",
+        "coord_x": 705662.930609,
+        "coord_y": 3672605.79877,
+        "place_detail": null
+      }
+    ],
+    "محيط منصوري": [
+      {
+        "id": 976,
+        "name_ar": "المنصوري",
+        "caza": "Sour",
+        "coord_x": 705662.930609,
+        "coord_y": 3672605.79877,
+        "place_detail": "Outskirts phrasing → Mansouri Sour (same pattern as محيط النبطية الفوقا)."
+      }
+    ],
+    "اطراف منصوري": [
+      {
+        "id": 976,
+        "name_ar": "المنصوري",
+        "caza": "Sour",
+        "coord_x": 705662.930609,
+        "coord_y": 3672605.79877,
+        "place_detail": "Outskirts phrasing → Mansouri Sour."
+      }
+    ],
+    "محيط علي طاهر": [
+      {
+        "id": 87,
+        "name_ar": "علي الطاهر",
+        "caza": "Nabatiye",
+        "coord_x": 734221.533667,
+        "coord_y": 3694639.74059,
+        "place_detail": "Outskirts phrasing → Aali Et-Taher."
+      }
+    ],
+    "اطراف علي طاهر": [
+      {
+        "id": 87,
+        "name_ar": "علي الطاهر",
+        "caza": "Nabatiye",
+        "coord_x": 734221.533667,
+        "coord_y": 3694639.74059,
+        "place_detail": "Outskirts phrasing → Aali Et-Taher."
+      }
+    ],
+    "قنطره": [
+      {
+        "id": 1228,
+        "name_ar": "قنطرة",
+        "caza": "Marjaayoun",
+        "coord_x": 729259.298537,
+        "coord_y": 3684126.59343,
+        "place_detail": "South-Lebanon قنطرة (Marjayoun), not Akkar Qantarat Aakkar (ref has ال)."
+      }
+    ],
+    "Qantara": [
+      {
+        "id": 1228,
+        "name_ar": "قنطرة",
+        "caza": "Marjaayoun",
+        "coord_x": 729259.298537,
+        "coord_y": 3684126.59343,
+        "place_detail": null
+      }
+    ],
+    "عيناتا بنت جبيل": [
+      {
+        "id": 144,
+        "name_ar": "عيناتا بنت جبيل",
+        "caza": "Bint Jubail",
+        "coord_x": 728297.718306,
+        "coord_y": 3668390.56042,
+        "place_detail": null
+      }
+    ],
+    "Aaynata Bent Jbayl": [
+      {
+        "id": 144,
+        "name_ar": "عيناتا بنت جبيل",
+        "caza": "Bint Jubail",
+        "coord_x": 728297.718306,
+        "coord_y": 3668390.56042,
+        "place_detail": null
+      }
+    ],
+    "عيناثا": [
+      {
+        "id": 144,
+        "name_ar": "عيناتا بنت جبيل",
+        "caza": "Bint Jubail",
+        "coord_x": 728297.718306,
+        "coord_y": 3668390.56042,
+        "place_detail": "South-Lebanon Ainata (Bint Jbeil), not Metn Aaynab (عيناب)."
+      }
+    ],
+    "عيناتا": [
+      {
+        "id": 144,
+        "name_ar": "عيناتا بنت جبيل",
+        "caza": "Bint Jubail",
+        "coord_x": 728297.718306,
+        "coord_y": 3668390.56042,
+        "place_detail": "Spelling variant of عيناثا → Aaynata Bent Jbayl (war-news default; Baalbek عيناتا also exists)."
+      }
+    ],
+    "مجيديه حاصبيا": [
+      {
+        "id": 970,
+        "name_ar": "مجيدية حاصبيا",
+        "caza": "Hasbaiya",
+        "coord_x": 747273.349727,
+        "coord_y": 3686666.29543,
+        "place_detail": null
+      }
+    ],
+    "Majidiy? Hasbaiya": [
+      {
+        "id": 970,
+        "name_ar": "مجيدية حاصبيا",
+        "caza": "Hasbaiya",
+        "coord_x": 747273.349727,
+        "coord_y": 3686666.29543,
+        "place_detail": null
+      }
+    ],
+    "مجيديه": [
+      {
+        "id": 970,
+        "name_ar": "مجيدية حاصبيا",
+        "caza": "Hasbaiya",
+        "coord_x": 747273.349727,
+        "coord_y": 3686666.29543,
+        "place_detail": "Majidiye Hasbaya, not Massaaoudiyé (Akkar)."
+      }
+    ],
+    "حروف": [
+      {
+        "id": 652,
+        "name_ar": "حروف",
+        "caza": "Nabatiye",
+        "coord_x": 727118.662568,
+        "coord_y": 3695226.05415,
+        "place_detail": null
+      }
+    ],
+    "Harouf En-Nabatiyeh": [
+      {
+        "id": 652,
+        "name_ar": "حروف",
+        "caza": "Nabatiye",
+        "coord_x": 727118.662568,
+        "coord_y": 3695226.05415,
+        "place_detail": null
+      }
+    ],
+    "حاروف": [
+      {
+        "id": 652,
+        "name_ar": "حروف",
+        "caza": "Nabatiye",
+        "coord_x": 727118.662568,
+        "coord_y": 3695226.05415,
+        "place_detail": "Common Arabic spelling of Harouf En-Nabatiyeh; ACS ref_name_ar omits the internal alef."
+      }
+    ],
+    "تولين": [
+      {
+        "id": 1464,
+        "name_ar": "تولين",
+        "caza": "Marjaayoun",
+        "coord_x": 727492.883408,
+        "coord_y": 3681936.43234,
+        "place_detail": null
+      }
+    ],
+    "Touline": [
+      {
+        "id": 1464,
+        "name_ar": "تولين",
+        "caza": "Marjaayoun",
+        "coord_x": 727492.883408,
+        "coord_y": 3681936.43234,
+        "place_detail": null
+      }
+    ],
+    "وادي سلوقي": [
+      {
+        "id": 1464,
+        "name_ar": "تولين",
+        "caza": "Marjaayoun",
+        "coord_x": 727492.883408,
+        "coord_y": 3681936.43234,
+        "place_detail": "Spelling variant for Wadi el-Selouqi -> Touline."
+      }
+    ],
+    "سلوقي": [
+      {
+        "id": 1464,
+        "name_ar": "تولين",
+        "caza": "Marjaayoun",
+        "coord_x": 727492.883408,
+        "coord_y": 3681936.43234,
+        "place_detail": "Extractor may strip وادي; same Wadi el-Selouqi context -> Touline."
+      }
+    ],
+    "wadi selouqi": [
+      {
+        "id": 1464,
+        "name_ar": "تولين",
+        "caza": "Marjaayoun",
+        "coord_x": 727492.883408,
+        "coord_y": 3681936.43234,
+        "place_detail": "Latin variant for Wadi el-Selouqi -> Touline."
+      }
+    ],
+    "wadi salouqi": [
+      {
+        "id": 1464,
+        "name_ar": "تولين",
+        "caza": "Marjaayoun",
+        "coord_x": 727492.883408,
+        "coord_y": 3681936.43234,
+        "place_detail": "Latin variant for Wadi el-Selouqi -> Touline."
+      }
+    ],
+    "علما شعب": [
+      {
+        "id": 90,
+        "name_ar": "علما الشعب",
+        "caza": "Sour",
+        "coord_x": 702667.917906,
+        "coord_y": 3664898.76497,
+        "place_detail": null
+      }
+    ],
+    "Aalma Ech-Chaab": [
+      {
+        "id": 90,
+        "name_ar": "علما الشعب",
+        "caza": "Sour",
+        "coord_x": 702667.917906,
+        "coord_y": 3664898.76497,
+        "place_detail": null
+      }
+    ],
+    "لبونه": [
+      {
+        "id": 90,
+        "name_ar": "علما الشعب",
+        "caza": "Sour",
+        "coord_x": 702667.917906,
+        "coord_y": 3664898.76497,
+        "place_detail": "Confirmed no-ACS local name -> Aalma Ech-Chaab."
+      }
+    ],
+    "ناقوره": [
+      {
+        "id": 335,
+        "name_ar": "الناقورة",
+        "caza": "Sour",
+        "coord_x": 698790.072454,
+        "coord_y": 3665376.01852,
+        "place_detail": null
+      },
+      {
+        "id": 335,
+        "name_ar": "الناقورة",
+        "caza": "Sour",
+        "coord_x": 698790.072454,
+        "coord_y": 3665376.01852,
+        "place_detail": "Confirmed no-ACS local name -> Borj En-Naqoura."
+      }
+    ],
+    "Borj En-Naqoura": [
+      {
+        "id": 335,
+        "name_ar": "الناقورة",
+        "caza": "Sour",
+        "coord_x": 698790.072454,
+        "coord_y": 3665376.01852,
+        "place_detail": null
+      }
+    ],
+    "شعيتيه": [
+      {
+        "id": 399,
+        "name_ar": "شعيتية",
+        "caza": "Sour",
+        "coord_x": 710569.609673,
+        "coord_y": 3675725.04088,
+        "place_detail": null
+      }
+    ],
+    "Chaaitiy?": [
+      {
+        "id": 399,
+        "name_ar": "شعيتية",
+        "caza": "Sour",
+        "coord_x": 710569.609673,
+        "coord_y": 3675725.04088,
+        "place_detail": null
+      }
+    ],
+    "مالكيه": [
+      {
+        "id": 399,
+        "name_ar": "شعيتية",
+        "caza": "Sour",
+        "coord_x": 710569.609673,
+        "coord_y": 3675725.04088,
+        "place_detail": "Confirmed no-ACS local name -> Chaaitiye."
+      }
+    ],
+    "شقرا": [
+      {
+        "id": 409,
+        "name_ar": "شقرا",
+        "caza": "Bint Jubail",
+        "coord_x": 730224.406251,
+        "coord_y": 3673811.50406,
+        "place_detail": null
+      }
+    ],
+    "Chaqra": [
+      {
+        "id": 409,
+        "name_ar": "شقرا",
+        "caza": "Bint Jubail",
+        "coord_x": 730224.406251,
+        "coord_y": 3673811.50406,
+        "place_detail": null
+      }
+    ],
+    "خله دواوير": [
+      {
+        "id": 409,
+        "name_ar": "شقرا",
+        "caza": "Bint Jubail",
+        "coord_x": 730224.406251,
+        "coord_y": 3673811.50406,
+        "place_detail": "Confirmed no-ACS local name -> Chaqra."
+      }
+    ],
+    "دير قانون": [
+      {
+        "id": 521,
+        "name_ar": "دير قانون",
+        "caza": "Sour",
+        "coord_x": 707962.766728,
+        "coord_y": 3677422.16388,
+        "place_detail": null
+      }
+    ],
+    "Deir Qanoun El-Aain": [
+      {
+        "id": 521,
+        "name_ar": "دير قانون",
+        "caza": "Sour",
+        "coord_x": 707962.766728,
+        "coord_y": 3677422.16388,
+        "place_detail": null
+      }
+    ],
+    "معليه": [
+      {
+        "id": 521,
+        "name_ar": "دير قانون",
+        "caza": "Sour",
+        "coord_x": 707962.766728,
+        "coord_y": 3677422.16388,
+        "place_detail": "Confirmed no-ACS local name -> Deir Qanoun El-Aain."
+      }
+    ],
+    "سماعيه": [
+      {
+        "id": 521,
+        "name_ar": "دير قانون",
+        "caza": "Sour",
+        "coord_x": 707962.766728,
+        "coord_y": 3677422.16388,
+        "place_detail": "Confirmed no-ACS local name -> Deir Qanoun El-Aain."
+      }
+    ],
+    "حولا": [
+      {
+        "id": 701,
+        "name_ar": "حولا",
+        "caza": "Marjaayoun",
+        "coord_x": 734189.612024,
+        "coord_y": 3677015.03001,
+        "place_detail": null
+      }
+    ],
+    "Houla": [
+      {
+        "id": 701,
+        "name_ar": "حولا",
+        "caza": "Marjaayoun",
+        "coord_x": 734189.612024,
+        "coord_y": 3677015.03001,
+        "place_detail": null
+      }
+    ],
+    "خله ساقيه": [
+      {
+        "id": 701,
+        "name_ar": "حولا",
+        "caza": "Marjaayoun",
+        "coord_x": 734189.612024,
+        "coord_y": 3677015.03001,
+        "place_detail": "Confirmed no-ACS local name -> Houla."
+      }
+    ],
+    "وادي اسطبل": [
+      {
+        "id": 701,
+        "name_ar": "حولا",
+        "caza": "Marjaayoun",
+        "coord_x": 734189.612024,
+        "coord_y": 3677015.03001,
+        "place_detail": "Confirmed no-ACS local name -> Houla."
+      }
+    ],
+    "اسكندرونه": [
+      {
+        "id": 724,
+        "name_ar": "إسكندرونة",
+        "caza": "Sour",
+        "coord_x": 703585.302293,
+        "coord_y": 3670587.87489,
+        "place_detail": null
+      }
+    ],
+    "Iskandarouna Sour": [
+      {
+        "id": 724,
+        "name_ar": "إسكندرونة",
+        "caza": "Sour",
+        "coord_x": 703585.302293,
+        "coord_y": 3670587.87489,
+        "place_detail": null
+      }
+    ],
+    "بياضه": [
+      {
+        "id": 724,
+        "name_ar": "إسكندرونة",
+        "caza": "Sour",
+        "coord_x": 703585.302293,
+        "coord_y": 3670587.87489,
+        "place_detail": "Confirmed no-ACS local name -> Iskandarouna Sour."
+      }
+    ],
+    "كفر شوبا": [
+      {
+        "id": 813,
+        "name_ar": "كفر شوبا",
+        "caza": "Hasbaiya",
+        "coord_x": 750226.221755,
+        "coord_y": 3689887.68377,
+        "place_detail": null
+      }
+    ],
+    "Kfar Chouba": [
+      {
+        "id": 813,
+        "name_ar": "كفر شوبا",
+        "caza": "Hasbaiya",
+        "coord_x": 750226.221755,
+        "coord_y": 3689887.68377,
+        "place_detail": null
+      }
+    ],
+    "رمثا": [
+      {
+        "id": 813,
+        "name_ar": "كفر شوبا",
+        "caza": "Hasbaiya",
+        "coord_x": 750226.221755,
+        "coord_y": 3689887.68377,
+        "place_detail": "Confirmed no-ACS local name -> Kfar Chouba."
+      }
+    ],
+    "شانوح": [
+      {
+        "id": 813,
+        "name_ar": "كفر شوبا",
+        "caza": "Hasbaiya",
+        "coord_x": 750226.221755,
+        "coord_y": 3689887.68377,
+        "place_detail": "Confirmed no-ACS local name -> Kfar Chouba."
+      }
+    ],
+    "جبل رفيع": [
+      {
+        "id": 851,
+        "name_ar": "كفر رمان",
+        "caza": "Nabatiye",
+        "coord_x": 734102.86272,
+        "coord_y": 3698123.36265,
+        "place_detail": "Confirmed no-ACS local name -> Kfar Roummane."
+      }
+    ],
+    "دبشه": [
+      {
+        "id": 851,
+        "name_ar": "كفر رمان",
+        "caza": "Nabatiye",
+        "coord_x": 734102.86272,
+        "coord_y": 3698123.36265,
+        "place_detail": "Confirmed no-ACS local name -> Kfar Roummane."
+      }
+    ],
+    "مجدل زون": [
+      {
+        "id": 969,
+        "name_ar": "مجدل زون",
+        "caza": "Sour",
+        "coord_x": 708562.298235,
+        "coord_y": 3670460.40234,
+        "place_detail": null
+      }
+    ],
+    "Majdelzoun": [
+      {
+        "id": 969,
+        "name_ar": "مجدل زون",
+        "caza": "Sour",
+        "coord_x": 708562.298235,
+        "coord_y": 3670460.40234,
+        "place_detail": null
+      }
+    ],
+    "وادي حسن": [
+      {
+        "id": 969,
+        "name_ar": "مجدل زون",
+        "caza": "Sour",
+        "coord_x": 708562.298235,
+        "coord_y": 3670460.40234,
+        "place_detail": "Confirmed no-ACS local name -> Majdelzoun."
+      }
+    ],
+    "بيوت سياد": [
+      {
+        "id": 976,
+        "name_ar": "المنصوري",
+        "caza": "Sour",
+        "coord_x": 705662.930609,
+        "coord_y": 3672605.79877,
+        "place_detail": "Confirmed no-ACS local name -> Mansouri Sour."
+      }
+    ],
+    "مركبا": [
+      {
+        "id": 991,
+        "name_ar": "مركبا",
+        "caza": "Marjaayoun",
+        "coord_x": 734348.283673,
+        "coord_y": 3679717.77906,
+        "place_detail": null
+      }
+    ],
+    "Markaba": [
+      {
+        "id": 991,
+        "name_ar": "مركبا",
+        "caza": "Marjaayoun",
+        "coord_x": 734348.283673,
+        "coord_y": 3679717.77906,
+        "place_detail": null
+      }
+    ],
+    "جبل ورده": [
+      {
+        "id": 991,
+        "name_ar": "مركبا",
+        "caza": "Marjaayoun",
+        "coord_x": 734348.283673,
+        "coord_y": 3679717.77906,
+        "place_detail": "Confirmed no-ACS local name -> Markaba."
+      }
+    ],
+    "مزرعه مشرف": [
+      {
+        "id": 1054,
+        "name_ar": "مزرعة المشرف",
+        "caza": "Sour",
+        "coord_x": 718474.745375,
+        "coord_y": 3677572.3227,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Mechref": [
+      {
+        "id": 1054,
+        "name_ar": "مزرعة المشرف",
+        "caza": "Sour",
+        "coord_x": 718474.745375,
+        "coord_y": 3677572.3227,
+        "place_detail": null
+      }
+    ],
+    "محرونه": [
+      {
+        "id": 1054,
+        "name_ar": "مزرعة المشرف",
+        "caza": "Sour",
+        "coord_x": 718474.745375,
+        "coord_y": 3677572.3227,
+        "place_detail": "Confirmed no-ACS local name -> Mazraat Mechref."
+      }
+    ],
+    "ميس جبل": [
+      {
+        "id": 1079,
+        "name_ar": "ميس الجبل",
+        "caza": "Marjaayoun",
+        "coord_x": 734238.22285,
+        "coord_y": 3673579.39132,
+        "place_detail": null
+      }
+    ],
+    "Meiss Ej-Jabal": [
+      {
+        "id": 1079,
+        "name_ar": "ميس الجبل",
+        "caza": "Marjaayoun",
+        "coord_x": 734238.22285,
+        "coord_y": 3673579.39132,
+        "place_detail": null
+      }
+    ],
+    "حوشين": [
+      {
+        "id": 1079,
+        "name_ar": "ميس الجبل",
+        "caza": "Marjaayoun",
+        "coord_x": 734238.22285,
+        "coord_y": 3673579.39132,
+        "place_detail": "Confirmed no-ACS local name -> Meiss Ej-Jabal."
+      }
+    ],
+    "وادي جمل": [
+      {
+        "id": 1079,
+        "name_ar": "ميس الجبل",
+        "caza": "Marjaayoun",
+        "coord_x": 734238.22285,
+        "coord_y": 3673579.39132,
+        "place_detail": "Confirmed no-ACS local name -> Meiss Ej-Jabal."
+      }
+    ],
+    "قبريخا": [
+      {
+        "id": 1219,
+        "name_ar": "قبريخا",
+        "caza": "Marjaayoun",
+        "coord_x": 729584.622501,
+        "coord_y": 3681748.99426,
+        "place_detail": null
+      }
+    ],
+    "Qabrikha": [
+      {
+        "id": 1219,
+        "name_ar": "قبريخا",
+        "caza": "Marjaayoun",
+        "coord_x": 729584.622501,
+        "coord_y": 3681748.99426,
+        "place_detail": null
+      }
+    ],
+    "محميه وادي حجير": [
+      {
+        "id": 1219,
+        "name_ar": "قبريخا",
+        "caza": "Marjaayoun",
+        "coord_x": 729584.622501,
+        "coord_y": 3681748.99426,
+        "place_detail": "Confirmed no-ACS local name -> Qabrikha."
+      }
+    ],
+    "قليعه": [
+      {
+        "id": 1252,
+        "name_ar": "قليعة",
+        "caza": "Marjaayoun",
+        "coord_x": 738444.279598,
+        "coord_y": 3691050.72015,
+        "place_detail": null
+      }
+    ],
+    "Qlaiaa": [
+      {
+        "id": 1252,
+        "name_ar": "قليعة",
+        "caza": "Marjaayoun",
+        "coord_x": 738444.279598,
+        "coord_y": 3691050.72015,
+        "place_detail": null
+      }
+    ],
+    "جسر خردلي": [
+      {
+        "id": 1252,
+        "name_ar": "قليعة",
+        "caza": "Marjaayoun",
+        "coord_x": 738444.279598,
+        "coord_y": 3691050.72015,
+        "place_detail": "Confirmed no-ACS local name -> Qlaiaa."
+      }
+    ],
+    "راشيا فخار": [
+      {
+        "id": 1288,
+        "name_ar": "راشيّا الفخار",
+        "caza": "Hasbaiya",
+        "coord_x": 746945.577127,
+        "coord_y": 3693476.64709,
+        "place_detail": null
+      }
+    ],
+    "Rachaiya El-Foukhar": [
+      {
+        "id": 1288,
+        "name_ar": "راشيّا الفخار",
+        "caza": "Hasbaiya",
+        "coord_x": 746945.577127,
+        "coord_y": 3693476.64709,
+        "place_detail": null
+      }
+    ],
+    "وادي حير": [
+      {
+        "id": 1288,
+        "name_ar": "راشيّا الفخار",
+        "caza": "Hasbaiya",
+        "coord_x": 746945.577127,
+        "coord_y": 3693476.64709,
+        "place_detail": "Confirmed no-ACS local name -> Rachaiya El-Foukhar."
+      }
+    ],
+    "صلايب": [
+      {
+        "id": 1354,
+        "name_ar": "صلايب",
+        "caza": "Hasbaiya",
+        "coord_x": 744780.521974,
+        "coord_y": 3685658.18801,
+        "place_detail": null
+      }
+    ],
+    "Salaiyeb": [
+      {
+        "id": 1354,
+        "name_ar": "صلايب",
+        "caza": "Hasbaiya",
+        "coord_x": 744780.521974,
+        "coord_y": 3685658.18801,
+        "place_detail": null
+      }
+    ],
+    "وزاني": [
+      {
+        "id": 1354,
+        "name_ar": "صلايب",
+        "caza": "Hasbaiya",
+        "coord_x": 744780.521974,
+        "coord_y": 3685658.18801,
+        "place_detail": "Confirmed no-ACS local name -> Salaiyeb."
+      }
+    ],
+    "طيبه مرجعيون": [
+      {
+        "id": 1440,
+        "name_ar": "طيبة مرجعيون",
+        "caza": "Marjaayoun",
+        "coord_x": 734612.260684,
+        "coord_y": 3684993.67344,
+        "place_detail": null
+      }
+    ],
+    "Taybet Matjaayoun": [
+      {
+        "id": 1440,
+        "name_ar": "طيبة مرجعيون",
+        "caza": "Marjaayoun",
+        "coord_x": 734612.260684,
+        "coord_y": 3684993.67344,
+        "place_detail": null
+      }
+    ],
+    "ابو مكنا": [
+      {
+        "id": 1440,
+        "name_ar": "طيبة مرجعيون",
+        "caza": "Marjaayoun",
+        "coord_x": 734612.260684,
+        "coord_y": 3684993.67344,
+        "place_detail": "Confirmed no-ACS local name -> Taybet Matjaayoun."
+      }
+    ],
+    "عريض ماريحيا": [
+      {
+        "id": 1464,
+        "name_ar": "تولين",
+        "caza": "Marjaayoun",
+        "coord_x": 727492.883408,
+        "coord_y": 3681936.43234,
+        "place_detail": "Confirmed no-ACS local name -> Touline."
+      }
+    ],
+    "زوطر شرقيه": [
+      {
+        "id": 1519,
+        "name_ar": "زوطر الشرقية",
+        "caza": "Nabatiye",
+        "coord_x": 730331.666142,
+        "coord_y": 3689503.95877,
+        "place_detail": null
+      }
+    ],
+    "Zaoutar Ech-Charqiy?": [
+      {
+        "id": 1519,
+        "name_ar": "زوطر الشرقية",
+        "caza": "Nabatiye",
+        "coord_x": 730331.666142,
+        "coord_y": 3689503.95877,
+        "place_detail": null
+      }
+    ],
+    "وادي راج": [
+      {
+        "id": 1519,
+        "name_ar": "زوطر الشرقية",
+        "caza": "Nabatiye",
+        "coord_x": 730331.666142,
+        "coord_y": 3689503.95877,
+        "place_detail": "Confirmed no-ACS local name -> Zaoutar Ech-Charqiye."
+      }
+    ],
+    "دبل اميه": [
+      {
+        "id": 487,
+        "name_ar": "دبل امية",
+        "caza": "Bint Jubail",
+        "coord_x": 721623.365916,
+        "coord_y": 3667554.99097,
+        "place_detail": null
+      }
+    ],
+    "Debl": [
+      {
+        "id": 487,
+        "name_ar": "دبل امية",
+        "caza": "Bint Jubail",
+        "coord_x": 721623.365916,
+        "coord_y": 3667554.99097,
+        "place_detail": null
+      }
+    ],
+    "دبل": [
+      {
+        "id": 487,
+        "name_ar": "دبل امية",
+        "caza": "Bint Jubail",
+        "coord_x": 721623.365916,
+        "coord_y": 3667554.99097,
+        "place_detail": "Bare news form -> Debl. ACS Arabic is دبل امية."
+      }
+    ],
+    "جبين": [
+      {
+        "id": 759,
+        "name_ar": "جبين",
+        "caza": "Sour",
+        "coord_x": 708602.542817,
+        "coord_y": 3667678.45389,
+        "place_detail": "Definite-article news form -> Jibbayn. ACS Arabic is جبين."
+      }
+    ],
+    "Jibbayn": [
+      {
+        "id": 759,
+        "name_ar": "جبين",
+        "caza": "Sour",
+        "coord_x": 708602.542817,
+        "coord_y": 3667678.45389,
+        "place_detail": null
+      }
+    ],
+    "وادي حجير": [
+      {
+        "id": 1219,
+        "name_ar": "قبريخا",
+        "caza": "Marjaayoun",
+        "coord_x": 729584.622501,
+        "coord_y": 3681748.99426,
+        "place_detail": "Common shortened form of محمية وادي الحجير -> Qabrikha."
+      }
+    ],
+    "بازوريه": [
+      {
+        "id": 230,
+        "name_ar": "بازورية",
+        "caza": "Sour",
+        "coord_x": 711303.878977,
+        "coord_y": 3681521.97361,
+        "place_detail": "Definite-article news form -> Bazouriye (Sour). ACS Arabic is بازورية."
+      }
+    ],
+    "Bazouriy?": [
+      {
+        "id": 230,
+        "name_ar": "بازورية",
+        "caza": "Sour",
+        "coord_x": 711303.878977,
+        "coord_y": 3681521.97361,
+        "place_detail": null
+      }
+    ],
+    "Bazourieh": [
+      {
+        "id": 230,
+        "name_ar": "بازورية",
+        "caza": "Sour",
+        "coord_x": 711303.878977,
+        "coord_y": 3681521.97361,
+        "place_detail": "Press Latin spelling -> Bazouriye (Sour). Not among the ACS names."
+      }
+    ],
+    "Bazouriyeh": [
+      {
+        "id": 230,
+        "name_ar": "بازورية",
+        "caza": "Sour",
+        "coord_x": 711303.878977,
+        "coord_y": 3681521.97361,
+        "place_detail": "Press Latin spelling -> Bazouriye (Sour). Not among the ACS names."
+      }
+    ],
+    "حيطوره": [
+      {
+        "id": 664,
+        "name_ar": "حيطورة",
+        "caza": "Jezzine",
+        "coord_x": 736804.711676,
+        "coord_y": 3711830.99416,
+        "place_detail": null
+      }
+    ],
+    "Haytoura": [
+      {
+        "id": 664,
+        "name_ar": "حيطورة",
+        "caza": "Jezzine",
+        "coord_x": 736804.711676,
+        "coord_y": 3711830.99416,
+        "place_detail": null
+      }
+    ],
+    "حداثا": [
+      {
+        "id": 601,
+        "name_ar": "حداثا",
+        "caza": "Bint Jubail",
+        "coord_x": 723003.808205,
+        "coord_y": 3671227.72284,
+        "place_detail": null
+      }
+    ],
+    "Haddatha": [
+      {
+        "id": 601,
+        "name_ar": "حداثا",
+        "caza": "Bint Jubail",
+        "coord_x": 723003.808205,
+        "coord_y": 3671227.72284,
+        "place_detail": null
+      }
+    ],
+    "مزرعه جمجيم": [
+      {
+        "id": 1046,
+        "name_ar": "مزرعة جمجيم",
+        "caza": "Saida",
+        "coord_x": 711868.020302,
+        "coord_y": 3693410.90978,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Jamjim": [
+      {
+        "id": 1046,
+        "name_ar": "مزرعة جمجيم",
+        "caza": "Saida",
+        "coord_x": 711868.020302,
+        "coord_y": 3693410.90978,
+        "place_detail": null
+      }
+    ],
+    "شوكين": [
+      {
+        "id": 452,
+        "name_ar": "شوكين",
+        "caza": "Nabatiye",
+        "coord_x": 728738.175419,
+        "coord_y": 3692819.89152,
+        "place_detail": null
+      }
+    ],
+    "Choukine": [
+      {
+        "id": 452,
+        "name_ar": "شوكين",
+        "caza": "Nabatiye",
+        "coord_x": 728738.175419,
+        "coord_y": 3692819.89152,
+        "place_detail": null
+      }
+    ],
+    "مروحين": [
+      {
+        "id": 1087,
+        "name_ar": "مروحين",
+        "caza": "Sour",
+        "coord_x": 712627.848531,
+        "coord_y": 3666408.39391,
+        "place_detail": null
+      }
+    ],
+    "Merouahine": [
+      {
+        "id": 1087,
+        "name_ar": "مروحين",
+        "caza": "Sour",
+        "coord_x": 712627.848531,
+        "coord_y": 3666408.39391,
+        "place_detail": null
+      }
+    ],
+    "بطيشيه": [
+      {
+        "id": 384,
+        "name_ar": "بطيشية",
+        "caza": "Sour",
+        "coord_x": 705877.583216,
+        "coord_y": 3665695.08557,
+        "place_detail": null
+      }
+    ],
+    "Btaychiy?": [
+      {
+        "id": 384,
+        "name_ar": "بطيشية",
+        "caza": "Sour",
+        "coord_x": 705877.583216,
+        "coord_y": 3665695.08557,
+        "place_detail": null
+      }
+    ],
+    "مزرعه عرب طبايا": [
+      {
+        "id": 119,
+        "name_ar": "مزرعة عرب  طبَايا",
+        "caza": "Saida",
+        "coord_x": 726655.167097,
+        "coord_y": 3707922.7927,
+        "place_detail": null
+      }
+    ],
+    "Aarab Tabbaya": [
+      {
+        "id": 119,
+        "name_ar": "مزرعة عرب  طبَايا",
+        "caza": "Saida",
+        "coord_x": 726655.167097,
+        "coord_y": 3707922.7927,
+        "place_detail": null
+      }
+    ],
+    "دير ميماس": [
+      {
+        "id": 518,
+        "name_ar": "دير ميماس",
+        "caza": "Marjaayoun",
+        "coord_x": 736807.106341,
+        "coord_y": 3687576.00402,
+        "place_detail": null
+      }
+    ],
+    "Deir Mimas": [
+      {
+        "id": 518,
+        "name_ar": "دير ميماس",
+        "caza": "Marjaayoun",
+        "coord_x": 736807.106341,
+        "coord_y": 3687576.00402,
+        "place_detail": null
+      }
+    ],
+    "بياض صور": [
+      {
+        "id": 310,
+        "name_ar": "البياض صور",
+        "caza": "Sour",
+        "coord_x": 716638.597565,
+        "coord_y": 3676485.47844,
+        "place_detail": null
+      }
+    ],
+    "Biyad": [
+      {
+        "id": 310,
+        "name_ar": "البياض صور",
+        "caza": "Sour",
+        "coord_x": 716638.597565,
+        "coord_y": 3676485.47844,
+        "place_detail": null
+      }
+    ],
+    "رب تلاتين": [
+      {
+        "id": 1283,
+        "name_ar": "رب التلاتين",
+        "caza": "Marjaayoun",
+        "coord_x": 734348.293878,
+        "coord_y": 3682222.93316,
+        "place_detail": null
+      }
+    ],
+    "Rabb Et-Tlatine": [
+      {
+        "id": 1283,
+        "name_ar": "رب التلاتين",
+        "caza": "Marjaayoun",
+        "coord_x": 734348.293878,
+        "coord_y": 3682222.93316,
+        "place_detail": null
+      }
+    ],
+    "ياطر": [
+      {
+        "id": 1490,
+        "name_ar": "ياطر",
+        "caza": "Bint Jubail",
+        "coord_x": 716821.149354,
+        "coord_y": 3670219.37559,
+        "place_detail": null
+      }
+    ],
+    "Yater": [
+      {
+        "id": 1490,
+        "name_ar": "ياطر",
+        "caza": "Bint Jubail",
+        "coord_x": 716821.149354,
+        "coord_y": 3670219.37559,
+        "place_detail": null
+      }
+    ],
+    "مجيدل": [
+      {
+        "id": 1114,
+        "name_ar": "مجيدل",
+        "caza": "Jezzine",
+        "coord_x": 726208.141167,
+        "coord_y": 3711535.47151,
+        "place_detail": null
+      }
+    ],
+    "Mjaydel Jezzine": [
+      {
+        "id": 1114,
+        "name_ar": "مجيدل",
+        "caza": "Jezzine",
+        "coord_x": 726208.141167,
+        "coord_y": 3711535.47151,
+        "place_detail": null
+      }
+    ],
+    "دبعل": [
+      {
+        "id": 486,
+        "name_ar": "دبعل",
+        "caza": "Sour",
+        "coord_x": 718712.407835,
+        "coord_y": 3681663.22095,
+        "place_detail": null
+      }
+    ],
+    "Debaal Sour": [
+      {
+        "id": 486,
+        "name_ar": "دبعل",
+        "caza": "Sour",
+        "coord_x": 718712.407835,
+        "coord_y": 3681663.22095,
+        "place_detail": null
+      }
+    ],
+    "طورا": [
+      {
+        "id": 1465,
+        "name_ar": "طورا",
+        "caza": "Sour",
+        "coord_x": 714114.722739,
+        "coord_y": 3686093.84941,
+        "place_detail": null
+      }
+    ],
+    "Toura": [
+      {
+        "id": 1465,
+        "name_ar": "طورا",
+        "caza": "Sour",
+        "coord_x": 714114.722739,
+        "coord_y": 3686093.84941,
+        "place_detail": null
+      }
+    ],
+    "مزرعه كوثريه الرز": [
+      {
+        "id": 1048,
+        "name_ar": "مزرعة كوثرية الرز",
+        "caza": "Saida",
+        "coord_x": 714378.041555,
+        "coord_y": 3695068.06271,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Kaoutariyet Er-Riz": [
+      {
+        "id": 1048,
+        "name_ar": "مزرعة كوثرية الرز",
+        "caza": "Saida",
+        "coord_x": 714378.041555,
+        "coord_y": 3695068.06271,
+        "place_detail": null
+      }
+    ],
+    "قليله": [
+      {
+        "id": 1253,
+        "name_ar": "قليلة",
+        "caza": "Sour",
+        "coord_x": 707736.410351,
+        "coord_y": 3675141.86336,
+        "place_detail": null
+      }
+    ],
+    "Qlail? Sour": [
+      {
+        "id": 1253,
+        "name_ar": "قليلة",
+        "caza": "Sour",
+        "coord_x": 707736.410351,
+        "coord_y": 3675141.86336,
+        "place_detail": null
+      }
+    ],
+    "صيدا": [
+      {
+        "id": 1348,
+        "name_ar": "صيدا",
+        "caza": "Saida",
+        "coord_x": 719928.546305,
+        "coord_y": 3716233.75795,
+        "place_detail": null
+      }
+    ],
+    "Saida El-Qadimeh": [
+      {
+        "id": 1348,
+        "name_ar": "صيدا",
+        "caza": "Saida",
+        "coord_x": 719928.546305,
+        "coord_y": 3716233.75795,
+        "place_detail": null
+      }
+    ],
+    "ساري": [
+      {
+        "id": 1060,
+        "name_ar": "ساري",
+        "caza": "Saida",
+        "coord_x": 711852.753079,
+        "coord_y": 3697059.79022,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Sari": [
+      {
+        "id": 1060,
+        "name_ar": "ساري",
+        "caza": "Saida",
+        "coord_x": 711852.753079,
+        "coord_y": 3697059.79022,
+        "place_detail": null
+      }
+    ],
+    "عين عرب مرجعيون": [
+      {
+        "id": 26,
+        "name_ar": "عين عرب مرجعيون",
+        "caza": "Marjaayoun",
+        "coord_x": 744281.027395,
+        "coord_y": 3687602.6972,
+        "place_detail": null
+      }
+    ],
+    "Aain Aarab Marjaayoun": [
+      {
+        "id": 26,
+        "name_ar": "عين عرب مرجعيون",
+        "caza": "Marjaayoun",
+        "coord_x": 744281.027395,
+        "coord_y": 3687602.6972,
+        "place_detail": null
+      }
+    ],
+    "بافليه": [
+      {
+        "id": 196,
+        "name_ar": "بافليه",
+        "caza": "Sour",
+        "coord_x": 720396.779936,
+        "coord_y": 3682700.43314,
+        "place_detail": null
+      }
+    ],
+    "Bafliy?": [
+      {
+        "id": 196,
+        "name_ar": "بافليه",
+        "caza": "Sour",
+        "coord_x": 720396.779936,
+        "coord_y": 3682700.43314,
+        "place_detail": null
+      }
+    ],
+    "مليخ": [
+      {
+        "id": 1116,
+        "name_ar": "مليخ",
+        "caza": "Jezzine",
+        "coord_x": 737142.764454,
+        "coord_y": 3706337.31103,
+        "place_detail": null
+      }
+    ],
+    "Mlikh": [
+      {
+        "id": 1116,
+        "name_ar": "مليخ",
+        "caza": "Jezzine",
+        "coord_x": 737142.764454,
+        "coord_y": 3706337.31103,
+        "place_detail": null
+      }
+    ],
+    "مزرعه خريبه": [
+      {
+        "id": 1146,
+        "name_ar": "مزرعة الخريبة",
+        "caza": "Nabatiye",
+        "coord_x": 728503.313417,
+        "coord_y": 3706332.58186,
+        "place_detail": null
+      }
+    ],
+    "Mzaraat El-Khreib?": [
+      {
+        "id": 1146,
+        "name_ar": "مزرعة الخريبة",
+        "caza": "Nabatiye",
+        "coord_x": 728503.313417,
+        "coord_y": 3706332.58186,
+        "place_detail": null
+      }
+    ],
+    "معروب": [
+      {
+        "id": 942,
+        "name_ar": "معروب",
+        "caza": "Sour",
+        "coord_x": 717806.304561,
+        "coord_y": 3685162.4422,
+        "place_detail": null
+      }
+    ],
+    "Maaroub": [
+      {
+        "id": 942,
+        "name_ar": "معروب",
+        "caza": "Sour",
+        "coord_x": 717806.304561,
+        "coord_y": 3685162.4422,
+        "place_detail": null
+      }
+    ],
+    "كفرا بنت جبيل": [
+      {
+        "id": 786,
+        "name_ar": "كفرا بنت جبيل",
+        "caza": "Bint Jubail",
+        "coord_x": 718806.524949,
+        "coord_y": 3673367.88614,
+        "place_detail": null
+      }
+    ],
+    "Kafra Bant Jbayl": [
+      {
+        "id": 786,
+        "name_ar": "كفرا بنت جبيل",
+        "caza": "Bint Jubail",
+        "coord_x": 718806.524949,
+        "coord_y": 3673367.88614,
+        "place_detail": null
+      }
+    ],
+    "عيتا شعب": [
+      {
+        "id": 149,
+        "name_ar": "عيتا الشعب",
+        "caza": "Bint Jubail",
+        "coord_x": 718513.673603,
+        "coord_y": 3664359.59741,
+        "place_detail": null
+      }
+    ],
+    "Aayta Ech-Chaab": [
+      {
+        "id": 149,
+        "name_ar": "عيتا الشعب",
+        "caza": "Bint Jubail",
+        "coord_x": 718513.673603,
+        "coord_y": 3664359.59741,
+        "place_detail": null
+      }
+    ],
+    "محيبيب": [
+      {
+        "id": 1093,
+        "name_ar": "محيبيب",
+        "caza": "Marjaayoun",
+        "coord_x": 733213.273715,
+        "coord_y": 3670737.24055,
+        "place_detail": null
+      }
+    ],
+    "Mhaibib": [
+      {
+        "id": 1093,
+        "name_ar": "محيبيب",
+        "caza": "Marjaayoun",
+        "coord_x": 733213.273715,
+        "coord_y": 3670737.24055,
+        "place_detail": null
+      }
+    ],
+    "اركي": [
+      {
+        "id": 554,
+        "name_ar": "اركي",
+        "caza": "Saida",
+        "coord_x": 722144.019549,
+        "coord_y": 3706782.12751,
+        "place_detail": null
+      }
+    ],
+    "Erkay": [
+      {
+        "id": 554,
+        "name_ar": "اركي",
+        "caza": "Saida",
+        "coord_x": 722144.019549,
+        "coord_y": 3706782.12751,
+        "place_detail": null
+      }
+    ],
+    "رمانه": [
+      {
+        "id": 1335,
+        "name_ar": "رمانة",
+        "caza": "Jezzine",
+        "coord_x": 737382.155819,
+        "coord_y": 3710427.06707,
+        "place_detail": null
+      }
+    ],
+    "Roummanet": [
+      {
+        "id": 1335,
+        "name_ar": "رمانة",
+        "caza": "Jezzine",
+        "coord_x": 737382.155819,
+        "coord_y": 3710427.06707,
+        "place_detail": null
+      }
+    ],
+    "نميريه": [
+      {
+        "id": 1178,
+        "name_ar": "نميرية",
+        "caza": "Nabatiye",
+        "coord_x": 723800.626902,
+        "coord_y": 3700470.90238,
+        "place_detail": null
+      }
+    ],
+    "Nmairiy?": [
+      {
+        "id": 1178,
+        "name_ar": "نميرية",
+        "caza": "Nabatiye",
+        "coord_x": 723800.626902,
+        "coord_y": 3700470.90238,
+        "place_detail": null
+      }
+    ],
+    "زغرين جزين": [
+      {
+        "id": 1065,
+        "name_ar": "زغرين جزين",
+        "caza": "Jezzine",
+        "coord_x": 737550.556767,
+        "coord_y": 3701094.77242,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Zighrine Jezzine": [
+      {
+        "id": 1065,
+        "name_ar": "زغرين جزين",
+        "caza": "Jezzine",
+        "coord_x": 737550.556767,
+        "coord_y": 3701094.77242,
+        "place_detail": null
+      }
+    ],
+    "كفركيلا": [
+      {
+        "id": 839,
+        "name_ar": "كفركيلا",
+        "caza": "Marjaayoun",
+        "coord_x": 737231.600533,
+        "coord_y": 3684654.40582,
+        "place_detail": null
+      }
+    ],
+    "Kfar Kila": [
+      {
+        "id": 839,
+        "name_ar": "كفركيلا",
+        "caza": "Marjaayoun",
+        "coord_x": 737231.600533,
+        "coord_y": 3684654.40582,
+        "place_detail": null
+      }
+    ],
+    "كفرحون": [
+      {
+        "id": 834,
+        "name_ar": "كفرحون",
+        "caza": "Jezzine",
+        "coord_x": 740891.136462,
+        "coord_y": 3708159.46082,
+        "place_detail": null
+      }
+    ],
+    "Kfar Houn?": [
+      {
+        "id": 834,
+        "name_ar": "كفرحون",
+        "caza": "Jezzine",
+        "coord_x": 740891.136462,
+        "coord_y": 3708159.46082,
+        "place_detail": null
+      }
+    ],
+    "فرديس": [
+      {
+        "id": 559,
+        "name_ar": "الفرديس",
+        "caza": "Hasbaiya",
+        "coord_x": 747033.957114,
+        "coord_y": 3695297.78794,
+        "place_detail": null
+      }
+    ],
+    "Fardis Hasbaiya": [
+      {
+        "id": 559,
+        "name_ar": "الفرديس",
+        "caza": "Hasbaiya",
+        "coord_x": 747033.957114,
+        "coord_y": 3695297.78794,
+        "place_detail": null
+      }
+    ],
+    "ارزي": [
+      {
+        "id": 178,
+        "name_ar": "أرزي",
+        "caza": "Saida",
+        "coord_x": 713846.021574,
+        "coord_y": 3690462.90005,
+        "place_detail": null
+      }
+    ],
+    "Arzai": [
+      {
+        "id": 178,
+        "name_ar": "أرزي",
+        "caza": "Saida",
+        "coord_x": 713846.021574,
+        "coord_y": 3690462.90005,
+        "place_detail": null
+      }
+    ],
+    "مزرعه حسينيه": [
+      {
+        "id": 1031,
+        "name_ar": "مزرعة الحسينية",
+        "caza": "Saida",
+        "coord_x": 718406.19991,
+        "coord_y": 3708349.88204,
+        "place_detail": null
+      }
+    ],
+    "Mazraat El-Houssainiy?": [
+      {
+        "id": 1031,
+        "name_ar": "مزرعة الحسينية",
+        "caza": "Saida",
+        "coord_x": 718406.19991,
+        "coord_y": 3708349.88204,
+        "place_detail": null
+      }
+    ],
+    "مزرعه بصفور": [
+      {
+        "id": 1019,
+        "name_ar": "مزرعة بصفُور",
+        "caza": "Nabatiye",
+        "coord_x": 721489.387463,
+        "coord_y": 3697284.40986,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Bsaffour": [
+      {
+        "id": 1019,
+        "name_ar": "مزرعة بصفُور",
+        "caza": "Nabatiye",
+        "coord_x": 721489.387463,
+        "coord_y": 3697284.40986,
+        "place_detail": null
+      }
+    ],
+    "مجادل": [
+      {
+        "id": 958,
+        "name_ar": "المجادل",
+        "caza": "Sour",
+        "coord_x": 720140.755408,
+        "coord_y": 3679353.73118,
+        "place_detail": null
+      }
+    ],
+    "Majdel": [
+      {
+        "id": 958,
+        "name_ar": "المجادل",
+        "caza": "Sour",
+        "coord_x": 720140.755408,
+        "coord_y": 3679353.73118,
+        "place_detail": null
+      }
+    ],
+    "عدشيت شقيف": [
+      {
+        "id": 17,
+        "name_ar": "عدشيت الشقيف",
+        "caza": "Nabatiye",
+        "coord_x": 724905.101521,
+        "coord_y": 3692278.38488,
+        "place_detail": null
+      }
+    ],
+    "Aadchit Ech-Chqif": [
+      {
+        "id": 17,
+        "name_ar": "عدشيت الشقيف",
+        "caza": "Nabatiye",
+        "coord_x": 724905.101521,
+        "coord_y": 3692278.38488,
+        "place_detail": null
+      }
+    ],
+    "داريا جزين": [
+      {
+        "id": 1021,
+        "name_ar": "داريا جزين",
+        "caza": "Jezzine",
+        "coord_x": 741752.506228,
+        "coord_y": 3705341.11485,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Daraya": [
+      {
+        "id": 1021,
+        "name_ar": "داريا جزين",
+        "caza": "Jezzine",
+        "coord_x": 741752.506228,
+        "coord_y": 3705341.11485,
+        "place_detail": null
+      }
+    ],
+    "عين قانا": [
+      {
+        "id": 66,
+        "name_ar": "عين قانا",
+        "caza": "Nabatiye",
+        "coord_x": 732488.181923,
+        "coord_y": 3705749.72815,
+        "place_detail": null
+      }
+    ],
+    "Aain Qana": [
+      {
+        "id": 66,
+        "name_ar": "عين قانا",
+        "caza": "Nabatiye",
+        "coord_x": 732488.181923,
+        "coord_y": 3705749.72815,
+        "place_detail": null
+      }
+    ],
+    "ابو شاش": [
+      {
+        "id": 160,
+        "name_ar": "أبو شاش",
+        "caza": "Sour",
+        "coord_x": 705941.812058,
+        "coord_y": 3667687.40397,
+        "place_detail": null
+      }
+    ],
+    "Abou Chech": [
+      {
+        "id": 160,
+        "name_ar": "أبو شاش",
+        "caza": "Sour",
+        "coord_x": 705941.812058,
+        "coord_y": 3667687.40397,
+        "place_detail": null
+      }
+    ],
+    "ميفدون": [
+      {
+        "id": 1003,
+        "name_ar": "ميفدون",
+        "caza": "Nabatiye",
+        "coord_x": 730440.888118,
+        "coord_y": 3692040.73077,
+        "place_detail": null
+      }
+    ],
+    "Mayfadoun": [
+      {
+        "id": 1003,
+        "name_ar": "ميفدون",
+        "caza": "Nabatiye",
+        "coord_x": 730440.888118,
+        "coord_y": 3692040.73077,
+        "place_detail": null
+      }
+    ],
+    "خربه سلم": [
+      {
+        "id": 900,
+        "name_ar": "خربة سلم",
+        "caza": "Bint Jubail",
+        "coord_x": 725557.756675,
+        "coord_y": 3679610.88763,
+        "place_detail": null
+      }
+    ],
+    "Khirbet Selm": [
+      {
+        "id": 900,
+        "name_ar": "خربة سلم",
+        "caza": "Bint Jubail",
+        "coord_x": 725557.756675,
+        "coord_y": 3679610.88763,
+        "place_detail": null
+      }
+    ],
+    "ماري": [
+      {
+        "id": 1085,
+        "name_ar": "ماري",
+        "caza": "Hasbaiya",
+        "coord_x": 746277.089869,
+        "coord_y": 3689504.40581,
+        "place_detail": null
+      }
+    ],
+    "Meri": [
+      {
+        "id": 1085,
+        "name_ar": "ماري",
+        "caza": "Hasbaiya",
+        "coord_x": 746277.089869,
+        "coord_y": 3689504.40581,
+        "place_detail": null
+      }
+    ],
+    "قطراني": [
+      {
+        "id": 1243,
+        "name_ar": "قطراني",
+        "caza": "Jezzine",
+        "coord_x": 741957.023777,
+        "coord_y": 3703282.63278,
+        "place_detail": null
+      }
+    ],
+    "Qatrani": [
+      {
+        "id": 1243,
+        "name_ar": "قطراني",
+        "caza": "Jezzine",
+        "coord_x": 741957.023777,
+        "coord_y": 3703282.63278,
+        "place_detail": null
+      }
+    ],
+    "بيبه": [
+      {
+        "id": 239,
+        "name_ar": "بيبه",
+        "caza": "Jezzine",
+        "coord_x": 736096.397083,
+        "coord_y": 3716757.27178,
+        "place_detail": null
+      }
+    ],
+    "B?b?": [
+      {
+        "id": 239,
+        "name_ar": "بيبه",
+        "caza": "Jezzine",
+        "coord_x": 736096.397083,
+        "coord_y": 3716757.27178,
+        "place_detail": null
+      }
+    ],
+    "كنيسه صور": [
+      {
+        "id": 914,
+        "name_ar": "كنيسة صور",
+        "caza": "Sour",
+        "coord_x": 710717.431797,
+        "coord_y": 3676451.6226,
+        "place_detail": null
+      }
+    ],
+    "Kneisset Sour": [
+      {
+        "id": 914,
+        "name_ar": "كنيسة صور",
+        "caza": "Sour",
+        "coord_x": 710717.431797,
+        "coord_y": 3676451.6226,
+        "place_detail": null
+      }
+    ],
+    "دير سريان": [
+      {
+        "id": 524,
+        "name_ar": "دير سريان",
+        "caza": "Marjaayoun",
+        "coord_x": 732840.636952,
+        "coord_y": 3686574.25216,
+        "place_detail": null
+      }
+    ],
+    "Deir Siriane": [
+      {
+        "id": 524,
+        "name_ar": "دير سريان",
+        "caza": "Marjaayoun",
+        "coord_x": 732840.636952,
+        "coord_y": 3686574.25216,
+        "place_detail": null
+      }
+    ],
+    "يارون": [
+      {
+        "id": 1489,
+        "name_ar": "يارون",
+        "caza": "Bint Jubail",
+        "coord_x": 725757.79561,
+        "coord_y": 3663080.79727,
+        "place_detail": null
+      }
+    ],
+    "Yaroun": [
+      {
+        "id": 1489,
+        "name_ar": "يارون",
+        "caza": "Bint Jubail",
+        "coord_x": 725757.79561,
+        "coord_y": 3663080.79727,
+        "place_detail": null
+      }
+    ],
+    "مراح حباس": [
+      {
+        "id": 1129,
+        "name_ar": "مراح الحباس",
+        "caza": "Jezzine",
+        "coord_x": 728616.079907,
+        "coord_y": 3714903.60272,
+        "place_detail": null
+      }
+    ],
+    "Mrah El-Hbasse": [
+      {
+        "id": 1129,
+        "name_ar": "مراح الحباس",
+        "caza": "Jezzine",
+        "coord_x": 728616.079907,
+        "coord_y": 3714903.60272,
+        "place_detail": null
+      }
+    ],
+    "حاره صيدا": [
+      {
+        "id": 644,
+        "name_ar": "حارة صيدا",
+        "caza": "Saida",
+        "coord_x": 722354.295159,
+        "coord_y": 3715448.77218,
+        "place_detail": null
+      }
+    ],
+    "Haret Saida": [
+      {
+        "id": 644,
+        "name_ar": "حارة صيدا",
+        "caza": "Saida",
+        "coord_x": 722354.295159,
+        "coord_y": 3715448.77218,
+        "place_detail": null
+      }
+    ],
+    "دير قطين": [
+      {
+        "id": 505,
+        "name_ar": "دير قطِين",
+        "caza": "Jezzine",
+        "coord_x": 735106.137544,
+        "coord_y": 3713166.50278,
+        "place_detail": null
+      }
+    ],
+    "Deir El Qattine": [
+      {
+        "id": 505,
+        "name_ar": "دير قطِين",
+        "caza": "Jezzine",
+        "coord_x": 735106.137544,
+        "coord_y": 3713166.50278,
+        "place_detail": null
+      }
+    ],
+    "بحنين": [
+      {
+        "id": 296,
+        "name_ar": "بحنين",
+        "caza": "Jezzine",
+        "coord_x": 740974.507562,
+        "coord_y": 3718860.51979,
+        "place_detail": null
+      }
+    ],
+    "Bhannine": [
+      {
+        "id": 296,
+        "name_ar": "بحنين",
+        "caza": "Jezzine",
+        "coord_x": 740974.507562,
+        "coord_y": 3718860.51979,
+        "place_detail": null
+      }
+    ],
+    "عبرا": [
+      {
+        "id": 12,
+        "name_ar": "عبرا",
+        "caza": "Saida",
+        "coord_x": 723345.386146,
+        "coord_y": 3716707.24742,
+        "place_detail": null
+      }
+    ],
+    "AAbra Saida": [
+      {
+        "id": 12,
+        "name_ar": "عبرا",
+        "caza": "Saida",
+        "coord_x": 723345.386146,
+        "coord_y": 3716707.24742,
+        "place_detail": null
+      }
+    ],
+    "بليدا": [
+      {
+        "id": 321,
+        "name_ar": "بليدا",
+        "caza": "Marjaayoun",
+        "coord_x": 733915.061329,
+        "coord_y": 3668937.98363,
+        "place_detail": null
+      }
+    ],
+    "Blida": [
+      {
+        "id": 321,
+        "name_ar": "بليدا",
+        "caza": "Marjaayoun",
+        "coord_x": 733915.061329,
+        "coord_y": 3668937.98363,
+        "place_detail": null
+      }
+    ],
+    "عدشيت قصير": [
+      {
+        "id": 18,
+        "name_ar": "عدشيت القصير",
+        "caza": "Marjaayoun",
+        "coord_x": 730873.437323,
+        "coord_y": 3684564.61342,
+        "place_detail": null
+      }
+    ],
+    "Aadchit El-Qoussair": [
+      {
+        "id": 18,
+        "name_ar": "عدشيت القصير",
+        "caza": "Marjaayoun",
+        "coord_x": 730873.437323,
+        "coord_y": 3684564.61342,
+        "place_detail": null
+      }
+    ],
+    "حمرا نبطيه": [
+      {
+        "id": 614,
+        "name_ar": "الحمرا النبطية",
+        "caza": "Nabatiye",
+        "coord_x": 732157.426909,
+        "coord_y": 3690187.05111,
+        "place_detail": null
+      }
+    ],
+    "Hamra En-Nabattiyeh": [
+      {
+        "id": 614,
+        "name_ar": "الحمرا النبطية",
+        "caza": "Nabatiye",
+        "coord_x": 732157.426909,
+        "coord_y": 3690187.05111,
+        "place_detail": null
+      }
+    ],
+    "عيشيه": [
+      {
+        "id": 139,
+        "name_ar": "عيشية",
+        "caza": "Jezzine",
+        "coord_x": 738411.579947,
+        "coord_y": 3698974.73933,
+        "place_detail": null
+      }
+    ],
+    "Aaychiy?": [
+      {
+        "id": 139,
+        "name_ar": "عيشية",
+        "caza": "Jezzine",
+        "coord_x": 738411.579947,
+        "coord_y": 3698974.73933,
+        "place_detail": null
+      }
+    ],
+    "حبوش": [
+      {
+        "id": 594,
+        "name_ar": "حبوش",
+        "caza": "Nabatiye",
+        "coord_x": 731284.761171,
+        "coord_y": 3699174.64122,
+        "place_detail": null
+      }
+    ],
+    "Habbouch En-Nabatiyeh": [
+      {
+        "id": 594,
+        "name_ar": "حبوش",
+        "caza": "Nabatiye",
+        "coord_x": 731284.761171,
+        "coord_y": 3699174.64122,
+        "place_detail": null
+      }
+    ],
+    "بابليه": [
+      {
+        "id": 193,
+        "name_ar": "بابلية",
+        "caza": "Saida",
+        "coord_x": 716358.720151,
+        "coord_y": 3699321.08077,
+        "place_detail": null
+      }
+    ],
+    "Babliy?": [
+      {
+        "id": 193,
+        "name_ar": "بابلية",
+        "caza": "Saida",
+        "coord_x": 716358.720151,
+        "coord_y": 3699321.08077,
+        "place_detail": null
+      }
+    ],
+    "قناريت": [
+      {
+        "id": 1251,
+        "name_ar": "قناريت",
+        "caza": "Saida",
+        "coord_x": 721207.972681,
+        "coord_y": 3709613.76277,
+        "place_detail": null
+      }
+    ],
+    "Qennarit": [
+      {
+        "id": 1251,
+        "name_ar": "قناريت",
+        "caza": "Saida",
+        "coord_x": 721207.972681,
+        "coord_y": 3709613.76277,
+        "place_detail": null
+      }
+    ],
+    "هباريه": [
+      {
+        "id": 672,
+        "name_ar": "هبّارية",
+        "caza": "Hasbaiya",
+        "coord_x": 751126.429521,
+        "coord_y": 3694430.96552,
+        "place_detail": null
+      }
+    ],
+    "Hebbariy?": [
+      {
+        "id": 672,
+        "name_ar": "هبّارية",
+        "caza": "Hasbaiya",
+        "coord_x": 751126.429521,
+        "coord_y": 3694430.96552,
+        "place_detail": null
+      }
+    ],
+    "يارين": [
+      {
+        "id": 1488,
+        "name_ar": "يارين",
+        "caza": "Sour",
+        "coord_x": 708625.494729,
+        "coord_y": 3665325.23109,
+        "place_detail": null
+      }
+    ],
+    "Yarine": [
+      {
+        "id": 1488,
+        "name_ar": "يارين",
+        "caza": "Sour",
+        "coord_x": 708625.494729,
+        "coord_y": 3665325.23109,
+        "place_detail": null
+      }
+    ],
+    "قتاله جزين": [
+      {
+        "id": 1280,
+        "name_ar": "قتالة جزين",
+        "caza": "Jezzine",
+        "coord_x": 732221.852473,
+        "coord_y": 3717507.5723,
+        "place_detail": null
+      }
+    ],
+    "Qtal? Jezzine": [
+      {
+        "id": 1280,
+        "name_ar": "قتالة جزين",
+        "caza": "Jezzine",
+        "coord_x": 732221.852473,
+        "coord_y": 3717507.5723,
+        "place_detail": null
+      }
+    ],
+    "صربا نبطيه": [
+      {
+        "id": 1366,
+        "name_ar": "صربا النبطية",
+        "caza": "Nabatiye",
+        "coord_x": 729722.274666,
+        "coord_y": 3705918.2267,
+        "place_detail": null
+      }
+    ],
+    "Sarba En-Nabatieh": [
+      {
+        "id": 1366,
+        "name_ar": "صربا النبطية",
+        "caza": "Nabatiye",
+        "coord_x": 729722.274666,
+        "coord_y": 3705918.2267,
+        "place_detail": null
+      }
+    ],
+    "عمره": [
+      {
+        "id": 104,
+        "name_ar": "عمرة",
+        "caza": "Marjaayoun",
+        "coord_x": 742661.298637,
+        "coord_y": 3684108.25025,
+        "place_detail": null
+      }
+    ],
+    "Aamra": [
+      {
+        "id": 104,
+        "name_ar": "عمرة",
+        "caza": "Marjaayoun",
+        "coord_x": 742661.298637,
+        "coord_y": 3684108.25025,
+        "place_detail": null
+      }
+    ],
+    "شرقيه": [
+      {
+        "id": 413,
+        "name_ar": "شرقية",
+        "caza": "Nabatiye",
+        "coord_x": 725176.738148,
+        "coord_y": 3698810.20399,
+        "place_detail": null
+      }
+    ],
+    "Charqiy?": [
+      {
+        "id": 413,
+        "name_ar": "شرقية",
+        "caza": "Nabatiye",
+        "coord_x": 725176.738148,
+        "coord_y": 3698810.20399,
+        "place_detail": null
+      }
+    ],
+    "كوثريه سياد": [
+      {
+        "id": 796,
+        "name_ar": "كوثرية السياد",
+        "caza": "Saida",
+        "coord_x": 721942.90986,
+        "coord_y": 3699833.04152,
+        "place_detail": null
+      }
+    ],
+    "Kaoutariyet Es-Siyad": [
+      {
+        "id": 796,
+        "name_ar": "كوثرية السياد",
+        "caza": "Saida",
+        "coord_x": 721942.90986,
+        "coord_y": 3699833.04152,
+        "place_detail": null
+      }
+    ],
+    "عين مير اسطبل": [
+      {
+        "id": 2,
+        "name_ar": "عين المير إسطبل",
+        "caza": "Jezzine",
+        "coord_x": 728661.054774,
+        "coord_y": 3713433.03649,
+        "place_detail": null
+      }
+    ],
+    "A'ain El-Mir (El Establ": [
+      {
+        "id": 2,
+        "name_ar": "عين المير إسطبل",
+        "caza": "Jezzine",
+        "coord_x": 728661.054774,
+        "coord_y": 3713433.03649,
+        "place_detail": null
+      }
+    ],
+    "بويضه مرجعيون": [
+      {
+        "id": 343,
+        "name_ar": "بويضة مرجعيون",
+        "caza": "Marjaayoun",
+        "coord_x": 738911.057269,
+        "coord_y": 3694709.24626,
+        "place_detail": null
+      }
+    ],
+    "Boueyda Marjaayoun": [
+      {
+        "id": 343,
+        "name_ar": "بويضة مرجعيون",
+        "caza": "Marjaayoun",
+        "coord_x": 738911.057269,
+        "coord_y": 3694709.24626,
+        "place_detail": null
+      }
+    ],
+    "سلعا": [
+      {
+        "id": 1373,
+        "name_ar": "سلعا",
+        "caza": "Sour",
+        "coord_x": 722078.562379,
+        "coord_y": 3682293.77839,
+        "place_detail": null
+      }
+    ],
+    "Selaa Sour": [
+      {
+        "id": 1373,
+        "name_ar": "سلعا",
+        "caza": "Sour",
+        "coord_x": 722078.562379,
+        "coord_y": 3682293.77839,
+        "place_detail": null
+      }
+    ],
+    "زحلتا": [
+      {
+        "id": 1528,
+        "name_ar": "زحلتا",
+        "caza": "Jezzine",
+        "coord_x": 736457.851157,
+        "coord_y": 3710769.03252,
+        "place_detail": null
+      }
+    ],
+    "Zhilta": [
+      {
+        "id": 1528,
+        "name_ar": "زحلتا",
+        "caza": "Jezzine",
+        "coord_x": 736457.851157,
+        "coord_y": 3710769.03252,
+        "place_detail": null
+      }
+    ],
+    "حوره": [
+      {
+        "id": 705,
+        "name_ar": "حوره",
+        "caza": "Marjaayoun",
+        "coord_x": 738139.953361,
+        "coord_y": 3686966.58339,
+        "place_detail": null
+      }
+    ],
+    "Houra": [
+      {
+        "id": 705,
+        "name_ar": "حوره",
+        "caza": "Marjaayoun",
+        "coord_x": 738139.953361,
+        "coord_y": 3686966.58339,
+        "place_detail": null
+      }
+    ],
+    "درب سيم": [
+      {
+        "id": 480,
+        "name_ar": "درب السيم",
+        "caza": "Saida",
+        "coord_x": 721348.544098,
+        "coord_y": 3712944.78192,
+        "place_detail": null
+      }
+    ],
+    "Darb Es-Sim": [
+      {
+        "id": 480,
+        "name_ar": "درب السيم",
+        "caza": "Saida",
+        "coord_x": 721348.544098,
+        "coord_y": 3712944.78192,
+        "place_detail": null
+      }
+    ],
+    "برج رحال": [
+      {
+        "id": 337,
+        "name_ar": "برج رحال",
+        "caza": "Sour",
+        "coord_x": 712238.391495,
+        "coord_y": 3688118.59856,
+        "place_detail": null
+      }
+    ],
+    "Borj Rahhal": [
+      {
+        "id": 337,
+        "name_ar": "برج رحال",
+        "caza": "Sour",
+        "coord_x": 712238.391495,
+        "coord_y": 3688118.59856,
+        "place_detail": null
+      }
+    ],
+    "صير غربيه": [
+      {
+        "id": 1394,
+        "name_ar": "صير الغربية",
+        "caza": "Nabatiye",
+        "coord_x": 719726.871315,
+        "coord_y": 3689497.60065,
+        "place_detail": null
+      }
+    ],
+    "Sir El-Gharbiy?": [
+      {
+        "id": 1394,
+        "name_ar": "صير الغربية",
+        "caza": "Nabatiye",
+        "coord_x": 719726.871315,
+        "coord_y": 3689497.60065,
+        "place_detail": null
+      }
+    ],
+    "جبل طوره": [
+      {
+        "id": 727,
+        "name_ar": "جبل طوره",
+        "caza": "Jezzine",
+        "coord_x": 738431.560952,
+        "coord_y": 3709882.68112,
+        "place_detail": null
+      }
+    ],
+    "Jabal Toura": [
+      {
+        "id": 727,
+        "name_ar": "جبل طوره",
+        "caza": "Jezzine",
+        "coord_x": 738431.560952,
+        "coord_y": 3709882.68112,
+        "place_detail": null
+      }
+    ],
+    "بنت جبيل": [
+      {
+        "id": 280,
+        "name_ar": "بنت جبيل",
+        "caza": "Bint Jubail",
+        "coord_x": 726807.728048,
+        "coord_y": 3667111.85394,
+        "place_detail": null
+      }
+    ],
+    "Bent Jbayl": [
+      {
+        "id": 280,
+        "name_ar": "بنت جبيل",
+        "caza": "Bint Jubail",
+        "coord_x": 726807.728048,
+        "coord_y": 3667111.85394,
+        "place_detail": null
+      }
+    ],
+    "خرائب صيدا": [
+      {
+        "id": 886,
+        "name_ar": "الخرائب صيدا",
+        "caza": "Saida",
+        "coord_x": 713393.903347,
+        "coord_y": 3692665.84877,
+        "place_detail": null
+      }
+    ],
+    "Khayayeb Saida": [
+      {
+        "id": 886,
+        "name_ar": "الخرائب صيدا",
+        "caza": "Saida",
+        "coord_x": 713393.903347,
+        "coord_y": 3692665.84877,
+        "place_detail": null
+      }
+    ],
+    "مزارع شبعا": [
+      {
+        "id": 419,
+        "name_ar": "مزارع شبعا",
+        "caza": "Hasbaiya",
+        "coord_x": 749848.61684,
+        "coord_y": 3685715.10766,
+        "place_detail": null
+      }
+    ],
+    "Chebaa Farms": [
+      {
+        "id": 419,
+        "name_ar": "مزارع شبعا",
+        "caza": "Hasbaiya",
+        "coord_x": 749848.61684,
+        "coord_y": 3685715.10766,
+        "place_detail": null
+      }
+    ],
+    "طير سمحات": [
+      {
+        "id": 1063,
+        "name_ar": "طير سمحات",
+        "caza": "Sour",
+        "coord_x": 723625.164455,
+        "coord_y": 3686631.02035,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Tayr Semhat": [
+      {
+        "id": 1063,
+        "name_ar": "طير سمحات",
+        "caza": "Sour",
+        "coord_x": 723625.164455,
+        "coord_y": 3686631.02035,
+        "place_detail": null
+      }
+    ],
+    "دير تقلا": [
+      {
+        "id": 1023,
+        "name_ar": "دير تقلا",
+        "caza": "Saida",
+        "coord_x": 713394.308784,
+        "coord_y": 3697859.06014,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Deir Taqla": [
+      {
+        "id": 1023,
+        "name_ar": "دير تقلا",
+        "caza": "Saida",
+        "coord_x": 713394.308784,
+        "coord_y": 3697859.06014,
+        "place_detail": null
+      }
+    ],
+    "مطريه شومر": [
+      {
+        "id": 1000,
+        "name_ar": "مطرية الشومر",
+        "caza": "Saida",
+        "coord_x": 711747.742074,
+        "coord_y": 3690804.29222,
+        "place_detail": null
+      }
+    ],
+    "Matariyet Ech-Choumar": [
+      {
+        "id": 1000,
+        "name_ar": "مطرية الشومر",
+        "caza": "Saida",
+        "coord_x": 711747.742074,
+        "coord_y": 3690804.29222,
+        "place_detail": null
+      }
+    ],
+    "كفر دونين": [
+      {
+        "id": 819,
+        "name_ar": "كفر دونين",
+        "caza": "Bint Jubail",
+        "coord_x": 723810.615388,
+        "coord_y": 3679195.63435,
+        "place_detail": null
+      }
+    ],
+    "Kfar Dounine": [
+      {
+        "id": 819,
+        "name_ar": "كفر دونين",
+        "caza": "Bint Jubail",
+        "coord_x": 723810.615388,
+        "coord_y": 3679195.63435,
+        "place_detail": null
+      }
+    ],
+    "جباع نبطيه": [
+      {
+        "id": 741,
+        "name_ar": "جباع النبطية",
+        "caza": "Nabatiye",
+        "coord_x": 734837.663215,
+        "coord_y": 3708624.81358,
+        "place_detail": null
+      }
+    ],
+    "Jbaa En-Nabatiyeh": [
+      {
+        "id": 741,
+        "name_ar": "جباع النبطية",
+        "caza": "Nabatiye",
+        "coord_x": 734837.663215,
+        "coord_y": 3708624.81358,
+        "place_detail": null
+      }
+    ],
+    "باريش": [
+      {
+        "id": 211,
+        "name_ar": "باريش",
+        "caza": "Sour",
+        "coord_x": 718893.482898,
+        "coord_y": 3683628.8566,
+        "place_detail": null
+      }
+    ],
+    "Barich": [
+      {
+        "id": 211,
+        "name_ar": "باريش",
+        "caza": "Sour",
+        "coord_x": 718893.482898,
+        "coord_y": 3683628.8566,
+        "place_detail": null
+      }
+    ],
+    "عاريه": [
+      {
+        "id": 125,
+        "name_ar": "عاريه",
+        "caza": "Jezzine",
+        "coord_x": 740686.161399,
+        "coord_y": 3716991.83866,
+        "place_detail": null
+      }
+    ],
+    "Aaray": [
+      {
+        "id": 125,
+        "name_ar": "عاريه",
+        "caza": "Jezzine",
+        "coord_x": 740686.161399,
+        "coord_y": 3716991.83866,
+        "place_detail": null
+      }
+    ],
+    "عيترون": [
+      {
+        "id": 77,
+        "name_ar": "عيترون",
+        "caza": "Bint Jubail",
+        "coord_x": 731678.054624,
+        "coord_y": 3666323.53916,
+        "place_detail": null
+      }
+    ],
+    "Aaintaroun": [
+      {
+        "id": 77,
+        "name_ar": "عيترون",
+        "caza": "Bint Jubail",
+        "coord_x": 731678.054624,
+        "coord_y": 3666323.53916,
+        "place_detail": null
+      }
+    ],
+    "هلاليه صيدا": [
+      {
+        "id": 687,
+        "name_ar": "هلالية صيدا",
+        "caza": "Saida",
+        "coord_x": 722014.730623,
+        "coord_y": 3716505.57177,
+        "place_detail": null
+      }
+    ],
+    "Hlaliy? Saida": [
+      {
+        "id": 687,
+        "name_ar": "هلالية صيدا",
+        "caza": "Saida",
+        "coord_x": 722014.730623,
+        "coord_y": 3716505.57177,
+        "place_detail": null
+      }
+    ],
+    "عيتيت": [
+      {
+        "id": 153,
+        "name_ar": "عيتيت",
+        "caza": "Sour",
+        "coord_x": 714305.953936,
+        "coord_y": 3679012.0377,
+        "place_detail": null
+      }
+    ],
+    "Aaytit": [
+      {
+        "id": 153,
+        "name_ar": "عيتيت",
+        "caza": "Sour",
+        "coord_x": 714305.953936,
+        "coord_y": 3679012.0377,
+        "place_detail": null
+      }
+    ],
+    "ورديه": [
+      {
+        "id": 1201,
+        "name_ar": "وردية",
+        "caza": "Jezzine",
+        "coord_x": 740812.054979,
+        "coord_y": 3697833.64779,
+        "place_detail": null
+      }
+    ],
+    "Ouardiy?": [
+      {
+        "id": 1201,
+        "name_ar": "وردية",
+        "caza": "Jezzine",
+        "coord_x": 740812.054979,
+        "coord_y": 3697833.64779,
+        "place_detail": null
+      }
+    ],
+    "صور": [
+      {
+        "id": 1407,
+        "name_ar": "صور",
+        "caza": "Sour",
+        "coord_x": 706081.186616,
+        "coord_y": 3681865.53699,
+        "place_detail": null
+      }
+    ],
+    "Sour": [
+      {
+        "id": 1407,
+        "name_ar": "صور",
+        "caza": "Sour",
+        "coord_x": 706081.186616,
+        "coord_y": 3681865.53699,
+        "place_detail": null
+      }
+    ],
+    "عرمتي": [
+      {
+        "id": 123,
+        "name_ar": "عرمتى",
+        "caza": "Jezzine",
+        "coord_x": 739533.749274,
+        "coord_y": 3704885.3732,
+        "place_detail": null
+      }
+    ],
+    "Aaramta": [
+      {
+        "id": 123,
+        "name_ar": "عرمتى",
+        "caza": "Jezzine",
+        "coord_x": 739533.749274,
+        "coord_y": 3704885.3732,
+        "place_detail": null
+      }
+    ],
+    "خرطوم": [
+      {
+        "id": 885,
+        "name_ar": "خرطوم",
+        "caza": "Saida",
+        "coord_x": 720315.632074,
+        "coord_y": 3698496.32174,
+        "place_detail": null
+      }
+    ],
+    "Khartoum": [
+      {
+        "id": 885,
+        "name_ar": "خرطوم",
+        "caza": "Saida",
+        "coord_x": 720315.632074,
+        "coord_y": 3698496.32174,
+        "place_detail": null
+      }
+    ],
+    "مزرعه زلوطيه": [
+      {
+        "id": 1045,
+        "name_ar": "مزرعة الزلوطية",
+        "caza": "Sour",
+        "coord_x": 710297.860813,
+        "coord_y": 3665559.02512,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Ez-Zalloutiyeh": [
+      {
+        "id": 1045,
+        "name_ar": "مزرعة الزلوطية",
+        "caza": "Sour",
+        "coord_x": 710297.860813,
+        "coord_y": 3665559.02512,
+        "place_detail": null
+      }
+    ],
+    "برج شمالي": [
+      {
+        "id": 332,
+        "name_ar": "برج الشمالي",
+        "caza": "Sour",
+        "coord_x": 708317.684858,
+        "coord_y": 3682560.08833,
+        "place_detail": null
+      }
+    ],
+    "Borj Ech-Chemali": [
+      {
+        "id": 332,
+        "name_ar": "برج الشمالي",
+        "caza": "Sour",
+        "coord_x": 708317.684858,
+        "coord_y": 3682560.08833,
+        "place_detail": null
+      }
+    ],
+    "برج ملوك": [
+      {
+        "id": 333,
+        "name_ar": "برج الملوك",
+        "caza": "Marjaayoun",
+        "coord_x": 738847.370816,
+        "coord_y": 3688921.07633,
+        "place_detail": null
+      }
+    ],
+    "Borj El-Moulouk": [
+      {
+        "id": 333,
+        "name_ar": "برج الملوك",
+        "caza": "Marjaayoun",
+        "coord_x": 738847.370816,
+        "coord_y": 3688921.07633,
+        "place_detail": null
+      }
+    ],
+    "صيدا دكرمان": [
+      {
+        "id": 1346,
+        "name_ar": "صيدا الدكرمان",
+        "caza": "Saida",
+        "coord_x": 720342.208158,
+        "coord_y": 3714817.6845,
+        "place_detail": null
+      }
+    ],
+    "Saida Ed-Dekermane": [
+      {
+        "id": 1346,
+        "name_ar": "صيدا الدكرمان",
+        "caza": "Saida",
+        "coord_x": 720342.208158,
+        "coord_y": 3714817.6845,
+        "place_detail": null
+      }
+    ],
+    "قصيبه نبطيه": [
+      {
+        "id": 1276,
+        "name_ar": "قصيبة النبطية",
+        "caza": "Nabatiye",
+        "coord_x": 723342.661625,
+        "coord_y": 3690964.37499,
+        "place_detail": null
+      }
+    ],
+    "Qsaibet En-Nabatiyeh": [
+      {
+        "id": 1276,
+        "name_ar": "قصيبة النبطية",
+        "caza": "Nabatiye",
+        "coord_x": 723342.661625,
+        "coord_y": 3690964.37499,
+        "place_detail": null
+      }
+    ],
+    "انصاريه": [
+      {
+        "id": 723,
+        "name_ar": "إنصارية",
+        "caza": "Saida",
+        "coord_x": 712718.992149,
+        "coord_y": 3699005.87692,
+        "place_detail": null
+      }
+    ],
+    "Insariy?": [
+      {
+        "id": 723,
+        "name_ar": "إنصارية",
+        "caza": "Saida",
+        "coord_x": 712718.992149,
+        "coord_y": 3699005.87692,
+        "place_detail": null
+      }
+    ],
+    "سجد": [
+      {
+        "id": 1372,
+        "name_ar": "سجد",
+        "caza": "Jezzine",
+        "coord_x": 735778.933467,
+        "coord_y": 3702247.92948,
+        "place_detail": null
+      }
+    ],
+    "S?joud": [
+      {
+        "id": 1372,
+        "name_ar": "سجد",
+        "caza": "Jezzine",
+        "coord_x": 735778.933467,
+        "coord_y": 3702247.92948,
+        "place_detail": null
+      }
+    ],
+    "قانا": [
+      {
+        "id": 1226,
+        "name_ar": "قانا",
+        "caza": "Sour",
+        "coord_x": 714366.217102,
+        "coord_y": 3676588.80162,
+        "place_detail": null
+      }
+    ],
+    "Qana": [
+      {
+        "id": 1226,
+        "name_ar": "قانا",
+        "caza": "Sour",
+        "coord_x": 714366.217102,
+        "coord_y": 3676588.80162,
+        "place_detail": null
+      }
+    ],
+    "دوير نبطيه": [
+      {
+        "id": 543,
+        "name_ar": "الدوير النبطية",
+        "caza": "Nabatiye",
+        "coord_x": 724463.973383,
+        "coord_y": 3696493.9138,
+        "place_detail": null
+      }
+    ],
+    "Douair En-Nabatiyeh": [
+      {
+        "id": 543,
+        "name_ar": "الدوير النبطية",
+        "caza": "Nabatiye",
+        "coord_x": 724463.973383,
+        "coord_y": 3696493.9138,
+        "place_detail": null
+      }
+    ],
+    "بريقع": [
+      {
+        "id": 365,
+        "name_ar": "بريقع",
+        "caza": "Nabatiye",
+        "coord_x": 721095.530267,
+        "coord_y": 3691550.08365,
+        "place_detail": null
+      }
+    ],
+    "Braiqeaa": [
+      {
+        "id": 365,
+        "name_ar": "بريقع",
+        "caza": "Nabatiye",
+        "coord_x": 721095.530267,
+        "coord_y": 3691550.08365,
+        "place_detail": null
+      }
+    ],
+    "ظهيره": [
+      {
+        "id": 532,
+        "name_ar": "ظهيرة",
+        "caza": "Sour",
+        "coord_x": 707390.412952,
+        "coord_y": 3665425.06361,
+        "place_detail": null
+      }
+    ],
+    "Dhayra": [
+      {
+        "id": 532,
+        "name_ar": "ظهيرة",
+        "caza": "Sour",
+        "coord_x": 707390.412952,
+        "coord_y": 3665425.06361,
+        "place_detail": null
+      }
+    ],
+    "برتي": [
+      {
+        "id": 287,
+        "name_ar": "برتي",
+        "caza": "Saida",
+        "coord_x": 731303.433184,
+        "coord_y": 3711580.40856,
+        "place_detail": null
+      }
+    ],
+    "Berti": [
+      {
+        "id": 287,
+        "name_ar": "برتي",
+        "caza": "Saida",
+        "coord_x": 731303.433184,
+        "coord_y": 3711580.40856,
+        "place_detail": null
+      }
+    ],
+    "زفتا": [
+      {
+        "id": 1524,
+        "name_ar": "زفتا",
+        "caza": "Nabatiye",
+        "coord_x": 723259.060431,
+        "coord_y": 3702812.35748,
+        "place_detail": null
+      }
+    ],
+    "Zefta": [
+      {
+        "id": 1524,
+        "name_ar": "زفتا",
+        "caza": "Nabatiye",
+        "coord_x": 723259.060431,
+        "coord_y": 3702812.35748,
+        "place_detail": null
+      }
+    ],
+    "عدوسيه": [
+      {
+        "id": 21,
+        "name_ar": "عدّوسية",
+        "caza": "Saida",
+        "coord_x": 717121.93014,
+        "coord_y": 3706069.92333,
+        "place_detail": null
+      }
+    ],
+    "Aadoussiye": [
+      {
+        "id": 21,
+        "name_ar": "عدّوسية",
+        "caza": "Saida",
+        "coord_x": 717121.93014,
+        "coord_y": 3706069.92333,
+        "place_detail": null
+      }
+    ],
+    "اوساميات": [
+      {
+        "id": 1056,
+        "name_ar": "الاوساميات",
+        "caza": "Saida",
+        "coord_x": 714803.271951,
+        "coord_y": 3696733.58135,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Oussamiyat": [
+      {
+        "id": 1056,
+        "name_ar": "الاوساميات",
+        "caza": "Saida",
+        "coord_x": 714803.271951,
+        "coord_y": 3696733.58135,
+        "place_detail": null
+      }
+    ],
+    "صربين": [
+      {
+        "id": 1412,
+        "name_ar": "صربين",
+        "caza": "Bint Jubail",
+        "coord_x": 720162.613235,
+        "coord_y": 3670985.89164,
+        "place_detail": null
+      }
+    ],
+    "Srobbine": [
+      {
+        "id": 1412,
+        "name_ar": "صربين",
+        "caza": "Bint Jubail",
+        "coord_x": 720162.613235,
+        "coord_y": 3670985.89164,
+        "place_detail": null
+      }
+    ],
+    "ريمات": [
+      {
+        "id": 1321,
+        "name_ar": "ريمات",
+        "caza": "Jezzine",
+        "coord_x": 732389.265359,
+        "coord_y": 3712916.11284,
+        "place_detail": null
+      }
+    ],
+    "Rimat": [
+      {
+        "id": 1321,
+        "name_ar": "ريمات",
+        "caza": "Jezzine",
+        "coord_x": 732389.265359,
+        "coord_y": 3712916.11284,
+        "place_detail": null
+      }
+    ],
+    "خربه بصل": [
+      {
+        "id": 896,
+        "name_ar": "خربة البصل",
+        "caza": "Saida",
+        "coord_x": 719814.043692,
+        "coord_y": 3706062.97509,
+        "place_detail": null
+      }
+    ],
+    "Khirbet El-Bassal": [
+      {
+        "id": 896,
+        "name_ar": "خربة البصل",
+        "caza": "Saida",
+        "coord_x": 719814.043692,
+        "coord_y": 3706062.97509,
+        "place_detail": null
+      }
+    ],
+    "مصيلح": [
+      {
+        "id": 1011,
+        "name_ar": "المصيلح",
+        "caza": "Saida",
+        "coord_x": 718951.972925,
+        "coord_y": 3707067.77433,
+        "place_detail": null
+      }
+    ],
+    "Mazraat 'Mseileh": [
+      {
+        "id": 1011,
+        "name_ar": "المصيلح",
+        "caza": "Saida",
+        "coord_x": 718951.972925,
+        "coord_y": 3707067.77433,
+        "place_detail": null
+      }
+    ],
+    "مارون راس": [
+      {
+        "id": 994,
+        "name_ar": "مارون الراس",
+        "caza": "Bint Jubail",
+        "coord_x": 728873.191526,
+        "coord_y": 3665318.61262,
+        "place_detail": null
+      }
+    ],
+    "Maroun Er-Ras": [
+      {
+        "id": 994,
+        "name_ar": "مارون الراس",
+        "caza": "Bint Jubail",
+        "coord_x": 728873.191526,
+        "coord_y": 3665318.61262,
+        "place_detail": null
+      }
+    ],
+    "حلوسيه": [
+      {
+        "id": 609,
+        "name_ar": "حلوسية",
+        "caza": "Sour",
+        "coord_x": 716457.785866,
+        "coord_y": 3688025.00122,
+        "place_detail": null
+      }
+    ],
+    "Halloussiy?": [
+      {
+        "id": 609,
+        "name_ar": "حلوسية",
+        "caza": "Sour",
+        "coord_x": 716457.785866,
+        "coord_y": 3688025.00122,
+        "place_detail": null
+      }
+    ],
+    "يانوح صور": [
+      {
+        "id": 1486,
+        "name_ar": "يانوح صور",
+        "caza": "Sour",
+        "coord_x": 714545.858592,
+        "coord_y": 3682371.128,
+        "place_detail": null
+      }
+    ],
+    "Yanouh Sour": [
+      {
+        "id": 1486,
+        "name_ar": "يانوح صور",
+        "caza": "Sour",
+        "coord_x": 714545.858592,
+        "coord_y": 3682371.128,
+        "place_detail": null
+      }
+    ],
+    "حميري": [
+      {
+        "id": 690,
+        "name_ar": "حميري",
+        "caza": "Sour",
+        "coord_x": 718836.564335,
+        "coord_y": 3686612.45604,
+        "place_detail": null
+      }
+    ],
+    "Hmairi Sour": [
+      {
+        "id": 690,
+        "name_ar": "حميري",
+        "caza": "Sour",
+        "coord_x": 718836.564335,
+        "coord_y": 3686612.45604,
+        "place_detail": null
+      }
+    ],
+    "زغدرايا": [
+      {
+        "id": 1499,
+        "name_ar": "زغدرايا",
+        "caza": "Saida",
+        "coord_x": 722863.613462,
+        "coord_y": 3712467.73273,
+        "place_detail": null
+      }
+    ],
+    "Zaghdraiya": [
+      {
+        "id": 1499,
+        "name_ar": "زغدرايا",
+        "caza": "Saida",
+        "coord_x": 722863.613462,
+        "coord_y": 3712467.73273,
+        "place_detail": null
+      }
+    ],
+    "طويري": [
+      {
+        "id": 1460,
+        "name_ar": "طويري",
+        "caza": "Sour",
+        "coord_x": 725489.028022,
+        "coord_y": 3684680.51355,
+        "place_detail": null
+      }
+    ],
+    "Touayri": [
+      {
+        "id": 1460,
+        "name_ar": "طويري",
+        "caza": "Sour",
+        "coord_x": 725489.028022,
+        "coord_y": 3684680.51355,
+        "place_detail": null
+      }
+    ],
+    "كفردجال": [
+      {
+        "id": 818,
+        "name_ar": "كفردجال",
+        "caza": "Nabatiye",
+        "coord_x": 727016.816234,
+        "coord_y": 3692136.61253,
+        "place_detail": null
+      }
+    ],
+    "Kfar Djal En-Nabatiyeh": [
+      {
+        "id": 818,
+        "name_ar": "كفردجال",
+        "caza": "Nabatiye",
+        "coord_x": 727016.816234,
+        "coord_y": 3692136.61253,
+        "place_detail": null
+      }
+    ],
+    "محموديه جزين": [
+      {
+        "id": 954,
+        "name_ar": "محمودية جزين",
+        "caza": "Jezzine",
+        "coord_x": 737644.629922,
+        "coord_y": 3696872.624,
+        "place_detail": null
+      }
+    ],
+    "Mahmoudiy? Jezzine": [
+      {
+        "id": 954,
+        "name_ar": "محمودية جزين",
+        "caza": "Jezzine",
+        "coord_x": 737644.629922,
+        "coord_y": 3696872.624,
+        "place_detail": null
+      }
+    ],
+    "كفرفالوس": [
+      {
+        "id": 820,
+        "name_ar": "كفرفالوس",
+        "caza": "Jezzine",
+        "coord_x": 729970.691827,
+        "coord_y": 3714657.97435,
+        "place_detail": null
+      }
+    ],
+    "Kfar Falous": [
+      {
+        "id": 820,
+        "name_ar": "كفرفالوس",
+        "caza": "Jezzine",
+        "coord_x": 729970.691827,
+        "coord_y": 3714657.97435,
+        "place_detail": null
+      }
+    ],
+    "مزرعه بياض": [
+      {
+        "id": 1029,
+        "name_ar": "مزرعة البياض",
+        "caza": "Nabatiye",
+        "coord_x": 730571.134671,
+        "coord_y": 3701413.17443,
+        "place_detail": null
+      }
+    ],
+    "Mazraat El-Bayad En-Nabatieh": [
+      {
+        "id": 1029,
+        "name_ar": "مزرعة البياض",
+        "caza": "Nabatiye",
+        "coord_x": 730571.134671,
+        "coord_y": 3701413.17443,
+        "place_detail": null
+      }
+    ],
+    "معماريه": [
+      {
+        "id": 937,
+        "name_ar": "معمارية",
+        "caza": "Saida",
+        "coord_x": 720281.846106,
+        "coord_y": 3707614.01737,
+        "place_detail": null
+      }
+    ],
+    "Maamriy?": [
+      {
+        "id": 937,
+        "name_ar": "معمارية",
+        "caza": "Saida",
+        "coord_x": 720281.846106,
+        "coord_y": 3707614.01737,
+        "place_detail": null
+      }
+    ],
+    "بلاط مرجعيون": [
+      {
+        "id": 319,
+        "name_ar": "بلاط مرجعيون",
+        "caza": "Marjaayoun",
+        "coord_x": 742398.873466,
+        "coord_y": 3696754.14178,
+        "place_detail": null
+      }
+    ],
+    "Blat Marjaayoun": [
+      {
+        "id": 319,
+        "name_ar": "بلاط مرجعيون",
+        "caza": "Marjaayoun",
+        "coord_x": 742398.873466,
+        "coord_y": 3696754.14178,
+        "place_detail": null
+      }
+    ],
+    "دردغايا": [
+      {
+        "id": 530,
+        "name_ar": "دردغايا",
+        "caza": "Sour",
+        "coord_x": 720954.866066,
+        "coord_y": 3684645.53402,
+        "place_detail": null
+      }
+    ],
+    "Derdaghaiya": [
+      {
+        "id": 530,
+        "name_ar": "دردغايا",
+        "caza": "Sour",
+        "coord_x": 720954.866066,
+        "coord_y": 3684645.53402,
+        "place_detail": null
+      }
+    ],
+    "حارتيه": [
+      {
+        "id": 653,
+        "name_ar": "حارتية",
+        "caza": "Saida",
+        "coord_x": 712140.490676,
+        "coord_y": 3695758.17907,
+        "place_detail": null
+      }
+    ],
+    "Hartiy?": [
+      {
+        "id": 653,
+        "name_ar": "حارتية",
+        "caza": "Saida",
+        "coord_x": 712140.490676,
+        "coord_y": 3695758.17907,
+        "place_detail": null
+      }
+    ],
+    "سلطانيه": [
+      {
+        "id": 1405,
+        "name_ar": "سلطانية",
+        "caza": "Bint Jubail",
+        "coord_x": 723454.931332,
+        "coord_y": 3676637.76914,
+        "place_detail": null
+      }
+    ],
+    "Soultaniyet Bent Jbayl": [
+      {
+        "id": 1405,
+        "name_ar": "سلطانية",
+        "caza": "Bint Jubail",
+        "coord_x": 723454.931332,
+        "coord_y": 3676637.76914,
+        "place_detail": null
+      }
+    ],
+    "حاصبيا": [
+      {
+        "id": 654,
+        "name_ar": "حاصبيّا",
+        "caza": "Hasbaiya",
+        "coord_x": 748690.687547,
+        "coord_y": 3700089.2912,
+        "place_detail": null
+      }
+    ],
+    "Hasbaiya": [
+      {
+        "id": 654,
+        "name_ar": "حاصبيّا",
+        "caza": "Hasbaiya",
+        "coord_x": 748690.687547,
+        "coord_y": 3700089.2912,
+        "place_detail": null
+      }
+    ],
+    "غباطيه": [
+      {
+        "id": 576,
+        "name_ar": "غبَاطية",
+        "caza": "Jezzine",
+        "coord_x": 739867.958224,
+        "coord_y": 3718947.60139,
+        "place_detail": null
+      }
+    ],
+    "Ghabbatiy?": [
+      {
+        "id": 576,
+        "name_ar": "غبَاطية",
+        "caza": "Jezzine",
+        "coord_x": 739867.958224,
+        "coord_y": 3718947.60139,
+        "place_detail": null
+      }
+    ],
+    "عدلون": [
+      {
+        "id": 19,
+        "name_ar": "عدلون",
+        "caza": "Saida",
+        "coord_x": 710718.202802,
+        "coord_y": 3697163.52366,
+        "place_detail": null
+      }
+    ],
+    "Aadloun": [
+      {
+        "id": 19,
+        "name_ar": "عدلون",
+        "caza": "Saida",
+        "coord_x": 710718.202802,
+        "coord_y": 3697163.52366,
+        "place_detail": null
+      }
+    ],
+    "مجدل سلم": [
+      {
+        "id": 966,
+        "name_ar": "مجدل سلم",
+        "caza": "Marjaayoun",
+        "coord_x": 729770.237954,
+        "coord_y": 3678143.40355,
+        "place_detail": null
+      }
+    ],
+    "Majdel Selm": [
+      {
+        "id": 966,
+        "name_ar": "مجدل سلم",
+        "caza": "Marjaayoun",
+        "coord_x": 729770.237954,
+        "coord_y": 3678143.40355,
+        "place_detail": null
+      }
+    ],
+    "مزرعه كفر جوز": [
+      {
+        "id": 1051,
+        "name_ar": "مزرعة كفر جوز",
+        "caza": "Nabatiye",
+        "coord_x": 730280.163426,
+        "coord_y": 3697821.74467,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Kfarjaouz": [
+      {
+        "id": 1051,
+        "name_ar": "مزرعة كفر جوز",
+        "caza": "Nabatiye",
+        "coord_x": 730280.163426,
+        "coord_y": 3697821.74467,
+        "place_detail": null
+      }
+    ],
+    "طيري": [
+      {
+        "id": 1457,
+        "name_ar": "طيري",
+        "caza": "Bint Jubail",
+        "coord_x": 723768.716451,
+        "coord_y": 3669481.66308,
+        "place_detail": null
+      }
+    ],
+    "Tiri": [
+      {
+        "id": 1457,
+        "name_ar": "طيري",
+        "caza": "Bint Jubail",
+        "coord_x": 723768.716451,
+        "coord_y": 3669481.66308,
+        "place_detail": null
+      }
+    ],
+    "براميه": [
+      {
+        "id": 366,
+        "name_ar": "برامية",
+        "caza": "Saida",
+        "coord_x": 722123.608333,
+        "coord_y": 3717395.952,
+        "place_detail": null
+      }
+    ],
+    "Bramiy?": [
+      {
+        "id": 366,
+        "name_ar": "برامية",
+        "caza": "Saida",
+        "coord_x": 722123.608333,
+        "coord_y": 3717395.952,
+        "place_detail": null
+      }
+    ],
+    "مزرعه عين بوسوار": [
+      {
+        "id": 32,
+        "name_ar": "مزرعة عين بوسوار",
+        "caza": "Nabatiye",
+        "coord_x": 734344.235966,
+        "coord_y": 3706210.06109,
+        "place_detail": null
+      }
+    ],
+    "Aain Bou Souar": [
+      {
+        "id": 32,
+        "name_ar": "مزرعة عين بوسوار",
+        "caza": "Nabatiye",
+        "coord_x": 734344.235966,
+        "coord_y": 3706210.06109,
+        "place_detail": null
+      }
+    ],
+    "صفاريه": [
+      {
+        "id": 1382,
+        "name_ar": "صفاريه",
+        "caza": "Jezzine",
+        "coord_x": 731471.739695,
+        "coord_y": 3715431.26917,
+        "place_detail": null
+      }
+    ],
+    "Sfaray": [
+      {
+        "id": 1382,
+        "name_ar": "صفاريه",
+        "caza": "Jezzine",
+        "coord_x": 731471.739695,
+        "coord_y": 3715431.26917,
+        "place_detail": null
+      }
+    ],
+    "ميدان": [
+      {
+        "id": 1102,
+        "name_ar": "ميدان",
+        "caza": "Jezzine",
+        "coord_x": 738147.322808,
+        "coord_y": 3719329.31096,
+        "place_detail": null
+      }
+    ],
+    "Midane Jezzine": [
+      {
+        "id": 1102,
+        "name_ar": "ميدان",
+        "caza": "Jezzine",
+        "coord_x": 738147.322808,
+        "coord_y": 3719329.31096,
+        "place_detail": null
+      }
+    ],
+    "مزرعه طمره": [
+      {
+        "id": 1062,
+        "name_ar": "مزرعة طمره",
+        "caza": "Jezzine",
+        "coord_x": 736587.796708,
+        "coord_y": 3693593.1788,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Tamra": [
+      {
+        "id": 1062,
+        "name_ar": "مزرعة طمره",
+        "caza": "Jezzine",
+        "coord_x": 736587.796708,
+        "coord_y": 3693593.1788,
+        "place_detail": null
+      }
+    ],
+    "تفاحتا": [
+      {
+        "id": 1447,
+        "name_ar": "تفاحتا",
+        "caza": "Saida",
+        "coord_x": 719679.441587,
+        "coord_y": 3702454.48236,
+        "place_detail": null
+      }
+    ],
+    "Teffahta": [
+      {
+        "id": 1447,
+        "name_ar": "تفاحتا",
+        "caza": "Saida",
+        "coord_x": 719679.441587,
+        "coord_y": 3702454.48236,
+        "place_detail": null
+      }
+    ],
+    "جرمق": [
+      {
+        "id": 736,
+        "name_ar": "الجرمق",
+        "caza": "Jezzine",
+        "coord_x": 735599.147749,
+        "coord_y": 3696500.85804,
+        "place_detail": null
+      }
+    ],
+    "Jarmaq": [
+      {
+        "id": 736,
+        "name_ar": "الجرمق",
+        "caza": "Jezzine",
+        "coord_x": 735599.147749,
+        "coord_y": 3696500.85804,
+        "place_detail": null
+      }
+    ],
+    "بنعفول": [
+      {
+        "id": 326,
+        "name_ar": "بنعفول",
+        "caza": "Saida",
+        "coord_x": 724051.627547,
+        "coord_y": 3707513.90656,
+        "place_detail": null
+      }
+    ],
+    "Bnaafoul": [
+      {
+        "id": 326,
+        "name_ar": "بنعفول",
+        "caza": "Saida",
+        "coord_x": 724051.627547,
+        "coord_y": 3707513.90656,
+        "place_detail": null
+      }
+    ],
+    "حومين تحتا": [
+      {
+        "id": 704,
+        "name_ar": "حومين التحتا",
+        "caza": "Nabatiye",
+        "coord_x": 725932.971686,
+        "coord_y": 3706727.52936,
+        "place_detail": null
+      }
+    ],
+    "Houmine Et-Tahta": [
+      {
+        "id": 704,
+        "name_ar": "حومين التحتا",
+        "caza": "Nabatiye",
+        "coord_x": 725932.971686,
+        "coord_y": 3706727.52936,
+        "place_detail": null
+      }
+    ],
+    "عيتا جبل الزط": [
+      {
+        "id": 78,
+        "name_ar": "عيتا الجبل الزط",
+        "caza": "Bint Jubail",
+        "coord_x": 724657.239046,
+        "coord_y": 3673203.63893,
+        "place_detail": null
+      }
+    ],
+    "Aaita Ej-Jabal": [
+      {
+        "id": 78,
+        "name_ar": "عيتا الجبل الزط",
+        "caza": "Bint Jubail",
+        "coord_x": 724657.239046,
+        "coord_y": 3673203.63893,
+        "place_detail": null
+      }
+    ],
+    "وادي بعنقودين": [
+      {
+        "id": 1181,
+        "name_ar": "وادي بعنقودين",
+        "caza": "Jezzine",
+        "coord_x": 726440.696058,
+        "coord_y": 3714200.87832,
+        "place_detail": null
+      }
+    ],
+    "Ouadi Baanqoudaine": [
+      {
+        "id": 1181,
+        "name_ar": "وادي بعنقودين",
+        "caza": "Jezzine",
+        "coord_x": 726440.696058,
+        "coord_y": 3714200.87832,
+        "place_detail": null
+      }
+    ],
+    "معركه": [
+      {
+        "id": 941,
+        "name_ar": "معركة",
+        "caza": "Sour",
+        "coord_x": 715200.88821,
+        "coord_y": 3683888.74272,
+        "place_detail": null
+      }
+    ],
+    "Maarak?": [
+      {
+        "id": 941,
+        "name_ar": "معركة",
+        "caza": "Sour",
+        "coord_x": 715200.88821,
+        "coord_y": 3683888.74272,
+        "place_detail": null
+      }
+    ],
+    "بستيات": [
+      {
+        "id": 289,
+        "name_ar": "بستيات",
+        "caza": "Sour",
+        "coord_x": 719649.89912,
+        "coord_y": 3685286.31307,
+        "place_detail": null
+      }
+    ],
+    "Bestiyat": [
+      {
+        "id": 289,
+        "name_ar": "بستيات",
+        "caza": "Sour",
+        "coord_x": 719649.89912,
+        "coord_y": 3685286.31307,
+        "place_detail": null
+      }
+    ],
+    "بنواتي جزين": [
+      {
+        "id": 279,
+        "name_ar": "بنواتي جزين",
+        "caza": "Jezzine",
+        "coord_x": 739422.068392,
+        "coord_y": 3718077.89365,
+        "place_detail": null
+      }
+    ],
+    "Benouati Jezzine": [
+      {
+        "id": 279,
+        "name_ar": "بنواتي جزين",
+        "caza": "Jezzine",
+        "coord_x": 739422.068392,
+        "coord_y": 3718077.89365,
+        "place_detail": null
+      }
+    ],
+    "شواليق جزين": [
+      {
+        "id": 443,
+        "name_ar": "شواليق جزين",
+        "caza": "Jezzine",
+        "coord_x": 726722.502089,
+        "coord_y": 3715200.68816,
+        "place_detail": null
+      }
+    ],
+    "Choualiq Jezzine": [
+      {
+        "id": 443,
+        "name_ar": "شواليق جزين",
+        "caza": "Jezzine",
+        "coord_x": 726722.502089,
+        "coord_y": 3715200.68816,
+        "place_detail": null
+      }
+    ],
+    "جزين": [
+      {
+        "id": 758,
+        "name_ar": "جزين",
+        "caza": "Jezzine",
+        "coord_x": 740279.385033,
+        "coord_y": 3712769.81928,
+        "place_detail": null
+      }
+    ],
+    "Jezzine": [
+      {
+        "id": 758,
+        "name_ar": "جزين",
+        "caza": "Jezzine",
+        "coord_x": 740279.385033,
+        "coord_y": 3712769.81928,
+        "place_detail": null
+      }
+    ],
+    "شبيل": [
+      {
+        "id": 416,
+        "name_ar": "شبيل",
+        "caza": "Jezzine",
+        "coord_x": 741738.884446,
+        "coord_y": 3700777.92746,
+        "place_detail": null
+      }
+    ],
+    "Chbail": [
+      {
+        "id": 416,
+        "name_ar": "شبيل",
+        "caza": "Jezzine",
+        "coord_x": 741738.884446,
+        "coord_y": 3700777.92746,
+        "place_detail": null
+      }
+    ],
+    "جزيره صيدا": [
+      {
+        "id": 739,
+        "name_ar": "جزيرة صيدا",
+        "caza": "Saida",
+        "coord_x": 710926.180697,
+        "coord_y": 3690067.35864,
+        "place_detail": null
+      }
+    ],
+    "Jazira Saida": [
+      {
+        "id": 739,
+        "name_ar": "جزيرة صيدا",
+        "caza": "Saida",
+        "coord_x": 710926.180697,
+        "coord_y": 3690067.35864,
+        "place_detail": null
+      }
+    ],
+    "عزه": [
+      {
+        "id": 158,
+        "name_ar": "عزه",
+        "caza": "Nabatiye",
+        "coord_x": 726561.021255,
+        "coord_y": 3703987.27237,
+        "place_detail": null
+      }
+    ],
+    "Aazzi": [
+      {
+        "id": 158,
+        "name_ar": "عزه",
+        "caza": "Nabatiye",
+        "coord_x": 726561.021255,
+        "coord_y": 3703987.27237,
+        "place_detail": null
+      }
+    ],
+    "انان": [
+      {
+        "id": 172,
+        "name_ar": "أنان",
+        "caza": "Jezzine",
+        "coord_x": 730503.694917,
+        "coord_y": 3716963.34946,
+        "place_detail": null
+      }
+    ],
+    "Anane": [
+      {
+        "id": 172,
+        "name_ar": "أنان",
+        "caza": "Jezzine",
+        "coord_x": 730503.694917,
+        "coord_y": 3716963.34946,
+        "place_detail": null
+      }
+    ],
+    "صلحاني": [
+      {
+        "id": 1355,
+        "name_ar": "الصلحاني",
+        "caza": "Bint Jubail",
+        "coord_x": 715279.762811,
+        "coord_y": 3668204.94155,
+        "place_detail": null
+      }
+    ],
+    "Salhani": [
+      {
+        "id": 1355,
+        "name_ar": "الصلحاني",
+        "caza": "Bint Jubail",
+        "coord_x": 715279.762811,
+        "coord_y": 3668204.94155,
+        "place_detail": null
+      }
+    ],
+    "عين قنيا": [
+      {
+        "id": 68,
+        "name_ar": "عين قنيا",
+        "caza": "Hasbaiya",
+        "coord_x": 751597.278107,
+        "coord_y": 3698847.76653,
+        "place_detail": null
+      }
+    ],
+    "Aain Qinia": [
+      {
+        "id": 68,
+        "name_ar": "عين قنيا",
+        "caza": "Hasbaiya",
+        "coord_x": 751597.278107,
+        "coord_y": 3698847.76653,
+        "place_detail": null
+      }
+    ],
+    "صوانه مرجعيون": [
+      {
+        "id": 1361,
+        "name_ar": "صوانة مرجعيون",
+        "caza": "Marjaayoun",
+        "coord_x": 727555.790065,
+        "coord_y": 3679882.39281,
+        "place_detail": null
+      }
+    ],
+    "Saouanet Marjayoun": [
+      {
+        "id": 1361,
+        "name_ar": "صوانة مرجعيون",
+        "caza": "Marjaayoun",
+        "coord_x": 727555.790065,
+        "coord_y": 3679882.39281,
+        "place_detail": null
+      }
+    ],
+    "خله خازن": [
+      {
+        "id": 1052,
+        "name_ar": "خلة خازن",
+        "caza": "Jezzine",
+        "coord_x": 740133.094984,
+        "coord_y": 3701378.27879,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Khallet Khazen": [
+      {
+        "id": 1052,
+        "name_ar": "خلة خازن",
+        "caza": "Jezzine",
+        "coord_x": 740133.094984,
+        "coord_y": 3701378.27879,
+        "place_detail": null
+      }
+    ],
+    "ميمس": [
+      {
+        "id": 1078,
+        "name_ar": "ميمس",
+        "caza": "Hasbaiya",
+        "coord_x": 751251.124427,
+        "coord_y": 3702554.95694,
+        "place_detail": null
+      }
+    ],
+    "Meimes": [
+      {
+        "id": 1078,
+        "name_ar": "ميمس",
+        "caza": "Hasbaiya",
+        "coord_x": 751251.124427,
+        "coord_y": 3702554.95694,
+        "place_detail": null
+      }
+    ],
+    "حرف": [
+      {
+        "id": 646,
+        "name_ar": "الحرف",
+        "caza": "Jezzine",
+        "coord_x": 737318.141675,
+        "coord_y": 3718569.15902,
+        "place_detail": null
+      }
+    ],
+    "Harf Jezzine": [
+      {
+        "id": 646,
+        "name_ar": "الحرف",
+        "caza": "Jezzine",
+        "coord_x": 737318.141675,
+        "coord_y": 3718569.15902,
+        "place_detail": null
+      }
+    ],
+    "اوزاعيه": [
+      {
+        "id": 985,
+        "name_ar": "اوزاعية",
+        "caza": "Jezzine",
+        "coord_x": 738863.52267,
+        "coord_y": 3697552.06414,
+        "place_detail": null
+      }
+    ],
+    "Maraat Ouazaiy?": [
+      {
+        "id": 985,
+        "name_ar": "اوزاعية",
+        "caza": "Jezzine",
+        "coord_x": 738863.52267,
+        "coord_y": 3697552.06414,
+        "place_detail": null
+      }
+    ],
+    "قوزح": [
+      {
+        "id": 1230,
+        "name_ar": "قوزح",
+        "caza": "Bint Jubail",
+        "coord_x": 718528.733326,
+        "coord_y": 3667192.56699,
+        "place_detail": null
+      }
+    ],
+    "Qaouzah": [
+      {
+        "id": 1230,
+        "name_ar": "قوزح",
+        "caza": "Bint Jubail",
+        "coord_x": 718528.733326,
+        "coord_y": 3667192.56699,
+        "place_detail": null
+      }
+    ],
+    "طنبوريت": [
+      {
+        "id": 1432,
+        "name_ar": "طنبوريت",
+        "caza": "Saida",
+        "coord_x": 724105.702584,
+        "coord_y": 3711378.50727,
+        "place_detail": null
+      }
+    ],
+    "Tanbourit": [
+      {
+        "id": 1432,
+        "name_ar": "طنبوريت",
+        "caza": "Saida",
+        "coord_x": 724105.702584,
+        "coord_y": 3711378.50727,
+        "place_detail": null
+      }
+    ],
+    "مزرعه عيا": [
+      {
+        "id": 80,
+        "name_ar": "مزرعة عيا",
+        "caza": "Sour",
+        "coord_x": 715282.018934,
+        "coord_y": 3673683.18688,
+        "place_detail": null
+      }
+    ],
+    "Aaiy?": [
+      {
+        "id": 80,
+        "name_ar": "مزرعة عيا",
+        "caza": "Sour",
+        "coord_x": 715282.018934,
+        "coord_y": 3673683.18688,
+        "place_detail": null
+      }
+    ],
+    "روم": [
+      {
+        "id": 1332,
+        "name_ar": "روم",
+        "caza": "Jezzine",
+        "coord_x": 734079.028578,
+        "coord_y": 3714848.26251,
+        "place_detail": null
+      }
+    ],
+    "Roum": [
+      {
+        "id": 1332,
+        "name_ar": "روم",
+        "caza": "Jezzine",
+        "coord_x": 734079.028578,
+        "coord_y": 3714848.26251,
+        "place_detail": null
+      }
+    ],
+    "بكاسين": [
+      {
+        "id": 312,
+        "name_ar": "بكاسين",
+        "caza": "Jezzine",
+        "coord_x": 738955.19089,
+        "coord_y": 3716378.58895,
+        "place_detail": null
+      }
+    ],
+    "Bkassine": [
+      {
+        "id": 312,
+        "name_ar": "بكاسين",
+        "caza": "Jezzine",
+        "coord_x": 738955.19089,
+        "coord_y": 3716378.58895,
+        "place_detail": null
+      }
+    ],
+    "ارزون": [
+      {
+        "id": 179,
+        "name_ar": "ارزون",
+        "caza": "Sour",
+        "coord_x": 721821.492743,
+        "coord_y": 3685074.30577,
+        "place_detail": null
+      }
+    ],
+    "Arzoun": [
+      {
+        "id": 179,
+        "name_ar": "ارزون",
+        "caza": "Sour",
+        "coord_x": 721821.492743,
+        "coord_y": 3685074.30577,
+        "place_detail": null
+      }
+    ],
+    "طير حرفا": [
+      {
+        "id": 1443,
+        "name_ar": "طير حرفا",
+        "caza": "Sour",
+        "coord_x": 707354.763605,
+        "coord_y": 3668344.83689,
+        "place_detail": null
+      }
+    ],
+    "Tayr Harfa": [
+      {
+        "id": 1443,
+        "name_ar": "طير حرفا",
+        "caza": "Sour",
+        "coord_x": 707354.763605,
+        "coord_y": 3668344.83689,
+        "place_detail": null
+      }
+    ],
+    "صديقين": [
+      {
+        "id": 1341,
+        "name_ar": "صديقين",
+        "caza": "Sour",
+        "coord_x": 715148.177845,
+        "coord_y": 3674834.22554,
+        "place_detail": null
+      }
+    ],
+    "Sadiqine": [
+      {
+        "id": 1341,
+        "name_ar": "صديقين",
+        "caza": "Sour",
+        "coord_x": 715148.177845,
+        "coord_y": 3674834.22554,
+        "place_detail": null
+      }
+    ],
+    "زيتا": [
+      {
+        "id": 1525,
+        "name_ar": "زيتا",
+        "caza": "Saida",
+        "coord_x": 722499.314488,
+        "coord_y": 3709790.11189,
+        "place_detail": null
+      }
+    ],
+    "Zeita": [
+      {
+        "id": 1525,
+        "name_ar": "زيتا",
+        "caza": "Saida",
+        "coord_x": 722499.314488,
+        "coord_y": 3709790.11189,
+        "place_detail": null
+      }
+    ],
+    "قعقعيه جسر": [
+      {
+        "id": 1213,
+        "name_ar": "قعقعية الجسر",
+        "caza": "Nabatiye",
+        "coord_x": 726538.465873,
+        "coord_y": 3690168.27574,
+        "place_detail": null
+      }
+    ],
+    "Qaaqaaiyet Ej-Jisr": [
+      {
+        "id": 1213,
+        "name_ar": "قعقعية الجسر",
+        "caza": "Nabatiye",
+        "coord_x": 726538.465873,
+        "coord_y": 3690168.27574,
+        "place_detail": null
+      }
+    ],
+    "عنقون": [
+      {
+        "id": 110,
+        "name_ar": "عنقون",
+        "caza": "Saida",
+        "coord_x": 725580.544915,
+        "coord_y": 3709292.47883,
+        "place_detail": null
+      }
+    ],
+    "Aanqoun": [
+      {
+        "id": 110,
+        "name_ar": "عنقون",
+        "caza": "Saida",
+        "coord_x": 725580.544915,
+        "coord_y": 3709292.47883,
+        "place_detail": null
+      }
+    ],
+    "صفد بطيخ": [
+      {
+        "id": 1342,
+        "name_ar": "صفد البطيخ",
+        "caza": "Bint Jubail",
+        "coord_x": 726790.572877,
+        "coord_y": 3675825.66379,
+        "place_detail": null
+      }
+    ],
+    "Safad Al-Battikh": [
+      {
+        "id": 1342,
+        "name_ar": "صفد البطيخ",
+        "caza": "Bint Jubail",
+        "coord_x": 726790.572877,
+        "coord_y": 3675825.66379,
+        "place_detail": null
+      }
+    ],
+    "ابو قمحه": [
+      {
+        "id": 162,
+        "name_ar": "أبو قمحة",
+        "caza": "Hasbaiya",
+        "coord_x": 747177.196387,
+        "coord_y": 3696673.81554,
+        "place_detail": null
+      }
+    ],
+    "Abou Qamha": [
+      {
+        "id": 162,
+        "name_ar": "أبو قمحة",
+        "caza": "Hasbaiya",
+        "coord_x": 747177.196387,
+        "coord_y": 3696673.81554,
+        "place_detail": null
+      }
+    ],
+    "عين بعل": [
+      {
+        "id": 30,
+        "name_ar": "عين بعل",
+        "caza": "Sour",
+        "coord_x": 710068.78617,
+        "coord_y": 3680025.93008,
+        "place_detail": null
+      }
+    ],
+    "Aain Baal": [
+      {
+        "id": 30,
+        "name_ar": "عين بعل",
+        "caza": "Sour",
+        "coord_x": 710068.78617,
+        "coord_y": 3680025.93008,
+        "place_detail": null
+      }
+    ],
+    "كفر بده": [
+      {
+        "id": 1050,
+        "name_ar": "كفر بدَه",
+        "caza": "Saida",
+        "coord_x": 711167.74053,
+        "coord_y": 3694170.50937,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Kfar Beda": [
+      {
+        "id": 1050,
+        "name_ar": "كفر بدَه",
+        "caza": "Saida",
+        "coord_x": 711167.74053,
+        "coord_y": 3694170.50937,
+        "place_detail": null
+      }
+    ],
+    "قلويه": [
+      {
+        "id": 1224,
+        "name_ar": "قلويه",
+        "caza": "Bint Jubail",
+        "coord_x": 725455.598477,
+        "coord_y": 3681709.86556,
+        "place_detail": null
+      }
+    ],
+    "Qalaouiy?": [
+      {
+        "id": 1224,
+        "name_ar": "قلويه",
+        "caza": "Bint Jubail",
+        "coord_x": 725455.598477,
+        "coord_y": 3681709.86556,
+        "place_detail": null
+      }
+    ],
+    "كفرحتي": [
+      {
+        "id": 828,
+        "name_ar": "كفرحتى",
+        "caza": "Saida",
+        "coord_x": 727806.624826,
+        "coord_y": 3710076.75828,
+        "place_detail": null
+      }
+    ],
+    "Kfar Hatta Saida": [
+      {
+        "id": 828,
+        "name_ar": "كفرحتى",
+        "caza": "Saida",
+        "coord_x": 727806.624826,
+        "coord_y": 3710076.75828,
+        "place_detail": null
+      }
+    ],
+    "زبدين نبطيه": [
+      {
+        "id": 1529,
+        "name_ar": "زبدين النبطية",
+        "caza": "Nabatiye",
+        "coord_x": 729089.964486,
+        "coord_y": 3695394.05526,
+        "place_detail": null
+      }
+    ],
+    "Zibdine En-Nabatiyeh": [
+      {
+        "id": 1529,
+        "name_ar": "زبدين النبطية",
+        "caza": "Nabatiye",
+        "coord_x": 729089.964486,
+        "coord_y": 3695394.05526,
+        "place_detail": null
+      }
+    ],
+    "مرج زهور دنيبه": [
+      {
+        "id": 988,
+        "name_ar": "مرج الزهور الدنيبة",
+        "caza": "Hasbaiya",
+        "coord_x": 754892.359976,
+        "coord_y": 3706214.50509,
+        "place_detail": null
+      }
+    ],
+    "Marj Ez-Zouhour (Haouch El-Qinnaab?": [
+      {
+        "id": 988,
+        "name_ar": "مرج الزهور الدنيبة",
+        "caza": "Hasbaiya",
+        "coord_x": 754892.359976,
+        "coord_y": 3706214.50509,
+        "place_detail": null
+      }
+    ],
+    "يحمر": [
+      {
+        "id": 1492,
+        "name_ar": "يحمر",
+        "caza": "Nabatiye",
+        "coord_x": 734051.271799,
+        "coord_y": 3688707.70904,
+        "place_detail": null
+      }
+    ],
+    "Yohmor En-Nabatiyeh": [
+      {
+        "id": 1492,
+        "name_ar": "يحمر",
+        "caza": "Nabatiye",
+        "coord_x": 734051.271799,
+        "coord_y": 3688707.70904,
+        "place_detail": null
+      }
+    ],
+    "مزرعه قلعه ميس": [
+      {
+        "id": 1057,
+        "name_ar": "مزرعة قلعة ميس",
+        "caza": "Nabatiye",
+        "coord_x": 719593.507478,
+        "coord_y": 3693477.35622,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Qalaat El-Meis": [
+      {
+        "id": 1057,
+        "name_ar": "مزرعة قلعة ميس",
+        "caza": "Nabatiye",
+        "coord_x": 719593.507478,
+        "coord_y": 3693477.35622,
+        "place_detail": null
+      }
+    ],
+    "حمصيه": [
+      {
+        "id": 697,
+        "name_ar": "حمصية",
+        "caza": "Jezzine",
+        "coord_x": 737321.361746,
+        "coord_y": 3715273.59537,
+        "place_detail": null
+      }
+    ],
+    "Homsiy?": [
+      {
+        "id": 697,
+        "name_ar": "حمصية",
+        "caza": "Jezzine",
+        "coord_x": 737321.361746,
+        "coord_y": 3715273.59537,
+        "place_detail": null
+      }
+    ],
+    "بيساريه": [
+      {
+        "id": 309,
+        "name_ar": "بيسارية",
+        "caza": "Saida",
+        "coord_x": 715877.794288,
+        "coord_y": 3704326.07667,
+        "place_detail": null
+      }
+    ],
+    "Bissariy?": [
+      {
+        "id": 309,
+        "name_ar": "بيسارية",
+        "caza": "Saida",
+        "coord_x": 715877.794288,
+        "coord_y": 3704326.07667,
+        "place_detail": null
+      }
+    ],
+    "كوكبا حاصبيا": [
+      {
+        "id": 795,
+        "name_ar": "كوكبا حاصبيّا",
+        "caza": "Hasbaiya",
+        "coord_x": 745177.961506,
+        "coord_y": 3697871.63539,
+        "place_detail": null
+      }
+    ],
+    "Kaoukaba Hasbaiya": [
+      {
+        "id": 795,
+        "name_ar": "كوكبا حاصبيّا",
+        "caza": "Hasbaiya",
+        "coord_x": 745177.961506,
+        "coord_y": 3697871.63539,
+        "place_detail": null
+      }
+    ],
+    "صباح": [
+      {
+        "id": 1339,
+        "name_ar": "صّباح",
+        "caza": "Jezzine",
+        "coord_x": 738209.540326,
+        "coord_y": 3717073.81625,
+        "place_detail": null
+      }
+    ],
+    "Sabbah": [
+      {
+        "id": 1339,
+        "name_ar": "صّباح",
+        "caza": "Jezzine",
+        "coord_x": 738209.540326,
+        "coord_y": 3717073.81625,
+        "place_detail": null
+      }
+    ],
+    "شويا": [
+      {
+        "id": 446,
+        "name_ar": "شويّا",
+        "caza": "Hasbaiya",
+        "coord_x": 754590.476733,
+        "coord_y": 3697564.90261,
+        "place_detail": null
+      }
+    ],
+    "Chouaya Hasbaiya": [
+      {
+        "id": 446,
+        "name_ar": "شويّا",
+        "caza": "Hasbaiya",
+        "coord_x": 754590.476733,
+        "coord_y": 3697564.90261,
+        "place_detail": null
+      }
+    ],
+    "عازور": [
+      {
+        "id": 155,
+        "name_ar": "عازور",
+        "caza": "Jezzine",
+        "coord_x": 735518.249352,
+        "coord_y": 3716328.72918,
+        "place_detail": null
+      }
+    ],
+    "Aazour": [
+      {
+        "id": 155,
+        "name_ar": "عازور",
+        "caza": "Jezzine",
+        "coord_x": 735518.249352,
+        "coord_y": 3716328.72918,
+        "place_detail": null
+      }
+    ],
+    "مشموشه": [
+      {
+        "id": 950,
+        "name_ar": "مشموشة",
+        "caza": "Jezzine",
+        "coord_x": 738600.607452,
+        "coord_y": 3718541.48231,
+        "place_detail": null
+      }
+    ],
+    "Machmouch?": [
+      {
+        "id": 950,
+        "name_ar": "مشموشة",
+        "caza": "Jezzine",
+        "coord_x": 738600.607452,
+        "coord_y": 3718541.48231,
+        "place_detail": null
+      }
+    ],
+    "حجه": [
+      {
+        "id": 604,
+        "name_ar": "حجة",
+        "caza": "Saida",
+        "coord_x": 721736.871709,
+        "coord_y": 3705906.21883,
+        "place_detail": null
+      }
+    ],
+    "Hajj?": [
+      {
+        "id": 604,
+        "name_ar": "حجة",
+        "caza": "Saida",
+        "coord_x": 721736.871709,
+        "coord_y": 3705906.21883,
+        "place_detail": null
+      }
+    ],
+    "بني حيان": [
+      {
+        "id": 205,
+        "name_ar": "بني حيان",
+        "caza": "Marjaayoun",
+        "coord_x": 731822.944869,
+        "coord_y": 3681469.29028,
+        "place_detail": null
+      }
+    ],
+    "Bany haiyane": [
+      {
+        "id": 205,
+        "name_ar": "بني حيان",
+        "caza": "Marjaayoun",
+        "coord_x": 731822.944869,
+        "coord_y": 3681469.29028,
+        "place_detail": null
+      }
+    ],
+    "صيدون": [
+      {
+        "id": 1367,
+        "name_ar": "صيدون",
+        "caza": "Jezzine",
+        "coord_x": 733374.36491,
+        "coord_y": 3711724.95439,
+        "place_detail": null
+      }
+    ],
+    "Saydoun": [
+      {
+        "id": 1367,
+        "name_ar": "صيدون",
+        "caza": "Jezzine",
+        "coord_x": 733374.36491,
+        "coord_y": 3711724.95439,
+        "place_detail": null
+      }
+    ],
+    "مزرعه مطيريه جباع": [
+      {
+        "id": 1142,
+        "name_ar": "مزرعة مطيرية جباع",
+        "caza": "Saida",
+        "coord_x": 723153.593415,
+        "coord_y": 3710907.12274,
+        "place_detail": null
+      }
+    ],
+    "Mtayriy?": [
+      {
+        "id": 1142,
+        "name_ar": "مزرعة مطيرية جباع",
+        "caza": "Saida",
+        "coord_x": 723153.593415,
+        "coord_y": 3710907.12274,
+        "place_detail": null
+      }
+    ],
+    "سفنتا": [
+      {
+        "id": 1385,
+        "name_ar": "سفنتا",
+        "caza": "Saida",
+        "coord_x": 731177.524043,
+        "coord_y": 3710603.07467,
+        "place_detail": null
+      }
+    ],
+    "Sfenta": [
+      {
+        "id": 1385,
+        "name_ar": "سفنتا",
+        "caza": "Saida",
+        "coord_x": 731177.524043,
+        "coord_y": 3710603.07467,
+        "place_detail": null
+      }
+    ],
+    "لوبيه": [
+      {
+        "id": 934,
+        "name_ar": "لوبية",
+        "caza": "Saida",
+        "coord_x": 712471.226822,
+        "coord_y": 3701036.98802,
+        "place_detail": null
+      }
+    ],
+    "Loubi?": [
+      {
+        "id": 934,
+        "name_ar": "لوبية",
+        "caza": "Saida",
+        "coord_x": 712471.226822,
+        "coord_y": 3701036.98802,
+        "place_detail": null
+      }
+    ],
+    "بتدين لقش": [
+      {
+        "id": 386,
+        "name_ar": "بتدين اللقش",
+        "caza": "Jezzine",
+        "coord_x": 737000.625552,
+        "coord_y": 3716987.23128,
+        "place_detail": null
+      }
+    ],
+    "Btedine El-Leqch": [
+      {
+        "id": 386,
+        "name_ar": "بتدين اللقش",
+        "caza": "Jezzine",
+        "coord_x": 737000.625552,
+        "coord_y": 3716987.23128,
+        "place_detail": null
+      }
+    ],
+    "مزرعه شلبعل": [
+      {
+        "id": 1020,
+        "name_ar": "مزرعة شلبعل",
+        "caza": "Nabatiye",
+        "coord_x": 722208.77401,
+        "coord_y": 3696492.83228,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Chalbaal": [
+      {
+        "id": 1020,
+        "name_ar": "مزرعة شلبعل",
+        "caza": "Nabatiye",
+        "coord_x": 722208.77401,
+        "coord_y": 3696492.83228,
+        "place_detail": null
+      }
+    ],
+    "بيت ليف": [
+      {
+        "id": 269,
+        "name_ar": "بيت ليف",
+        "caza": "Bint Jubail",
+        "coord_x": 717677.616419,
+        "coord_y": 3668381.17271,
+        "place_detail": null
+      }
+    ],
+    "Beit Lif": [
+      {
+        "id": 269,
+        "name_ar": "بيت ليف",
+        "caza": "Bint Jubail",
+        "coord_x": 717677.616419,
+        "coord_y": 3668381.17271,
+        "place_detail": null
+      }
+    ],
+    "تبنا": [
+      {
+        "id": 1446,
+        "name_ar": "تبنا",
+        "caza": "Saida",
+        "coord_x": 717797.157423,
+        "coord_y": 3703267.15977,
+        "place_detail": null
+      }
+    ],
+    "Tebna": [
+      {
+        "id": 1446,
+        "name_ar": "تبنا",
+        "caza": "Saida",
+        "coord_x": 717797.157423,
+        "coord_y": 3703267.15977,
+        "place_detail": null
+      }
+    ],
+    "دبين": [
+      {
+        "id": 534,
+        "name_ar": "دبين",
+        "caza": "Marjaayoun",
+        "coord_x": 741552.710401,
+        "coord_y": 3695249.06805,
+        "place_detail": null
+      }
+    ],
+    "Dibbine": [
+      {
+        "id": 534,
+        "name_ar": "دبين",
+        "caza": "Marjaayoun",
+        "coord_x": 741552.710401,
+        "coord_y": 3695249.06805,
+        "place_detail": null
+      }
+    ],
+    "دير كيفا": [
+      {
+        "id": 511,
+        "name_ar": "دير كيفا",
+        "caza": "Sour",
+        "coord_x": 724024.937927,
+        "coord_y": 3682213.47604,
+        "place_detail": null
+      }
+    ],
+    "Deir Kifa": [
+      {
+        "id": 511,
+        "name_ar": "دير كيفا",
+        "caza": "Sour",
+        "coord_x": 724024.937927,
+        "coord_y": 3682213.47604,
+        "place_detail": null
+      }
+    ],
+    "رشكنانيه": [
+      {
+        "id": 1313,
+        "name_ar": "رشكنانيه",
+        "caza": "Sour",
+        "coord_x": 717073.412649,
+        "coord_y": 3674406.87327,
+        "place_detail": null
+      }
+    ],
+    "Recheknanay": [
+      {
+        "id": 1313,
+        "name_ar": "رشكنانيه",
+        "caza": "Sour",
+        "coord_x": 717073.412649,
+        "coord_y": 3674406.87327,
+        "place_detail": null
+      }
+    ],
+    "كفرملكي صيدا": [
+      {
+        "id": 844,
+        "name_ar": "كفرملكي صيدا",
+        "caza": "Saida",
+        "coord_x": 730543.863026,
+        "coord_y": 3709680.02719,
+        "place_detail": null
+      }
+    ],
+    "Kfar Melki Saida": [
+      {
+        "id": 844,
+        "name_ar": "كفرملكي صيدا",
+        "caza": "Saida",
+        "coord_x": 730543.863026,
+        "coord_y": 3709680.02719,
+        "place_detail": null
+      }
+    ],
+    "كفرجرا": [
+      {
+        "id": 835,
+        "name_ar": "كفرجرا",
+        "caza": "Jezzine",
+        "coord_x": 725650.6269,
+        "coord_y": 3714676.9041,
+        "place_detail": null
+      }
+    ],
+    "Kfar Jarra": [
+      {
+        "id": 835,
+        "name_ar": "كفرجرا",
+        "caza": "Jezzine",
+        "coord_x": 725650.6269,
+        "coord_y": 3714676.9041,
+        "place_detail": null
+      }
+    ],
+    "دير زهراني": [
+      {
+        "id": 506,
+        "name_ar": "دير الزهراني",
+        "caza": "Nabatiye",
+        "coord_x": 727867.368197,
+        "coord_y": 3701454.8856,
+        "place_detail": null
+      }
+    ],
+    "Deir Ez-Zahrani": [
+      {
+        "id": 506,
+        "name_ar": "دير الزهراني",
+        "caza": "Nabatiye",
+        "coord_x": 727867.368197,
+        "coord_y": 3701454.8856,
+        "place_detail": null
+      }
+    ],
+    "مجدليون": [
+      {
+        "id": 968,
+        "name_ar": "مجدليون",
+        "caza": "Saida",
+        "coord_x": 724353.346517,
+        "coord_y": 3715479.04812,
+        "place_detail": null
+      }
+    ],
+    "Majdelyoun": [
+      {
+        "id": 968,
+        "name_ar": "مجدليون",
+        "caza": "Saida",
+        "coord_x": 724353.346517,
+        "coord_y": 3715479.04812,
+        "place_detail": null
+      }
+    ],
+    "حميله": [
+      {
+        "id": 688,
+        "name_ar": "حميلة",
+        "caza": "Nabatiye",
+        "coord_x": 729366.185808,
+        "coord_y": 3703489.46556,
+        "place_detail": null
+      }
+    ],
+    "Hmail?": [
+      {
+        "id": 688,
+        "name_ar": "حميلة",
+        "caza": "Nabatiye",
+        "coord_x": 729366.185808,
+        "coord_y": 3703489.46556,
+        "place_detail": null
+      }
+    ],
+    "دير نطار": [
+      {
+        "id": 520,
+        "name_ar": "دير نطار",
+        "caza": "Bint Jubail",
+        "coord_x": 721558.586977,
+        "coord_y": 3678055.88202,
+        "place_detail": null
+      }
+    ],
+    "Deir Ntar": [
+      {
+        "id": 520,
+        "name_ar": "دير نطار",
+        "caza": "Bint Jubail",
+        "coord_x": 721558.586977,
+        "coord_y": 3678055.88202,
+        "place_detail": null
+      }
+    ],
+    "برج قلويه": [
+      {
+        "id": 336,
+        "name_ar": "برج قلويه",
+        "caza": "Bint Jubail",
+        "coord_x": 725910.159307,
+        "coord_y": 3682740.66644,
+        "place_detail": null
+      }
+    ],
+    "Borj qalaouiy?": [
+      {
+        "id": 336,
+        "name_ar": "برج قلويه",
+        "caza": "Bint Jubail",
+        "coord_x": 725910.159307,
+        "coord_y": 3682740.66644,
+        "place_detail": null
+      }
+    ],
+    "قبع": [
+      {
+        "id": 1216,
+        "name_ar": "قبع",
+        "caza": "Jezzine",
+        "coord_x": 737252.777816,
+        "coord_y": 3714474.37122,
+        "place_detail": null
+      }
+    ],
+    "Qabaa Jezzine": [
+      {
+        "id": 1216,
+        "name_ar": "قبع",
+        "caza": "Jezzine",
+        "coord_x": 737252.777816,
+        "coord_y": 3714474.37122,
+        "place_detail": null
+      }
+    ],
+    "جبال بطم": [
+      {
+        "id": 742,
+        "name_ar": "جبال البطم",
+        "caza": "Sour",
+        "coord_x": 713968.068445,
+        "coord_y": 3672170.32963,
+        "place_detail": null
+      }
+    ],
+    "Jbal El-Botm": [
+      {
+        "id": 742,
+        "name_ar": "جبال البطم",
+        "caza": "Sour",
+        "coord_x": 713968.068445,
+        "coord_y": 3672170.32963,
+        "place_detail": null
+      }
+    ],
+    "نيحا صور": [
+      {
+        "id": 1176,
+        "name_ar": "نيحا صور",
+        "caza": "Sour",
+        "coord_x": 723692.25158,
+        "coord_y": 3684057.62968,
+        "place_detail": null
+      }
+    ],
+    "Niha Sour": [
+      {
+        "id": 1176,
+        "name_ar": "نيحا صور",
+        "caza": "Sour",
+        "coord_x": 723692.25158,
+        "coord_y": 3684057.62968,
+        "place_detail": null
+      }
+    ],
+    "تعيد": [
+      {
+        "id": 1413,
+        "name_ar": "تعيد",
+        "caza": "Jezzine",
+        "coord_x": 736347.881179,
+        "coord_y": 3717740.67175,
+        "place_detail": null
+      }
+    ],
+    "Taaid": [
+      {
+        "id": 1413,
+        "name_ar": "تعيد",
+        "caza": "Jezzine",
+        "coord_x": 736347.881179,
+        "coord_y": 3717740.67175,
+        "place_detail": null
+      }
+    ],
+    "سكسكيه": [
+      {
+        "id": 1353,
+        "name_ar": "سكسكية",
+        "caza": "Saida",
+        "coord_x": 712262.536185,
+        "coord_y": 3701979.57408,
+        "place_detail": null
+      }
+    ],
+    "Saksakiy?": [
+      {
+        "id": 1353,
+        "name_ar": "سكسكية",
+        "caza": "Saida",
+        "coord_x": 712262.536185,
+        "coord_y": 3701979.57408,
+        "place_detail": null
+      }
+    ],
+    "بستان صور": [
+      {
+        "id": 352,
+        "name_ar": "بستان صور",
+        "caza": "Sour",
+        "coord_x": 710418.842133,
+        "coord_y": 3664738.40649,
+        "place_detail": null
+      }
+    ],
+    "Boustane": [
+      {
+        "id": 352,
+        "name_ar": "بستان صور",
+        "caza": "Sour",
+        "coord_x": 710418.842133,
+        "coord_y": 3664738.40649,
+        "place_detail": null
+      }
+    ],
+    "ججيم": [
+      {
+        "id": 761,
+        "name_ar": "ججيم",
+        "caza": "Sour",
+        "coord_x": 704310.546598,
+        "coord_y": 3667482.50946,
+        "place_detail": null
+      }
+    ],
+    "Jijim": [
+      {
+        "id": 761,
+        "name_ar": "ججيم",
+        "caza": "Sour",
+        "coord_x": 704310.546598,
+        "coord_y": 3667482.50946,
+        "place_detail": null
+      }
+    ],
+    "حومين فوقا": [
+      {
+        "id": 703,
+        "name_ar": "حومين الفوقا",
+        "caza": "Nabatiye",
+        "coord_x": 731720.450468,
+        "coord_y": 3703192.80473,
+        "place_detail": null
+      }
+    ],
+    "Houmine El-Faouqa": [
+      {
+        "id": 703,
+        "name_ar": "حومين الفوقا",
+        "caza": "Nabatiye",
+        "coord_x": 731720.450468,
+        "coord_y": 3703192.80473,
+        "place_detail": null
+      }
+    ],
+    "غازيه": [
+      {
+        "id": 586,
+        "name_ar": "غازية",
+        "caza": "Saida",
+        "coord_x": 719007.870751,
+        "coord_y": 3710211.75894,
+        "place_detail": null
+      }
+    ],
+    "Ghaziy?": [
+      {
+        "id": 586,
+        "name_ar": "غازية",
+        "caza": "Saida",
+        "coord_x": 719007.870751,
+        "coord_y": 3710211.75894,
+        "place_detail": null
+      }
+    ],
+    "طير دبه": [
+      {
+        "id": 1441,
+        "name_ar": "طير دبّه",
+        "caza": "Sour",
+        "coord_x": 711754.074671,
+        "coord_y": 3684192.4161,
+        "place_detail": null
+      }
+    ],
+    "Tayr Debb?": [
+      {
+        "id": 1441,
+        "name_ar": "طير دبّه",
+        "caza": "Sour",
+        "coord_x": 711754.074671,
+        "coord_y": 3684192.4161,
+        "place_detail": null
+      }
+    ],
+    "ضهر دير": [
+      {
+        "id": 460,
+        "name_ar": "ضهر الدير",
+        "caza": "Jezzine",
+        "coord_x": 732388.228223,
+        "coord_y": 3711932.02388,
+        "place_detail": null
+      }
+    ],
+    "Dahr Ed-Deir": [
+      {
+        "id": 460,
+        "name_ar": "ضهر الدير",
+        "caza": "Jezzine",
+        "coord_x": 732388.228223,
+        "coord_y": 3711932.02388,
+        "place_detail": null
+      }
+    ],
+    "محيليب": [
+      {
+        "id": 1098,
+        "name_ar": "محيليب",
+        "caza": "Sour",
+        "coord_x": 708659.078,
+        "coord_y": 3687636.76132,
+        "place_detail": null
+      }
+    ],
+    "Mheilib": [
+      {
+        "id": 1098,
+        "name_ar": "محيليب",
+        "caza": "Sour",
+        "coord_x": 708659.078,
+        "coord_y": 3687636.76132,
+        "place_detail": null
+      }
+    ],
+    "دمشقيه": [
+      {
+        "id": 529,
+        "name_ar": "دمشقية",
+        "caza": "Jezzine",
+        "coord_x": 736776.290504,
+        "coord_y": 3695179.36861,
+        "place_detail": null
+      }
+    ],
+    "Demachqiy?": [
+      {
+        "id": 529,
+        "name_ar": "دمشقية",
+        "caza": "Jezzine",
+        "coord_x": 736776.290504,
+        "coord_y": 3695179.36861,
+        "place_detail": null
+      }
+    ],
+    "بيت ياحون": [
+      {
+        "id": 273,
+        "name_ar": "بيت ياحون",
+        "caza": "Bint Jubail",
+        "coord_x": 725850.941347,
+        "coord_y": 3671616.63467,
+        "place_detail": null
+      }
+    ],
+    "Beit Yahoun": [
+      {
+        "id": 273,
+        "name_ar": "بيت ياحون",
+        "caza": "Bint Jubail",
+        "coord_x": 725850.941347,
+        "coord_y": 3671616.63467,
+        "place_detail": null
+      }
+    ],
+    "تول": [
+      {
+        "id": 1461,
+        "name_ar": "تول",
+        "caza": "Nabatiye",
+        "coord_x": 727663.165212,
+        "coord_y": 3697318.06173,
+        "place_detail": null
+      }
+    ],
+    "Toul": [
+      {
+        "id": 1461,
+        "name_ar": "تول",
+        "caza": "Nabatiye",
+        "coord_x": 727663.165212,
+        "coord_y": 3697318.06173,
+        "place_detail": null
+      }
+    ],
+    "كفير زيت": [
+      {
+        "id": 870,
+        "name_ar": "كفير الزيت",
+        "caza": "Hasbaiya",
+        "coord_x": 754394.268701,
+        "coord_y": 3703223.52823,
+        "place_detail": null
+      }
+    ],
+    "Kfayr Ez-Zait": [
+      {
+        "id": 870,
+        "name_ar": "كفير الزيت",
+        "caza": "Hasbaiya",
+        "coord_x": 754394.268701,
+        "coord_y": 3703223.52823,
+        "place_detail": null
+      }
+    ],
+    "ابل سقي": [
+      {
+        "id": 715,
+        "name_ar": "إبل السقي",
+        "caza": "Marjaayoun",
+        "coord_x": 744174.274517,
+        "coord_y": 3693803.00874,
+        "place_detail": null
+      }
+    ],
+    "Ibl Es-Saqi": [
+      {
+        "id": 715,
+        "name_ar": "إبل السقي",
+        "caza": "Marjaayoun",
+        "coord_x": 744174.274517,
+        "coord_y": 3693803.00874,
+        "place_detail": null
+      }
+    ],
+    "مزرعه عرب سكر": [
+      {
+        "id": 1013,
+        "name_ar": "مزرعة عرب سكر",
+        "caza": "Saida",
+        "coord_x": 727269.622026,
+        "coord_y": 3707455.35836,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Aarab Soukkar": [
+      {
+        "id": 1013,
+        "name_ar": "مزرعة عرب سكر",
+        "caza": "Saida",
+        "coord_x": 727269.622026,
+        "coord_y": 3707455.35836,
+        "place_detail": null
+      }
+    ],
+    "عين جرفا": [
+      {
+        "id": 59,
+        "name_ar": "عين جرفا",
+        "caza": "Hasbaiya",
+        "coord_x": 749785.547444,
+        "coord_y": 3696920.82854,
+        "place_detail": null
+      }
+    ],
+    "Aain Jarfa": [
+      {
+        "id": 59,
+        "name_ar": "عين جرفا",
+        "caza": "Hasbaiya",
+        "coord_x": 749785.547444,
+        "coord_y": 3696920.82854,
+        "place_detail": null
+      }
+    ],
+    "جرجوع": [
+      {
+        "id": 734,
+        "name_ar": "جرجوع",
+        "caza": "Nabatiye",
+        "coord_x": 734267.179856,
+        "coord_y": 3703745.04141,
+        "place_detail": null
+      }
+    ],
+    "Jarjouaa": [
+      {
+        "id": 734,
+        "name_ar": "جرجوع",
+        "caza": "Nabatiye",
+        "coord_x": 734267.179856,
+        "coord_y": 3703745.04141,
+        "place_detail": null
+      }
+    ],
+    "وسطاني": [
+      {
+        "id": 1347,
+        "name_ar": "الوسطاني",
+        "caza": "Saida",
+        "coord_x": 721439.188528,
+        "coord_y": 3717797.31018,
+        "place_detail": null
+      }
+    ],
+    "Saida El-Oustani": [
+      {
+        "id": 1347,
+        "name_ar": "الوسطاني",
+        "caza": "Saida",
+        "coord_x": 721439.188528,
+        "coord_y": 3717797.31018,
+        "place_detail": null
+      }
+    ],
+    "بوصلايا": [
+      {
+        "id": 350,
+        "name_ar": "بوصلايا",
+        "caza": "Jezzine",
+        "coord_x": 733167.318543,
+        "coord_y": 3709984.30747,
+        "place_detail": null
+      }
+    ],
+    "Bouslaya": [
+      {
+        "id": 350,
+        "name_ar": "بوصلايا",
+        "caza": "Jezzine",
+        "coord_x": 733167.318543,
+        "coord_y": 3709984.30747,
+        "place_detail": null
+      }
+    ],
+    "مزرعه عرب الجل": [
+      {
+        "id": 116,
+        "name_ar": "مزرعة عرب الجل",
+        "caza": "Saida",
+        "coord_x": 728048.670271,
+        "coord_y": 3707285.34068,
+        "place_detail": null
+      }
+    ],
+    "Aarab Ej-Jall": [
+      {
+        "id": 116,
+        "name_ar": "مزرعة عرب الجل",
+        "caza": "Saida",
+        "coord_x": 728048.670271,
+        "coord_y": 3707285.34068,
+        "place_detail": null
+      }
+    ],
+    "مزرعه دمياط": [
+      {
+        "id": 1025,
+        "name_ar": "مزرعة دمياط",
+        "caza": "Marjaayoun",
+        "coord_x": 737196.619515,
+        "coord_y": 3692916.30224,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Doumiat": [
+      {
+        "id": 1025,
+        "name_ar": "مزرعة دمياط",
+        "caza": "Marjaayoun",
+        "coord_x": 737196.619515,
+        "coord_y": 3692916.30224,
+        "place_detail": null
+      }
+    ],
+    "بدياس": [
+      {
+        "id": 248,
+        "name_ar": "بدياس",
+        "caza": "Sour",
+        "coord_x": 714125.044949,
+        "coord_y": 3688542.77145,
+        "place_detail": null
+      }
+    ],
+    "Bedias": [
+      {
+        "id": 248,
+        "name_ar": "بدياس",
+        "caza": "Sour",
+        "coord_x": 714125.044949,
+        "coord_y": 3688542.77145,
+        "place_detail": null
+      }
+    ],
+    "كفرفيلا": [
+      {
+        "id": 862,
+        "name_ar": "كفرفيلا",
+        "caza": "Nabatiye",
+        "coord_x": 731865.449495,
+        "coord_y": 3707321.40697,
+        "place_detail": null
+      }
+    ],
+    "Kfarfila": [
+      {
+        "id": 862,
+        "name_ar": "كفرفيلا",
+        "caza": "Nabatiye",
+        "coord_x": 731865.449495,
+        "coord_y": 3707321.40697,
+        "place_detail": null
+      }
+    ],
+    "وادي جزين": [
+      {
+        "id": 1481,
+        "name_ar": "وادي جزين",
+        "caza": "Jezzine",
+        "coord_x": 739616.843291,
+        "coord_y": 3715336.74395,
+        "place_detail": null
+      }
+    ],
+    "Wadi Jezzine": [
+      {
+        "id": 1481,
+        "name_ar": "وادي جزين",
+        "caza": "Jezzine",
+        "coord_x": 739616.843291,
+        "coord_y": 3715336.74395,
+        "place_detail": null
+      }
+    ],
+    "برعشيت": [
+      {
+        "id": 207,
+        "name_ar": "برعشيت",
+        "caza": "Bint Jubail",
+        "coord_x": 727428.386018,
+        "coord_y": 3673730.64521,
+        "place_detail": null
+      }
+    ],
+    "Baraachit": [
+      {
+        "id": 207,
+        "name_ar": "برعشيت",
+        "caza": "Bint Jubail",
+        "coord_x": 727428.386018,
+        "coord_y": 3673730.64521,
+        "place_detail": null
+      }
+    ],
+    "شبعا": [
+      {
+        "id": 418,
+        "name_ar": "شبعا",
+        "caza": "Hasbaiya",
+        "coord_x": 755724.486452,
+        "coord_y": 3693948.53324,
+        "place_detail": null
+      }
+    ],
+    "Chebaa": [
+      {
+        "id": 418,
+        "name_ar": "شبعا",
+        "caza": "Hasbaiya",
+        "coord_x": 755724.486452,
+        "coord_y": 3693948.53324,
+        "place_detail": null
+      }
+    ],
+    "عبا": [
+      {
+        "id": 6,
+        "name_ar": "عبا",
+        "caza": "Nabatiye",
+        "coord_x": 722700.147767,
+        "coord_y": 3693502.55605,
+        "place_detail": null
+      }
+    ],
+    "Aabba": [
+      {
+        "id": 6,
+        "name_ar": "عبا",
+        "caza": "Nabatiye",
+        "coord_x": 722700.147767,
+        "coord_y": 3693502.55605,
+        "place_detail": null
+      }
+    ],
+    "عين ابو عبدالله": [
+      {
+        "id": 29,
+        "name_ar": "عين أبو عبدالله",
+        "caza": "Sour",
+        "coord_x": 710399.01762,
+        "coord_y": 3689315.37879,
+        "place_detail": null
+      }
+    ],
+    "Aain Abou Abdallah": [
+      {
+        "id": 29,
+        "name_ar": "عين أبو عبدالله",
+        "caza": "Sour",
+        "coord_x": 710399.01762,
+        "coord_y": 3689315.37879,
+        "place_detail": null
+      }
+    ],
+    "غندوريه بنت جبيل": [
+      {
+        "id": 580,
+        "name_ar": "غندورية بنت جبيل",
+        "caza": "Bint Jubail",
+        "coord_x": 726852.057086,
+        "coord_y": 3684459.91032,
+        "place_detail": null
+      }
+    ],
+    "Ghandouriyet Bent Jbayl": [
+      {
+        "id": 580,
+        "name_ar": "غندورية بنت جبيل",
+        "caza": "Bint Jubail",
+        "coord_x": 726852.057086,
+        "coord_y": 3684459.91032,
+        "place_detail": null
+      }
+    ],
+    "مزرعه رهبان": [
+      {
+        "id": 1041,
+        "name_ar": "مزرعة الرهبان",
+        "caza": "Jezzine",
+        "coord_x": 737012.094251,
+        "coord_y": 3708416.01627,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Er-Rouhbane": [
+      {
+        "id": 1041,
+        "name_ar": "مزرعة الرهبان",
+        "caza": "Jezzine",
+        "coord_x": 737012.094251,
+        "coord_y": 3708416.01627,
+        "place_detail": null
+      }
+    ],
+    "شمع": [
+      {
+        "id": 402,
+        "name_ar": "شمع",
+        "caza": "Sour",
+        "coord_x": 705539.537501,
+        "coord_y": 3669444.82251,
+        "place_detail": null
+      }
+    ],
+    "Chamaa": [
+      {
+        "id": 402,
+        "name_ar": "شمع",
+        "caza": "Sour",
+        "coord_x": 705539.537501,
+        "coord_y": 3669444.82251,
+        "place_detail": null
+      }
+    ],
+    "بيصور جزين": [
+      {
+        "id": 227,
+        "name_ar": "بيصور جزين",
+        "caza": "Jezzine",
+        "coord_x": 727372.632902,
+        "coord_y": 3713379.91912,
+        "place_detail": null
+      }
+    ],
+    "Bayssour Jezzine": [
+      {
+        "id": 227,
+        "name_ar": "بيصور جزين",
+        "caza": "Jezzine",
+        "coord_x": 727372.632902,
+        "coord_y": 3713379.91912,
+        "place_detail": null
+      }
+    ],
+    "ميه وميه": [
+      {
+        "id": 1112,
+        "name_ar": "مية ومية",
+        "caza": "Saida",
+        "coord_x": 722237.469242,
+        "coord_y": 3714071.01384,
+        "place_detail": null
+      }
+    ],
+    "Miy? ou Miy?": [
+      {
+        "id": 1112,
+        "name_ar": "مية ومية",
+        "caza": "Saida",
+        "coord_x": 722237.469242,
+        "coord_y": 3714071.01384,
+        "place_detail": null
+      }
+    ],
+    "كفريا": [
+      {
+        "id": 1349,
+        "name_ar": "كفريا",
+        "caza": "Saida",
+        "coord_x": 726253.448904,
+        "coord_y": 3715765.7806,
+        "place_detail": null
+      }
+    ],
+    "Saida Kefraya": [
+      {
+        "id": 1349,
+        "name_ar": "كفريا",
+        "caza": "Saida",
+        "coord_x": 726253.448904,
+        "coord_y": 3715765.7806,
+        "place_detail": null
+      }
+    ],
+    "جميجمه": [
+      {
+        "id": 766,
+        "name_ar": "جميجمة",
+        "caza": "Bint Jubail",
+        "coord_x": 727359.572327,
+        "coord_y": 3677135.00837,
+        "place_detail": null
+      }
+    ],
+    "Jmaijm?": [
+      {
+        "id": 766,
+        "name_ar": "جميجمة",
+        "caza": "Bint Jubail",
+        "coord_x": 727359.572327,
+        "coord_y": 3677135.00837,
+        "place_detail": null
+      }
+    ],
+    "عديسه مرجعيون": [
+      {
+        "id": 16,
+        "name_ar": "عديسة مرجعيون",
+        "caza": "Marjaayoun",
+        "coord_x": 736503.832975,
+        "coord_y": 3681651.28711,
+        "place_detail": null
+      }
+    ],
+    "Aadaysse Marjaayoun": [
+      {
+        "id": 16,
+        "name_ar": "عديسة مرجعيون",
+        "caza": "Marjaayoun",
+        "coord_x": 736503.832975,
+        "coord_y": 3681651.28711,
+        "place_detail": null
+      }
+    ],
+    "مرنبا": [
+      {
+        "id": 993,
+        "name_ar": "مرنبا",
+        "caza": "Sour",
+        "coord_x": 725096.275219,
+        "coord_y": 3687690.56181,
+        "place_detail": null
+      }
+    ],
+    "Marnba": [
+      {
+        "id": 993,
+        "name_ar": "مرنبا",
+        "caza": "Sour",
+        "coord_x": 725096.275219,
+        "coord_y": 3687690.56181,
+        "place_detail": null
+      }
+    ],
+    "كفرصير": [
+      {
+        "id": 854,
+        "name_ar": "كفرصير",
+        "caza": "Nabatiye",
+        "coord_x": 723124.963223,
+        "coord_y": 3688918.45472,
+        "place_detail": null
+      }
+    ],
+    "Kfar Sir": [
+      {
+        "id": 854,
+        "name_ar": "كفرصير",
+        "caza": "Nabatiye",
+        "coord_x": 723124.963223,
+        "coord_y": 3688918.45472,
+        "place_detail": null
+      }
+    ],
+    "مزرعه عرقوب": [
+      {
+        "id": 1028,
+        "name_ar": "مزرعة العرقوب",
+        "caza": "Jezzine",
+        "coord_x": 736063.217977,
+        "coord_y": 3699081.5231,
+        "place_detail": null
+      }
+    ],
+    "Mazraat El-Aarqoub": [
+      {
+        "id": 1028,
+        "name_ar": "مزرعة العرقوب",
+        "caza": "Jezzine",
+        "coord_x": 736063.217977,
+        "coord_y": 3699081.5231,
+        "place_detail": null
+      }
+    ],
+    "حيتوله": [
+      {
+        "id": 663,
+        "name_ar": "حيتوله",
+        "caza": "Jezzine",
+        "coord_x": 729556.191756,
+        "coord_y": 3711624.06575,
+        "place_detail": null
+      }
+    ],
+    "Haytoul?": [
+      {
+        "id": 663,
+        "name_ar": "حيتوله",
+        "caza": "Jezzine",
+        "coord_x": 729556.191756,
+        "coord_y": 3711624.06575,
+        "place_detail": null
+      }
+    ],
+    "عقتنيت": [
+      {
+        "id": 115,
+        "name_ar": "عقتنيت",
+        "caza": "Saida",
+        "coord_x": 721552.648351,
+        "coord_y": 3708371.16139,
+        "place_detail": null
+      }
+    ],
+    "Aaqtanit": [
+      {
+        "id": 115,
+        "name_ar": "عقتنيت",
+        "caza": "Saida",
+        "coord_x": 721552.648351,
+        "coord_y": 3708371.16139,
+        "place_detail": null
+      }
+    ],
+    "طير فلسيه": [
+      {
+        "id": 1442,
+        "name_ar": "طير فلسيه",
+        "caza": "Sour",
+        "coord_x": 718028.233919,
+        "coord_y": 3688361.99603,
+        "place_detail": null
+      }
+    ],
+    "Tayr Falsay": [
+      {
+        "id": 1442,
+        "name_ar": "طير فلسيه",
+        "caza": "Sour",
+        "coord_x": 718028.233919,
+        "coord_y": 3688361.99603,
+        "place_detail": null
+      }
+    ],
+    "قطموم": [
+      {
+        "id": 1241,
+        "name_ar": "قطموم",
+        "caza": "Bint Jubail",
+        "coord_x": 720966.634996,
+        "coord_y": 3660600.33545,
+        "place_detail": null
+      }
+    ],
+    "Qatmoun": [
+      {
+        "id": 1241,
+        "name_ar": "قطموم",
+        "caza": "Bint Jubail",
+        "coord_x": 720966.634996,
+        "coord_y": 3660600.33545,
+        "place_detail": null
+      }
+    ],
+    "مزرعه واسطه": [
+      {
+        "id": 1147,
+        "name_ar": "مزرعة الواسطة",
+        "caza": "Saida",
+        "coord_x": 710636.031021,
+        "coord_y": 3692239.27176,
+        "place_detail": null
+      }
+    ],
+    "Mzaraat El-Ouasta": [
+      {
+        "id": 1147,
+        "name_ar": "مزرعة الواسطة",
+        "caza": "Saida",
+        "coord_x": 710636.031021,
+        "coord_y": 3692239.27176,
+        "place_detail": null
+      }
+    ],
+    "حنيه": [
+      {
+        "id": 678,
+        "name_ar": "حنية",
+        "caza": "Sour",
+        "coord_x": 706856.957812,
+        "coord_y": 3674379.3109,
+        "place_detail": null
+      }
+    ],
+    "Henniy?": [
+      {
+        "id": 678,
+        "name_ar": "حنية",
+        "caza": "Sour",
+        "coord_x": 706856.957812,
+        "coord_y": 3674379.3109,
+        "place_detail": null
+      }
+    ],
+    "كفر شلال": [
+      {
+        "id": 810,
+        "name_ar": "كفر شلال",
+        "caza": "Saida",
+        "coord_x": 729280.901262,
+        "coord_y": 3708545.96571,
+        "place_detail": null
+      }
+    ],
+    "Kfar Chellal": [
+      {
+        "id": 810,
+        "name_ar": "كفر شلال",
+        "caza": "Saida",
+        "coord_x": 729280.901262,
+        "coord_y": 3708545.96571,
+        "place_detail": null
+      }
+    ],
+    "قعقعيه صنوبر": [
+      {
+        "id": 1214,
+        "name_ar": "قعقعية الصنوبر",
+        "caza": "Saida",
+        "coord_x": 717592.056343,
+        "coord_y": 3702011.67519,
+        "place_detail": null
+      }
+    ],
+    "Qaaqaiyet Es-Snaoubar": [
+      {
+        "id": 1214,
+        "name_ar": "قعقعية الصنوبر",
+        "caza": "Saida",
+        "coord_x": 717592.056343,
+        "coord_y": 3702011.67519,
+        "place_detail": null
+      }
+    ],
+    "محيدله": [
+      {
+        "id": 1035,
+        "name_ar": "المحيدلة",
+        "caza": "Saida",
+        "coord_x": 713416.703323,
+        "coord_y": 3696233.19005,
+        "place_detail": null
+      }
+    ],
+    "Mazraat El-Mhaydal?": [
+      {
+        "id": 1035,
+        "name_ar": "المحيدلة",
+        "caza": "Saida",
+        "coord_x": 713416.703323,
+        "coord_y": 3696233.19005,
+        "place_detail": null
+      }
+    ],
+    "كفر تبنيت": [
+      {
+        "id": 857,
+        "name_ar": "كفر تبنيت",
+        "caza": "Nabatiye",
+        "coord_x": 734640.509019,
+        "coord_y": 3692944.02702,
+        "place_detail": null
+      }
+    ],
+    "Kfar Tibnit": [
+      {
+        "id": 857,
+        "name_ar": "كفر تبنيت",
+        "caza": "Nabatiye",
+        "coord_x": 734640.509019,
+        "coord_y": 3692944.02702,
+        "place_detail": null
+      }
+    ],
+    "عين دلب": [
+      {
+        "id": 36,
+        "name_ar": "عين الدلب",
+        "caza": "Saida",
+        "coord_x": 723378.257381,
+        "coord_y": 3714243.38875,
+        "place_detail": null
+      }
+    ],
+    "Aain Ed-Delb": [
+      {
+        "id": 36,
+        "name_ar": "عين الدلب",
+        "caza": "Saida",
+        "coord_x": 723378.257381,
+        "coord_y": 3714243.38875,
+        "place_detail": null
+      }
+    ],
+    "زراريه": [
+      {
+        "id": 1544,
+        "name_ar": "زرارية",
+        "caza": "Saida",
+        "coord_x": 716979.429793,
+        "coord_y": 3691864.32496,
+        "place_detail": null
+      }
+    ],
+    "Zrariy?": [
+      {
+        "id": 1544,
+        "name_ar": "زرارية",
+        "caza": "Saida",
+        "coord_x": 716979.429793,
+        "coord_y": 3691864.32496,
+        "place_detail": null
+      }
+    ],
+    "باتوليه": [
+      {
+        "id": 222,
+        "name_ar": "باتوليه",
+        "caza": "Sour",
+        "coord_x": 709002.988898,
+        "coord_y": 3678955.27423,
+        "place_detail": null
+      }
+    ],
+    "Batoulay": [
+      {
+        "id": 222,
+        "name_ar": "باتوليه",
+        "caza": "Sour",
+        "coord_x": 709002.988898,
+        "coord_y": 3678955.27423,
+        "place_detail": null
+      }
+    ],
+    "حامول": [
+      {
+        "id": 613,
+        "name_ar": "حامول",
+        "caza": "Sour",
+        "coord_x": 702239.589635,
+        "coord_y": 3668329.48155,
+        "place_detail": null
+      }
+    ],
+    "Hamoul": [
+      {
+        "id": 613,
+        "name_ar": "حامول",
+        "caza": "Sour",
+        "coord_x": 702239.589635,
+        "coord_y": 3668329.48155,
+        "place_detail": null
+      }
+    ],
+    "علمانه": [
+      {
+        "id": 92,
+        "name_ar": "علمانة",
+        "caza": "Marjaayoun",
+        "coord_x": 729581.72876,
+        "coord_y": 3687593.08072,
+        "place_detail": null
+      }
+    ],
+    "Aalmane Marjaayoun": [
+      {
+        "id": 92,
+        "name_ar": "علمانة",
+        "caza": "Marjaayoun",
+        "coord_x": 729581.72876,
+        "coord_y": 3687593.08072,
+        "place_detail": null
+      }
+    ],
+    "دلافه": [
+      {
+        "id": 528,
+        "name_ar": "دلافة",
+        "caza": "Hasbaiya",
+        "coord_x": 745920.620507,
+        "coord_y": 3701411.13902,
+        "place_detail": null
+      }
+    ],
+    "Dellaf?": [
+      {
+        "id": 528,
+        "name_ar": "دلافة",
+        "caza": "Hasbaiya",
+        "coord_x": 745920.620507,
+        "coord_y": 3701411.13902,
+        "place_detail": null
+      }
+    ],
+    "رشاف": [
+      {
+        "id": 1286,
+        "name_ar": "رشاف",
+        "caza": "Bint Jubail",
+        "coord_x": 720356.719867,
+        "coord_y": 3669700.63516,
+        "place_detail": null
+      }
+    ],
+    "Rachaf": [
+      {
+        "id": 1286,
+        "name_ar": "رشاف",
+        "caza": "Bint Jubail",
+        "coord_x": 720356.719867,
+        "coord_y": 3669700.63516,
+        "place_detail": null
+      }
+    ],
+    "غسانيه": [
+      {
+        "id": 583,
+        "name_ar": "غسانية",
+        "caza": "Saida",
+        "coord_x": 719259.63789,
+        "coord_y": 3699887.46432,
+        "place_detail": null
+      }
+    ],
+    "Ghassaniy?": [
+      {
+        "id": 583,
+        "name_ar": "غسانية",
+        "caza": "Saida",
+        "coord_x": 719259.63789,
+        "coord_y": 3699887.46432,
+        "place_detail": null
+      }
+    ],
+    "حاريص": [
+      {
+        "id": 650,
+        "name_ar": "حاريص",
+        "caza": "Bint Jubail",
+        "coord_x": 721381.128093,
+        "coord_y": 3673453.9662,
+        "place_detail": null
+      }
+    ],
+    "Haris": [
+      {
+        "id": 650,
+        "name_ar": "حاريص",
+        "caza": "Bint Jubail",
+        "coord_x": 721381.128093,
+        "coord_y": 3673453.9662,
+        "place_detail": null
+      }
+    ],
+    "زوطر غربيه": [
+      {
+        "id": 1520,
+        "name_ar": "زوطر الغربية",
+        "caza": "Nabatiye",
+        "coord_x": 728459.568848,
+        "coord_y": 3689834.484,
+        "place_detail": null
+      }
+    ],
+    "Zaoutar El-Gharbiy?": [
+      {
+        "id": 1520,
+        "name_ar": "زوطر الغربية",
+        "caza": "Nabatiye",
+        "coord_x": 728459.568848,
+        "coord_y": 3689834.484,
+        "place_detail": null
+      }
+    ],
+    "نجاريه": [
+      {
+        "id": 1166,
+        "name_ar": "نجارية",
+        "caza": "Saida",
+        "coord_x": 717735.95542,
+        "coord_y": 3707051.54659,
+        "place_detail": null
+      }
+    ],
+    "Najjariy?": [
+      {
+        "id": 1166,
+        "name_ar": "نجارية",
+        "caza": "Saida",
+        "coord_x": 717735.95542,
+        "coord_y": 3707051.54659,
+        "place_detail": null
+      }
+    ],
+    "جنسنايا": [
+      {
+        "id": 754,
+        "name_ar": "جنسنايا",
+        "caza": "Jezzine",
+        "coord_x": 725784.838233,
+        "coord_y": 3713526.05791,
+        "place_detail": null
+      }
+    ],
+    "Jensnaya": [
+      {
+        "id": 754,
+        "name_ar": "جنسنايا",
+        "caza": "Jezzine",
+        "coord_x": 725784.838233,
+        "coord_y": 3713526.05791,
+        "place_detail": null
+      }
+    ],
+    "وادي جيلو": [
+      {
+        "id": 1196,
+        "name_ar": "وادي جيلو",
+        "caza": "Sour",
+        "coord_x": 713976.923733,
+        "coord_y": 3681402.92989,
+        "place_detail": null
+      }
+    ],
+    "Ouadi Jilo": [
+      {
+        "id": 1196,
+        "name_ar": "وادي جيلو",
+        "caza": "Sour",
+        "coord_x": 713976.923733,
+        "coord_y": 3681402.92989,
+        "place_detail": null
+      }
+    ],
+    "محاربيه": [
+      {
+        "id": 1097,
+        "name_ar": "محاربية",
+        "caza": "Jezzine",
+        "coord_x": 727174.368304,
+        "coord_y": 3712566.68716,
+        "place_detail": null
+      }
+    ],
+    "Mharbiy?": [
+      {
+        "id": 1097,
+        "name_ar": "محاربية",
+        "caza": "Jezzine",
+        "coord_x": 727174.368304,
+        "coord_y": 3712566.68716,
+        "place_detail": null
+      }
+    ],
+    "نفاخيه": [
+      {
+        "id": 1172,
+        "name_ar": "نفاخية",
+        "caza": "Sour",
+        "coord_x": 722398.645301,
+        "coord_y": 3683757.03333,
+        "place_detail": null
+      }
+    ],
+    "Neftakhiy?": [
+      {
+        "id": 1172,
+        "name_ar": "نفاخية",
+        "caza": "Sour",
+        "coord_x": 722398.645301,
+        "coord_y": 3683757.03333,
+        "place_detail": null
+      }
+    ],
+    "لبعا": [
+      {
+        "id": 929,
+        "name_ar": "لبعا",
+        "caza": "Jezzine",
+        "coord_x": 727651.143802,
+        "coord_y": 3714901.58096,
+        "place_detail": null
+      }
+    ],
+    "Lebaa": [
+      {
+        "id": 929,
+        "name_ar": "لبعا",
+        "caza": "Jezzine",
+        "coord_x": 727651.143802,
+        "coord_y": 3714901.58096,
+        "place_detail": null
+      }
+    ],
+    "عين ابل": [
+      {
+        "id": 58,
+        "name_ar": "عين ابل",
+        "caza": "Bint Jubail",
+        "coord_x": 723992.610218,
+        "coord_y": 3665898.73449,
+        "place_detail": null
+      }
+    ],
+    "Aain Ibl": [
+      {
+        "id": 58,
+        "name_ar": "عين ابل",
+        "caza": "Bint Jubail",
+        "coord_x": 723992.610218,
+        "coord_y": 3665898.73449,
+        "place_detail": null
+      }
+    ],
+    "صالحيه": [
+      {
+        "id": 1356,
+        "name_ar": "صالحية",
+        "caza": "Saida",
+        "coord_x": 725217.911394,
+        "coord_y": 3715985.46256,
+        "place_detail": null
+      }
+    ],
+    "Salhiyet Saida": [
+      {
+        "id": 1356,
+        "name_ar": "صالحية",
+        "caza": "Saida",
+        "coord_x": 725217.911394,
+        "coord_y": 3715985.46256,
+        "place_detail": null
+      }
+    ],
+    "مزرعه سنيبر": [
+      {
+        "id": 1012,
+        "name_ar": "مزرعة سنيبر",
+        "caza": "Saida",
+        "coord_x": 716688.74911,
+        "coord_y": 3704407.12555,
+        "place_detail": null
+      }
+    ],
+    "Mazraat 'Snaiber": [
+      {
+        "id": 1012,
+        "name_ar": "مزرعة سنيبر",
+        "caza": "Saida",
+        "coord_x": 716688.74911,
+        "coord_y": 3704407.12555,
+        "place_detail": null
+      }
+    ],
+    "حيداب": [
+      {
+        "id": 682,
+        "name_ar": "حيداب",
+        "caza": "Jezzine",
+        "coord_x": 734549.878911,
+        "coord_y": 3712257.65665,
+        "place_detail": null
+      }
+    ],
+    "Hidab": [
+      {
+        "id": 682,
+        "name_ar": "حيداب",
+        "caza": "Jezzine",
+        "coord_x": 734549.878911,
+        "coord_y": 3712257.65665,
+        "place_detail": null
+      }
+    ],
+    "بقسطا": [
+      {
+        "id": 364,
+        "name_ar": "بقسطا",
+        "caza": "Saida",
+        "coord_x": 724089.356522,
+        "coord_y": 3717629.49965,
+        "place_detail": null
+      }
+    ],
+    "Bqosta": [
+      {
+        "id": 364,
+        "name_ar": "بقسطا",
+        "caza": "Saida",
+        "coord_x": 724089.356522,
+        "coord_y": 3717629.49965,
+        "place_detail": null
+      }
+    ],
+    "جويا": [
+      {
+        "id": 768,
+        "name_ar": "جويا",
+        "caza": "Sour",
+        "coord_x": 717388.306288,
+        "coord_y": 3680589.40377,
+        "place_detail": null
+      }
+    ],
+    "Jouaiya": [
+      {
+        "id": 768,
+        "name_ar": "جويا",
+        "caza": "Sour",
+        "coord_x": 717388.306288,
+        "coord_y": 3680589.40377,
+        "place_detail": null
+      }
+    ],
+    "صرفند": [
+      {
+        "id": 1365,
+        "name_ar": "صرفند",
+        "caza": "Saida",
+        "coord_x": 713861.086509,
+        "coord_y": 3703734.42411,
+        "place_detail": null
+      }
+    ],
+    "Sarafand": [
+      {
+        "id": 1365,
+        "name_ar": "صرفند",
+        "caza": "Saida",
+        "coord_x": 713861.086509,
+        "coord_y": 3703734.42411,
+        "place_detail": null
+      }
+    ],
+    "فرون": [
+      {
+        "id": 572,
+        "name_ar": "فرون",
+        "caza": "Bint Jubail",
+        "coord_x": 726021.397032,
+        "coord_y": 3686787.77732,
+        "place_detail": null
+      }
+    ],
+    "Froun": [
+      {
+        "id": 572,
+        "name_ar": "فرون",
+        "caza": "Bint Jubail",
+        "coord_x": 726021.397032,
+        "coord_y": 3686787.77732,
+        "place_detail": null
+      }
+    ],
+    "راميه بنت جبيل": [
+      {
+        "id": 1297,
+        "name_ar": "رامية بنت جبيل",
+        "caza": "Bint Jubail",
+        "coord_x": 715905.179348,
+        "coord_y": 3666144.26296,
+        "place_detail": null
+      }
+    ],
+    "Ramyet Bent Jbayl": [
+      {
+        "id": 1297,
+        "name_ar": "رامية بنت جبيل",
+        "caza": "Bint Jubail",
+        "coord_x": 715905.179348,
+        "coord_y": 3666144.26296,
+        "place_detail": null
+      }
+    ],
+    "قروح": [
+      {
+        "id": 1058,
+        "name_ar": "قروح",
+        "caza": "Jezzine",
+        "coord_x": 739237.534235,
+        "coord_y": 3701874.97617,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Qrouh": [
+      {
+        "id": 1058,
+        "name_ar": "قروح",
+        "caza": "Jezzine",
+        "coord_x": 739237.534235,
+        "coord_y": 3701874.97617,
+        "place_detail": null
+      }
+    ],
+    "جبشيت": [
+      {
+        "id": 760,
+        "name_ar": "جبشيت",
+        "caza": "Nabatiye",
+        "coord_x": 726111.67591,
+        "coord_y": 3693869.48164,
+        "place_detail": null
+      }
+    ],
+    "Jibchit": [
+      {
+        "id": 760,
+        "name_ar": "جبشيت",
+        "caza": "Nabatiye",
+        "coord_x": 726111.67591,
+        "coord_y": 3693869.48164,
+        "place_detail": null
+      }
+    ],
+    "مزرعه سيناي": [
+      {
+        "id": 1061,
+        "name_ar": "مزرعة سيناي",
+        "caza": "Saida",
+        "coord_x": 719509.634399,
+        "coord_y": 3696865.40207,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Sinai": [
+      {
+        "id": 1061,
+        "name_ar": "مزرعة سيناي",
+        "caza": "Saida",
+        "coord_x": 719509.634399,
+        "coord_y": 3696865.40207,
+        "place_detail": null
+      }
+    ],
+    "سريره": [
+      {
+        "id": 1410,
+        "name_ar": "سريرة",
+        "caza": "Jezzine",
+        "coord_x": 743750.810977,
+        "coord_y": 3702024.51049,
+        "place_detail": null
+      }
+    ],
+    "Srayri": [
+      {
+        "id": 1410,
+        "name_ar": "سريرة",
+        "caza": "Jezzine",
+        "coord_x": 743750.810977,
+        "coord_y": 3702024.51049,
+        "place_detail": null
+      }
+    ],
+    "خربه دوير صيدا": [
+      {
+        "id": 895,
+        "name_ar": "خربة الدوير صيدا",
+        "caza": "Saida",
+        "coord_x": 715490.079038,
+        "coord_y": 3701620.96733,
+        "place_detail": null
+      }
+    ],
+    "Khirbet Ed-Douair Saida": [
+      {
+        "id": 895,
+        "name_ar": "خربة الدوير صيدا",
+        "caza": "Saida",
+        "coord_x": 715490.079038,
+        "coord_y": 3701620.96733,
+        "place_detail": null
+      }
+    ],
+    "شهابيه": [
+      {
+        "id": 422,
+        "name_ar": "شهابية",
+        "caza": "Sour",
+        "coord_x": 721422.85346,
+        "coord_y": 3680573.38885,
+        "place_detail": null
+      }
+    ],
+    "Chehabiy?": [
+      {
+        "id": 422,
+        "name_ar": "شهابية",
+        "caza": "Sour",
+        "coord_x": 721422.85346,
+        "coord_y": 3680573.38885,
+        "place_detail": null
+      }
+    ],
+    "مزرعه لوزيد": [
+      {
+        "id": 1053,
+        "name_ar": "مزرعة لوزيد",
+        "caza": "Jezzine",
+        "coord_x": 740643.480663,
+        "coord_y": 3700086.01129,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Louzid (Louayziy?": [
+      {
+        "id": 1053,
+        "name_ar": "مزرعة لوزيد",
+        "caza": "Jezzine",
+        "coord_x": 740643.480663,
+        "coord_y": 3700086.01129,
+        "place_detail": null
+      }
+    ],
+    "داوديه": [
+      {
+        "id": 469,
+        "name_ar": "الداودية",
+        "caza": "Saida",
+        "coord_x": 713914.587136,
+        "coord_y": 3701012.51287,
+        "place_detail": null
+      }
+    ],
+    "Daoudiy?": [
+      {
+        "id": 469,
+        "name_ar": "الداودية",
+        "caza": "Saida",
+        "coord_x": 713914.587136,
+        "coord_y": 3701012.51287,
+        "place_detail": null
+      }
+    ],
+    "مزرعه دمول": [
+      {
+        "id": 1024,
+        "name_ar": "مزرعة دمول",
+        "caza": "Nabatiye",
+        "coord_x": 721315.723561,
+        "coord_y": 3694831.04519,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Dmoul": [
+      {
+        "id": 1024,
+        "name_ar": "مزرعة دمول",
+        "caza": "Nabatiye",
+        "coord_x": 721315.723561,
+        "coord_y": 3694831.04519,
+        "place_detail": null
+      }
+    ],
+    "قريه صيدا": [
+      {
+        "id": 1272,
+        "name_ar": "قرية صيدا",
+        "caza": "Saida",
+        "coord_x": 724336.373954,
+        "coord_y": 3713391.04771,
+        "place_detail": null
+      }
+    ],
+    "Qraiyet Saida": [
+      {
+        "id": 1272,
+        "name_ar": "قرية صيدا",
+        "caza": "Saida",
+        "coord_x": 724336.373954,
+        "coord_y": 3713391.04771,
+        "place_detail": null
+      }
+    ],
+    "مزرعه عقماتا": [
+      {
+        "id": 1010,
+        "name_ar": "مزرعة عقماتا",
+        "caza": "Jezzine",
+        "coord_x": 736640.637807,
+        "coord_y": 3704691.13231,
+        "place_detail": null
+      }
+    ],
+    "Mazraat": [
+      {
+        "id": 1010,
+        "name_ar": "مزرعة عقماتا",
+        "caza": "Jezzine",
+        "coord_x": 736640.637807,
+        "coord_y": 3704691.13231,
+        "place_detail": null
+      }
+    ],
+    "دير قانون نهر": [
+      {
+        "id": 522,
+        "name_ar": "دير قانون النهر",
+        "caza": "Sour",
+        "coord_x": 715037.719076,
+        "coord_y": 3687064.09729,
+        "place_detail": null
+      }
+    ],
+    "Deir Qanoun En-Nahr": [
+      {
+        "id": 522,
+        "name_ar": "دير قانون النهر",
+        "caza": "Sour",
+        "coord_x": 715037.719076,
+        "coord_y": 3687064.09729,
+        "place_detail": null
+      }
+    ],
+    "كفروه او بفروه": [
+      {
+        "id": 291,
+        "name_ar": "كفروة أو بفروة",
+        "caza": "Nabatiye",
+        "coord_x": 724953.793394,
+        "coord_y": 3702937.04069,
+        "place_detail": null
+      }
+    ],
+    "Bfarou?": [
+      {
+        "id": 291,
+        "name_ar": "كفروة أو بفروة",
+        "caza": "Nabatiye",
+        "coord_x": 724953.793394,
+        "coord_y": 3702937.04069,
+        "place_detail": null
+      }
+    ],
+    "شحور": [
+      {
+        "id": 423,
+        "name_ar": "شحور",
+        "caza": "Sour",
+        "coord_x": 721336.764155,
+        "coord_y": 3686855.54007,
+        "place_detail": null
+      }
+    ],
+    "Chehour": [
+      {
+        "id": 423,
+        "name_ar": "شحور",
+        "caza": "Sour",
+        "coord_x": 721336.764155,
+        "coord_y": 3686855.54007,
+        "place_detail": null
+      }
+    ],
+    "شيحين": [
+      {
+        "id": 431,
+        "name_ar": "شيحين",
+        "caza": "Sour",
+        "coord_x": 710621.98703,
+        "coord_y": 3667781.74189,
+        "place_detail": null
+      }
+    ],
+    "Chihine": [
+      {
+        "id": 431,
+        "name_ar": "شيحين",
+        "caza": "Sour",
+        "coord_x": 710621.98703,
+        "coord_y": 3667781.74189,
+        "place_detail": null
+      }
+    ],
+    "كرخا": [
+      {
+        "id": 797,
+        "name_ar": "كرخا",
+        "caza": "Jezzine",
+        "coord_x": 727396.456627,
+        "coord_y": 3716549.34347,
+        "place_detail": null
+      }
+    ],
+    "Karkha": [
+      {
+        "id": 797,
+        "name_ar": "كرخا",
+        "caza": "Jezzine",
+        "coord_x": 727396.456627,
+        "coord_y": 3716549.34347,
+        "place_detail": null
+      }
+    ],
+    "ارنون": [
+      {
+        "id": 176,
+        "name_ar": "أرنون",
+        "caza": "Nabatiye",
+        "coord_x": 735551.017629,
+        "coord_y": 3691067.21304,
+        "place_detail": null
+      }
+    ],
+    "Arnoun": [
+      {
+        "id": 176,
+        "name_ar": "أرنون",
+        "caza": "Nabatiye",
+        "coord_x": 735551.017629,
+        "coord_y": 3691067.21304,
+        "place_detail": null
+      }
+    ],
+    "خيام": [
+      {
+        "id": 901,
+        "name_ar": "الخيام",
+        "caza": "Marjaayoun",
+        "coord_x": 742319.411332,
+        "coord_y": 3689534.82039,
+        "place_detail": null
+      }
+    ],
+    "Khiyam Marjaayoun": [
+      {
+        "id": 901,
+        "name_ar": "الخيام",
+        "caza": "Marjaayoun",
+        "coord_x": 742319.411332,
+        "coord_y": 3689534.82039,
+        "place_detail": null
+      }
+    ],
+    "كفرحمام": [
+      {
+        "id": 824,
+        "name_ar": "كفرحمام",
+        "caza": "Hasbaiya",
+        "coord_x": 748716.018752,
+        "coord_y": 3692246.46444,
+        "place_detail": null
+      }
+    ],
+    "Kfar Hamam": [
+      {
+        "id": 824,
+        "name_ar": "كفرحمام",
+        "caza": "Hasbaiya",
+        "coord_x": 748716.018752,
+        "coord_y": 3692246.46444,
+        "place_detail": null
+      }
+    ],
+    "وادي ليمون": [
+      {
+        "id": 1193,
+        "name_ar": "وادي الليمون",
+        "caza": "Jezzine",
+        "coord_x": 729050.640516,
+        "coord_y": 3712383.26476,
+        "place_detail": null
+      }
+    ],
+    "Ouadi El-Laymoun": [
+      {
+        "id": 1193,
+        "name_ar": "وادي الليمون",
+        "caza": "Jezzine",
+        "coord_x": 729050.640516,
+        "coord_y": 3712383.26476,
+        "place_detail": null
+      }
+    ],
+    "مزرعه سرده": [
+      {
+        "id": 1059,
+        "name_ar": "مزرعة  سردة",
+        "caza": "Marjaayoun",
+        "coord_x": 742177.73193,
+        "coord_y": 3686929.12539,
+        "place_detail": null
+      }
+    ],
+    "Mazraat Sarada": [
+      {
+        "id": 1059,
+        "name_ar": "مزرعة  سردة",
+        "caza": "Marjaayoun",
+        "coord_x": 742177.73193,
+        "coord_y": 3686929.12539,
+        "place_detail": null
+      }
+    ],
+    "طلوسه": [
+      {
+        "id": 1431,
+        "name_ar": "طلوسة",
+        "caza": "Marjaayoun",
+        "coord_x": 731777.990415,
+        "coord_y": 3679501.77686,
+        "place_detail": null
+      }
+    ],
+    "Talloussa": [
+      {
+        "id": 1431,
+        "name_ar": "طلوسة",
+        "caza": "Marjaayoun",
+        "coord_x": 731777.990415,
+        "coord_y": 3679501.77686,
+        "place_detail": null
+      }
+    ],
+    "حسانيه": [
+      {
+        "id": 659,
+        "name_ar": "حسانية",
+        "caza": "Jezzine",
+        "coord_x": 728130.728553,
+        "coord_y": 3711577.99336,
+        "place_detail": null
+      }
+    ],
+    "Hassaniy?": [
+      {
+        "id": 659,
+        "name_ar": "حسانية",
+        "caza": "Jezzine",
+        "coord_x": 728130.728553,
+        "coord_y": 3711577.99336,
+        "place_detail": null
+      }
+    ],
+    "رومين": [
+      {
+        "id": 1334,
+        "name_ar": "رومين",
+        "caza": "Nabatiye",
+        "coord_x": 727210.743201,
+        "coord_y": 3705232.87379,
+        "place_detail": null
+      }
+    ],
+    "Roumine": [
+      {
+        "id": 1334,
+        "name_ar": "رومين",
+        "caza": "Nabatiye",
+        "coord_x": 727210.743201,
+        "coord_y": 3705232.87379,
+        "place_detail": null
+      }
+    ],
+    "مزرعه عيتانيه": [
+      {
+        "id": 1036,
+        "name_ar": "مزرعة العيتانية",
+        "caza": "Saida",
+        "coord_x": 709680.986203,
+        "coord_y": 3693197.61699,
+        "place_detail": null
+      }
+    ],
+    "Mazraat El Yahoudiy? (Aaitaniy?": [
+      {
+        "id": 1036,
+        "name_ar": "مزرعة العيتانية",
+        "caza": "Saida",
+        "coord_x": 709680.986203,
+        "coord_y": 3693197.61699,
+        "place_detail": null
+      }
+    ],
+    "سنيا": [
+      {
+        "id": 1360,
+        "name_ar": "سنيَا",
+        "caza": "Jezzine",
+        "coord_x": 734866.033467,
+        "coord_y": 3711182.60721,
+        "place_detail": null
+      }
+    ],
+    "Sanaya": [
+      {
+        "id": 1360,
+        "name_ar": "سنيَا",
+        "caza": "Jezzine",
+        "coord_x": 734866.033467,
+        "coord_y": 3711182.60721,
+        "place_detail": null
+      }
+    ],
+    "عزيه": [
+      {
+        "id": 154,
+        "name_ar": "عزِّيه",
+        "caza": "Sour",
+        "coord_x": 708756.654416,
+        "coord_y": 3672968.86974,
+        "place_detail": null
+      }
+    ],
+    "Aaziy?": [
+      {
+        "id": 154,
+        "name_ar": "عزِّيه",
+        "caza": "Sour",
+        "coord_x": 708756.654416,
+        "coord_y": 3672968.86974,
+        "place_detail": null
+      }
+    ],
+    "ريحانه جزين": [
+      {
+        "id": 1316,
+        "name_ar": "ريحانة جزين",
+        "caza": "Jezzine",
+        "coord_x": 738041.966231,
+        "coord_y": 3702960.06729,
+        "place_detail": null
+      }
+    ],
+    "Rihane Jezzine": [
+      {
+        "id": 1316,
+        "name_ar": "ريحانة جزين",
+        "caza": "Jezzine",
+        "coord_x": 738041.966231,
+        "coord_y": 3702960.06729,
+        "place_detail": null
+      }
+    ],
+    "قيتولي": [
+      {
+        "id": 1245,
+        "name_ar": "قيتولي",
+        "caza": "Jezzine",
+        "coord_x": 736742.170876,
+        "coord_y": 3713716.22752,
+        "place_detail": null
+      }
+    ],
+    "Qaytoul?": [
+      {
+        "id": 1245,
+        "name_ar": "قيتولي",
+        "caza": "Jezzine",
+        "coord_x": 736742.170876,
+        "coord_y": 3713716.22752,
+        "place_detail": null
+      }
+    ],
+    "تبنين": [
+      {
+        "id": 1455,
+        "name_ar": "تبنين",
+        "caza": "Bint Jubail",
+        "coord_x": 724352.223862,
+        "coord_y": 3674984.66846,
+        "place_detail": null
+      }
+    ],
+    "Tibnine": [
+      {
+        "id": 1455,
+        "name_ar": "تبنين",
+        "caza": "Bint Jubail",
+        "coord_x": 724352.223862,
+        "coord_y": 3674984.66846,
+        "place_detail": null
+      }
+    ],
+    "انصار": [
+      {
+        "id": 173,
+        "name_ar": "إنصار",
+        "caza": "Nabatiye",
+        "coord_x": 717504.945911,
+        "coord_y": 3695510.24316,
+        "place_detail": null
+      }
+    ],
+    "Ansar": [
+      {
+        "id": 173,
+        "name_ar": "إنصار",
+        "caza": "Nabatiye",
+        "coord_x": 717504.945911,
+        "coord_y": 3695510.24316,
+        "place_detail": null
+      }
+    ],
+    "خلوات حاصبيا": [
+      {
+        "id": 878,
+        "name_ar": "خلوات حاصبيّا",
+        "caza": "Hasbaiya",
+        "coord_x": 756059.352257,
+        "coord_y": 3699486.35812,
+        "place_detail": null
+      }
+    ],
+    "Khalouet Hasbaiya": [
+      {
+        "id": 878,
+        "name_ar": "خلوات حاصبيّا",
+        "caza": "Hasbaiya",
+        "coord_x": 756059.352257,
+        "coord_y": 3699486.35812,
+        "place_detail": null
+      }
+    ],
+    "جناتا": [
+      {
+        "id": 753,
+        "name_ar": "جناتا",
+        "caza": "Sour",
+        "coord_x": 716085.327197,
+        "coord_y": 3685649.44601,
+        "place_detail": null
+      }
+    ],
+    "Jennata": [
+      {
+        "id": 753,
+        "name_ar": "جناتا",
+        "caza": "Sour",
+        "coord_x": 716085.327197,
+        "coord_y": 3685649.44601,
+        "place_detail": null
+      }
+    ],
+    "ديرعامص": [
+      {
+        "id": 491,
+        "name_ar": "ديرعامص",
+        "caza": "Sour",
+        "coord_x": 718303.129073,
+        "coord_y": 3675258.58704,
+        "place_detail": null
+      }
+    ],
+    "Deir Aames": [
+      {
+        "id": 491,
+        "name_ar": "ديرعامص",
+        "caza": "Sour",
+        "coord_x": 718303.129073,
+        "coord_y": 3675258.58704,
+        "place_detail": null
+      }
+    ],
+    "خريبه حاصبيا": [
+      {
+        "id": 907,
+        "name_ar": "خريبة حاصبيّا",
+        "caza": "Hasbaiya",
+        "coord_x": 746214.935692,
+        "coord_y": 3691395.61217,
+        "place_detail": null
+      }
+    ],
+    "Khreibet Hasbaiya": [
+      {
+        "id": 907,
+        "name_ar": "خريبة حاصبيّا",
+        "caza": "Hasbaiya",
+        "coord_x": 746214.935692,
+        "coord_y": 3691395.61217,
+        "place_detail": null
+      }
+    ],
+    "لويزه جزين": [
+      {
+        "id": 933,
+        "name_ar": "لويزة جزين",
+        "caza": "Jezzine",
+        "coord_x": 735488.742376,
+        "coord_y": 3705676.77694,
+        "place_detail": null
+      }
+    ],
+    "Louayzet Jezzine": [
+      {
+        "id": 933,
+        "name_ar": "لويزة جزين",
+        "caza": "Jezzine",
+        "coord_x": 735488.742376,
+        "coord_y": 3705676.77694,
+        "place_detail": null
+      }
+    ],
+    "جرنايا": [
+      {
+        "id": 757,
+        "name_ar": "جرنايا",
+        "caza": "Jezzine",
+        "coord_x": 730139.019499,
+        "coord_y": 3707933.87149,
+        "place_detail": null
+      }
+    ],
+    "Jernaya": [
+      {
+        "id": 757,
+        "name_ar": "جرنايا",
+        "caza": "Jezzine",
+        "coord_x": 730139.019499,
+        "coord_y": 3707933.87149,
+        "place_detail": null
+      }
+    ],
+    "مزرعه مطحنه": [
+      {
+        "id": 1034,
+        "name_ar": "مزرعة المطحنة",
+        "caza": "Jezzine",
+        "coord_x": 733872.30886,
+        "coord_y": 3718295.67573,
+        "place_detail": null
+      }
+    ],
+    "Mazraat El-Mathane": [
+      {
+        "id": 1034,
+        "name_ar": "مزرعة المطحنة",
+        "caza": "Jezzine",
+        "coord_x": 733872.30886,
+        "coord_y": 3718295.67573,
+        "place_detail": null
+      }
+    ],
+    "مرجعيون": [
+      {
+        "id": 989,
+        "name_ar": "مرجعيون",
+        "caza": "Marjaayoun",
+        "coord_x": 741196.914247,
+        "coord_y": 3693289.8451,
+        "place_detail": null
+      }
+    ],
+    "Marjaayoun": [
+      {
+        "id": 989,
+        "name_ar": "مرجعيون",
+        "caza": "Marjaayoun",
+        "coord_x": 741196.914247,
+        "coord_y": 3693289.8451,
+        "place_detail": null
+      }
+    ],
+    "برغز": [
+      {
+        "id": 345,
+        "name_ar": "برغز",
+        "caza": "Hasbaiya",
+        "coord_x": 743966.977643,
+        "coord_y": 3699621.78145,
+        "place_detail": null
+      }
+    ],
+    "Bourghos": [
+      {
+        "id": 345,
+        "name_ar": "برغز",
+        "caza": "Hasbaiya",
+        "coord_x": 743966.977643,
+        "coord_y": 3699621.78145,
+        "place_detail": null
+      }
+    ],
+    "رميش": [
+      {
+        "id": 1326,
+        "name_ar": "رميش",
+        "caza": "Bint Jubail",
+        "coord_x": 721159.024797,
+        "coord_y": 3662021.71494,
+        "place_detail": null
+      }
+    ],
+    "Rmaich": [
+      {
+        "id": 1326,
+        "name_ar": "رميش",
+        "caza": "Bint Jubail",
+        "coord_x": 721159.024797,
+        "coord_y": 3662021.71494,
+        "place_detail": null
+      }
+    ],
+    "مكنونيه": [
+      {
+        "id": 972,
+        "name_ar": "مكنونية",
+        "caza": "Jezzine",
+        "coord_x": 735961.935307,
+        "coord_y": 3712550.51373,
+        "place_detail": null
+      }
+    ],
+    "Maknounet Jezzine": [
+      {
+        "id": 972,
+        "name_ar": "مكنونية",
+        "caza": "Jezzine",
+        "coord_x": 735961.935307,
+        "coord_y": 3712550.51373,
+        "place_detail": null
+      }
+    ],
+    "صريفا": [
+      {
+        "id": 1411,
+        "name_ar": "صريفا",
+        "caza": "Sour",
+        "coord_x": 723690.26397,
+        "coord_y": 3685075.49468,
+        "place_detail": null
+      }
+    ],
+    "Srifa": [
+      {
+        "id": 1411,
+        "name_ar": "صريفا",
+        "caza": "Sour",
+        "coord_x": 723690.26397,
+        "coord_y": 3685075.49468,
+        "place_detail": null
+      }
+    ],
+    "بسري": [
+      {
+        "id": 308,
+        "name_ar": "بسري",
+        "caza": "Jezzine",
+        "coord_x": 735312.834021,
+        "coord_y": 3718023.08344,
+        "place_detail": null
+      }
+    ],
+    "Bisri": [
+      {
+        "id": 308,
+        "name_ar": "بسري",
+        "caza": "Jezzine",
+        "coord_x": 735312.834021,
+        "coord_y": 3718023.08344,
+        "place_detail": null
+      }
+    ],
+    "كفربيت": [
+      {
+        "id": 808,
+        "name_ar": "كفربيت",
+        "caza": "Saida",
+        "coord_x": 728656.667204,
+        "coord_y": 3709087.73508,
+        "place_detail": null
+      }
+    ],
+    "Kfar Beit": [
+      {
+        "id": 808,
+        "name_ar": "كفربيت",
+        "caza": "Saida",
+        "coord_x": 728656.667204,
+        "coord_y": 3709087.73508,
+        "place_detail": null
+      }
+    ],
+    "كفور نبطيه": [
+      {
+        "id": 874,
+        "name_ar": "الكفور النبطية",
+        "caza": "Nabatiye",
+        "coord_x": 728008.317633,
+        "coord_y": 3698880.51325,
+        "place_detail": null
+      }
+    ],
+    "Kfour En-Nabatieh": [
+      {
+        "id": 874,
+        "name_ar": "الكفور النبطية",
+        "caza": "Nabatiye",
+        "coord_x": 728008.317633,
+        "coord_y": 3698880.51325,
+        "place_detail": null
+      }
+    ],
+    "خزيز": [
+      {
+        "id": 908,
+        "name_ar": "خزيز",
+        "caza": "Saida",
+        "coord_x": 723260.260502,
+        "coord_y": 3705889.94083,
+        "place_detail": null
+      }
+    ],
+    "Khzaiz": [
+      {
+        "id": 908,
+        "name_ar": "خزيز",
+        "caza": "Saida",
+        "coord_x": 723260.260502,
+        "coord_y": 3705889.94083,
+        "place_detail": null
+      }
+    ],
+    "رماديه": [
+      {
+        "id": 1324,
+        "name_ar": "رمادية",
+        "caza": "Sour",
+        "coord_x": 712285.676102,
+        "coord_y": 3676016.40229,
+        "place_detail": null
+      }
+    ],
+    "Rmadiy?": [
+      {
+        "id": 1324,
+        "name_ar": "رمادية",
+        "caza": "Sour",
+        "coord_x": 712285.676102,
+        "coord_y": 3676016.40229,
+        "place_detail": null
+      }
+    ],
+    "عرب صاليم": [
+      {
+        "id": 118,
+        "name_ar": "عرب صاليم",
+        "caza": "Nabatiye",
+        "coord_x": 733239.01309,
+        "coord_y": 3701147.24537,
+        "place_detail": null
+      }
+    ],
+    "Aarab Salim": [
+      {
+        "id": 118,
+        "name_ar": "عرب صاليم",
+        "caza": "Nabatiye",
+        "coord_x": 733239.01309,
+        "coord_y": 3701147.24537,
+        "place_detail": null
+      }
+    ],
+    "مروانيه": [
+      {
+        "id": 1088,
+        "name_ar": "مروانية",
+        "caza": "Saida",
+        "coord_x": 720411.34405,
+        "coord_y": 3704323.72182,
+        "place_detail": null
+      }
+    ],
+    "Merouaniy?": [
+      {
+        "id": 1088,
+        "name_ar": "مروانية",
+        "caza": "Saida",
+        "coord_x": 720411.34405,
+        "coord_y": 3704323.72182,
+        "place_detail": null
+      }
+    ],
+    "مغدوشه": [
+      {
+        "id": 953,
+        "name_ar": "مغدوشة",
+        "caza": "Saida",
+        "coord_x": 721864.840004,
+        "coord_y": 3711200.56665,
+        "place_detail": null
+      }
+    ],
+    "Maghdouch?": [
+      {
+        "id": 953,
+        "name_ar": "مغدوشة",
+        "caza": "Saida",
+        "coord_x": 721864.840004,
+        "coord_y": 3711200.56665,
+        "place_detail": null
+      }
+    ],
+    "حنين": [
+      {
+        "id": 616,
+        "name_ar": "حنين",
+        "caza": "Bint Jubail",
+        "coord_x": 721607.161982,
+        "coord_y": 3665228.51404,
+        "place_detail": null
+      }
+    ],
+    "Hanine": [
+      {
+        "id": 616,
+        "name_ar": "حنين",
+        "caza": "Bint Jubail",
+        "coord_x": 721607.161982,
+        "coord_y": 3665228.51404,
+        "place_detail": null
+      }
+    ],
+    "حناوي": [
+      {
+        "id": 615,
+        "name_ar": "حناوي",
+        "caza": "Sour",
+        "coord_x": 711727.632605,
+        "coord_y": 3677839.67448,
+        "place_detail": null
+      }
+    ],
+    "Hanaouay": [
+      {
+        "id": 615,
+        "name_ar": "حناوي",
+        "caza": "Sour",
+        "coord_x": 711727.632605,
+        "coord_y": 3677839.67448,
+        "place_detail": null
+      }
+    ],
+    "عباسيه": [
+      {
+        "id": 7,
+        "name_ar": "عباسية",
+        "caza": "Sour",
+        "coord_x": 709712.532422,
+        "coord_y": 3685994.26309,
+        "place_detail": null
+      }
+    ],
+    "Aabbassiyet Sour": [
+      {
+        "id": 7,
+        "name_ar": "عباسية",
+        "caza": "Sour",
+        "coord_x": 709712.532422,
+        "coord_y": 3685994.26309,
+        "place_detail": null
+      }
+    ]
+  }
+}

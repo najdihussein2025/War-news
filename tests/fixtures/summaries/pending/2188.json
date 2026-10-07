@@ -1,0 +1,88 @@
+{
+  "message_id": 2188,
+  "channel": "alichoeib1970",
+  "raw_text": "صفحة الإعلامي الشهيد علي شعيب:\n\nملخص الإعتداءات من منتصف الليل حتى الساعة:\n\nالقصف المدفعي:\nصربين\nعلي الطاهر \nحداثا\nحاريص \n\nالتفجيرات المعادية:\nبين برعشيت و كونين\nالمنصوري\n\nقنابل صوتية:\nحاريص",
+  "posted_at": "2026-09-18 05:07:03+00:00",
+  "expected": {
+    "window": {
+      "start": "2026-09-18T00:00:00+03:00",
+      "end": "2026-09-18T08:07:03+03:00",
+      "rule": "overnight:end_time_ignored"
+    },
+    "items": [
+      {
+        "condition_id": 5,
+        "primary": "صربين",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "صربين"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "علي الطاهر",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "علي الطاهر"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "حداثا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "حداثا"
+        ]
+      },
+      {
+        "condition_id": 5,
+        "primary": "حاريص",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "حاريص"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "برعشيت",
+        "secondary": "كونين",
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "بين برعشيت و كونين"
+        ]
+      },
+      {
+        "condition_id": 21,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "المنصوري"
+        ]
+      },
+      {
+        "condition_id": 10,
+        "primary": "حاريص",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "حاريص"
+        ]
+      }
+    ],
+    "leftover_tokens": [],
+    "auto_acceptable": true
+  },
+  "reviewer_notes": ""
+}
