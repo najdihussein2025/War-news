@@ -41,6 +41,7 @@ class SummaryWindow:
     rule: str
     evidence: str | None
     anchor_date: date
+    note: str | None = None
 
 
 @dataclass(frozen=True)
@@ -73,6 +74,8 @@ class ParsedSummaryItem:
     evidence_spans: tuple[EvidenceSpan, ...]
     header_text: str
     item_key: str
+    event_time: datetime | None = None
+    origin_text: str | None = None
 
 
 @dataclass(frozen=True)
