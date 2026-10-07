@@ -82,6 +82,14 @@
   - {core: "قنابل لانشر", condition_ids: [13]}
   - {core: "مروحيات اباتشي", condition_ids: [46]}
   - {core: "القنابل المتفجره", condition_ids: [13]}
+  - {core: "احراق المنازل", condition_ids: [27]}
+  - {core: "احراق منازل", condition_ids: [27]}
+  - {core: "احراق ممتلكات", condition_ids: [27]}
+  - {core: "يضرم النيران", condition_ids: [27]}
+  - {core: "قصف بالقذائف الفسفوريه", condition_ids: [7]}
+  - {core: "القذائف الفسفوريه", condition_ids: [7]}
+  - {core: "قنبله صوتيه", condition_ids: [10]}
+  - {core: "قنبله مضيئه", condition_ids: [9]}
   - {core: "قذائف دخانيه", condition_ids: [8]}
   - {core: "قنابل دخانيه", condition_ids: [8]}
   - {core: "الاعتداءات بالمحلقات", condition_ids: [13]}

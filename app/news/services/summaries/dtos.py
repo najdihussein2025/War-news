@@ -77,6 +77,20 @@ class ParsedSummaryItem:
     event_time: datetime | None = None
     origin_text: str | None = None
     status: str = "resolved"
+    # Parallel to evidence_spans: original-text span of the header each piece
+    # of evidence was read under (None when the line carries its own action).
+    header_spans: tuple[tuple[int, int] | None, ...] = ()
+    # Where the condition came from: "header", "inline" (action named on the line
+    # itself), "header+inline", "parenthetical" or "timeline".
+    condition_source: str = "header"
+
+
+@dataclass(frozen=True)
+class HeaderSpan:
+    text: str
+    start: int
+    end: int
+    status: str
 
 
 @dataclass(frozen=True)
@@ -106,3 +120,4 @@ class ParseResult:
     auto_acceptable: bool = False
     residual: tuple[SummaryResidual, ...] = field(default_factory=tuple)
     disposition: str = "residual_only"
+    headers: tuple[HeaderSpan, ...] = field(default_factory=tuple)

@@ -48,6 +48,17 @@ class HeaderDictionarySnapshot:
             return None
         return HeaderEntry(normalize_token(candidate), tuple(dict.fromkeys(condition_ids)), "approved", "header grammar")
 
+    def has_action_core(self, candidate: str) -> bool:
+        """True when any action core occurs in the text, even amid other words."""
+        value = f" {normalize_token(candidate).replace('+', ' و ')} "
+        for core in self.action_cores:
+            words = normalize_token(core.normalized_header).split()
+            first = words[0][2:] if words[0].startswith("ال") and len(words[0]) > 3 else words[0]
+            flexible = " ".join([rf"(?:ال)?{re.escape(first)}", *(re.escape(x) for x in words[1:])])
+            if re.search(rf"(?<![؀-ۿ]){flexible}(?![؀-ۿ])", value):
+                return True
+        return False
+
     def resolve(self, candidate: str) -> tuple[HeaderEntry | None, str]:
         exact, note = self.match(candidate)
         if exact is not None and exact.status == "approved":
