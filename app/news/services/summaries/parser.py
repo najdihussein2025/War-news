@@ -76,6 +76,11 @@ def _span(normalized, phrase: str, search_start: int) -> tuple[EvidenceSpan, int
     return normalized.original_span(pos,pos+len(needle)), pos+len(needle)
 
 
+def _find_in(flat: str, token: str, start: int, end: int) -> tuple[int, int]:
+    pos=flat.find(token,start,end)
+    return (pos,pos+len(token)) if pos>=0 else (start,end)
+
+
 def _timeline_parts(line: str, gazetteer: GazetteerSnapshot, headers: HeaderDictionarySnapshot,
                     anchor_date: date | None):
     hit=_TIMELINE.match(normalize_token(line))
@@ -194,12 +199,12 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
         if chosen and item[1]==chosen[-1][1]: continue
         chosen.append(item)
     chosen.sort()
-    contextual_residuals: list[tuple[str,str,str]]=[]
+    located: list[tuple[str,str,int,int]]=[]  # (kind, text, flat start, flat end)
     unresolved_headers=[]
     for hit in re.finditer(r"([^:\n]{2,100}):",flat):
         candidate=hit.group(1).strip()
         if _ACTION.search(candidate) and not any(a<=hit.start()<b or hit.end()==b for a,b,_,_ in chosen):
-            unresolved_headers.append(candidate)
+            unresolved_headers.append(candidate); located.append(("unresolved_header",candidate,hit.start(1),hit.end(1)))
     header_spans_orig=[(normalized.original_span(a,b),entry,candidate) for a,b,entry,candidate in chosen]
     sections=[]; raw_items=[]; leftovers=[]; unresolved_places=[]; ambiguous=[]; prose=[]
     qualifiers_set={normalize_token(x) for x in lexicon.get("qualifiers",[])}
@@ -252,14 +257,17 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
         # Above a header a line with neither a place nor an action (a channel
         # signature, a greeting) could never become an item, so it is not review work.
         if chosen and not _has_place(original_line,gazetteer) and not headers.has_action_core(original_line): continue
-        if len(original_line.split())>=4: prose.append(original_line)
-        else: unresolved_places.append(original_line)
+        if len(original_line.split())>=4: prose.append(original_line); located.append(("out_of_scope",original_line,line_start,line_end))
+        else: unresolved_places.append(original_line); located.append(("unresolved_place",original_line,line_start,line_end))
     for index,(start,end,entry,candidate) in enumerate(chosen):
         stop=chosen[index+1][0] if index+1<len(chosen) else len(flat)
         location_block=flat[end:stop].strip()
         header_span=(header_spans_orig[index][0].start,header_spans_orig[index][0].end)
         if entry.status == "prose":
-            for prose_line in (p.strip() for p in re.split(r"[\n،,؛;]+",location_block) if p.strip()):
+            for prose_match in re.finditer(r"[^\n،,؛;]+",flat[end:stop]):
+                prose_line=prose_match.group(0).strip()
+                if not prose_line: continue
+                prose_start=end+prose_match.start()+len(prose_match.group(0))-len(prose_match.group(0).lstrip()); prose_end=prose_start+len(prose_line)
                 parsed=_timeline_parts(prose_line,gazetteer,headers,anchor_date)
                 if parsed:
                     conditions,primary,timeline_quals,origin,event_time=parsed
@@ -274,7 +282,7 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
                         for condition_id in conditions:
                             key_material=f"{condition_id}|{primary.id}|"
                             raw_items.append(ParsedSummaryItem(condition_id,primary,None,(),primary.place_detail,1,(prose_line,),(evidence,),"inline prose",hashlib.sha256(key_material.encode()).hexdigest(),header_spans=(header_span,),condition_source="inline"))
-                    else: prose.append(prose_line)
+                    else: prose.append(prose_line); located.append(("out_of_scope",prose_line,prose_start,prose_end))
             continue
         if entry.status != "approved":
             blocked=0
@@ -284,10 +292,10 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
                     line_start=end+line_match.start()+len(line_match.group(0))-len(line_match.group(0).lstrip())
                     # A line that names its own action takes nothing from the header.
                     if not standalone(line,line_start,line_start+len(line)):
-                        contextual_residuals.append(("place_under_unresolved_header",line,candidate)); blocked+=1
+                        located.append(("place_under_unresolved_header",line,line_start,line_start+len(line))); blocked+=1
             # A barrier that blocks nothing (a channel signature, a footer) is not worth a review row.
             if blocked or entry.note!="header barrier" or _ACTION.search(candidate):
-                unresolved_headers.append(candidate)
+                unresolved_headers.append(candidate); located.append(("unresolved_header",candidate,start,end))
             continue
         section=ParsedSection(candidate,entry.condition_ids,location_block); sections.append(section)
         block_raw=flat[end:stop]
@@ -343,7 +351,7 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
                         between=embedded
                         if inline: item_conditions=inline.condition_ids; condition_source="inline"
                     else:
-                        prose.append(original_part)
+                        prose.append(original_part); located.append(("out_of_scope",original_part,part_start,part_end))
                         continue
             dash=_DASH.match(part) if not between else None
             conjunction=_CONJ.match(part) if not between and not dash else None
@@ -353,11 +361,11 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
                 lv,la=_resolve(gazetteer,left); rv,ra=_resolve(gazetteer,right)
                 if lv and rv:
                     pairs=[(lv,rv if between or dash else None)] if between or dash else [(lv,None),(rv,None)]
-                elif la or ra: ambiguous.append(original_part)
+                elif la or ra: ambiguous.append(original_part); located.append(("ambiguous_place",original_part,part_start,part_end))
             if not pairs:
                 whole,is_ambiguous=_resolve(gazetteer,part)
                 if whole: pairs=[(whole,None)]
-                elif is_ambiguous: ambiguous.append(original_part)
+                elif is_ambiguous: ambiguous.append(original_part); located.append(("ambiguous_place",original_part,part_start,part_end))
             if not pairs:
                 places,unused=_dp_places(part,gazetteer)
                 significant_unused=[u for u in unused if normalize_token(u) not in noise]
@@ -374,14 +382,17 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
                     condition_source="header+inline" if additive else "inline"
                 elif places and not significant_unused: pairs=[(p,None) for p in places]
                 elif places:
-                    if len(significant_unused)>=4: prose.append(original_part)
+                    if len(significant_unused)>=4: prose.append(original_part); located.append(("out_of_scope",original_part,part_start,part_end))
                     else:
                         pairs=[(p,None) for p in places]; leftovers.extend(significant_unused)
+                        for token in significant_unused: located.append(("leftover_token",token,*_find_in(flat,token,part_start,part_end)))
                 else:
                     significant=[u for u in part.split() if normalize_token(u) not in noise]
-                    if len(significant)>=4: prose.append(original_part)
+                    if len(significant)>=4: prose.append(original_part); located.append(("out_of_scope",original_part,part_start,part_end))
                     elif significant:
                         unresolved_places.append(original_part); leftovers.extend(significant)
+                        located.append(("unresolved_place",original_part,part_start,part_end))
+                        for token in significant: located.append(("leftover_token",token,*_find_in(flat,token,part_start,part_end)))
             evidence=normalized.original_span(part_start,part_end)
             for primary,secondary in pairs:
                 for condition_id in item_conditions:
@@ -400,13 +411,15 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
         merged[k]=replace(old,secondary_village=secondary,qualifiers=tuple(quals),reported_count=max(old.reported_count,item.reported_count),location_texts=tuple(dict.fromkeys(old.location_texts+item.location_texts)),evidence_spans=old.evidence_spans+item.evidence_spans,header_spans=old.header_spans+item.header_spans,item_key=hashlib.sha256(key_material.encode()).hexdigest())
     residual=[]
     header_table=[(span.start,span.end,candidate,entry.status) for span,entry,candidate in header_spans_orig]
-    section_header=sections[-1].header_text if sections else None
-    for kind,values in (("leftover_token",leftovers),("unresolved_header",unresolved_headers),("unresolved_place",unresolved_places),("ambiguous_place",ambiguous),("out_of_scope",prose)):
-        for value in dict.fromkeys(values):
-            span,_=_span(normalized,value,0)
-            residual.append(SummaryResidual(kind,value,section_header,(span.start,span.end)))
-    for kind,value,header in contextual_residuals:
-        span,_=_span(normalized,value,0)
+    def header_at(offset: int) -> str | None:
+        prior=[(start,text) for start,_,text,_ in header_table if start<=offset]
+        return prior[-1][1] if prior else None
+    order={"leftover_token":0,"unresolved_header":1,"unresolved_place":2,"ambiguous_place":3,"out_of_scope":4,"place_under_unresolved_header":5}
+    seen=set()
+    for kind,value,flat_start,flat_end in sorted(located,key=lambda x:(order[x[0]],x[2],x[3])):
+        span=normalized.original_span(flat_start,flat_end); header=header_at(span.start)
+        if (kind,value,header,) in seen and kind!="place_under_unresolved_header": continue
+        seen.add((kind,value,header))
         residual.append(SummaryResidual(kind,value,header,(span.start,span.end)))
     disposition="complete" if merged and not residual else "partial" if merged else "residual_only"
     header_result=tuple(HeaderSpan(text,start,end,status) for start,end,text,status in header_table)

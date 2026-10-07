@@ -40,3 +40,17 @@ def header_provenance_violations(text: str, result: ParseResult, gazetteer: Gaze
                 violations.append(f"condition {item.condition_id} at {item.primary_village.name_ar!r} read under header "
                                   f"@{header[0]} but a header-like line starts @{nearest}")
     return violations
+
+
+def residual_header_violations(text: str, result: ParseResult, gazetteer: GazetteerSnapshot,
+                               headers: HeaderDictionarySnapshot) -> list[str]:
+    """A residual entry's section_header must be the nearest header-like line above its offsets."""
+    barriers = sorted({*header_like_starts(text, gazetteer, headers), *(h.start for h in result.headers)})
+    by_start = {h.start: h.text for h in result.headers}
+    violations = []
+    for entry in result.residual:
+        nearest = max((b for b in barriers if b <= entry.offsets[0]), default=None)
+        expected = by_start.get(nearest) if nearest is not None else None
+        if entry.section_header != expected:
+            violations.append(f"{entry.kind} {entry.text!r} labelled {entry.section_header!r}, nearest header is {expected!r}")
+    return violations
