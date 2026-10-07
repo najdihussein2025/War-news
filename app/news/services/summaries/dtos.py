@@ -76,6 +76,15 @@ class ParsedSummaryItem:
     item_key: str
     event_time: datetime | None = None
     origin_text: str | None = None
+    status: str = "resolved"
+
+
+@dataclass(frozen=True)
+class SummaryResidual:
+    kind: str
+    text: str
+    section_header: str | None
+    offsets: tuple[int, int]
 
 
 @dataclass(frozen=True)
@@ -95,3 +104,5 @@ class ParseResult:
     ambiguous_places: tuple[str, ...] = field(default_factory=tuple)
     out_of_scope_lines: tuple[str, ...] = field(default_factory=tuple)
     auto_acceptable: bool = False
+    residual: tuple[SummaryResidual, ...] = field(default_factory=tuple)
+    disposition: str = "residual_only"
