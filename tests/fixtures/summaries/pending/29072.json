@@ -25,7 +25,8 @@
           "القنطره"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -39,7 +40,8 @@
           "منطقه الدبشه"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -51,7 +53,8 @@
           "برعشيت"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -65,7 +68,8 @@
           "منطقه علي الطاهر"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -79,7 +83,8 @@
           "اطراف دير سريان"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -91,7 +96,8 @@
           "دوحه كفررمان"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -106,7 +112,8 @@
           "بين ميفدون والنبطيه الفوقا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -120,7 +127,8 @@
           "وادي السلوقي لجهه ميس الجبل"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -132,7 +140,8 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -144,7 +153,107 @@
           "بين برعشيت وبيت ياحون"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
+      },
+      {
+        "condition_id": 21,
+        "primary": "مجدل زون",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "مجدلزون"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved"
+      },
+      {
+        "condition_id": 21,
+        "primary": "كفر تبنيت",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "كفرتبنيت"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved"
+      },
+      {
+        "condition_id": 21,
+        "primary": "أرنون",
+        "secondary": "كفر تبنيت",
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "بين ارنون وكفرتبنيت"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved"
+      },
+      {
+        "condition_id": 21,
+        "primary": "برعشيت",
+        "secondary": null,
+        "qualifiers": [
+          "اطراف"
+        ],
+        "reported_count": 1,
+        "location_texts": [
+          "اطراف برعشيت"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved"
+      },
+      {
+        "condition_id": 21,
+        "primary": "مركبا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "مركبا"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved"
+      },
+      {
+        "condition_id": 21,
+        "primary": "زوطر الشرقية",
+        "secondary": null,
+        "qualifiers": [
+          "اطراف"
+        ],
+        "reported_count": 1,
+        "location_texts": [
+          "اطراف زوطر الشرقيه"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved"
+      },
+      {
+        "condition_id": 21,
+        "primary": "المنصوري",
+        "secondary": "المنصوري",
+        "qualifiers": [
+          "مشاع"
+        ],
+        "reported_count": 1,
+        "location_texts": [
+          "بيوت السياد",
+          "مشاع المنصوري",
+          "بين بيوت السياد والمنصوري"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 18,
@@ -156,7 +265,8 @@
           "حداثا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 18,
@@ -168,7 +278,8 @@
           "الخيام"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 18,
@@ -182,7 +293,8 @@
           "تولين لجهه وادي الحجير"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 18,
@@ -194,9 +306,76 @@
           "زوطر الشرقيه"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       }
     ],
+    "residual": [
+      {
+        "kind": "leftover_token",
+        "text": "الطاهر+فوسفوري",
+        "section_header": "تمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          291,
+          305
+        ]
+      },
+      {
+        "kind": "unresolved_place",
+        "text": "علي الطاهر+فوسفوري",
+        "section_header": "تمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          287,
+          305
+        ]
+      },
+      {
+        "kind": "out_of_scope",
+        "text": "احراق منازل في بيت ياحون",
+        "section_header": "تمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          571,
+          595
+        ]
+      },
+      {
+        "kind": "out_of_scope",
+        "text": "قنبله صوتيه باتجاه احد رعاه المواشي في شبعا",
+        "section_header": "تمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          598,
+          641
+        ]
+      },
+      {
+        "kind": "out_of_scope",
+        "text": "قنبله صوتيه باتجاه المنصوري",
+        "section_header": "تمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          644,
+          671
+        ]
+      },
+      {
+        "kind": "out_of_scope",
+        "text": "دبابه ميركافا معاديه استهدفت اطراف تبنين",
+        "section_header": "تمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          674,
+          714
+        ]
+      },
+      {
+        "kind": "out_of_scope",
+        "text": "دبابه ميركافا معاديه استهدفت وادي المنصوري",
+        "section_header": "تمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          717,
+          759
+        ]
+      }
+    ],
+    "disposition": "partial",
     "leftover_tokens": [
       "الطاهر+فوسفوري"
     ],

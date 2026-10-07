@@ -7,7 +7,7 @@
   "channel": "mehwaralmokawma",
   "raw_text": "🌟صفحة الإعلامي الشهيد علي شعيب:\n\nملخص الإعتداءات من منتصف الليل حتى الساعة:\n\nالقصف المدفعي:\nصربين\nعلي الطاهر \nحداثا\nحاريص \n\nالتفجيرات المعادية:\nبين برعشيت و كونين\nالمنصوري\n\nقنابل صوتية:\nحاريص\nT.me/mehwaralmokawma\n                                 «مـيّـثـمـ𓂆»",
   "posted_at": "2026-09-18 05:07:32+00:00",
-  "badge": "blocked by parser",
+  "badge": "auto_acceptable",
   "expected": {
     "window": {
       "start": "2026-09-18T00:00:00+03:00",
@@ -26,7 +26,8 @@
           "صربين"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -38,7 +39,8 @@
           "علي الطاهر"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -50,7 +52,8 @@
           "حداثا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -62,7 +65,8 @@
           "حاريص"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -74,7 +78,8 @@
           "بين برعشيت و كونين"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -86,7 +91,8 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 10,
@@ -98,16 +104,15 @@
           "حاريص"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       }
     ],
-    "leftover_tokens": [
-      "T",
-      "me",
-      "mehwaralmokawma"
-    ],
+    "residual": [],
+    "disposition": "complete",
+    "leftover_tokens": [],
     "out_of_scope_lines": [],
-    "auto_acceptable": false
+    "auto_acceptable": true
   },
   "reviewer_notes": ""
 }

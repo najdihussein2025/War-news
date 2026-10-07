@@ -27,7 +27,8 @@
           "علي الطاهر"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -39,7 +40,8 @@
           "دوحه كفررمان"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -51,7 +53,8 @@
           "بين القنطره ودير سريان"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -65,7 +68,8 @@
           "مشاع المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -77,7 +81,8 @@
           "علي الطاهر"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -89,7 +94,8 @@
           "دوحه كفررمان"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -101,7 +107,8 @@
           "حداثا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -113,7 +120,8 @@
           "ميس الجبل"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -128,7 +136,8 @@
           "مشاع المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -142,7 +151,8 @@
           "اطراف شقرا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -156,7 +166,8 @@
           "اطراف ميفدون"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -170,7 +181,8 @@
           "اطراف برعشيت"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -184,7 +196,8 @@
           "اطراف بيت ياحون"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -196,7 +209,8 @@
           "حداثا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -208,7 +222,8 @@
           "برعشيت"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -223,7 +238,8 @@
           "مشاع المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -235,7 +251,8 @@
           "كفرتبنيت"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -247,7 +264,8 @@
           "حولا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -259,7 +277,8 @@
           "طلوسه"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -271,7 +290,8 @@
           "زوطر الشرقيه"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -283,7 +303,8 @@
           "الخيام"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 18,
@@ -295,7 +316,8 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 18,
@@ -307,7 +329,8 @@
           "ميس الجبل"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 18,
@@ -319,7 +342,8 @@
           "حداثا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 18,
@@ -331,7 +355,8 @@
           "زوطر الشرقيه"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 18,
@@ -343,20 +368,117 @@
           "صربين"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
+      },
+      {
+        "condition_id": 10,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "محلقه معاديه القت قنابل صوتيه علي بلده المنصوري."
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved"
       }
     ],
+    "residual": [
+      {
+        "kind": "leftover_token",
+        "text": "سدانه",
+        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          239,
+          244
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "عيتا",
+        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          504,
+          508
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "الجبل",
+        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          204,
+          209
+        ]
+      },
+      {
+        "kind": "unresolved_place",
+        "text": "سدانه عند اطراف الهباريه",
+        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          239,
+          263
+        ]
+      },
+      {
+        "kind": "unresolved_place",
+        "text": "اطراف عيتا الجبل",
+        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          498,
+          514
+        ]
+      },
+      {
+        "kind": "out_of_scope",
+        "text": "تقدم دبابتي «ميركافا» الي منطقه مشاع المنصوري",
+        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          565,
+          611
+        ]
+      },
+      {
+        "kind": "out_of_scope",
+        "text": "بالتزامن مع اعمال جرف وهدم واحراق عدد من المنازل.",
+        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          613,
+          662
+        ]
+      },
+      {
+        "kind": "out_of_scope",
+        "text": "تقدم معاد من بلده حداثا باتجاه اطراف عيتا الجبل.",
+        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          665,
+          715
+        ]
+      },
+      {
+        "kind": "out_of_scope",
+        "text": "دبابه «ميركافا» استهدفت مدينه الخيام.",
+        "section_header": "التمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          736,
+          773
+        ]
+      }
+    ],
+    "disposition": "partial",
     "leftover_tokens": [
       "سدانه",
       "عيتا",
       "الجبل"
     ],
     "out_of_scope_lines": [
-      "تقدم دبابتي الي منطقه مشاع المنصوري",
+      "تقدم دبابتي «ميركافا» الي منطقه مشاع المنصوري",
       "بالتزامن مع اعمال جرف وهدم واحراق عدد من المنازل.",
       "تقدم معاد من بلده حداثا باتجاه اطراف عيتا الجبل.",
-      "دبابه استهدفت مدينه الخيام.",
-      "محلقه معاديه القت قنابل صوتيه علي بلده المنصوري."
+      "دبابه «ميركافا» استهدفت مدينه الخيام."
     ],
     "auto_acceptable": false
   },

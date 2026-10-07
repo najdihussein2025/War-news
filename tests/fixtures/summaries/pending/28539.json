@@ -23,7 +23,8 @@
           "حداثا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -35,7 +36,8 @@
           "دوحه كفررمان"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -47,7 +49,8 @@
           "صربين"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -59,7 +62,8 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -71,7 +75,8 @@
           "وادي السلوقي"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -83,7 +88,8 @@
           "حاريص"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -95,9 +101,22 @@
           "زوطر الشرقيه"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       }
     ],
+    "residual": [
+      {
+        "kind": "out_of_scope",
+        "text": "عمليه تمشيط تنفذها قوات الاحتلال في بلده حداثا",
+        "section_header": "التفجيرات",
+        "offsets": [
+          138,
+          184
+        ]
+      }
+    ],
+    "disposition": "partial",
     "leftover_tokens": [],
     "out_of_scope_lines": [
       "عمليه تمشيط تنفذها قوات الاحتلال في بلده حداثا"

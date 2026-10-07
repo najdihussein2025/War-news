@@ -25,7 +25,8 @@
           "النبطيه الفوقا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -37,7 +38,8 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -49,7 +51,8 @@
           "القنطره"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -61,7 +64,8 @@
           "وادي السلوقي"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -73,7 +77,8 @@
           "بين زوطر الشرقيه و كفرتبنيت"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -88,7 +93,8 @@
           "سهل الخيام"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -100,7 +106,8 @@
           "كفرتبنيت"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -112,7 +119,8 @@
           "برعشيت"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -124,7 +132,8 @@
           "بيت ليف"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -136,7 +145,8 @@
           "النبطيه الفوقا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -148,7 +158,8 @@
           "زوطر الشرقيه"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -160,7 +171,8 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -172,7 +184,8 @@
           "حداثا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -184,7 +197,8 @@
           "ميس الجبل"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -196,7 +210,8 @@
           "وادي زبقين"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -208,7 +223,8 @@
           "وادي السلوقي"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -220,7 +236,8 @@
           "عدشيت القصير"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -232,7 +249,8 @@
           "بيت ياحون"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -244,7 +262,8 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -256,7 +275,8 @@
           "الطيري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -268,7 +288,8 @@
           "بيت ياحون"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -283,9 +304,94 @@
           "نهر زوطر الشرقيه"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       }
     ],
+    "residual": [
+      {
+        "kind": "leftover_token",
+        "text": "حلتا",
+        "section_header": "التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "offsets": [
+          304,
+          308
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "وادي",
+        "section_header": "التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "offsets": [
+          147,
+          151
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "مظلم-بيت",
+        "section_header": "التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "offsets": [
+          489,
+          497
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "ليف",
+        "section_header": "التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "offsets": [
+          242,
+          245
+        ]
+      },
+      {
+        "kind": "unresolved_place",
+        "text": "حلتا",
+        "section_header": "التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "offsets": [
+          304,
+          308
+        ]
+      },
+      {
+        "kind": "unresolved_place",
+        "text": "وادي مظلم-بيت ليف",
+        "section_header": "التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "offsets": [
+          484,
+          501
+        ]
+      },
+      {
+        "kind": "out_of_scope",
+        "text": "توغل قوه معاديه الي الحي الغربي في بلده حلتا و عملو علي تفتيش المنازل و اخضع بعض المواطنين من نساء و رجال الي التحقيق",
+        "section_header": "التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "offsets": [
+          503,
+          620
+        ]
+      },
+      {
+        "kind": "out_of_scope",
+        "text": "بالاضافه الي قيامه باعمال جرف في الاراضي عند اطراف البلده",
+        "section_header": "التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "offsets": [
+          622,
+          680
+        ]
+      },
+      {
+        "kind": "out_of_scope",
+        "text": "كما اقدم العدو علي اعتقال شخصين من ابناء البلده",
+        "section_header": "التفجيرات التي نفذها العدو في البلدات الجنوبيه",
+        "offsets": [
+          682,
+          729
+        ]
+      }
+    ],
+    "disposition": "partial",
     "leftover_tokens": [
       "حلتا",
       "حلتا",

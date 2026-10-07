@@ -25,7 +25,8 @@
           "بيت ياحون"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -37,7 +38,8 @@
           "برعشيت"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -49,7 +51,8 @@
           "وادي الحجير"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -61,7 +64,8 @@
           "دوحه كفررمان"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 8,
@@ -73,7 +77,8 @@
           "كفرشوبا(قذائف دخانيه)"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 18,
@@ -85,9 +90,40 @@
           "برعشيت"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       }
     ],
+    "residual": [
+      {
+        "kind": "leftover_token",
+        "text": "عيتا",
+        "section_header": "تمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          189,
+          193
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "الجبل",
+        "section_header": "تمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          194,
+          199
+        ]
+      },
+      {
+        "kind": "unresolved_place",
+        "text": "عيتا الجبل",
+        "section_header": "تمشيط بالاسلحه الرشاشه",
+        "offsets": [
+          189,
+          199
+        ]
+      }
+    ],
+    "disposition": "partial",
     "leftover_tokens": [
       "عيتا",
       "الجبل"

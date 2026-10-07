@@ -23,7 +23,8 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -35,7 +36,8 @@
           "النبطيه الفوقا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -49,7 +51,8 @@
           "اطراف زوطر الشرقيه"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -61,7 +64,8 @@
           "القنطره"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -73,7 +77,8 @@
           "وادي زبقين"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -85,7 +90,8 @@
           "وادي زبقين"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -97,7 +103,8 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -109,7 +116,8 @@
           "كفرتبنيت"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -121,7 +129,8 @@
           "ميس الجبل"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -136,7 +145,8 @@
           "اطراف تولين"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -148,7 +158,8 @@
           "بيت ليف"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -160,7 +171,8 @@
           "بين برعشيت و كونين"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -172,7 +184,8 @@
           "حداثا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -184,7 +197,8 @@
           "حاريص"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -196,7 +210,8 @@
           "بين كونين و برعشيت"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -208,7 +223,8 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -220,7 +236,8 @@
           "مجدلزون"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -232,7 +249,8 @@
           "وادي السلوقي"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 10,
@@ -244,9 +262,67 @@
           "دبين"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       }
     ],
+    "residual": [
+      {
+        "kind": "leftover_token",
+        "text": "صريين",
+        "section_header": "القنابل الصوتيه",
+        "offsets": [
+          257,
+          262
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "الخردله",
+        "section_header": "القنابل الصوتيه",
+        "offsets": [
+          313,
+          320
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "القصير",
+        "section_header": "القنابل الصوتيه",
+        "offsets": [
+          333,
+          339
+        ]
+      },
+      {
+        "kind": "unresolved_place",
+        "text": "صريين",
+        "section_header": "القنابل الصوتيه",
+        "offsets": [
+          257,
+          262
+        ]
+      },
+      {
+        "kind": "unresolved_place",
+        "text": "مجري نهر الخردله",
+        "section_header": "القنابل الصوتيه",
+        "offsets": [
+          304,
+          320
+        ]
+      },
+      {
+        "kind": "unresolved_place",
+        "text": "القصير",
+        "section_header": "القنابل الصوتيه",
+        "offsets": [
+          333,
+          339
+        ]
+      }
+    ],
+    "disposition": "partial",
     "leftover_tokens": [
       "صريين",
       "الخردله",

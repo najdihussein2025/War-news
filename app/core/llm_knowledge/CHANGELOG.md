@@ -1,5 +1,13 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-07 - Summary parser Step 1d closure
+
+URLs and decorative tail signatures are removed before segmentation without
+removing action-header guillemets such as `قنابل «لانشر»`. Header fillers now
+accept article/gender variants and movement headings route to prose sections.
+Summary acceptance is item-level: resolved items survive partial bulletins while
+typed residual entries are retained for S4/review, never silently discarded.
+
 ## 2026-10-07 - Summary parser Step 1c
 
 Summary parsing now normalises bidi/Persian marks and bullet punctuation before

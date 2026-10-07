@@ -23,7 +23,8 @@
           "- الساعه 6:28 صباحا تفجير في بلده المنصوري"
         ],
         "event_time": "2026-09-13T06:28:00+03:00",
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -38,7 +39,8 @@
           "- الساعه 6:30 صباحا تفجير جديد في بلده المنصوري-وسط البلده"
         ],
         "event_time": "2026-09-13T06:30:00+03:00",
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -53,7 +55,8 @@
           "- الساعه 7:34 صباحا للمره الثالثه تفجير في بلده المنصوري-وسط البلده"
         ],
         "event_time": "2026-09-13T07:34:00+03:00",
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -65,7 +68,8 @@
           "- الساعه 7:48 صباحا قصف مدفعي من البياضه باتجاه المنصوري"
         ],
         "event_time": "2026-09-13T07:48:00+03:00",
-        "origin_text": "البياضه"
+        "origin_text": "البياضه",
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -80,7 +84,8 @@
           "- الساعه 7:50 صباحا للمره الرابعه تفجير في بلده المنصوري-جامع البلده"
         ],
         "event_time": "2026-09-13T07:50:00+03:00",
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -95,7 +100,8 @@
           "- الساعه 10:00 صباحا قصف مدفعي استهدف المنصوري -الحي الرابع"
         ],
         "event_time": "2026-09-13T10:00:00+03:00",
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -109,9 +115,22 @@
           "- الساعه 10:30 قصف مدفعي استهدف المنصوري -المشاع"
         ],
         "event_time": "2026-09-13T10:30:00+03:00",
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       }
     ],
+    "residual": [
+      {
+        "kind": "out_of_scope",
+        "text": "- الساعه 8:48 زوارق اسرائيليه تجوب شاطئ المنصوري",
+        "section_header": null,
+        "offsets": [
+          368,
+          417
+        ]
+      }
+    ],
+    "disposition": "partial",
     "leftover_tokens": [],
     "out_of_scope_lines": [
       "- الساعه 8:48 زوارق اسرائيليه تجوب شاطئ المنصوري"

@@ -23,7 +23,8 @@
           "الخيام"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -35,7 +36,8 @@
           "كفرتبنيت"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -49,7 +51,8 @@
           "اطراف برعشيت"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -61,7 +64,8 @@
           "النبطيه الفوقا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -73,9 +77,31 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       }
     ],
+    "residual": [
+      {
+        "kind": "out_of_scope",
+        "text": "توغل قوه معاديه الي الحي الغربي في بلده حلتا و عملو علي تفتيش المنازل و اخضع بعض المواطنين من نساء و رجال الي التحقيق",
+        "section_header": "التفجيرات المعاديه",
+        "offsets": [
+          168,
+          285
+        ]
+      },
+      {
+        "kind": "out_of_scope",
+        "text": "بالاضافه الي قيامه باعمال جرف في الاراضي عند اطراف البلده",
+        "section_header": "التفجيرات المعاديه",
+        "offsets": [
+          287,
+          345
+        ]
+      }
+    ],
+    "disposition": "partial",
     "leftover_tokens": [],
     "out_of_scope_lines": [
       "توغل قوه معاديه الي الحي الغربي في بلده حلتا و عملو علي تفتيش المنازل و اخضع بعض المواطنين من نساء و رجال الي التحقيق",

@@ -23,7 +23,8 @@
           "وادي السلوقي"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -38,7 +39,8 @@
           "زوطر الشرقيه"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -52,7 +54,8 @@
           "اطراف زوطر الشرقيه وميفدون"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -64,7 +67,8 @@
           "بيت ياحون"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 18,
@@ -76,19 +80,8 @@
           "زوطر الشرقيه"
         ],
         "event_time": null,
-        "origin_text": null
-      },
-      {
-        "condition_id": 18,
-        "primary": "تولين",
-        "secondary": null,
-        "qualifiers": [],
-        "reported_count": 1,
-        "location_texts": [
-          "وادي السلوقي"
-        ],
-        "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -102,7 +95,8 @@
           "- حي الدير في بلده النبطيه الفوقا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -116,7 +110,8 @@
           "- بلده كفرتبنيت"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -130,21 +125,55 @@
           "- مرتفع علي الطاهر"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       }
     ],
+    "residual": [
+      {
+        "kind": "leftover_token",
+        "text": "الدير",
+        "section_header": "غارات من الطيران الحربي",
+        "offsets": [
+          258,
+          263
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "بلده",
+        "section_header": "غارات من الطيران الحربي",
+        "offsets": [
+          267,
+          271
+        ]
+      },
+      {
+        "kind": "out_of_scope",
+        "text": "وادي السلوقي",
+        "section_header": "غارات من الطيران الحربي",
+        "offsets": [
+          72,
+          84
+        ]
+      },
+      {
+        "kind": "out_of_scope",
+        "text": "العدو يضرم النيران في الممتلكات في بلده بيت ياحون",
+        "section_header": "غارات من الطيران الحربي",
+        "offsets": [
+          323,
+          372
+        ]
+      }
+    ],
+    "disposition": "partial",
     "leftover_tokens": [
-      "تحركات",
-      "اليات",
-      "العدو",
       "الدير",
-      "بلده",
-      "https",
-      "t",
-      "me",
-      "hashemsayed"
+      "بلده"
     ],
     "out_of_scope_lines": [
+      "وادي السلوقي",
       "العدو يضرم النيران في الممتلكات في بلده بيت ياحون"
     ],
     "auto_acceptable": false

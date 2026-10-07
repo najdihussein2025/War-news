@@ -28,7 +28,8 @@
           "القنطره لجهه تولين"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -40,7 +41,8 @@
           "وادي السلوقي"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -52,7 +54,8 @@
           "علي الطاهر"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -64,7 +67,8 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 9,
@@ -76,7 +80,8 @@
           "وادي السلوقي"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 9,
@@ -88,7 +93,8 @@
           "حولا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 18,
@@ -100,7 +106,8 @@
           "حولا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 18,
@@ -112,18 +119,45 @@
           "الخيام"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       }
     ],
+    "residual": [
+      {
+        "kind": "leftover_token",
+        "text": "مزرعه",
+        "section_header": "قنابل «لانشر»",
+        "offsets": [
+          231,
+          236
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "بسطره",
+        "section_header": "قنابل «لانشر»",
+        "offsets": [
+          237,
+          242
+        ]
+      },
+      {
+        "kind": "unresolved_place",
+        "text": "مزرعه بسطره عند اطراف كفرشوبا",
+        "section_header": "قنابل «لانشر»",
+        "offsets": [
+          231,
+          260
+        ]
+      }
+    ],
+    "disposition": "partial",
     "leftover_tokens": [
       "مزرعه",
       "بسطره",
-      "قنابل",
       "مزرعه",
-      "بسطره",
-      "T",
-      "me",
-      "mehwaralmokawma"
+      "بسطره"
     ],
     "out_of_scope_lines": [],
     "auto_acceptable": false

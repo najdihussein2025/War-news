@@ -30,18 +30,19 @@ def simulated(gaz):
     return GazetteerSnapshot(names,gaz.descriptors)
 
 def simple_item(i):
-    return {"condition_id":i.condition_id,"primary":i.primary_village.name_ar,"secondary":i.secondary_village.name_ar if i.secondary_village else None,"qualifiers":list(i.qualifiers),"reported_count":i.reported_count,"location_texts":list(i.location_texts),"event_time":i.event_time.isoformat() if i.event_time else None,"origin_text":i.origin_text}
+    return {"condition_id":i.condition_id,"primary":i.primary_village.name_ar,"secondary":i.secondary_village.name_ar if i.secondary_village else None,"qualifiers":list(i.qualifiers),"reported_count":i.reported_count,"location_texts":list(i.location_texts),"event_time":i.event_time.isoformat() if i.event_time else None,"origin_text":i.origin_text,"status":i.status}
 
 def main():
     gaz,headers,lex=load(); sim=simulated(gaz)
     rows=[json.loads(x) for x in Path("recon_output/summary_bulletins.jsonl").open(encoding="utf-8")]
-    current=[]; proposed=[]; rules=Counter(); blockers=Counter(); leftovers=Counter(); unresolved_places=Counter(); unresolved_headers=Counter()
+    current=[]; proposed=[]; rules=Counter(); blockers=Counter(); leftovers=Counter(); unresolved_places=Counter(); unresolved_headers=Counter(); residuals=Counter(); residual_texts=Counter()
     sectioned=sectioned_ok=sim_sectioned_ok=timeline=timeline_ok=sim_timeline_ok=0
     by_id={r["message_id"]:r for r in rows}
     for r in rows:
         posted=datetime.fromisoformat(r["message_datetime"]); window=resolve_window(r["text"],posted)
         a=parse_summary(r["text"],gaz,headers,lex,window.anchor_date); b=parse_summary(r["text"],sim,headers,lex,window.anchor_date)
         current.append(a); proposed.append(b); rules[window.rule]+=1
+        residuals.update(x.kind for x in a.residual); residual_texts.update((x.kind,x.text) for x in a.residual)
         is_timeline=any(i.event_time for i in a.items) or bool(a.out_of_scope_lines)
         if is_timeline: timeline+=1; timeline_ok+=a.auto_acceptable; sim_timeline_ok+=b.auto_acceptable
         else: sectioned+=1; sectioned_ok+=a.auto_acceptable; sim_sectioned_ok+=b.auto_acceptable
@@ -68,11 +69,18 @@ def main():
         if r["message_id"]==40279: continue
         i=index[r["message_id"]]; a=current[i]; b=proposed[i]; window=resolve_window(r["text"],datetime.fromisoformat(r["message_datetime"]))
         badge="auto_acceptable" if a.auto_acceptable else "blocked by aliases" if b.auto_acceptable else "blocked by parser"
-        payload={"message_id":r["message_id"],"siblings":[x for x in families[key] if x!=r["message_id"]],"channel":r.get("origin_account"),"raw_text":r["text"],"posted_at":r["message_datetime"],"badge":badge,"expected":{"window":{"start":window.start.isoformat(),"end":window.end.isoformat(),"rule":window.rule,"note":window.note},"items":[simple_item(x) for x in a.items],"leftover_tokens":list(a.leftover_tokens),"out_of_scope_lines":list(a.out_of_scope_lines),"auto_acceptable":a.auto_acceptable},"reviewer_notes":""}
+        payload={"message_id":r["message_id"],"siblings":[x for x in families[key] if x!=r["message_id"]],"channel":r.get("origin_account"),"raw_text":r["text"],"posted_at":r["message_datetime"],"badge":badge,"expected":{"window":{"start":window.start.isoformat(),"end":window.end.isoformat(),"rule":window.rule,"note":window.note},"items":[simple_item(x) for x in a.items],"residual":[{"kind":x.kind,"text":x.text,"section_header":x.section_header,"offsets":list(x.offsets)} for x in a.residual],"disposition":a.disposition,"leftover_tokens":list(a.leftover_tokens),"out_of_scope_lines":list(a.out_of_scope_lines),"auto_acceptable":a.auto_acceptable},"reviewer_notes":""}
         (pending/f"{r['message_id']}.json").write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding="utf-8")
 
     n=len(rows); cur=sum(x.auto_acceptable for x in current); simok=sum(x.auto_acceptable for x in proposed)
-    report=["# Step 1c parser coverage","","| stage | all bulletins | sectioned | timeline/prose |","|---|---:|---:|---:|",f"| after 1b | 30/{n} (13.6%) | 30/138 (21.7%) | 0/83 (0.0%) |",f"| after 1c, current snapshot | {cur}/{n} ({cur/n:.1%}) | {sectioned_ok}/{sectioned} ({sectioned_ok/sectioned:.1%}) | {timeline_ok}/{timeline} ({timeline_ok/timeline:.1%}) |",f"| after 1c, approved aliases simulated | {simok}/{n} ({simok/n:.1%}) | {sim_sectioned_ok}/{sectioned} ({sim_sectioned_ok/sectioned:.1%}) | {sim_timeline_ok}/{timeline} ({sim_timeline_ok/timeline:.1%}) |","",f"- Timeline/prose lines still out of scope: {sum(len(x.out_of_scope_lines) for x in current)}","","## Remaining blockers by class",""]
+    def count(kind,values): return sum(x.disposition==kind for x in values)
+    def candidates(values): return sum(len(x.items)+len(x.residual) for x in values)
+    def places(values): return sum(any(x.kind in {'unresolved_place','ambiguous_place'} for x in r.residual) for r in values)
+    times=sum(1 for r in current for x in r.items if x.event_time)
+    sizes=sorted(len(x.residual) for x in current); median=sizes[len(sizes)//2]; p90=sizes[min(len(sizes)-1,int(len(sizes)*.9))]
+    report=["# Step 1d parser coverage","","| metric | current DB | aliases simulated |","|---|---:|---:|",f"| bulletins complete | {count('complete',current)} | {count('complete',proposed)} |",f"| bulletins partial | {count('partial',current)} | {count('partial',proposed)} |",f"| bulletins residual_only | {count('residual_only',current)} | {count('residual_only',proposed)} |",f"| **resolved items / all item candidates** | {sum(len(x.items) for x in current)}/{candidates(current)} | {sum(len(x.items) for x in proposed)}/{candidates(proposed)} |",f"| residual entries total, by kind | {sum(residuals.values())}: {dict(residuals)} | {sum(len(x.residual) for x in proposed)} |",f"| residual entries per bulletin (median, p90) | {median}, {p90} | — |",f"| timeline events with exact time | {times} | {sum(1 for r in proposed for x in r.items if x.event_time)} |","",f"- S4 workload: {places(current)} bulletins have a place-like residual under an approved header.","","## Top residual texts by kind",""]
+    report += [f"- `{kind}` / `{text}`: {count}" for (kind,text),count in residual_texts.most_common(20)]
+    report += ["","## Remaining blockers by class",""]
     report += [f"- {k}: {v}" for k,v in blockers.most_common()]+["","## Window rules",""]+[f"- {k}: {v}" for k,v in rules.most_common()]
     for title,data in (("Top leftover tokens",leftovers),("Top unresolved places",unresolved_places),("Unresolved headers",unresolved_headers)):
         report += ["",f"## {title}",""]+[f"- `{k}`: {v}" for k,v in data.most_common(30)]

@@ -23,7 +23,8 @@
           "محيط علي الطاهر"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -35,7 +36,8 @@
           "النبطيه الفوقا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -47,7 +49,8 @@
           "عربصاليم"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -59,7 +62,8 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -71,7 +75,8 @@
           "حاريص"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -83,7 +88,8 @@
           "القنطره"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -95,7 +101,8 @@
           "وادي الحجير"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 7,
@@ -107,7 +114,8 @@
           "وادي الحجير"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -119,7 +127,8 @@
           "دوحه كفررمان"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 7,
@@ -131,7 +140,8 @@
           "دوحه كفررمان"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -143,7 +153,8 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 7,
@@ -155,7 +166,8 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 7,
@@ -167,7 +179,8 @@
           "علي الطاهر مدفعي+فوسفوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -179,7 +192,8 @@
           "علي الطاهر مدفعي+فوسفوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 7,
@@ -191,7 +205,8 @@
           "النبطيه الفوقا مدفعي+فوسفوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -203,7 +218,8 @@
           "النبطيه الفوقا مدفعي+فوسفوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -215,7 +231,8 @@
           "ديرسريان"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 7,
@@ -227,7 +244,8 @@
           "ديرسريان"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -239,7 +257,8 @@
           "وادي زبقين"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 7,
@@ -251,7 +270,8 @@
           "وادي زبقين"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -263,7 +283,8 @@
           "القنطره"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 7,
@@ -275,7 +296,8 @@
           "القنطره"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -287,7 +309,8 @@
           "الخيام"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 7,
@@ -299,7 +322,8 @@
           "الخيام"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -311,7 +335,8 @@
           "كفرشوبا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 7,
@@ -323,7 +348,8 @@
           "كفرشوبا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -335,7 +361,8 @@
           "حولا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 7,
@@ -347,7 +374,8 @@
           "حولا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -359,7 +387,8 @@
           "بني حيان"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 7,
@@ -371,7 +400,8 @@
           "بني حيان"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -383,7 +413,8 @@
           "وادي السلوقي"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 7,
@@ -395,7 +426,8 @@
           "وادي السلوقي"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 5,
@@ -407,7 +439,8 @@
           "زوطر الشرقيه"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 7,
@@ -419,7 +452,8 @@
           "زوطر الشرقيه"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 46,
@@ -433,7 +467,8 @@
           "حي المسلخ- النبطيه"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -445,7 +480,8 @@
           "المنصوري"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -457,7 +493,8 @@
           "كفرتبنيت"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -469,7 +506,8 @@
           "بيت ليف"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -481,7 +519,8 @@
           "حولا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -493,7 +532,8 @@
           "حداثا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -505,7 +545,8 @@
           "وادي السلوقي"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -517,7 +558,8 @@
           "مركبا"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -529,7 +571,8 @@
           "ارنون"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
       },
       {
         "condition_id": 21,
@@ -541,13 +584,169 @@
           "طلوسه"
         ],
         "event_time": null,
-        "origin_text": null
+        "origin_text": null,
+        "status": "resolved"
+      },
+      {
+        "condition_id": 18,
+        "primary": "المنصوري",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "المنصوري"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved"
+      },
+      {
+        "condition_id": 18,
+        "primary": "زوطر الشرقية",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "زوطر الشرقيه"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved"
+      },
+      {
+        "condition_id": 18,
+        "primary": "بيت ياحون",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "بيت ياحون"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved"
+      },
+      {
+        "condition_id": 18,
+        "primary": "كفر تبنيت",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "كفرتبنيت"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved"
+      },
+      {
+        "condition_id": 18,
+        "primary": "حداثا",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "حداثا"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved"
+      },
+      {
+        "condition_id": 18,
+        "primary": "ميس الجبل",
+        "secondary": null,
+        "qualifiers": [],
+        "reported_count": 1,
+        "location_texts": [
+          "ميس الجبل"
+        ],
+        "event_time": null,
+        "origin_text": null,
+        "status": "resolved"
       }
     ],
+    "residual": [
+      {
+        "kind": "leftover_token",
+        "text": "الرويس-النبطيه",
+        "section_header": "-تمشيط بالاسلحهالرشاشه",
+        "offsets": [
+          470,
+          484
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "احراق",
+        "section_header": "-تمشيط بالاسلحهالرشاشه",
+        "offsets": [
+          595,
+          600
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "المنازل",
+        "section_header": "-تمشيط بالاسلحهالرشاشه",
+        "offsets": [
+          601,
+          608
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "عيتا",
+        "section_header": "-تمشيط بالاسلحهالرشاشه",
+        "offsets": [
+          647,
+          651
+        ]
+      },
+      {
+        "kind": "leftover_token",
+        "text": "الجبل",
+        "section_header": "-تمشيط بالاسلحهالرشاشه",
+        "offsets": [
+          652,
+          657
+        ]
+      },
+      {
+        "kind": "unresolved_place",
+        "text": "حي الرويس-النبطيه",
+        "section_header": "-تمشيط بالاسلحهالرشاشه",
+        "offsets": [
+          467,
+          484
+        ]
+      },
+      {
+        "kind": "unresolved_place",
+        "text": "-احراق المنازل",
+        "section_header": "-تمشيط بالاسلحهالرشاشه",
+        "offsets": [
+          594,
+          608
+        ]
+      },
+      {
+        "kind": "unresolved_place",
+        "text": "عيتا الجبل",
+        "section_header": "-تمشيط بالاسلحهالرشاشه",
+        "offsets": [
+          647,
+          657
+        ]
+      }
+    ],
+    "disposition": "partial",
     "leftover_tokens": [
       "الرويس-النبطيه",
       "احراق",
-      "المنازل"
+      "المنازل",
+      "عيتا",
+      "الجبل"
     ],
     "out_of_scope_lines": [],
     "auto_acceptable": false
