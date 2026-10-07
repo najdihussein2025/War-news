@@ -7,7 +7,7 @@ from datetime import date, datetime, time
 from typing import Iterable
 from zoneinfo import ZoneInfo
 
-from .dtos import EvidenceSpan, HeaderEntry, ParseResult, ParsedSection, ParsedSummaryItem, VillageRef
+from .dtos import EvidenceSpan, HeaderEntry, ParseResult, ParsedSection, ParsedSummaryItem, SummaryResidual, VillageRef
 from .gazetteer import GazetteerSnapshot
 from .headers import HeaderDictionarySnapshot
 from .normalize import normalize_summary_text, normalize_token
@@ -18,9 +18,24 @@ _BETWEEN = re.compile(r"^بين\s+(.+?)\s*(?:\s+و\s*|\s*[-–—]\s*)(.+)$")
 _DASH = re.compile(r"^(.+?)\s*[-–—]\s*(.+)$")
 _CONJ = re.compile(r"^(.+?)\s+و\s*(.+)$")
 _SUFFIX = re.compile(r"\s+(لجهه|جهه|عند|قرب|باتجاه)\s+(.+)$")
-_PROSE_HEADER = re.compile(r"^(?:اعتداءات\s+اخري|التحركات\s+الاسرائيليه)$")
+_PROSE_HEADER = re.compile(r"^(?:اعتداءات\s+اخري|التحركات\s+الاسرائيليه|تحركات\s+اليات\s+العدو|تحركات\s+واليات\s+العدو|الاعتداءات\s+والتحركات)$")
 _TIMELINE = re.compile(r"^(?:الساعه\s+)?(\d{1,2})[:٫](\d{1,2})\s*(صباحا|فجرا|ظهرا|عصرا|مساء|ليلا)?\s+(.+)$")
 BEIRUT = ZoneInfo("Asia/Beirut")
+
+
+def _preclean_text(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictionarySnapshot) -> str:
+    """Remove true tail signatures/URLs before normalization, preserving syntax."""
+    text=re.sub(r"(?:https?://|(?:www\.|t\.me/))\S+", " ", text, flags=re.I)
+    def guillemet(match: re.Match[str]) -> str:
+        before=text[max(0,match.start()-32):match.start()]
+        content=match.group(0)[1:-1]
+        after=text[match.end():]
+        at_tail=not after.strip() or not after.split("\n",1)[0].strip()
+        header_context=headers.match_grammar(before.rsplit("\n",1)[-1].strip()+" "+content)
+        if at_tail and not gazetteer.lookup(content) and not header_context:
+            return " "*len(match.group(0))
+        return match.group(0)
+    return re.sub(r"«.*?»",guillemet,text,flags=re.S)
 
 
 def _resolve(gazetteer: GazetteerSnapshot, value: str) -> tuple[VillageRef | None, bool]:
@@ -97,7 +112,8 @@ def _inline_parts(line: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
 
 def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictionarySnapshot,
                   lexicon: dict, anchor_date: date | None = None) -> ParseResult:
-    text=re.sub(r"«.*?»",lambda m:m.group(0) if gazetteer.lookup(m.group(0)[1:-1]) else " "*len(m.group(0)),text,flags=re.S)
+    """Parse summaries without loss: resolved items reconcile; residual is for S4/review."""
+    text=_preclean_text(text,gazetteer,headers)
     normalized = normalize_summary_text(text)
     flat = normalized.text
     header_hits: list[tuple[int,int,object,str]]=[]
@@ -181,8 +197,7 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
                     key_material=f"{condition_id}|{primary.id}|{event_time.isoformat()}"
                     raw_items.append(ParsedSummaryItem(condition_id,primary,None,timeline_quals,primary.place_detail,1,(original_part,),(evidence,),"timeline",hashlib.sha256(key_material.encode()).hexdigest(),event_time,origin))
                 continue
-            part=re.sub(r"https?://\S+|(?:www\.)?t\.me/\S+", "", original_part, flags=re.I)
-            part=re.sub(r"«.*?»\s*$", "", part, flags=re.S).strip()
+            part=original_part.replace("«", "").replace("»", "").strip()
             for phrase in lexicon.get("noise_phrases",[]):
                 part=part.replace(normalize_token(phrase)," ")
             part=re.sub(r"[^\u0600-\u06ffA-Za-z0-9\s()×x+\-–—]", " ", part)
@@ -267,8 +282,7 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
                     key_material=f"{condition_id}|{primary.id}|{event_time.isoformat()}"
                     raw_items.append(ParsedSummaryItem(condition_id,primary,None,timeline_quals,primary.place_detail,1,(original_line,),(evidence,),"timeline",hashlib.sha256(key_material.encode()).hexdigest(),event_time,origin))
                 continue
-            line=re.sub(r"https?://\S+|(?:www\.)?t\.me/\S+", "", original_line, flags=re.I)
-            line=re.sub(r"«[^»]{1,40}»\s*$", "", line).strip()
+            line=original_line.replace("«", "").replace("»", "").strip()
             line,count=_count(line)
             embedded=re.search(r"(?:^|\s)بين\s+(.+?)\s+و\s*(.+)$",line)
             if embedded:
@@ -304,5 +318,11 @@ def parse_summary(text: str, gazetteer: GazetteerSnapshot, headers: HeaderDictio
             quals.append(f"secondary:{item.secondary_village.name_ar}")
         key_material=f"{item.condition_id}|{item.primary_village.id}|{'|'.join(sorted(quals))}"
         merged[k]=replace(old,secondary_village=secondary,qualifiers=tuple(quals),reported_count=max(old.reported_count,item.reported_count),location_texts=tuple(dict.fromkeys(old.location_texts+item.location_texts)),evidence_spans=old.evidence_spans+item.evidence_spans,item_key=hashlib.sha256(key_material.encode()).hexdigest())
-    acceptable=not(any((leftovers,unresolved_headers,unresolved_places,ambiguous,prose))) and bool(merged)
-    return ParseResult(tuple(sections),tuple(merged.values()),tuple(leftovers),tuple(dict.fromkeys(unresolved_headers)),tuple(dict.fromkeys(unresolved_places)),tuple(dict.fromkeys(ambiguous)),tuple(dict.fromkeys(prose)),acceptable)
+    residual=[]
+    section_header=sections[-1].header_text if sections else None
+    for kind,values in (("leftover_token",leftovers),("unresolved_header",unresolved_headers),("unresolved_place",unresolved_places),("ambiguous_place",ambiguous),("out_of_scope",prose)):
+        for value in dict.fromkeys(values):
+            span,_=_span(normalized,value,0)
+            residual.append(SummaryResidual(kind,value,section_header,(span.start,span.end)))
+    disposition="complete" if merged and not residual else "partial" if merged else "residual_only"
+    return ParseResult(tuple(sections),tuple(merged.values()),tuple(leftovers),tuple(dict.fromkeys(unresolved_headers)),tuple(dict.fromkeys(unresolved_places)),tuple(dict.fromkeys(ambiguous)),tuple(dict.fromkeys(prose)),disposition=="complete",tuple(residual),disposition)

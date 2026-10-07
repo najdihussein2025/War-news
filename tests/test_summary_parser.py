@@ -97,6 +97,27 @@ def test_every_action_core_accepts_article_and_fillers():
         bare=raw[2:] if raw.startswith('ال') else raw
         for variant in (bare,'ال'+bare,f'{bare} المعادي',f'التي نفذها العدو {bare}',f'{bare} من قصف مدفعي'):
             assert h.match_grammar(variant), (raw,variant)
+
+def test_real_url_tails_removed_before_segment_cleanup():
+    p=parse('قنابل «لانشر»:\nالخيام\nT.me/mehwaralmokawma\n«جـھ,آد𓂆»\nhttps://t.me/hashemsayed\nwww.example.test')
+    assert [(i.condition_id,i.primary_village.name_ar) for i in p.items]==[(13,'الخيام')]
+    assert not p.residual
+
+def test_guillemets_preserve_lanchar_header_and_merkaeva_prose():
+    header=parse('قنابل «لانشر»:\nالخيام')
+    prose=parse('اعتداءات اخرى:\nدبابة «ميركافا» استهدفت مدينة الخيام')
+    assert header.items[0].condition_id==13
+    assert prose.disposition=='residual_only' and any(r.kind=='out_of_scope' for r in prose.residual)
+
+def test_filler_variants_literal_typo_and_prose_headers():
+    h=default_header_dictionary()
+    assert h.match_grammar('تفجيرات معاديه') and h.match_grammar('الغارات الحربيه المعاديه')
+    p=parse('-تمشيط بالاسلحهالرشاشه:\nالخيام\nتحركات واليات العدو:\nالمنصوري')
+    assert p.items[0].condition_id==18 and p.out_of_scope_lines
+
+def test_item_level_disposition_preserves_resolved_items_and_residual():
+    p=parse('القصف المدفعي:\nالخيام\nمكان غامض طويل جدا')
+    assert p.items and p.disposition=='partial' and p.residual and not p.auto_acceptable
 def test_pure_imports_do_not_load_sqlalchemy_or_settings():
     files=['normalize.py','detection.py','window.py','parser.py','headers.py']
     source='\n'.join((Path('app/news/services/summaries')/name).read_text(encoding='utf-8') for name in files)
