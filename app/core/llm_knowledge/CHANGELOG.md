@@ -674,7 +674,7 @@ example; copy 2 was the only one with the CNRS fire safety rule. Commit
 `109a2f7` also wrote the air-violation exclusion lines with `"?? ?????? ?????? ?????"`
 and `"?????? ??????"` instead of Arabic (they were never clean in git). In
 `rules/tier1_multi_village.md` the Talloussa/Beit Yahoun example from `4edc7f0`
-carried double-encoded text (`ØªÙ…Ø´ÙŠØ·`).
+carried double-encoded Arabic text (UTF-8 bytes re-decoded as cp1252).
 
 **Rule / knowledge files changed:**
 - `rules/tier1_general_prompt.md`: one copy, copy 2's structure and complete
