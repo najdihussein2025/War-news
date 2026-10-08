@@ -22,3 +22,9 @@ The named scripts were introduced/changed on Aug 17, Sep 17, Sep 24, and Oct 5,
 but none of their committed dates aligns with a cluster conclusively. The large
 Sep 2 bulk cluster is the strongest evidence of an older untracked/manual
 rematerialization or direct database operation. No data was changed.
+
+The single-second, single-channel clusters at Aug 26 06:53, Sep 2 08:29,
+Sep 9 10:10, Sep 22 04:52, and Sep 23 09:12 match the per-raw-message
+reprocess/supersession pattern. They are therefore likely
+`RAW_MESSAGE_SOFT_DELETE (pre-audit)`; the Sep 2 09:00–10:50 cluster remains
+an unknown bulk operation.

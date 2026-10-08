@@ -4,8 +4,8 @@ import { useSearchParams } from "react-router-dom";
 import { Button, ConfirmDialog, DataTable, Dialog, EmptyState, Input, type DataTableColumn } from "../../../components/ui";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { formatDateTime } from "../../../lib/formatters";
-import { getRejectedNews, getRejectedNewsById, restoreRejectedNews } from "../api";
-import type { RejectedNewsItem } from "../types";
+import { getRejectedNews, getRejectedNewsById, restoreRejectedNews, getRejectedIncidents, restoreRejectedIncident } from "../api";
+import type { RejectedNewsItem, RejectedIncident } from "../types";
 
 const PAGE_SIZE = 25;
 
@@ -36,6 +36,7 @@ export const RejectedNewsPage = () => {
   );
   const [reasonItem, setReasonItem] = useState<RejectedNewsItem | null>(null);
   const [restoreItem, setRestoreItem] = useState<RejectedNewsItem | null>(null);
+  const [tab, setTab] = useState<"news" | "incidents">("news");
   const offset = (page - 1) * PAGE_SIZE;
   const list = useQuery({
     queryKey: ["rejected-news", PAGE_SIZE, offset, search],
@@ -55,6 +56,8 @@ export const RejectedNewsPage = () => {
       await queryClient.invalidateQueries({ queryKey: ["incidents"] });
     },
   });
+  const rejectedIncidents = useQuery({ queryKey: ["rejected-incidents"], queryFn: getRejectedIncidents, enabled: tab === "incidents" });
+  const restoreIncident = useMutation({ mutationFn: restoreRejectedIncident, onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rejected-incidents"] }) });
 
   const columns: Array<DataTableColumn<RejectedNewsItem>> = [
     {
@@ -143,6 +146,18 @@ export const RejectedNewsPage = () => {
         </p>
       </div>
     </section>
+    <div className="flex gap-2 border-b border-border pb-3"><Button variant={tab === "news" ? "primary" : "secondary"} onClick={() => setTab("news")}>Rejected news</Button><Button variant={tab === "incidents" ? "primary" : "secondary"} onClick={() => setTab("incidents")}>حوادث مرفوضة / Rejected incidents</Button></div>
+    {tab === "incidents" ? <DataTable
+      columns={[
+        { key: "village", header: "Village", render: (row: RejectedIncident) => row.village ?? "—" },
+        { key: "condition", header: "Action", render: (row: RejectedIncident) => row.condition ?? "—" },
+        { key: "event_date", header: "Date", render: (row: RejectedIncident) => row.event_date },
+        { key: "decision_reason", header: "Reason", render: (row: RejectedIncident) => <StatusBadge label={row.decision_reason} variant="danger" /> },
+        { key: "note", header: "Note", render: (row: RejectedIncident) => <span title={row.note ?? ""} className="block max-w-sm truncate" dir="rtl">{row.note ?? "—"}</span> },
+      ]}
+      rows={rejectedIncidents.data?.items ?? []} getRowKey={(row) => row.id} loading={rejectedIncidents.isLoading} error={rejectedIncidents.isError}
+      actions={(row) => <Button onClick={() => restoreIncident.mutate(row.id)} isLoading={restoreIncident.isPending}>Restore</Button>}
+    /> : <>
 
     <section className="rounded-xl border border-border bg-surface-raised p-4 shadow-[0_1px_2px_rgba(11,34,54,0.04)] sm:p-5">
       <label className="mb-2 block text-small font-semibold text-text-primary" htmlFor="rejected-news-search">
@@ -296,6 +311,6 @@ export const RejectedNewsPage = () => {
         )}
       </Dialog>
     ) : null}
-    {restoreItem ? <ConfirmDialog title="Move report to incidents?" description="This overrides the rejection and sends the report back through extraction, village matching, condition matching, and duplicate checking. It will appear in Incidents after processing succeeds." confirmLabel="Move to incidents" isLoading={restore.isPending} onCancel={() => setRestoreItem(null)} onConfirm={() => restore.mutateAsync(restoreItem.id)} /> : null}
+    {restoreItem ? <ConfirmDialog title="Move report to incidents?" description="This overrides the rejection and sends the report back through extraction, village matching, condition matching, and duplicate checking. It will appear in Incidents after processing succeeds." confirmLabel="Move to incidents" isLoading={restore.isPending} onCancel={() => setRestoreItem(null)} onConfirm={() => restore.mutateAsync(restoreItem.id)} /> : null}</>}
   </div>;
 };

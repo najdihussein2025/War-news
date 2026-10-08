@@ -13,6 +13,7 @@ import type {
   RejectedNewsItem,
   RejectedNewsListResponse,
   FilteredNewsListResponse,
+  RejectedIncidentListResponse,
 } from "./types";
 
 export const getRejectedNews = async (limit: number, offset: number, search: string): Promise<RejectedNewsListResponse> => {
@@ -28,6 +29,9 @@ export const getRejectedNewsById = async (id: number): Promise<RejectedNewsItem>
 export const restoreRejectedNews = async (id: number): Promise<void> => {
   await apiClient.post(`/rejected-news/${id}/restore`);
 };
+
+export const getRejectedIncidents = async (): Promise<RejectedIncidentListResponse> => (await apiClient.get("/rejected-incidents")).data;
+export const restoreRejectedIncident = async (id: string): Promise<void> => { await apiClient.post(`/rejected-incidents/${id}/restore`); };
 
 export type FilteredNewsFilters = {
   limit: number;

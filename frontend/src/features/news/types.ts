@@ -262,6 +262,9 @@ export type RejectedNewsListResponse = {
   offset: number;
 };
 
+export type RejectedIncident = { id: string; village: string | null; condition: string | null; event_date: string; source_name: string | null; decision_reason: string; decision_ref_incident_id: string | null; note: string | null };
+export type RejectedIncidentListResponse = { items: RejectedIncident[]; total: number };
+
 export type FilteredNewsItem = {
   id: number;
   incident_id: string | null;
