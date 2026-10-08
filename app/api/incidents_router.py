@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Literal
 from uuid import UUID
 
@@ -26,6 +26,10 @@ from app.news.dtos import (
     WorkbookImportSummaryDTO,
 )
 from app.news.repositories import IncidentRepository
+from app.news.models import Incident, IncidentOrigin
+from app.news.services.incidents.soft_delete import soft_delete_incident
+from app.news.services.summaries.decision_reasons import append_note, note
+from sqlalchemy import select
 from app.news.services import IncidentConflictError, IncidentNotFoundError, IncidentService, IncidentWorkbookService
 from app.news.services.realtime.incident_event_stream import incident_event_stream
 from app.news.services.incidents.imported_incident_enrichment import enrich_imported_incidents
@@ -83,6 +87,8 @@ def list_incidents(
     has_casualties: bool = Query(default=False),
     sort_order: Literal["newest", "oldest"] = Query(default="newest"),
     group_by: Literal["raw_message"] | None = Query(default=None),
+    summary_added: bool = Query(default=False),
+    decision_reason: str | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ) -> IncidentListResponse:
@@ -102,6 +108,8 @@ def list_incidents(
         has_casualties=has_casualties,
         sort_order=sort_order,
         group_by=group_by,
+        summary_added=summary_added,
+        decision_reason=decision_reason,
     )
     return IncidentService(IncidentRepository(db)).list_all(params)
 
@@ -282,6 +290,24 @@ def delete_incident(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except IncidentConflictError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+
+@router.post("/{incident_id}/reject-summary", status_code=status.HTTP_204_NO_CONTENT)
+def reject_summary_incident(
+    incident_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> None:
+    """Reject a summary-created row without reusing the generic delete reason."""
+    incident = db.scalar(select(Incident).where(Incident.id == incident_id, Incident.is_deleted.is_(False)).with_for_update())
+    if incident is None or incident.origin != IncidentOrigin.summary:
+        raise HTTPException(status_code=404, detail="Active summary incident not found.")
+    now = date.today().isoformat()
+    incident.decision_reason = "REJECTED_BY_ADMIN"
+    incident.decided_at = datetime.now(timezone.utc)
+    incident.note = append_note(incident.note, note("REJECTED_BY_ADMIN", user=current_user.email, decided_date=now))
+    soft_delete_incident(db, incident, reason="REJECTED_BY_ADMIN", performed_by=current_user.id)
+    db.commit()
 
 
 @router.post("/{incident_id}/edit-lock", response_model=IncidentDetailDTO)

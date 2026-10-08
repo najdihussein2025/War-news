@@ -59,7 +59,7 @@ def test_pipeline_duplicate_for_raw_message_id_retires_incident() -> None:
     assert db.added[-1] is incident
     [audit] = [row for row in db.added if isinstance(row, IncidentUpdate)]
     assert audit.action == UpdateAction.delete
-    assert audit.new_values["deleted_reason"] == "cluster_subsumption"
+    assert audit.new_values["deleted_reason"] == "RAW_MESSAGE_SOFT_DELETE"
     assert db.flush_calls == 1
 
 

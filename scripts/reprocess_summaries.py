@@ -37,9 +37,11 @@ from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
 from app.core.logging_config import configure_logging
-from app.news.models import Incident, IncidentOrigin, MessageStatus, RawMessage
+from app.news.models import Incident, IncidentOrigin, MessageStatus, RawMessage, UpdateAction
 from app.news.models.summary_bulletin import SummaryBulletin, SummaryItem, SummaryResolution
-from app.news.repositories.incident_repository import IncidentRepository
+from app.news.services.incidents.incident_change_log import record_incident_change
+from app.news.services.incidents.soft_delete import soft_delete_incident
+from app.news.services.summaries.decision_reasons import append_note, note as decision_note
 from app.news.services.summaries.condition_families import ConditionFamilies, load_condition_families
 from app.news.services.summaries.intake_service import intake_summary
 from app.news.services.summaries.reconcile_service import reconcile_summary
@@ -57,6 +59,7 @@ class OldIncidentRow:
     condition_id: int | None
     classification: OldIncidentClass
     detail: str
+    was_deleted_without_reason: bool = False
 
 
 @dataclass
@@ -73,15 +76,13 @@ class MessageResult:
 
 
 def select_candidate_messages(session: Session, since: date, until: date, limit: int | None) -> list[int]:
-    """Raw messages in range with no summary row yet, oldest first."""
-    already_summary = select(SummaryBulletin.raw_message_id)
+    """All possible bulletins in order, including earlier summary rows needing repair."""
     query = (
         select(RawMessage.id)
         .where(
             RawMessage.raw_text.is_not(None),
             RawMessage.message_datetime >= datetime.combine(since, datetime.min.time(), tzinfo=timezone.utc),
             RawMessage.message_datetime < datetime.combine(until, datetime.min.time(), tzinfo=timezone.utc) + timedelta(days=1),
-            RawMessage.id.not_in(already_summary),
         )
         .order_by(RawMessage.message_datetime.asc(), RawMessage.id.asc())
     )
@@ -96,18 +97,20 @@ def _old_path_incidents(session: Session, raw_message_id: int) -> list[Incident]
             select(Incident).where(
                 Incident.raw_message_id == raw_message_id,
                 Incident.origin == IncidentOrigin.live,
-                Incident.is_deleted.is_(False),
+                # Include historical deletes with no reason so they can be classified
+                # and either retained-with-a-decision or restored in place.
+                (Incident.is_deleted.is_(False) | Incident.deleted_reason.is_(None)),
             )
         )
     )
 
 
-def _other_live_match_exists(
+def _other_live_match(
     session: Session, *, village_id: int | None, condition_id: int | None, event_date: date,
     exclude_raw_message_id: int, families: ConditionFamilies, tolerance_days: int = 1,
-) -> bool:
+) -> Incident | None:
     if village_id is None or condition_id is None:
-        return False
+        return None
     rows = session.scalars(
         select(Incident).where(
             Incident.village_id == village_id,
@@ -119,7 +122,7 @@ def _other_live_match_exists(
             Incident.event_date <= event_date + timedelta(days=tolerance_days),
         )
     ).all()
-    return bool(rows)
+    return rows[0] if rows else None
 
 
 def classify_old_incidents(
@@ -132,18 +135,19 @@ def classify_old_incidents(
     }
     rows: list[OldIncidentRow] = []
     for incident in _old_path_incidents(session, raw_message.id):
-        if _other_live_match_exists(
+        duplicate = _other_live_match(
             session, village_id=incident.village_id, condition_id=incident.condition_id,
             event_date=incident.event_date, exclude_raw_message_id=raw_message.id, families=families,
-        ):
+        )
+        if duplicate is not None:
             rows.append(OldIncidentRow(str(incident.id), incident.village_id, incident.condition_id,
-                "duplicate_of_live", "another live incident from a different message already covers this event"))
+                "duplicate_of_live", f"another live incident ({duplicate.id}) from a different message already covers this event", incident.is_deleted and incident.deleted_reason is None))
         elif (incident.village_id, incident.condition_id) in parsed_pairs:
             rows.append(OldIncidentRow(str(incident.id), incident.village_id, incident.condition_id,
-                "unique_correct", "matches a parsed summary item; kept active so reconciliation links it"))
+                "unique_correct", "matches a parsed summary item; kept active so reconciliation links it", incident.is_deleted and incident.deleted_reason is None))
         else:
             rows.append(OldIncidentRow(str(incident.id), incident.village_id, incident.condition_id,
-                "wrong", "village/condition is not among the parsed items"))
+                "wrong", "village/condition is not among the parsed items", incident.is_deleted and incident.deleted_reason is None))
     return rows
 
 
@@ -159,36 +163,73 @@ def process_message(session: Session, raw_message_id: int, *, apply: bool, famil
     try:
         raw_message = session.get(RawMessage, raw_message_id)
         assert raw_message is not None
-        intake = run_coroutine_sync(intake_summary(session, raw_message))
-        if intake.outcome in FALLBACK_OUTCOMES:
-            nested.rollback()
-            return None
+        existing_summary = session.scalar(
+            select(SummaryBulletin).where(SummaryBulletin.raw_message_id == raw_message.id)
+        )
+        if existing_summary is None:
+            intake = run_coroutine_sync(intake_summary(session, raw_message))
+            if intake.outcome in FALLBACK_OUTCOMES:
+                nested.rollback()
+                return None
+            summary_id, intake_outcome = intake.summary_id, intake.outcome
+        else:
+            summary_id, intake_outcome = existing_summary.id, "existing_summary"
         session.flush()
         parsed_items = list(
             session.scalars(
                 select(SummaryItem).where(
-                    SummaryItem.summary_id == intake.summary_id, SummaryItem.resolution == SummaryResolution.resolved,
+                    SummaryItem.summary_id == summary_id, SummaryItem.resolution == SummaryResolution.resolved,
                 )
             )
         )
         old_rows = classify_old_incidents(session, raw_message, parsed_items, families)
         result = MessageResult(
             raw_message_id, raw_message.message_datetime, raw_message.source_name,
-            intake.summary_id, intake.outcome, len(parsed_items), old_rows,
+            summary_id, intake_outcome, len(parsed_items), old_rows,
         )
         if apply:
-            repo = IncidentRepository(session)
+            summary = session.get(SummaryBulletin, summary_id)
+            assert summary is not None
+            summary_date = (summary.window_end or summary.created_at).date().isoformat()
             for row in old_rows:
-                if row.classification == "unique_correct":
-                    continue
                 incident = session.get(Incident, row.incident_id)
-                if incident is not None:
-                    repo.soft_delete_superseded_by_summary(
-                        incident, canonical_incident_id=None,
-                        note=f"Superseded by summary {intake.summary_id} (backfill {date.today().isoformat()}): {row.detail}.",
-                    )
+                if incident is None:
+                    continue
+                if row.classification == "unique_correct":
+                    if incident.is_deleted:
+                        incident.is_deleted = False
+                        incident.deleted_reason = None
+                        record_incident_change(
+                            session, incident_id=incident.id, action=UpdateAction.status_change,
+                            old_values={"is_deleted": True, "deleted_reason": None},
+                            new_values={"is_deleted": False, "decision_reason": "ACCEPTED_CONFIRMED_BY_SUMMARY"},
+                        )
+                    incident.decision_reason = "ACCEPTED_CONFIRMED_BY_SUMMARY"
+                    incident.decision_source_summary_id = summary.id
+                    incident.decided_at = datetime.now(timezone.utc)
+                    incident.note = append_note(incident.note, decision_note(
+                        "ACCEPTED_CONFIRMED_BY_SUMMARY", summary_channel=summary.channel,
+                        summary_date=summary_date,
+                    ) + ("\n(حُذف سابقاً بدون سبب مسجل)" if row.was_deleted_without_reason else ""))
+                    # Link the matching parsed item rather than materialising a copy.
+                    for item in parsed_items:
+                        if incident.village_id in {item.primary_village_id, item.secondary_village_id} and incident.condition_id == item.condition_id:
+                            item.matched_incident_id = incident.id
+                            break
+                    continue
+                reason = "REJECTED_DUPLICATE" if row.classification == "duplicate_of_live" else "REJECTED_WRONG_ROW"
+                incident.decision_reason = reason
+                incident.decision_source_summary_id = summary.id
+                incident.decided_at = datetime.now(timezone.utc)
+                incident.note = append_note(incident.note, decision_note(
+                    reason, village=incident.village_id, action=incident.condition_id,
+                    summary_channel=summary.channel, summary_date=summary_date,
+                    dup_short_id="", dup_channel="", dup_time="", hint="",
+                ) + ("\n(حُذف سابقاً بدون سبب مسجل)" if row.was_deleted_without_reason else ""))
+                if not incident.is_deleted:
+                    soft_delete_incident(session, incident, reason=reason)
             session.flush()
-            reconcile_result = run_coroutine_sync(reconcile_summary(session, intake.summary_id, dry_run=False))
+            reconcile_result = run_coroutine_sync(reconcile_summary(session, summary_id, dry_run=False))
             raw_message.status = MessageStatus.summary_handled
             raw_message.error_message = None
             session.add(raw_message)
@@ -209,10 +250,10 @@ def process_message(session: Session, raw_message_id: int, *, apply: bool, famil
 
 def write_report(results: list[MessageResult], *, apply: bool, since: date, until: date) -> tuple[Path, Path]:
     today = date.today().isoformat()
-    docs_dir = Path("Docs/audits")
+    docs_dir = Path("Docs/audits") / f"summary_cleanup_dryrun_{today}"
     docs_dir.mkdir(parents=True, exist_ok=True)
-    md_path = docs_dir / f"summary_backfill_{'apply' if apply else 'dryrun'}_{today}.md"
-    csv_path = docs_dir / f"summary_backfill_{'apply' if apply else 'dryrun'}_{today}.csv"
+    md_path = docs_dir / ("apply_report.md" if apply else "report.md")
+    csv_path = docs_dir / "decisions.csv"
 
     counts = {"unique_correct": 0, "duplicate_of_live": 0, "wrong": 0}
     errors = [r for r in results if r.summary_outcome == "error"]
@@ -262,6 +303,7 @@ def main() -> int:
     parser.add_argument("--since", required=True, type=date.fromisoformat)
     parser.add_argument("--until", required=True, type=date.fromisoformat)
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--batch", type=int, default=50, help="Commit boundary for --apply (default: 50).")
     parser.add_argument("--apply", action="store_true", help="Write real changes (default is a dry run).")
     args = parser.parse_args()
 
@@ -270,10 +312,11 @@ def main() -> int:
     with SessionLocal() as session:
         families = load_condition_families(session)
         message_ids = select_candidate_messages(session, args.since, args.until, args.limit)
-        for raw_message_id in message_ids:
+        for index, raw_message_id in enumerate(message_ids, start=1):
             result = process_message(session, raw_message_id, apply=args.apply, families=families)
             if args.apply:
-                session.commit()
+                if index % args.batch == 0:
+                    session.commit()
             else:
                 session.rollback()
             if result is None:
@@ -284,6 +327,8 @@ def main() -> int:
             else:
                 succeeded += 1
             results.append(result)
+        if args.apply:
+            session.commit()
 
     md_path, csv_path = write_report(results, apply=args.apply, since=args.since, until=args.until)
     line = f"Summary backfill mode={'apply' if args.apply else 'dry_run'} processed={processed} succeeded={succeeded} failed={failed}"

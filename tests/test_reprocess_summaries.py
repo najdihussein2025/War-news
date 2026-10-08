@@ -60,7 +60,7 @@ def _old_incident(world, raw, *, village="A", condition="Bombs", deaths=None) ->
     return incident
 
 
-def test_select_candidate_messages_excludes_already_processed(world):
+def test_select_candidate_messages_includes_existing_bulletins_for_repair(world):
     raw = _summary_raw_message(world)
     other = _summary_raw_message(world, text="خبر عادي بدون ملخص")
     already = _summary_raw_message(world)
@@ -69,7 +69,7 @@ def test_select_candidate_messages_excludes_already_processed(world):
     ))
     world.session.flush()
     ids = select_candidate_messages(world.session, date.today() - timedelta(days=1), date.today() + timedelta(days=1), None)
-    assert raw.id in ids and other.id in ids and already.id not in ids
+    assert raw.id in ids and other.id in ids and already.id in ids
 
 
 def test_non_summary_message_is_skipped_and_not_classified(world):
@@ -122,8 +122,8 @@ def test_apply_is_idempotent_links_unique_correct_and_removes_wrong(world):
     world.session.refresh(wrong)
     world.session.refresh(raw)
     assert unique.is_deleted is False and unique.deaths == 1  # kept, untouched
-    assert wrong.is_deleted is True and wrong.deleted_reason == "summary_superseded"
-    assert "Superseded by summary" in (wrong.note or "")
+    assert wrong.is_deleted is True and wrong.deleted_reason == "REJECTED_WRONG_ROW"
+    assert wrong.decision_reason == "REJECTED_WRONG_ROW"
     assert raw.status == MessageStatus.summary_handled
 
     incidents = world.session.scalars(select(Incident).where(Incident.raw_message_id == raw.id, Incident.is_deleted.is_(False))).all()
@@ -131,11 +131,11 @@ def test_apply_is_idempotent_links_unique_correct_and_removes_wrong(world):
     created_for_b = world.session.scalars(select(Incident).where(Incident.village_id == world.village["B"])).all()
     assert created_for_b and created_for_b[0].origin == IncidentOrigin.summary
 
-    # second pass over the same raw message is a no-op: already has a SummaryBulletin row
+    # Existing summaries are safely revisited: decisions and append-only notes are idempotent.
     families2 = load_condition_families(world.session)
     second = process_message(world.session, raw.id, apply=True, families=families2)
     world.session.commit()
-    assert second is None
+    assert second is not None and second.applied
 
 
 def test_apply_never_touches_incidents_from_other_raw_messages(world):

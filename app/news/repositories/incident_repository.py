@@ -334,6 +334,9 @@ class IncidentRepository(IncidentRepositoryInterface):
             SummaryItem.summary_id.label("summary_id"),
             SummaryBulletin.channel.label("summary_channel"),
             SummaryBulletin.window_end.label("summary_window_end"),
+            Incident.decision_reason,
+            Incident.decision_ref_incident_id,
+            Incident.note,
         )
         base_query = (
             select(*selected_columns)
@@ -370,6 +373,8 @@ class IncidentRepository(IncidentRepositoryInterface):
             return (
                 query.select_from(Incident)
                 .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
+                .outerjoin(SummaryItem, SummaryItem.id == Incident.source_summary_item_id)
+                .outerjoin(SummaryBulletin, SummaryBulletin.id == SummaryItem.summary_id)
                 .outerjoin(Village, Village.id == Incident.village_id)
                 .outerjoin(Condition, Condition.id == Incident.condition_id)
                 .outerjoin(Source, Source.id == func.coalesce(Incident.source_id, RawMessage.source_id))
@@ -2824,7 +2829,7 @@ class IncidentRepository(IncidentRepositoryInterface):
         if params.source_type:
             filters.append(Source.type == params.source_type.lower())
         if params.source_name:
-            filters.append(RawMessage.source_name == params.source_name)
+            filters.append(func.coalesce(RawMessage.source_name, SummaryBulletin.channel) == params.source_name)
         if params.event_date_from is not None:
             filters.append(event_date_column >= params.event_date_from)
         if params.event_date_to is not None:
@@ -2860,6 +2865,10 @@ class IncidentRepository(IncidentRepositoryInterface):
                     func.coalesce(Incident.total_injuries, 0) > 0,
                 )
             )
+        if params.summary_added:
+            filters.append(Incident.origin == IncidentOrigin.summary)
+        if params.decision_reason:
+            filters.append(Incident.decision_reason == params.decision_reason)
         return filters
 
     @classmethod
@@ -3034,6 +3043,8 @@ class IncidentRepository(IncidentRepositoryInterface):
             or params.flagged_only
             or params.verification_status is not None
             or params.duplicate_only
+            or params.summary_added
+            or params.decision_reason
         )
 
     @staticmethod

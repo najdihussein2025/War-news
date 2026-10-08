@@ -10,6 +10,7 @@ from app.accounts.models import User
 from app.api.deps import require_admin
 from app.core.database import get_db
 from app.news.models import Condition, Incident, UpdateAction, Village
+from app.news.models.summary_bulletin import SummaryBulletin
 from app.news.services.incidents.incident_change_log import record_incident_change
 from app.news.services.summaries.decision_reasons import append_note
 
@@ -18,14 +19,15 @@ router = APIRouter(prefix="/api/rejected-incidents", tags=["rejected-incidents"]
 
 @router.get("")
 def list_rejected_incidents(reason: str | None = None, channel: str | None = None, date_from: str | None = None, date_to: str | None = None, limit: int = Query(100, ge=1, le=150), offset: int = Query(0, ge=0), _user: User = Depends(require_admin), db: Session = Depends(get_db)):
-    query = select(Incident, Village.ref_name_ar, Condition.action_ar).outerjoin(Village).outerjoin(Condition).where(Incident.is_deleted.is_(True), Incident.decision_reason.is_not(None))
+    filters = [Incident.is_deleted.is_(True), Incident.decision_reason.is_not(None)]
+    query = select(Incident, Village.ref_name_ar, Condition.action_ar, SummaryBulletin.channel).outerjoin(Village).outerjoin(Condition).outerjoin(SummaryBulletin, SummaryBulletin.id == Incident.decision_source_summary_id).where(*filters)
     if reason: query = query.where(Incident.decision_reason == reason)
-    if date_from: query = query.where(Incident.event_date >= date_from)
-    if date_to: query = query.where(Incident.event_date <= date_to)
-    # Channel is intentionally deferred until source-summary joins land in 0078 data.
-    rows = db.execute(query.order_by(Incident.decided_at.desc().nullslast()).limit(limit).offset(offset)).all()
-    total = db.scalar(select(func.count()).select_from(Incident).where(Incident.is_deleted.is_(True), Incident.decision_reason.is_not(None))) or 0
-    return {"items": [{"id": str(i.id), "village": village, "condition": condition, "event_date": i.event_date, "source_name": i.source_id, "decision_reason": i.decision_reason, "decision_ref_incident_id": str(i.decision_ref_incident_id) if i.decision_ref_incident_id else None, "note": i.note} for i, village, condition in rows], "total": total}
+    if date_from: filters.append(Incident.event_date >= date_from)
+    if date_to: filters.append(Incident.event_date <= date_to)
+    if channel: filters.append(SummaryBulletin.channel == channel)
+    rows = db.execute(query.where(*filters).order_by(Incident.decided_at.desc().nullslast()).limit(limit).offset(offset)).all()
+    total = db.scalar(select(func.count()).select_from(Incident).outerjoin(SummaryBulletin, SummaryBulletin.id == Incident.decision_source_summary_id).where(*filters)) or 0
+    return {"items": [{"id": str(i.id), "village": village, "condition": condition, "event_date": i.event_date, "source_name": summary_channel, "decision_reason": i.decision_reason, "decision_ref_incident_id": str(i.decision_ref_incident_id) if i.decision_ref_incident_id else None, "note": i.note} for i, village, condition, summary_channel in rows], "total": total}
 
 
 @router.post("/{incident_id}/restore")
