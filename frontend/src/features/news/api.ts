@@ -30,7 +30,14 @@ export const restoreRejectedNews = async (id: number): Promise<void> => {
   await apiClient.post(`/rejected-news/${id}/restore`);
 };
 
-export const getRejectedIncidents = async (): Promise<RejectedIncidentListResponse> => (await apiClient.get("/rejected-incidents")).data;
+export const getRejectedIncidents = async (filters: { reason?: string; channel?: string; dateFrom?: string; dateTo?: string } = {}): Promise<RejectedIncidentListResponse> => {
+  const params = new URLSearchParams();
+  if (filters.reason) params.set("reason", filters.reason);
+  if (filters.channel) params.set("channel", filters.channel);
+  if (filters.dateFrom) params.set("date_from", filters.dateFrom);
+  if (filters.dateTo) params.set("date_to", filters.dateTo);
+  return (await apiClient.get(`/rejected-incidents?${params.toString()}`)).data;
+};
 export const restoreRejectedIncident = async (id: string): Promise<void> => { await apiClient.post(`/rejected-incidents/${id}/restore`); };
 
 export type FilteredNewsFilters = {
@@ -135,6 +142,8 @@ export const getIncidents = async (
   if (filters.groupBy) {
     params.set("group_by", filters.groupBy);
   }
+  if (filters.summaryAdded) params.set("summary_added", "true");
+  if (filters.decisionReason) params.set("decision_reason", filters.decisionReason);
 
   const response = await apiClient.get<IncidentListResponse>(
     `/incidents?${params.toString()}`,

@@ -67,6 +67,9 @@ class IncidentListItemDTO(BaseModel):
     summary_id: int | None = None
     summary_channel: str | None = None
     summary_window_end: datetime | None = None
+    decision_reason: str | None = None
+    decision_ref_incident_id: UUID | None = None
+    note: str | None = None
 
     @field_validator("duplicate_level", mode="before")
     @classmethod
@@ -92,6 +95,8 @@ class IncidentListParams(BaseModel):
     has_casualties: bool = False
     sort_order: Literal["newest", "oldest"] = "newest"
     group_by: Literal["raw_message"] | None = None
+    summary_added: bool = False
+    decision_reason: str | None = None
 
 
 class IncidentBulletinGroupDTO(BaseModel):

@@ -167,10 +167,12 @@ export const IncidentsPage = () => {
   const sortOrder = (params.get("sort_order") as "newest" | "oldest" | null) ?? "newest";
   const duplicateOnly = params.get("duplicate_only") === "true";
   const hasCasualties = params.get("has_casualties") === "true";
+  const summaryAdded = params.get("summary_added") === "true";
+  const decisionReason = params.get("decision_reason") ?? "";
   const groupByBulletin = params.get("group_by") !== "none";
   const pageSize = parsePageSize(params.get("page_size"));
   const hasFilters = hasNonDefaultFilters(
-    { village, condition, sourceName, verificationStatus, verificationType, duplicateOnly, hasCasualties, summaryReview: summaryReviewView },
+    { village, condition, sourceName, verificationStatus, verificationType, duplicateOnly, hasCasualties, summaryAdded, decisionReason, summaryReview: summaryReviewView },
     eventDateFrom,
     eventDateTo,
     { from: DEFAULT_EVENT_DATE_FROM, to: getBeirutDate() },
@@ -190,6 +192,8 @@ export const IncidentsPage = () => {
       eventDateTo,
       duplicateOnly,
       hasCasualties,
+      summaryAdded,
+      decisionReason: decisionReason || undefined,
       sortOrder,
       groupBy: verificationView && groupByBulletin ? "raw_message" as const : undefined,
     }),
@@ -199,6 +203,8 @@ export const IncidentsPage = () => {
       eventDateTo,
       duplicateOnly,
       hasCasualties,
+      summaryAdded,
+      decisionReason,
       pageSize,
       cursor,
       sortOrder,
@@ -247,6 +253,11 @@ export const IncidentsPage = () => {
     { value: "casualty_missing_number", label: "Missing number" },
     { value: "casualty_aggregate_toll", label: "Aggregate toll" },
     { value: "summary_review", label: "Summary review" },
+  ];
+  const summaryDecisionOptions: SelectOption[] = [
+    { value: "ACCEPTED_CONFIRMED_BY_SUMMARY", label: "Confirmed by summary" },
+    { value: "REJECTED_DUPLICATE", label: "Rejected duplicate" },
+    { value: "REJECTED_WRONG_ROW", label: "Rejected wrong row" },
   ];
   const verificationBadge = (row: Incident) => {
     if (row.verification_status === "verified") return { label: "Verified", variant: "success" as const };
@@ -312,6 +323,7 @@ export const IncidentsPage = () => {
               {row.village || "Unknown village"}
             </span>
             <SummaryOriginBadge origin={row.origin} summaryId={row.summary_id} channel={row.summary_channel} windowEnd={row.summary_window_end} roleBase={roleBase} />
+            {row.decision_reason ? <StatusBadge label={row.decision_reason} variant="neutral" /> : null}
             {row.duplicate_flag === "possible" && row.verification_status !== "needs_verification" ? (
               <StatusBadge label="Possible duplicate" variant="warning" />
             ) : null}
@@ -339,6 +351,7 @@ export const IncidentsPage = () => {
               {note}
             </p>
           ))}
+          {row.note ? <p title={row.note} className="max-w-md truncate text-caption text-text-muted" dir="rtl">{row.note}</p> : null}
           {villageResolutionNote(row) ? (
             <p className="text-caption text-text-muted">
               {villageResolutionNote(row)}
@@ -602,6 +615,21 @@ export const IncidentsPage = () => {
                     disabled={isContentSourcesLoading && sourceOptions.length === 0}
                     onChange={(value) => updateParam("source_name", value)}
                   />
+                </div>
+                <div className="space-y-2 xl:col-span-1">
+                  <Label htmlFor="incident-summary-reason-filter">Summary source</Label>
+                  <Select
+                    id="incident-summary-reason-filter"
+                    value={decisionReason}
+                    placeholder="All incidents"
+                    options={summaryDecisionOptions}
+                    className="w-full"
+                    onChange={(value) => updateParam("decision_reason", value)}
+                  />
+                  <label className="flex items-center gap-2 text-small text-text-primary">
+                    <input type="checkbox" checked={summaryAdded} onChange={(event) => updateParam("summary_added", event.target.checked ? "true" : "")} />
+                    Added from summary
+                  </label>
                 </div>
                 <div className="space-y-2 xl:col-span-1">
                   <Label htmlFor="incident-from-filter">From</Label>

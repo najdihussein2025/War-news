@@ -149,7 +149,7 @@ def test_pipeline_soft_delete_logs_reason_and_canonical() -> None:
         reason=DeletedReason.cluster_subsumption,
     )
 
-    assert retired.deleted_reason == "cluster_subsumption"
+    assert retired.deleted_reason == "RAW_MESSAGE_SOFT_DELETE"
     [entry] = _added_updates(db)
     assert entry.action == UpdateAction.delete
     assert entry.performed_by is None

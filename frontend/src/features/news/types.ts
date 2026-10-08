@@ -49,6 +49,9 @@ export type Incident = {
   summary_id?: number | null;
   summary_channel?: string | null;
   summary_window_end?: string | null;
+  decision_reason?: string | null;
+  decision_ref_incident_id?: string | null;
+  note?: string | null;
 };
 
 export type IncidentListResponse = {
@@ -99,6 +102,8 @@ export type IncidentFilters = {
   hasCasualties?: boolean;
   sortOrder?: "newest" | "oldest";
   groupBy?: "raw_message";
+  summaryAdded?: boolean;
+  decisionReason?: string;
 };
 
 export type ConditionOption = {
