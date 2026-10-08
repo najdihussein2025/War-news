@@ -15,6 +15,7 @@ from app.news.models.incident_update import IncidentUpdate, UpdateAction
 from app.news.models.incident_verification_flag import IncidentVerificationFlag
 from app.news.models.pipeline_stage_run import PipelineStageRun
 from app.news.models.raw_message import MessageStatus, RawMessage
+from app.news.models.summary_bulletin import SummaryBulletin, SummaryItem, SummaryReviewTask
 from app.news.models.sweep_cursor import SweepCursor
 from app.news.models.village import Village
 from app.news.models.village_location_alias import VillageLocationAlias
@@ -41,6 +42,9 @@ __all__ = [
     "MatchType",
     "MessageStatus",
     "RawMessage",
+    "SummaryBulletin",
+    "SummaryItem",
+    "SummaryReviewTask",
     "SweepCursor",
     "TrustTier",
     "UpdateAction",
