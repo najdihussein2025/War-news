@@ -136,7 +136,7 @@ def test_earliest_of_several_is_linked(world):
 
 
 def test_deleted_and_rejected_incidents_do_not_match(world):
-    add_incident(world, village="A", condition="Bombs", at=at(7, 10), is_deleted=True)
+    add_incident(world, village="A", condition="Bombs", at=at(7, 10), is_deleted=True, deleted_reason="admin")
     add_incident(world, village="A", condition="Bombs", at=at(7, 11), verification_status="rejected")
     summary = add_summary(world, [{"village": "A"}])
     run(world.session, summary)

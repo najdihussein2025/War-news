@@ -1,3 +1,4 @@
+import argparse
 import json
 from pathlib import Path
 from typing import Any
@@ -21,9 +22,11 @@ def _load_alias_rows() -> list[dict[str, Any]]:
         return json.load(file)
 
 
-def seed_village_location_aliases(db: Session) -> tuple[int, int, int]:
-    """Insert proposed aliases. Returns (inserted, skipped, missing_parent)."""
+def seed_village_location_aliases(db: Session, *, confirmed_only: bool = False, commit: bool = True) -> tuple[int, int, int]:
+    """Insert aliases (only ``confidence: confirmed`` ones when asked). Returns (inserted, skipped, missing_parent)."""
     rows = _load_alias_rows()
+    if confirmed_only:
+        rows = [row for row in rows if row.get("confidence") == "confirmed"]
     existing_norms = set(
         db.scalars(select(VillageLocationAlias.alias_normalized)).all()
     )
@@ -66,16 +69,23 @@ def seed_village_location_aliases(db: Session) -> tuple[int, int, int]:
         seen_norms.add(normalized)
         inserted += 1
 
-    db.commit()
+    if commit:
+        db.commit()
     return inserted, skipped, missing_parent
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Seed village location aliases from Data/VillageLocationAliases.json")
+    parser.add_argument("--confirmed-only", action="store_true", help="Only rows whose confidence is 'confirmed'.")
+    parser.add_argument("--apply", action="store_true", help="Commit. Without it the run is reported and rolled back.")
+    args = parser.parse_args()
     db = SessionLocal()
     try:
-        inserted, skipped, missing = seed_village_location_aliases(db)
+        inserted, skipped, missing = seed_village_location_aliases(db, confirmed_only=args.confirmed_only, commit=args.apply)
+        if not args.apply:
+            db.rollback()
         print(
-            "village_location_aliases "
+            f"village_location_aliases mode={'apply' if args.apply else 'dry_run'} "
             f"inserted={inserted} skipped={skipped} missing_parent={missing}"
         )
     finally:

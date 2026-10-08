@@ -32,6 +32,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import settings
 from app.news.models import Condition, Incident, RawMessage, Village
+from app.news.services.summaries.acceptance import accepted_parse
 from app.news.services.summaries.condition_families import ConditionFamilies, load_condition_families
 from app.news.services.summaries.detection import detect_summary
 from app.news.services.summaries.gazetteer import build_gazetteer_snapshot
@@ -78,16 +79,7 @@ def _fits(row: Incident, start: datetime, end: datetime, tolerance: int) -> bool
 
 def _accepted_parse(raw: RawMessage, gazetteer, headers):
     """The same detect + false-positive guard as intake_summary, without writes."""
-    body = raw.raw_text or ""
-    if not detect_summary(body).is_summary:
-        return None
-    posted = raw.message_datetime or raw.received_at
-    window = resolve_window(body, posted)
-    result = parse_summary(body, gazetteer, headers, LEXICON, window.anchor_date)
-    recognized = [header for header in result.headers if header.status == "approved"]
-    if len(result.items) + len(result.unresolved_places) < 2 or not recognized:
-        return None
-    return window, result
+    return accepted_parse(raw, gazetteer, headers)
 
 
 def _raw_in_window(rows: list[RawMessage], start: datetime, end: datetime) -> list[RawMessage]:
@@ -135,6 +127,7 @@ def main() -> int:
     parser.add_argument("--since", required=True, type=date.fromisoformat)
     parser.add_argument("--until", required=True, type=date.fromisoformat)
     parser.add_argument("--channel")
+    parser.add_argument("--out", type=Path, help="Output directory (default Docs/audits/summary_vs_news_review_<today>).")
     args = parser.parse_args()
     if args.until < args.since:
         parser.error("--until must be on or after --since")
@@ -238,7 +231,7 @@ def main() -> int:
                 old_rows.append({"incident_id": row.id, "summary_message_id": row.raw_message_id, "village": village_names.get(row.village_id, row.village_id), "condition": condition_names.get(row.condition_id, row.condition_id), "classification": old_class, "duplicate_of_incident_id": duplicate, "soft_deleted": row.is_deleted})
 
     # Files are intentionally written only after the database session has closed.
-    output = Path("Docs/audits") / f"summary_vs_news_review_{date.today().isoformat()}"
+    output = args.out or Path("Docs/audits") / f"summary_vs_news_review_{date.today().isoformat()}"
     output.mkdir(parents=True, exist_ok=True)
     fields = ["summary_message_id", "channels", "date", "window_start", "window_end", "header", "condition", "location_text", "village_id", "village_name", "modifier", "count", "classification", "sub_reason", "detail", "matched_incident_ids", "matched_raw_message_ids", "minutes_between_news_and_summary"]
     _write_csv(output / "items.csv", fields, item_rows)

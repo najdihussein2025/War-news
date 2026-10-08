@@ -19,3 +19,16 @@ def soft_delete_incident(db, incident: Incident, *, reason: str, canonical_incid
     record_incident_change(db, incident_id=incident.id, action=UpdateAction.delete,
         old_values={"is_deleted": False}, new_values={"is_deleted": True, "deleted_reason": reason, "canonical_incident_id": canonical_incident_id}, performed_by=performed_by)
     db.add(incident)
+
+
+def record_missing_deleted_reason(db, incident: Incident, *, reason: str, performed_by: UUID | None = None) -> bool:
+    """Give an already-deleted incident the reason it never recorded, with an audit row."""
+    if not reason:
+        raise ValueError("a deleted-reason is required")
+    if not incident.is_deleted or incident.deleted_reason is not None:
+        return False
+    incident.deleted_reason = reason
+    record_incident_change(db, incident_id=incident.id, action=UpdateAction.status_change,
+        old_values={"is_deleted": True, "deleted_reason": None}, new_values={"is_deleted": True, "deleted_reason": reason}, performed_by=performed_by)
+    db.add(incident)
+    return True
