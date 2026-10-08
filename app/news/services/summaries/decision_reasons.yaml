@@ -1,0 +1,33 @@
+REJECTED_DUPLICATE:
+  label: Duplicate
+  template: "مرفوض: مكرر — نفس الحدث ({action} في {village}) مسجل مسبقاً في الحادثة #{dup_short_id} من خبر {dup_channel} الساعة {dup_time}. مصدر هذا السطر: ملخص {summary_channel} بتاريخ {summary_date}."
+REJECTED_WRONG_ROW:
+  label: Wrong extraction
+  template: "مرفوض: خطأ في الاستخراج — {village}/{action} غير موجود في نص ملخص {summary_channel} بتاريخ {summary_date}.{hint}"
+REJECTED_DUPLICATE_SUMMARY_ROW:
+  label: Duplicate summary row
+  template: "مرفوض: مكرر من ملخص آخر — نفس السطر محفوظ في الحادثة #{kept_short_id}."
+ACCEPTED_CONFIRMED_BY_SUMMARY:
+  label: Confirmed by summary
+  template: "مقبول: مؤكد في ملخص {summary_channel} بتاريخ {summary_date} ولم يرد في أي خبر آخر."
+ACCEPTED_MISSED_NEVER_ARRIVED:
+  label: Missed news
+  template: "مقبول: أضيف من الملخص لأن الخبر لم يصلنا — ورد في ملخص {summary_channel} بتاريخ {summary_date}: «{evidence_span}»."
+ACCEPTED_MISSED_FAILED:
+  label: Failed processing
+  template: "مقبول: أضيف من الملخص لأن الخبر وصل لكن فشلت معالجته (الرسائل: {raw_ids})."
+ACCEPTED_MISSED_REJECTED:
+  label: Wrongly rejected
+  template: "مقبول: أضيف من الملخص لأن الخبر رُفض خطأً في فلتر الصلة (الرسائل: {raw_ids})."
+ACCEPTED_MISSED_WRONG_VILLAGE:
+  label: Wrong village
+  template: "مقبول: أضيف من الملخص لأن الخبر سُجل على قرية خاطئة ({recorded_villages}) — يرجى مراجعة الحادثة #{wrong_incident_short_id}."
+ACCEPTED_DIFFERENT_ACTION:
+  label: Different action
+  template: "مقبول: الملخص يذكر {action} في {village}، والأخبار سجلت أفعالاً أخرى فقط ({existing_actions})."
+REJECTED_BY_ADMIN:
+  label: Rejected by admin
+  template: "مرفوض بواسطة {user} بتاريخ {decided_date}."
+CONFIRMED_BY_SUMMARY:
+  label: Confirmed by summary
+  template: "مؤكد في ملخص {summary_channel} بتاريخ {summary_date}."

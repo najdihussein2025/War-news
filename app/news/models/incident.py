@@ -158,6 +158,12 @@ class Incident(Base):
         server_default=text("false"),
     )
     deleted_reason: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # Summary-audit decision metadata.  Migration 0078 adds these columns; note
+    # remains the immutable, human-readable explanation shown to administrators.
+    decision_reason: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    decision_source_summary_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("summary_bulletins.id", ondelete="SET NULL"), nullable=True)
+    decision_ref_incident_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("incidents.id", ondelete="SET NULL"), nullable=True)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_by: Mapped[UUID | None] = mapped_column(
         PgUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
