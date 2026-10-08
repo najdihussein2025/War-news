@@ -400,10 +400,10 @@ export const IncidentsPage = () => {
           ) : null}
           <span
             className={`inline-block h-2.5 w-2.5 rounded-full ${
-              row.verification_status === "rejected" ? "bg-danger" : "bg-success"
+              row.verification_status === "needs_verification" ? "bg-danger" : "bg-success"
             }`}
-            title={row.verification_status === "rejected" ? "Rejected" : "Not rejected"}
-            aria-label={row.verification_status === "rejected" ? "Rejected" : "Not rejected"}
+            title={row.verification_status === "needs_verification" ? "Needs verification" : "No verification needed"}
+            aria-label={row.verification_status === "needs_verification" ? "Needs verification" : "No verification needed"}
           />
         </div>
       ),
