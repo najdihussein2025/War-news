@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import BigInteger, Boolean, DateTime, Enum as SqlEnum, ForeignKey, Integer, Text, UniqueConstraint, func, text
+from sqlalchemy import ARRAY, BigInteger, Boolean, DateTime, Enum as SqlEnum, ForeignKey, Integer, Text, UniqueConstraint, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -74,6 +74,8 @@ class SummaryBulletin(Base):
     attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default=text("0"))
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
     hidden: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    # Dry-run outcome of reconciliation (SUMMARY_FLOW_MODE=shadow); never read in live mode.
+    shadow_result: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 
@@ -110,3 +112,14 @@ class SummaryReviewTask(Base):
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+
+
+class SummaryHeaderMapping(Base):
+    """Admin-learned header -> condition mapping, read after summary_headers.yaml."""
+
+    __tablename__ = "summary_header_mappings"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    header_text_normalized: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
+    condition_ids: Mapped[list[int]] = mapped_column(ARRAY(Integer), nullable=False)
+    created_by: Mapped[object | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

@@ -48,9 +48,17 @@ class Settings(BaseSettings):
     ollama_max_concurrent_requests: int = 4
     relevance_ollama_model: str = "gpt-oss:20b"
     extraction_ollama_model: str = "qwen2.5:7b"
-    # Summary intake is shadow-only until reconciliation is implemented.
+    # Summary bulletin flow: off | shadow (parse + dry-run reconcile, Tier 1 still
+    # runs) | live (summary replaces Tier 1 for detected bulletins).
     summary_flow_mode: str = "off"
     summary_reconcile_delay_minutes: int = 90
+    summary_reconcile_interval_seconds: int = 300
+    # Slack around the summary window when matching live incidents to items.
+    summary_match_tolerance_minutes: int = 60
+    # LLM cross-check (add-only) run during summary intake.
+    summary_crosscheck_enabled: bool = False
+    summary_crosscheck_model: str = "gpt-oss:20b"
+    summary_crosscheck_timeout_seconds: int = 120
     extraction_llm_timeout_seconds: int = 240
     extraction_llm_max_concurrent_requests: int = 2
     # Independent Tier 1 / Tier 2 LLM concurrency pools (see ollama_concurrency.py).

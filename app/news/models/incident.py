@@ -9,6 +9,7 @@ from sqlalchemy import (
     CHAR,
     CheckConstraint,
     DateTime,
+    Enum as SqlEnum,
     ForeignKey,
     Integer,
     String,
@@ -23,12 +24,21 @@ from pgvector.sqlalchemy import Vector
 from app.core.database import Base
 
 
+class IncidentOrigin(str, Enum):
+    """Where an incident came from: the live pipeline or a summary bulletin."""
+
+    live = "live"
+    summary = "summary"
+
+
 class DeletedReason(str, Enum):
     """Why an incident was soft-deleted; reconciliation only touches pipeline ones."""
 
     admin = "admin"
     duplicate_merge = "duplicate_merge"
     cluster_subsumption = "cluster_subsumption"
+    # Old-path incident replaced by the summary flow (backfill only).
+    summary_superseded = "summary_superseded"
 
 
 PIPELINE_DELETED_REASONS = (
@@ -152,6 +162,24 @@ class Incident(Base):
         PgUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
+    )
+    origin: Mapped[IncidentOrigin] = mapped_column(
+        SqlEnum(IncidentOrigin, name="incident_origin"),
+        nullable=False,
+        default=IncidentOrigin.live,
+        server_default=text("'live'"),
+    )
+    # Set on incidents created from a summary item; kept after live enrichment.
+    source_summary_item_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey(
+            "summary_items.id",
+            ondelete="SET NULL",
+            use_alter=True,
+            name="fk_incidents_source_summary_item_id",
+        ),
+        nullable=True,
+        index=True,
     )
     verification_status: Mapped[str] = mapped_column(
         String(24), nullable=False, default="auto_processed", server_default="auto_processed"

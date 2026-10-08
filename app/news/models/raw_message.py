@@ -33,6 +33,9 @@ class MessageStatus(str, Enum):
     # Terminal hold: fast-path refused to materialize (e.g. ambiguous
     # multi-village sub-events). No stage may materialize it automatically.
     held_for_review = "held_for_review"
+    # Terminal: the summary-bulletin flow owns this message (SUMMARY_FLOW_MODE=live).
+    # No sweep selects it, so Tier 1 / Tier 2 / materialization never touch it.
+    summary_handled = "summary_handled"
 
 
 FAILED_STAGE_RELEVANCE = "relevance_filter"
