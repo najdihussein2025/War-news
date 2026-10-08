@@ -180,5 +180,35 @@ the reference files. Summary-parser tests appear in a container only after rebui
 the backend image. For the dev stack, run:
 
 ```powershell
-docker compose --env-file .env.dev -f docker-compose.yml -f docker-compose.dev.yml build backend pipeline-worker live-sweep-worker
+docker compose --env-file .env.dev -f docker-compose.yml -f docker-compose.dev.yml build backend pipeline-worker live-sweep-worker summary-reconcile-worker
+docker compose --env-file .env.dev -f docker-compose.yml -f docker-compose.dev.yml exec backend alembic upgrade head
+docker compose --env-file .env.dev -f docker-compose.yml -f docker-compose.dev.yml up -d summary-reconcile-worker
 ```
+
+The alias SQL (`scripts/sql/summary_aliases_2026-10-08.sql`) is run manually against
+`war_news_test` / `war_news_devtest` after the admin confirms the four NEEDS CONFIRMATION
+rows; it is never run automatically.
+
+## Summary bulletin go-live checklist
+
+Going live means switching `.env.main` to `SUMMARY_FLOW_MODE=live` and
+`SUMMARY_CROSSCHECK_ENABLED=true` — **a human does this manually**, never a script or
+an agent. Required before that switch:
+
+- [ ] At least 20 approved golden fixtures (`tests/fixtures/summaries/approved/`),
+  `pytest tests/test_summary_golden.py` passing at 100%.
+- [ ] A shadow report (`python -m scripts.summary_shadow_report --since ... --until ...`)
+  reviewed for at least 2 days of real traffic, with the open-review-task count and the
+  old-path "wrong" count both acceptably small.
+- [ ] Migrations `20261008_0076` and `20261008_0077` applied on deploy
+  (`docker compose exec backend alembic upgrade head` against the **deploy** stack).
+- [ ] The alias SQL applied on deploy.
+- [ ] The `summary-reconcile-worker` service running on deploy.
+- [ ] A backfill dry run (`python -m scripts.reprocess_summaries --since ... --until ...`,
+  no `--apply`) reviewed; `--apply` run only after that review, in message-time order.
+- [ ] The cross-check model (`SUMMARY_CROSSCHECK_MODEL`) picked from `nvidia-smi` headroom
+  on the deploy Ollama host.
+
+**Rollback:** set `SUMMARY_FLOW_MODE` back to `shadow` (or `off`) in `.env.main`.
+Summary-created incidents are not removed or hidden — they stay in `incidents` and
+remain identifiable by `origin='summary'`.

@@ -12,6 +12,7 @@ def test_approved_golden_fixtures():
     gaz=GazetteerSnapshot.from_dict(json.loads((ROOT/'gazetteer_snapshot.json').read_text(encoding='utf-8')))
     lex=yaml.safe_load(Path('app/core/llm_knowledge/terminology/summary_location_lexicon.yaml').read_text(encoding='utf-8'))
     files=sorted((ROOT/'approved').glob('*.json')); assert files
+    print(f"approved golden fixtures: {len(files)}")
     for path in files:
         case=json.loads(path.read_text(encoding='utf-8')); result=parse_summary(case['raw_text'],gaz,default_header_dictionary(),lex)
         window=resolve_window(case['raw_text'],datetime.fromisoformat(case['posted_at']))
