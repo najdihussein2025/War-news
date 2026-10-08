@@ -14,6 +14,8 @@ import { RejectedNewsPage } from "../features/news/pages/RejectedNewsPage";
 import { SettingsPage } from "../features/settings/pages/SettingsPage";
 import { SourcesPage } from "../features/sources/pages/SourcesPage";
 import { IntelligenceFlowPage } from "../features/intelligenceFlow/pages/IntelligenceFlowPage";
+import { SummariesPage } from "../features/summaries/pages/SummariesPage";
+import { SummaryDetailPage } from "../features/summaries/pages/SummaryDetailPage";
 import { AppShell } from "./AppShell";
 import { useAuthStore } from "../stores/authStore";
 import { getSession } from "../features/auth/api";
@@ -110,6 +112,8 @@ export const createRoutes = (): RouteObject[] => [
         { path: "dashboard", element: <AdminDashboardPage /> },
         { path: "incidents", element: <IncidentsPage /> },
         { path: "incidents/:incidentId", element: <IncidentDetailPage /> },
+        { path: "summaries", element: <SummariesPage /> },
+        { path: "summaries/:summaryId", element: <SummaryDetailPage /> },
         { path: "filtered-news", element: <AllNewsPage /> },
         { path: "rejected-news", element: <RejectedNewsPage /> },
         { path: "air-violations", element: <AirViolationsPage /> },
@@ -129,6 +133,8 @@ export const createRoutes = (): RouteObject[] => [
         { path: "dashboard", element: <SuperAdminDashboardPage /> },
         { path: "incidents", element: <IncidentsPage /> },
         { path: "incidents/:incidentId", element: <IncidentDetailPage /> },
+        { path: "summaries", element: <SummariesPage /> },
+        { path: "summaries/:summaryId", element: <SummaryDetailPage /> },
         { path: "filtered-news", element: <AllNewsPage /> },
         { path: "rejected-news", element: <RejectedNewsPage /> },
         { path: "air-violations", element: <AirViolationsPage /> },

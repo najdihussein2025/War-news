@@ -44,6 +44,11 @@ export type Incident = {
   geo_context_anchor_village_name?: string | null;
   geo_context_distance_meters?: number | null;
   normalized_from?: string | null;
+  origin?: "live" | "summary";
+  source_summary_item_id?: number | null;
+  summary_id?: number | null;
+  summary_channel?: string | null;
+  summary_window_end?: string | null;
 };
 
 export type IncidentListResponse = {

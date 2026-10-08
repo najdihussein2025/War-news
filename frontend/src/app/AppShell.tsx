@@ -159,6 +159,12 @@ const navItems: NavItem[] = [
     hiddenFrom: [],
   },
   {
+    label: "Summaries",
+    path: "summaries",
+    icon: IncidentsIcon,
+    hiddenFrom: [],
+  },
+  {
     label: "Air Violations",
     path: "air-violations",
     icon: AirViolationsIcon,
@@ -206,6 +212,7 @@ const pageMeta = [
   { match: (pathname: string) => pathname.endsWith("/dashboard"), title: "Dashboard" },
   { match: (pathname: string) => pathname.includes("/air-violations"), title: "Air Violations" },
   { match: (pathname: string) => pathname.includes("/filtered-news"), title: "Filtered News" },
+  { match: (pathname: string) => pathname.includes("/summaries"), title: "Summaries" },
   { match: (pathname: string) => pathname.includes("/incidents"), title: "Incidents" },
   { match: (pathname: string) => pathname.includes("/rejected-news"), title: "Rejected News" },
   { match: (pathname: string) => pathname.includes("/sources"), title: "Sources" },

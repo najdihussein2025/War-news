@@ -2,6 +2,7 @@ import { isAxiosError } from "axios";
 import { useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { StatusBadge } from "../../../components/StatusBadge";
+import { SummaryOriginBadge } from "../../summaries/components/SummaryOriginBadge";
 import { Button, ConfirmDialog, Dialog, EmptyState, Input, Label } from "../../../components/ui";
 import { formatDate, formatDateTime, formatRelativeTime, formatTimeGap } from "../../../lib/formatters";
 import { roleBaseFromPath } from "../../../lib/rolePath";
@@ -226,6 +227,7 @@ export const IncidentDetailPage = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <SummaryOriginBadge origin={incident.origin} summaryId={incident.summary_id} channel={incident.summary_channel} windowEnd={incident.summary_window_end} roleBase={roleBase} />
             {incident.source_name || incident.source_reference || incident.source ? (
               <StatusBadge
                 label={incident.source_name || incident.source_reference || incident.source || "Unknown source"}

@@ -23,6 +23,8 @@ import { createIncident, reviewIncident } from "../api";
 import { useContentSourcesQuery } from "../../sources/hooks";
 import type { Incident, IncidentBulletinGroup } from "../types";
 import { CasualtyCheckPanel } from "../../casualtyChecks/components/CasualtyCheckPanel";
+import { SummaryOriginBadge } from "../../summaries/components/SummaryOriginBadge";
+import { SummaryReviewTable } from "../../summaries/components/SummaryReviewTable";
 import { ReasonChips, summarizeVerificationReasons } from "../verificationReasons";
 import {
   CompactIncidentList,
@@ -156,6 +158,8 @@ export const IncidentsPage = () => {
   const sourceName = params.get("source_name") ?? "";
   const verificationStatus = params.get("verification_status") as Incident["verification_status"] | "";
   const verificationType = verificationTypeFromSearch(location.search) ?? "";
+  // "Summary review" lists open summary review tasks (one per summary), not incidents.
+  const summaryReviewView = params.get("verification_type") === "summary_review";
   const eventDateFrom = normalizeDateInputValue(params.get("event_date_from")) || DEFAULT_EVENT_DATE_FROM;
   const eventDateTo = normalizeDateInputValue(params.get("event_date_to")) || getBeirutDate();
   const sortOrder = (params.get("sort_order") as "newest" | "oldest" | null) ?? "newest";
@@ -164,7 +168,7 @@ export const IncidentsPage = () => {
   const groupByBulletin = params.get("group_by") !== "none";
   const pageSize = parsePageSize(params.get("page_size"));
   const hasFilters = hasNonDefaultFilters(
-    { village, condition, sourceName, verificationStatus, verificationType, duplicateOnly, hasCasualties },
+    { village, condition, sourceName, verificationStatus, verificationType, duplicateOnly, hasCasualties, summaryReview: summaryReviewView },
     eventDateFrom,
     eventDateTo,
     { from: DEFAULT_EVENT_DATE_FROM, to: getBeirutDate() },
@@ -240,6 +244,7 @@ export const IncidentsPage = () => {
     { value: "duplicate", label: "Duplicate" },
     { value: "casualty_missing_number", label: "Missing number" },
     { value: "casualty_aggregate_toll", label: "Aggregate toll" },
+    { value: "summary_review", label: "Summary review" },
   ];
   const verificationBadge = (row: Incident) => {
     if (row.verification_status === "verified") return { label: "Verified", variant: "success" as const };
@@ -304,6 +309,7 @@ export const IncidentsPage = () => {
             <span className="font-semibold text-text-primary">
               {row.village || "Unknown village"}
             </span>
+            <SummaryOriginBadge origin={row.origin} summaryId={row.summary_id} channel={row.summary_channel} windowEnd={row.summary_window_end} roleBase={roleBase} />
             {row.duplicate_flag === "possible" && row.verification_status !== "needs_verification" ? (
               <StatusBadge label="Possible duplicate" variant="warning" />
             ) : null}
@@ -574,7 +580,7 @@ export const IncidentsPage = () => {
                   <Label htmlFor="incident-verification-type-filter">Check type</Label>
                   <Select
                     id="incident-verification-type-filter"
-                    value={verificationType}
+                    value={summaryReviewView ? "summary_review" : verificationType}
                     placeholder="All types"
                     options={verificationTypeOptions}
                     className="w-full"
@@ -702,6 +708,9 @@ export const IncidentsPage = () => {
             </div>
           </section>
 
+          {summaryReviewView ? (
+            <SummaryReviewTable roleBase={roleBase} />
+          ) : (
           <section className="space-y-3">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -838,8 +847,9 @@ export const IncidentsPage = () => {
               />
             )}
           </section>
+          )}
 
-          {total > pageSize ? (
+          {!summaryReviewView && total > pageSize ? (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-small text-text-muted">
                 Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, total)} of {total} incidents | Page {page}
