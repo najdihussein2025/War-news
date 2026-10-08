@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     ollama_max_concurrent_requests: int = 4
     relevance_ollama_model: str = "gpt-oss:20b"
     extraction_ollama_model: str = "qwen2.5:7b"
+    # Summary intake is shadow-only until reconciliation is implemented.
+    summary_flow_mode: str = "off"
+    summary_reconcile_delay_minutes: int = 90
     extraction_llm_timeout_seconds: int = 240
     extraction_llm_max_concurrent_requests: int = 2
     # Independent Tier 1 / Tier 2 LLM concurrency pools (see ollama_concurrency.py).

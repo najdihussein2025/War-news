@@ -173,3 +173,12 @@ extraction, `ollama show qwen2.5:7b`), never guessed.
 | `OLLAMA_NUM_CTX` | app `.env` | unset (server default) | Sent as `options.num_ctx`. Measured Tier 1 system prompt ≈ 4.5k tokens (single village) to ≈ 6.7k (multi-village) + post + JSON answer; 8192 is the smallest safe value. Too small = Ollama silently drops the start of the system prompt ("truncating input prompt" in its log). |
 | `OLLAMA_KEEP_ALIVE` | app `.env` | unset (server default, 5m) | Sent as `keep_alive`, e.g. `30m` or `-1`, so the model is not unloaded between sweeps. |
 | `TIER1_LLM_MAX_CONCURRENT_REQUESTS` / `TIER2_LLM_MAX_CONCURRENT_REQUESTS` / `OLLAMA_MAX_CONCURRENT_REQUESTS` | app `.env` | 2 / 2 / 4 | Placeholders until the Phase 0 latency numbers are in. |
+# Summary bulletin deployment
+
+The backend image includes `Data/` because runtime seed services and their tests read
+the reference files. Summary-parser tests appear in a container only after rebuilding
+the backend image. For the dev stack, run:
+
+```powershell
+docker compose --env-file .env.dev -f docker-compose.yml -f docker-compose.dev.yml build backend pipeline-worker live-sweep-worker
+```
