@@ -62,7 +62,7 @@ def _assert_evidence(raw_text: str, evidence: str) -> None:
         raise ValueError("summary parser evidence span is not a verbatim substring of raw_message.raw_text")
 
 
-async def intake_summary(session, raw_message) -> SummaryIntakeResult:
+async def intake_summary(session, raw_message, *, crosscheck_enabled: bool | None = None) -> SummaryIntakeResult:
     """Persist a parser result without ever changing the legacy message flow."""
     raw_text = raw_message.raw_text or ""
     if not detect_summary(raw_text).is_summary:
@@ -144,7 +144,7 @@ async def intake_summary(session, raw_message) -> SummaryIntakeResult:
         # Add-only LLM cross-check: it can append items or review reasons, never change the above.
         crosscheck = await crosscheck_summary(
             raw_text, parser_pairs, gazetteer=gazetteer, headers=headers, anchor_date=window.anchor_date,
-            known_unresolved=[*result.unresolved_places, *result.unresolved_headers],
+            known_unresolved=[*result.unresolved_places, *result.unresolved_headers], enabled=crosscheck_enabled,
         )
         if crosscheck.error:
             summary.last_error = crosscheck.error

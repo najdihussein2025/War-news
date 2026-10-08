@@ -154,7 +154,7 @@ def classify_old_incidents(
 FALLBACK_OUTCOMES = frozenset({"not_summary", "not_a_summary", "failed", "already_processed"})
 
 
-def process_message(session: Session, raw_message_id: int, *, apply: bool, families: ConditionFamilies) -> MessageResult | None:
+def process_message(session: Session, raw_message_id: int, *, apply: bool, families: ConditionFamilies, crosscheck: bool = False) -> MessageResult | None:
     """Returns None when the message is not a (usable) summary; otherwise the full result.
 
     Runs inside a SAVEPOINT so a dry run (or an error) never leaves partial writes.
@@ -167,7 +167,7 @@ def process_message(session: Session, raw_message_id: int, *, apply: bool, famil
             select(SummaryBulletin).where(SummaryBulletin.raw_message_id == raw_message.id)
         )
         if existing_summary is None:
-            intake = run_coroutine_sync(intake_summary(session, raw_message))
+            intake = run_coroutine_sync(intake_summary(session, raw_message, crosscheck_enabled=crosscheck))
             if intake.outcome in FALLBACK_OUTCOMES:
                 nested.rollback()
                 return None
@@ -304,6 +304,7 @@ def main() -> int:
     parser.add_argument("--until", required=True, type=date.fromisoformat)
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--batch", type=int, default=50, help="Commit boundary for --apply (default: 50).")
+    parser.add_argument("--crosscheck", choices=("off", "on"), default="off", help="Use add-only LLM cross-check for this backfill only (default: off).")
     parser.add_argument("--apply", action="store_true", help="Write real changes (default is a dry run).")
     args = parser.parse_args()
 
@@ -313,7 +314,7 @@ def main() -> int:
         families = load_condition_families(session)
         message_ids = select_candidate_messages(session, args.since, args.until, args.limit)
         for index, raw_message_id in enumerate(message_ids, start=1):
-            result = process_message(session, raw_message_id, apply=args.apply, families=families)
+            result = process_message(session, raw_message_id, apply=args.apply, families=families, crosscheck=args.crosscheck == "on")
             if args.apply:
                 if index % args.batch == 0:
                     session.commit()
