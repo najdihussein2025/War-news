@@ -398,15 +398,17 @@ export const IncidentsPage = () => {
               Compare with match
             </button>
           ) : null}
-          {qualityFlagText(row) ? (
-            <span
-              className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border text-caption text-text-muted"
-              title={qualityFlagText(row)}
-              aria-label="Quality flags"
-            >
-              i
-            </span>
-          ) : null}
+          <span
+            className={`inline-block h-2.5 w-2.5 rounded-full ${
+              qualityFlagText(row) ? "bg-danger" : "bg-success"
+            }`}
+            title={qualityFlagText(row) || "No verification issues"}
+            aria-label={
+              qualityFlagText(row)
+                ? `Verification needs attention: ${qualityFlagText(row)}`
+                : "No verification issues"
+            }
+          />
         </div>
       ),
     },
