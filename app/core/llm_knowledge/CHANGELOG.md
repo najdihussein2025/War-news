@@ -1,5 +1,12 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-08 - Summary bulletin shadow intake
+
+Added Phase 1 shadow persistence for deterministic summary bulletins. The 5 October
+nabatiehchannel example retains `وادي السلوقي (٢)`, `بين محيبيب و برعشيت`, and
+the compound `قنابل مضيئة و فسفورية` as parser evidence without changing legacy
+Tier 1. See `tests/test_summary_intake.py` and the summary parser tests.
+
 ## 2026-10-07 - Summary parser Step 1e: silent-error fixes
 
 A manual review of the regenerated fixtures found resolved items carrying the
