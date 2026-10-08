@@ -56,3 +56,17 @@ The cross-check (`crosscheck_service.py`, prompt `summary_crosscheck_prompt.md`)
   `summary_bulletins.last_error` and leaves the parser result untouched.
 - Accepted items carry `origin=llm_crosscheck` and are appended to
   `eval/summary_parser_misses.jsonl` so each parser gap can become a grammar fix.
+
+## Review rules (Phase 4)
+
+- There is exactly one review task per summary; the Incidents page lists one «Summary review»
+  entry per open task, never one per item.
+- An admin may resolve an `unresolved_location` with a village (optionally saving the spelling
+  as a `village_location_aliases` row), an `unknown_header` with one or more conditions
+  (optionally saving a `summary_header_mappings` row), or dismiss any item. A saved header
+  never overrides an approved YAML header.
+- Resolving an unknown header re-reads the bulletin with the header known, so the places under
+  it become items; the header row itself is kept as a record.
+- `casualty_in_summary` may be dismissed or turned into an incident; the incident still carries
+  no casualty numbers.
+- Resolving marks the items pending and queues the summary for reconciliation immediately.

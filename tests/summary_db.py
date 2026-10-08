@@ -70,8 +70,9 @@ def build_world() -> World:
     source = Source(type=SourceType.telegram, name="قناة اختبار")
     session.add(source)
     conditions = {name: Condition(action_en=name, action_ar=f"ar-{name}") for name in CONDITIONS}
+    arabic = {"A": "كفرا", "B": "صديقين", "C": "الخيام", "D": "ميفدون"}
     villages = {
-        key: Village(acs_code=code, ref_name_ar=key, ref_name_en=key, caza_en="Sour")
+        key: Village(acs_code=code, ref_name_ar=arabic[key], ref_name_en=key, caza_en="Sour")
         for code, key in enumerate(("A", "B", "C", "D"), start=1)
     }
     session.add_all([*conditions.values(), *villages.values()])

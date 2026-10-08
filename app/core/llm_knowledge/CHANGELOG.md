@@ -1,5 +1,14 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-08 - Summary review API and UI (Phase 4)
+
+Admins can resolve a summary's single review task: pick the village for a place the strict
+gazetteer could not read (real example from the 5 October nabatiehchannel bulletin: the
+unresolved places `مزرعة بسطرة` and `سدانة`), map an unknown header to conditions, or dismiss.
+Saved aliases and header mappings are read by the next summary; summary-created incidents
+show a «من الملخص» badge and stay visible in the incident list even though they have no raw
+message. See `tests/test_summaries_api.py`.
+
 ## 2026-10-08 - Summary LLM cross-check (Phase 3)
 
 Added an add-only larger-model cross-check to summary intake. Real example: in the

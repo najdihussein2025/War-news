@@ -124,9 +124,14 @@ async def intake_summary(session, raw_message) -> SummaryIntakeResult:
             parser_pairs.append(ParserPair(item.header_text, " | ".join(item.location_texts), item.condition_id,
                 item.primary_village.id, item.secondary_village.id if item.secondary_village else None))
             position += 1
+        section_of_place = {r.text: r.section_header for r in result.residual if r.kind == "unresolved_place" and r.section_header}
         for text in result.unresolved_places:
             _assert_evidence(raw_text, text)
-            row = SummaryItem(summary_id=summary.id, position=position, location_text=text,
+            # Keep the section's action with the place so a reviewer only has to pick the village.
+            header_text = section_of_place.get(text)
+            entry = headers.resolve(header_text)[0] if header_text else None
+            condition_id = entry.condition_ids[0] if entry is not None and entry.status == "approved" and len(entry.condition_ids) == 1 else None
+            row = SummaryItem(summary_id=summary.id, position=position, location_text=text, header_text=header_text, condition_id=condition_id,
                 evidence_span=text, origin=SummaryItemOrigin.parser, resolution=SummaryResolution.unresolved_location)
             session.add(row); session.flush(); reasons.append({"type": "unresolved_location", "item_ids": [row.id], "text": text})
             position += 1

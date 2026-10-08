@@ -10,7 +10,9 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import (
     and_,
+    String,
     case,
+    cast,
     desc,
     false,
     func,
@@ -52,6 +54,7 @@ from app.news.models import (
     DuplicateMatch,
     Incident,
     IncidentDetail,
+    IncidentOrigin,
     IncidentUpdate,
     MatchStatus,
     MatchType,
@@ -61,6 +64,7 @@ from app.news.models import (
     Village,
 )
 from app.news.models.incident_verification_flag import IncidentVerificationFlag
+from app.news.models.summary_bulletin import SummaryBulletin, SummaryItem
 from app.news.services.incident_details.incident_detail_category_serializer import (
     serialize_incident_category_sections,
 )
@@ -288,7 +292,7 @@ class IncidentRepository(IncidentRepositoryInterface):
                 else_=None,
             ).label("source"),
             self._source_reference_expression().label("source_reference"),
-            RawMessage.source_name.label("source_name"),
+            func.coalesce(RawMessage.source_name, SummaryBulletin.channel).label("source_name"),
             Incident.total_deaths,
             Incident.total_injuries,
             case(
@@ -324,11 +328,18 @@ class IncidentRepository(IncidentRepositoryInterface):
             Incident.story_group_id,
             Incident.quality_flags,
             RawMessage.match_result,
+            cast(Incident.origin, String).label("origin"),
+            Incident.source_summary_item_id,
+            SummaryItem.summary_id.label("summary_id"),
+            SummaryBulletin.channel.label("summary_channel"),
+            SummaryBulletin.window_end.label("summary_window_end"),
         )
         base_query = (
             select(*selected_columns)
             .select_from(Incident)
             .outerjoin(RawMessage, RawMessage.id == Incident.raw_message_id)
+            .outerjoin(SummaryItem, SummaryItem.id == Incident.source_summary_item_id)
+            .outerjoin(SummaryBulletin, SummaryBulletin.id == SummaryItem.summary_id)
             .outerjoin(Village, Village.id == Incident.village_id)
             .outerjoin(Condition, Condition.id == Incident.condition_id)
             .outerjoin(Source, Source.id == func.coalesce(Incident.source_id, RawMessage.source_id))
@@ -708,9 +719,31 @@ class IncidentRepository(IncidentRepositoryInterface):
             "toll_revisions": self._toll_revisions_for(incident.id),
             "related_incidents": self._related_incidents_for(incident),
             "open_casualty_flags_count": len(flags_by_incident.get(incident.id, [])),
+            **self._summary_origin_payload(incident),
             **serialize_incident_category_sections(detail),
         }
         return IncidentDetailDTO.model_validate(values)
+
+    def _summary_origin_payload(self, incident: Incident) -> dict[str, Any]:
+        """Where the incident came from, plus its summary (channel/date) for display."""
+        payload: dict[str, Any] = {
+            "origin": getattr(incident.origin, "value", incident.origin) or "live",
+            "source_summary_item_id": incident.source_summary_item_id,
+        }
+        if incident.source_summary_item_id is None:
+            return payload
+        summary = self.db.execute(
+            select(SummaryBulletin.id, SummaryBulletin.channel, SummaryBulletin.window_end)
+            .join(SummaryItem, SummaryItem.summary_id == SummaryBulletin.id)
+            .where(SummaryItem.id == incident.source_summary_item_id)
+        ).one_or_none()
+        if summary is not None:
+            payload.update(
+                summary_id=summary.id,
+                summary_channel=summary.channel,
+                summary_window_end=summary.window_end,
+            )
+        return payload
 
     def _list_village_match_payload(self, row: Mapping[str, Any]) -> dict[str, Any]:
         match_result = row.get("match_result") if isinstance(row, Mapping) else None
@@ -2778,9 +2811,16 @@ class IncidentRepository(IncidentRepositoryInterface):
             Incident.village_id.is_not(None),
             Incident.condition_id.not_in(AIR_VIOLATION_CONDITION_ID_TUPLE),
             cls._visible_incident_scope_filter(),
-            RawMessage.id.is_not(None),
-            RawMessage.status == MessageStatus.materialized,
-            ~RawMessage.raw_payload.op("?")("ocr_text"),
+            # Summary-created incidents have no raw message of their own (so no stage can
+            # re-read the bulletin for them); every other incident must be materialized.
+            or_(
+                Incident.origin == IncidentOrigin.summary,
+                and_(
+                    RawMessage.id.is_not(None),
+                    RawMessage.status == MessageStatus.materialized,
+                    ~RawMessage.raw_payload.op("?")("ocr_text"),
+                ),
+            ),
         ]
         if params.verification_status is None:
             filters.append(Incident.verification_status != "rejected")

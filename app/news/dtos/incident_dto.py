@@ -62,6 +62,11 @@ class IncidentListItemDTO(BaseModel):
     geo_context_anchor_village_name: str | None = None
     geo_context_distance_meters: float | None = None
     normalized_from: str | None = None
+    origin: Literal["live", "summary"] = "live"
+    source_summary_item_id: int | None = None
+    summary_id: int | None = None
+    summary_channel: str | None = None
+    summary_window_end: datetime | None = None
 
     @field_validator("duplicate_level", mode="before")
     @classmethod
@@ -251,6 +256,11 @@ class IncidentDetailDTO(BaseModel):
     toll_revisions: list[TollRevisionDTO] = Field(default_factory=list)
     related_incidents: list[RelatedIncidentDTO] = Field(default_factory=list)
     open_casualty_flags_count: int = 0
+    origin: Literal["live", "summary"] = "live"
+    source_summary_item_id: int | None = None
+    summary_id: int | None = None
+    summary_channel: str | None = None
+    summary_window_end: datetime | None = None
     lebanese_army: IncidentCategorySectionDTO | None = None
     unifil: IncidentCategorySectionDTO | None = None
     municipality: IncidentCategorySectionDTO | None = None
