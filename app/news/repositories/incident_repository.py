@@ -98,6 +98,7 @@ from app.news.services.incidents.incident_change_log import (
     changed_fields,
     record_incident_change,
 )
+from app.news.services.incidents.soft_delete import soft_delete_incident
 from app.news.services.materialization.verification_signals import (
     LOW_CONFIDENCE_VILLAGE_REVIEW_REASON,
 )
@@ -1115,16 +1116,7 @@ class IncidentRepository(IncidentRepositoryInterface):
             ):
                 return False
             raise StaleDataError("Incident version or edit lock is stale.")
-        incident.is_deleted = True
-        incident.deleted_reason = DeletedReason.admin.value
-        record_incident_change(
-            self.db,
-            incident_id=incident.id,
-            action=UpdateAction.delete,
-            old_values={"is_deleted": False},
-            new_values={"is_deleted": True, "deleted_reason": DeletedReason.admin.value},
-            performed_by=user_id,
-        )
+        soft_delete_incident(self.db, incident, reason=DeletedReason.admin.value, performed_by=user_id)
         evaluate_casualty_flags_safely(self.db, incident.id)
         self.db.commit()
         return True
