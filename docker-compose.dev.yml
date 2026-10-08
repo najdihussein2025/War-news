@@ -38,6 +38,12 @@ services:
     volumes:
       - .:/app
 
+  summary-reconcile-worker:
+    env_file:
+      - .env.dev
+    volumes:
+      - .:/app
+
   cnrs-poll-worker:
     env_file:
       - .env.dev

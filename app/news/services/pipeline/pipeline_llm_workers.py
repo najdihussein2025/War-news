@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import asyncio
 
 from app.api.factories.action_factory import build_extraction_classifier
 from app.core.database import SessionLocal
@@ -57,16 +56,22 @@ def run_tier1_extraction_for_message(raw_message_id: int) -> None:
             return
         post_text = message.raw_text or ""
         cnrs_classification = message.cnrs_classification
-        if settings.summary_flow_mode == "live":
-            raise NotImplementedError("SUMMARY_FLOW_MODE=live is not available until Phase 2 reconciliation is implemented")
-        if settings.summary_flow_mode == "shadow":
+        if settings.summary_flow_mode in {"shadow", "live"}:
             try:
-                from app.news.services.summaries.intake_service import intake_summary
-                asyncio.run(intake_summary(db, message))
+                from app.news.services.summaries.routing import route_summary
+
+                routing = route_summary(db, message)
                 db.commit()
+                if routing.handled:
+                    logger.info(
+                        "raw_message_id=%s handled by summary flow (%s); skipping Tier 1",
+                        raw_message_id,
+                        routing.outcome,
+                    )
+                    return
             except Exception:
                 db.rollback()
-                logger.warning("summary shadow intake failed raw_message_id=%s; continuing Tier 1", raw_message_id, exc_info=True)
+                logger.warning("summary intake failed raw_message_id=%s; continuing Tier 1", raw_message_id, exc_info=True)
 
     classifier = build_extraction_classifier()
     try:

@@ -1,4 +1,5 @@
 import logging
+from typing import Callable
 
 from app.llm.dtos import (
     ExtractPendingMessagesData,
@@ -26,9 +27,12 @@ class ExtractIncidentsAction:
         self,
         raw_messages: RawMessageRepositoryInterface,
         classifier: ExtractionClassifierInterface,
+        summary_router: Callable[[object], bool] | None = None,
     ) -> None:
         self.raw_messages = raw_messages
         self.classifier = classifier
+        # Returns True when the summary-bulletin flow took the message (skip Tier 1).
+        self.summary_router = summary_router
 
     def execute(self, data: ExtractPendingMessagesData) -> ExtractionBatchSummary:
         messages = self.raw_messages.get_pending_extraction_batch(
@@ -40,6 +44,8 @@ class ExtractIncidentsAction:
 
         for message in messages:
             processed += 1
+            if self.summary_router is not None and self.summary_router(message):
+                continue
             try:
                 result = self.classifier.extract_tier1(
                     post_text=message.raw_text or "",
@@ -103,6 +109,8 @@ class ExtractIncidentsAction:
         if message.extraction_result is not None:
             return
         if message.status != MessageStatus.parsed:
+            return
+        if self.summary_router is not None and self.summary_router(message):
             return
 
         try:

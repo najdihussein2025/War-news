@@ -134,6 +134,24 @@ services:
     networks:
       - appnet
 
+  summary-reconcile-worker:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      PG_APPLICATION_NAME: war-news-summary-reconcile
+      PIPELINE_ROLE: summary-reconcile-worker
+      PYTHONUNBUFFERED: "1"
+    command: sh -c "while true; do python -m scripts.summary_reconcile_sweep; sleep ${SUMMARY_RECONCILE_INTERVAL_SECONDS:-300}; done"
+    restart: unless-stopped
+    networks:
+      - appnet
+
   cnrs-poll-worker:
     build:
       context: .

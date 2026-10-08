@@ -4,9 +4,6 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass
 from datetime import timedelta
-from pathlib import Path
-
-import yaml
 
 from sqlalchemy import select
 
@@ -16,15 +13,17 @@ from app.news.models.summary_bulletin import (
     SummaryResolution, SummaryReviewStatus, SummaryReviewTask, SummaryStatus,
 )
 
+from .crosscheck_service import ParserPair, crosscheck_summary, record_parser_misses
 from .detection import detect_summary
 from .gazetteer import build_gazetteer_snapshot
-from .headers import default_header_dictionary
+from .header_store import header_dictionary_for_session
+from .lexicon import LEXICON
 from .normalize import normalize_summary_text, normalize_token
 from .parser import parse_summary
 from .window import resolve_window
 
 PARSER_VERSION = "summary-parser-1"
-LEXICON = yaml.safe_load((Path(__file__).resolve().parents[3] / "core" / "llm_knowledge" / "terminology" / "summary_location_lexicon.yaml").read_text(encoding="utf-8"))
+NOT_A_SUMMARY = "not_a_summary"
 
 
 @dataclass(frozen=True)
@@ -84,6 +83,8 @@ async def intake_summary(session, raw_message) -> SummaryIntakeResult:
         canonical = session.scalar(select(SummaryBulletin).where(
             SummaryBulletin.fingerprint == fingerprint,
             SummaryBulletin.id != summary.id,
+            SummaryBulletin.canonical_summary_id.is_(None),
+            SummaryBulletin.status != SummaryStatus.failed,
             SummaryBulletin.created_at >= cutoff,
         ).order_by(SummaryBulletin.created_at.asc()))
         if canonical is not None:
@@ -98,9 +99,21 @@ async def intake_summary(session, raw_message) -> SummaryIntakeResult:
         summary.window_basis = window.rule
         summary.process_after = window.end + timedelta(minutes=settings.summary_reconcile_delay_minutes)
         gazetteer = build_gazetteer_snapshot(session)
-        result = parse_summary(raw_text, gazetteer, default_header_dictionary(), LEXICON, window.anchor_date)
+        headers = header_dictionary_for_session(session)
+        result = parse_summary(raw_text, gazetteer, headers, LEXICON, window.anchor_date)
+        # False-positive guard: a real summary lists at least two (action, place)
+        # pairs under at least one recognized header. Anything else (a news item
+        # that merely says "ملخص") is left to Tier 1.
+        recognized_headers = [h for h in result.headers if h.status == "approved"]
+        if len(result.items) + len(result.unresolved_places) < 2 or not recognized_headers:
+            summary.status = SummaryStatus.failed
+            summary.last_error = NOT_A_SUMMARY
+            session.flush()
+            return SummaryIntakeResult("not_a_summary", summary.id, NOT_A_SUMMARY)
         reasons: list[dict] = []
-        for position, item in enumerate(result.items):
+        parser_pairs: list[ParserPair] = []
+        position = 0
+        for item in result.items:
             evidence = item.evidence_spans[0].text if item.evidence_spans else ""
             _assert_evidence(raw_text, evidence)
             session.add(SummaryItem(summary_id=summary.id, position=position, header_text=item.header_text,
@@ -108,16 +121,44 @@ async def intake_summary(session, raw_message) -> SummaryIntakeResult:
                 primary_village_id=item.primary_village.id, secondary_village_id=item.secondary_village.id if item.secondary_village else None,
                 modifier=_modifier(item), reported_count=item.reported_count, evidence_span=evidence,
                 origin=SummaryItemOrigin.parser, resolution=SummaryResolution.resolved))
+            parser_pairs.append(ParserPair(item.header_text, " | ".join(item.location_texts), item.condition_id,
+                item.primary_village.id, item.secondary_village.id if item.secondary_village else None))
+            position += 1
         for text in result.unresolved_places:
             _assert_evidence(raw_text, text)
-            row = SummaryItem(summary_id=summary.id, position=len(result.items) + len(reasons), location_text=text,
+            row = SummaryItem(summary_id=summary.id, position=position, location_text=text,
                 evidence_span=text, origin=SummaryItemOrigin.parser, resolution=SummaryResolution.unresolved_location)
             session.add(row); session.flush(); reasons.append({"type": "unresolved_location", "item_ids": [row.id], "text": text})
+            position += 1
         for text in result.unresolved_headers:
             _assert_evidence(raw_text, text)
-            row = SummaryItem(summary_id=summary.id, position=len(result.items) + len(reasons), header_text=text, location_text=text,
+            row = SummaryItem(summary_id=summary.id, position=position, header_text=text, location_text=text,
                 evidence_span=text, origin=SummaryItemOrigin.parser, resolution=SummaryResolution.unknown_header)
             session.add(row); session.flush(); reasons.append({"type": "unknown_header", "item_ids": [row.id], "text": text})
+            position += 1
+        # Add-only LLM cross-check: it can append items or review reasons, never change the above.
+        crosscheck = await crosscheck_summary(
+            raw_text, parser_pairs, gazetteer=gazetteer, headers=headers, anchor_date=window.anchor_date,
+            known_unresolved=[*result.unresolved_places, *result.unresolved_headers],
+        )
+        if crosscheck.error:
+            summary.last_error = crosscheck.error
+        for add in crosscheck.accepted:
+            item = add.item
+            session.add(SummaryItem(summary_id=summary.id, position=position, header_text=add.header,
+                condition_id=item.condition_id, location_text=" | ".join(item.location_texts) or add.location,
+                primary_village_id=item.primary_village.id, secondary_village_id=item.secondary_village.id if item.secondary_village else None,
+                modifier=_modifier(item), reported_count=item.reported_count, evidence_span=add.evidence_span,
+                origin=SummaryItemOrigin.llm_crosscheck, resolution=SummaryResolution.resolved))
+            position += 1
+        for add in crosscheck.review:
+            resolution = SummaryResolution.unknown_header if add.reason == "unknown_header" else SummaryResolution.unresolved_location
+            row = SummaryItem(summary_id=summary.id, position=position, header_text=add.header, location_text=add.location,
+                evidence_span=add.evidence_span, origin=SummaryItemOrigin.llm_crosscheck, resolution=resolution)
+            session.add(row); session.flush()
+            reasons.append({"type": add.reason, "item_ids": [row.id], "text": add.evidence_span, "origin": "llm_crosscheck"})
+            position += 1
+        record_parser_misses(raw_message.id, crosscheck.accepted)
         if reasons:
             session.add(SummaryReviewTask(summary_id=summary.id, reasons=reasons, status=SummaryReviewStatus.open))
             summary.status = SummaryStatus.needs_review

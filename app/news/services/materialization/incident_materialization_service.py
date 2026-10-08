@@ -1365,24 +1365,29 @@ class IncidentMaterializationService:
         from app.news.models import IncidentOrigin as _Origin
         from app.news.services.summaries.condition_families import load_condition_families
 
-        if not hasattr(self, "_condition_families"):
-            self._condition_families = load_condition_families(self.db)
-        found = self.db.scalar(
+        result = self.db.execute(
             select(Incident)
             .where(
                 Incident.origin == _Origin.summary,
                 Incident.village_id == village_id,
-                Incident.condition_id.in_(
-                    sorted(self._condition_families.equivalents(condition_id))
-                ),
                 Incident.event_date == event_datetime.date(),
                 Incident.is_deleted.is_(False),
                 Incident.verification_status.is_distinct_from("rejected"),
             )
             .order_by(Incident.event_time.asc().nulls_first(), Incident.created_at.asc())
-            .limit(1)
         )
-        return found if isinstance(found, Incident) else None
+        scalars = getattr(result, "scalars", None)
+        if scalars is None:  # lightweight test doubles return no result set
+            return None
+        candidates = [row for row in scalars().all() if isinstance(row, Incident)]
+        if not candidates:
+            return None
+        if not hasattr(self, "_condition_families"):
+            self._condition_families = load_condition_families(self.db)
+        for candidate in candidates:  # earliest first
+            if self._condition_families.same(condition_id, candidate.condition_id):
+                return candidate
+        return None
 
     def enrich_summary_incident(
         self,

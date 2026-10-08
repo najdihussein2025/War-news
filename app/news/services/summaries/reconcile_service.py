@@ -284,11 +284,9 @@ async def reconcile_summary(session, summary_id: int, *, dry_run: bool) -> Recon
     }
     if dry_run:
         summary.shadow_result = payload
-        summary.attempts = (summary.attempts or 0) + 1
     else:
         summary.hidden = result.hidden
         summary.status = SummaryStatus.needs_review if task_open else SummaryStatus.reconciled
-        summary.attempts = (summary.attempts or 0) + 1
         summary.last_error = None
     session.add(summary)
     session.flush()

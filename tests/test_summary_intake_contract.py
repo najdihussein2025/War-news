@@ -7,7 +7,8 @@ def test_summary_intake_stays_strict_and_never_imports_legacy_matcher():
     assert not any(term in source for term in forbidden)
 
 
-def test_live_mode_is_explicitly_guarded_before_tier1():
+def test_tier1_worker_routes_summaries_before_extraction():
     source = Path("app/news/services/pipeline/pipeline_llm_workers.py").read_text(encoding="utf-8")
-    assert "SUMMARY_FLOW_MODE=live is not available" in source
-    assert "intake_summary" in source
+    assert "route_summary" in source
+    assert source.index("route_summary") < source.index("classifier.extract_tier1")
+    assert "NotImplementedError" not in source

@@ -132,6 +132,7 @@ def build_extract_incidents_action(
 ) -> ExtractIncidentsAction:
     from app.news.repositories import RawMessageRepository
     from app.news.repositories import VillageRepository
+    from app.news.services.summaries.routing import build_summary_router
 
     if classifier is None:
         classifier = build_extraction_classifier(
@@ -141,6 +142,7 @@ def build_extract_incidents_action(
     return ExtractIncidentsAction(
         raw_messages=RawMessageRepository(db),
         classifier=classifier,
+        summary_router=build_summary_router(db),
     )
 
 

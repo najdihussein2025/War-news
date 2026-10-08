@@ -62,6 +62,12 @@ presence_gate:
     - terminology/org_types.yaml
     - terminology/role_terms.yaml
 
+# Summary bulletin cross-check (add-only): lists (header, location) pairs the parser missed.
+summary_crosscheck:
+  rules:
+    core:
+      - rules/summary_crosscheck_prompt.md
+
 story_revision:
   rules:
     core:
