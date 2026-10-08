@@ -81,6 +81,29 @@ def test_detailed_recurrence_days_later_is_not_merged_as_story_revision() -> Non
     assert result.relationship == StoryRelationship.unrelated
 
 
+def test_sparse_report_thirteen_hours_later_is_not_a_story_revision() -> None:
+    """Repeated shelling at the same village later that day is a new event."""
+    candidate = SimpleNamespace(
+        incident=SimpleNamespace(
+            id=uuid4(),
+            khabar="قصف مدفعي طال وادي زبقين",
+            deaths=None,
+            injuries=None,
+            total_deaths=None,
+            total_injuries=None,
+        ),
+        embedding_similarity=0.95,
+        time_gap_seconds=13 * 60 * 60,
+    )
+
+    result = StoryRelationshipService().classify_best(
+        current_text="قصف مدفعي يستهدف وادي زبقين",
+        candidates=[candidate],
+    )
+
+    assert result.relationship == StoryRelationship.unrelated
+
+
 def test_story_revision_llm_response_requires_a_marker() -> None:
     confirmed = parse_story_revision_response(
         '{"relationship_hint":"revision","matched_keywords":["حصيلة أولية"]}'

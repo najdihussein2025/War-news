@@ -38,7 +38,10 @@ SPARSE_REVISION_CONFIDENT_SIMILARITY = 0.55
 # Similar text at the same village days later is normally a recurring strike,
 # not a continuation of the old incident.  Longer links require explicit
 # revision/casualty-update wording handled by the deterministic backstop.
-HEURISTIC_STORY_MAX_GAP_SECONDS = 24 * 60 * 60
+# The sparse-message heuristic is for an *early* report of the same event,
+# not for a fresh, similarly worded report later in the day.  Longer windows
+# are still available to messages carrying explicit revision/recall markers.
+HEURISTIC_STORY_MAX_GAP_SECONDS = 6 * 60 * 60
 
 LlmClassifyFn = Callable[
     [str, str],

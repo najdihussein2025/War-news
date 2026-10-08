@@ -125,6 +125,25 @@ def test_wadi_phrase_does_not_confidently_fuzzy_match_unrelated_ouadi_village() 
     assert vm.village_review_required is True
 
 
+def test_bare_mashaa_is_not_fuzzy_matched_to_mchaa_ej_jibbe() -> None:
+    """A common-land qualifier must not become the unrelated northern village."""
+    mchaa_ej_jibbe = SimpleNamespace(
+        id=1066,
+        ref_name_ar="مشاع الجبة",
+        acs_name="Mchaa Ej-Jibbe",
+        cad_name=None,
+    )
+    villages = _TextSimilarRepositoryStub({"المشاع": [(mchaa_ej_jibbe, 0.56)]})
+    service = MatchingService(villages, _SimilarRepositoryStub(None, None))
+
+    result = service.match(_extraction(village=["المشاع"], action=None))
+
+    vm = result.village_matches[0]
+    assert vm.matched_village_id is None
+    assert vm.village_match_status == MatchResultStatus.matched_low_confidence
+    assert vm.village_review_required is True
+
+
 def test_matches_condition_and_preserves_raw_mentions() -> None:
     villages = _SimilarRepositoryStub(None, None)
     conditions = _SimilarRepositoryStub(22, 0.81)

@@ -1,0 +1,664 @@
+incident_id,summary_message_id,village,condition,classification,duplicate_of_incident_id,soft_deleted
+5efdfd1b-0d2c-4b0b-8372-83aa27f5cd5a,28444,ميفدون,عملية تمشيط,WRONG_ROW,,False
+615c40dd-d7a8-4ea3-a45c-cf7889ad8126,28444,شقرا,عملية تمشيط,WRONG_ROW,,False
+bd862756-2c2c-461b-b989-0cfcaf50ff35,28444,كفر تبنيت,عملية تمشيط,WRONG_ROW,,False
+cdc5e534-ba2f-4eb2-9261-56d8c266ee37,28444,برعشيت,عملية تمشيط,WRONG_ROW,,False
+f7371e4e-93e0-4ae2-bfd8-51b943e4b8bd,28444,كفر رمان,عملية تمشيط,WRONG_ROW,,False
+b72bf698-9b44-438e-9f57-4fa143f6938a,28444,حرف السياد,عملية تمشيط,WRONG_ROW,,False
+7f2b9f0c-e655-4588-9449-b6d35b1b5029,28444,زوطر الشرقية,قصف مدفعي,WRONG_ROW,,False
+d95304f8-a74a-49f4-a478-bc906cd9b04f,28444,طلوسة,قصف مدفعي,WRONG_ROW,,False
+b16fe504-8e32-4e85-b379-a7836d19cdc7,28444,حولا,قصف مدفعي,DUPLICATE_ROW,d5be3e16-c474-4c63-885c-df8f42d35bdd,False
+889c2733-4850-4637-9ae1-3aa4bd53583a,28444,عيتا الجبل الزط,قصف مدفعي,WRONG_ROW,,False
+3d4b3eb7-0dd0-47f9-a3b6-f66aa23de5c2,28444,الخيام,قصف مدفعي,DUPLICATE_ROW,ca37a4ae-644a-4a91-b097-5eab84cfe78c,False
+1b81fc79-a957-4273-b44c-1014acaa4a40,28444,بيت ياحون,قصف مدفعي,UNIQUE_CORRECT,,False
+462f3003-82f5-43bc-8d4e-d6f653df0264,28444,ميس الجبل,قصف مدفعي,DUPLICATE_ROW,ca9844d8-6663-4313-a64b-a20acaa54a2c,False
+321c8155-a985-422f-839a-4d5ad01cf37d,28444,حداثا,قصف مدفعي,UNIQUE_CORRECT,,False
+c0598f6c-fecc-4914-bbcb-9bfcca93e164,28444,المنصوري,قصف مدفعي,DUPLICATE_ROW,aa5d617a-9a95-4f6b-881b-afe27483f1d2,False
+840ffa9c-3b1e-4edc-ba26-caa0dc5550c6,28444,علي الطاهر,قصف مدفعي,UNIQUE_CORRECT,,False
+702cf8a0-0896-4147-91f4-53ea351ed1ee,28444,صربين,قصف مدفعي,DUPLICATE_ROW,9867b3fc-bc46-4262-ae04-102a249b0c32,False
+3a65d51e-fef4-432c-b4d3-0f913c077341,31412,برعشيت,قصف مدفعي,DUPLICATE_ROW,ed81a90b-cd2c-4d4f-be9d-f75d15c3ed6b,True
+91c07247-c54b-4840-9ca9-12a9d4e6752b,29812,كفر تبنيت,قصف مدفعي,WRONG_ROW,,True
+a61d15bb-9789-4507-9e93-481e8299df98,28475,شقرا,قصف مدفعي,UNIQUE_CORRECT,,True
+ffb77e0b-ae39-4aed-8b72-37bcd86c89da,31412,كفر رمان,قصف مدفعي,UNIQUE_CORRECT,,True
+18703f72-de8f-487f-b576-4c853e71f879,31412,ميفدون,قصف مدفعي,DUPLICATE_ROW,0b2067c7-0bcb-4a23-9af3-8cc348ef2f8e,True
+d453619b-5bf2-4dae-af99-a69d0a1e20dc,28475,كفر رمان,قصف مدفعي,UNIQUE_CORRECT,,True
+09b8a870-c5a6-4ce3-95fa-5af7fc37ffd7,28475,برعشيت,قصف مدفعي,DUPLICATE_ROW,ed81a90b-cd2c-4d4f-be9d-f75d15c3ed6b,True
+da8f3ba3-bf6c-4741-80da-d21883d5612c,28475,حرف السياد,قصف مدفعي,WRONG_ROW,,True
+526c2ba5-5d96-4662-abee-b8f632269cc7,28475,ميفدون,قصف مدفعي,DUPLICATE_ROW,0b2067c7-0bcb-4a23-9af3-8cc348ef2f8e,True
+a6c50ec7-d6f9-49cb-96d4-e6422a1dfb99,31412,حرف السياد,قصف مدفعي,WRONG_ROW,,True
+f6851734-ba46-4aa0-b686-d37955aab7fa,31412,شقرا,قصف مدفعي,UNIQUE_CORRECT,,True
+658f0d83-49b2-4b5c-bc04-9240ec717f8a,31714,كفر تبنيت,قصف مدفعي,WRONG_ROW,,True
+78ffa38c-ec42-467e-9a26-8de472ba511f,28385,كفر رمان,قصف مدفعي,UNIQUE_CORRECT,,True
+69a2cc5f-7366-4667-aa90-d1e58164cb44,28385,برعشيت,قصف مدفعي,DUPLICATE_ROW,ed81a90b-cd2c-4d4f-be9d-f75d15c3ed6b,True
+38fc4d6b-8518-4785-b09a-fb393a06a3d3,28385,شقرا,قصف مدفعي,UNIQUE_CORRECT,,True
+709a4f41-5d28-4773-ac43-709e6298084d,28385,حرف السياد,قصف مدفعي,WRONG_ROW,,True
+fd484f30-a7bc-42b1-9ec3-1f4d7e8ebd97,28385,ميفدون,قصف مدفعي,DUPLICATE_ROW,0b2067c7-0bcb-4a23-9af3-8cc348ef2f8e,True
+b621e6b5-7732-4088-a6ed-9232c20d2b23,31404,ميفدون,قصف مدفعي,DUPLICATE_ROW,0b2067c7-0bcb-4a23-9af3-8cc348ef2f8e,True
+4109214c-efbc-4394-a96e-72040a6b64dd,31404,كفر رمان,قصف مدفعي,UNIQUE_CORRECT,,True
+9a9fdef8-d57e-46ff-9e0e-1f3ca1e468a2,31404,شقرا,قصف مدفعي,UNIQUE_CORRECT,,True
+6b882a92-eeaa-422a-b1b8-f5e065323562,31404,برعشيت,قصف مدفعي,DUPLICATE_ROW,ed81a90b-cd2c-4d4f-be9d-f75d15c3ed6b,True
+e197249f-bf8a-425b-865a-8fcd99dc8fd3,31404,حرف السياد,قصف مدفعي,WRONG_ROW,,True
+20fda028-7a01-4ff9-b468-7e16c1a1aa97,29456,وادي الست,قصف مدفعي,DUPLICATE_ROW,a9b05203-265f-47bc-9231-e3fa240cfcd0,True
+1072fd0a-417d-464e-83af-50c11f03d3f9,29456,حداثا,قصف مدفعي,WRONG_ROW,,True
+f3054a1e-0a87-4a21-a5bd-8ba2c20723f0,29456,كفر رمان,قصف مدفعي,DUPLICATE_ROW,d2f9b3d7-848c-410e-9afb-09d3ea5f1598,True
+1b463d46-27f5-4688-9eda-9c4efccb3ecd,31710,وادي الست,قصف مدفعي,DUPLICATE_ROW,a9b05203-265f-47bc-9231-e3fa240cfcd0,True
+e66a05e3-1e8b-4bfe-8dab-18f55db666c7,31710,كفر رمان,قصف مدفعي,DUPLICATE_ROW,d2f9b3d7-848c-410e-9afb-09d3ea5f1598,True
+575123bd-bdd0-4df9-badc-ff189967dad2,31710,حرف السياد,قصف مدفعي,WRONG_ROW,,True
+4cbf7c37-856d-4033-9db0-bb3c03ce212a,28638,الخريبة,قنابل صوتية,WRONG_ROW,,False
+dffc225d-2651-4635-92db-aac31dfd81e3,28638,القنطرة,قنابل صوتية,WRONG_ROW,,False
+9359f7a7-dc45-4acb-8ca9-c069807dfaa8,28638,ميس الجبل,قنابل صوتية,WRONG_ROW,,False
+4cd03bc6-6123-4730-b8be-f411b3aff344,28638,المنصوري,قنابل صوتية,UNIQUE_CORRECT,,False
+9713eb4c-c7e7-4fb8-8775-83e9661d1288,28638,زوطر الشرقية,قنابل صوتية,WRONG_ROW,,False
+efd875ff-02de-48fa-9250-aede75dd2d18,28638,علي الطاهر,قنابل صوتية,WRONG_ROW,,False
+f65ada2b-2e77-4e53-92dc-44d3b448ac1b,31302,شبعا,قصف مدفعي,DUPLICATE_ROW,c9cb2145-0e89-48f7-bdb6-21f76f83ae9f,False
+566bbcab-225c-4dc7-a558-a7aa21548f12,31302,ميس الجبل,قصف مدفعي,UNIQUE_CORRECT,,True
+716a1edb-3534-4a5f-8254-c912119429bf,31302,حولا,قصف مدفعي,DUPLICATE_ROW,3eb3cbc9-6783-4dc5-ac58-fb19d3fd529f,True
+753b0e11-02b5-4f3b-9d38-0c8b96a72aac,31302,ميفدون,قصف مدفعي,UNIQUE_CORRECT,,True
+6ca1882f-62ea-476d-8718-75db1e2899ab,31302,منصورية,قصف مدفعي,WRONG_ROW,,False
+62084c7c-0050-4a13-ac49-fbb5e67b8a80,31302,كفر رمان,قصف مدفعي,DUPLICATE_ROW,d2f9b3d7-848c-410e-9afb-09d3ea5f1598,True
+99ce4846-bf3a-41ec-88c4-27b267e77ce7,31302,علي الطاهر,قصف مدفعي,DUPLICATE_ROW,94575be2-cb0e-4136-b6cc-e6e04eb83ac2,True
+eb48e665-e946-427c-b061-ef602445af02,31302,حداثا,قصف مدفعي,DUPLICATE_ROW,8d0f76cd-2439-4618-a620-e2404446d668,True
+39ff7f3e-989f-4782-af85-563b6973d852,31302,طلوسة,قصف مدفعي,DUPLICATE_ROW,4c3ad03e-0540-4339-a2af-dd0209a4e8a6,True
+93a7b0e4-2bd5-4594-a779-92aae1ca90f7,31302,زوطر الشرقية,قصف مدفعي,DUPLICATE_ROW,6bbd5241-50e7-4187-8997-eee2b383e305,True
+95adfa51-3206-487e-a620-76d0dec76da3,28493,كفر رمان,قصف مدفعي,DUPLICATE_ROW,d2f9b3d7-848c-410e-9afb-09d3ea5f1598,True
+eb80d119-4ea4-49ba-a82e-24c735c777a4,31155,ميفدون,عملية تمشيط,DUPLICATE_ROW,cf3e64c6-3af6-4661-a436-51216484ebdc,False
+cd7faf98-9ed9-4983-9c52-38f61ba5f068,31155,كفر تبنيت,عملية تمشيط,WRONG_ROW,,False
+5501ef06-b897-4878-9cf2-4c93e4035766,31155,كفر رمان,قصف مدفعي,DUPLICATE_ROW,ec512e62-3eb2-466c-af3f-455fd5880ff9,True
+15174c21-88bc-458a-9a84-8d603c3b209b,31155,مجدل زون,قصف مدفعي,WRONG_ROW,,True
+98f23ebb-0c9e-4b87-8b39-7779102245ee,31155,القنطرة,قصف مدفعي,DUPLICATE_ROW,3e7d0202-5c3a-4544-ac14-f22db7f02da5,True
+3a370e92-7104-447c-9d84-222b7562cbf2,31155,برعشيت,قصف مدفعي,DUPLICATE_ROW,2dc43c39-d7e1-4a0a-94bf-125446671114,True
+d7792ffd-1cd1-4c6b-9045-2860541fac94,31155,حرف السياد,قصف مدفعي,DUPLICATE_ROW,c04c607f-943f-4201-b915-4516282b1195,True
+f81c4b7d-da0b-4f8d-a3d1-934fe44e410e,31054,يحمر,عملية تمشيط,WRONG_ROW,,False
+5a1eab29-b4c8-48f2-bf10-92b86ff74b7a,31054,الخريبة,قصف مدفعي,WRONG_ROW,,True
+6fac02c0-f4c9-4e2e-b3f6-15dc7658a134,31054,حولا,قصف مدفعي,UNIQUE_CORRECT,,False
+a20231ee-afc6-4d30-8050-e15b3c3df5d9,31054,دير سريان,قصف مدفعي,DUPLICATE_ROW,2c916a48-4169-46ea-b487-c59eff27d0f0,False
+86519815-771a-4feb-80ea-e6a0ca8eb278,31054,شمع,قصف مدفعي,WRONG_ROW,,False
+dbe741b9-0998-4362-bf9d-f2ea0a7a2489,31054,بني حيان,قصف مدفعي,DUPLICATE_ROW,4e4823eb-07f9-4c5c-b745-4e59065e3380,True
+dc856467-5cea-4734-a911-08296c1a6e8c,31054,ميس الجبل,قصف مدفعي,UNIQUE_CORRECT,,True
+bc5f63ac-ea0e-4139-b2f2-b9817cd2aa55,31054,كفر رمان,قصف مدفعي,UNIQUE_CORRECT,,True
+c3657275-a959-4a58-9639-0768a3f14060,31054,طلوسة,قصف مدفعي,WRONG_ROW,,False
+f9de3995-c33f-4b00-8c8e-133fe993e0c8,31054,عيتا الجبل الزط,قصف مدفعي,DUPLICATE_ROW,f55c2427-5b73-41a6-a3ea-f2268501b3a9,False
+26d9f363-0650-488d-98dd-3a1d7a092ed2,31054,زوطر الشرقية,قصف مدفعي,WRONG_ROW,,True
+f9f77a85-8db3-4f3b-b2cc-5473715789d9,31054,صربين,قصف مدفعي,WRONG_ROW,,True
+4f6a8d66-dd4a-48ee-9256-9f37aecc864f,31062,علي الطاهر,قصف مدفعي,DUPLICATE_ROW,39d76d1d-feb2-484d-a313-82e19359d82b,True
+5897138d-357f-41de-b93f-c089b461233b,31054,برعشيت,قصف مدفعي,WRONG_ROW,,True
+c9bf9b60-3bf9-43ad-8c92-e1656b4454fe,31054,حداثا,قصف مدفعي,WRONG_ROW,,True
+e9463daf-740f-46e5-9714-c4bca0fdaf05,31010,كفر رمان,قصف مدفعي,DUPLICATE_ROW,57660fdb-329e-40fa-98f1-d9ee8a2315f1,True
+c66e5366-1658-4013-8f68-2072d6b2dec9,31021,كفر رمان,عملية تمشيط,WRONG_ROW,,False
+51066327-da58-4410-af85-ec3218fcc8c2,31021,حداثا,قصف مدفعي,UNIQUE_CORRECT,,False
+f01fa879-f262-4bfa-9d2e-9685d16e8f7b,31021,المنصوري,قصف مدفعي,UNIQUE_CORRECT,,True
+8d024cde-04be-45c6-85ef-ab608cad01b6,31021,القنطرة,قصف مدفعي,WRONG_ROW,,False
+3b79b04c-759a-4309-9212-c9c5680d231f,31021,علي الطاهر,قصف مدفعي,UNIQUE_CORRECT,,True
+58359992-b221-4c2b-83ee-57c94331aaeb,31778,المنيه,قصف وغارات,WRONG_ROW,,False
+d73fba5b-c57f-4789-83c6-a452ba63c010,31778,قليلة,قصف مدفعي,WRONG_ROW,,False
+e50f619d-d3b0-4167-8f08-4f3cfd637a41,31778,كونين,قصف مدفعي,DUPLICATE_ROW,a8d15180-6d7b-49a8-85f6-42f607c236d3,True
+49566d11-f8cf-4be4-9ec4-3f5e817c5407,31778,صربين,قصف مدفعي,DUPLICATE_ROW,4f2f9876-3bdb-4df6-809d-39740d399b80,True
+e6b174e7-0469-4786-9c0a-8a5b89f05488,31778,كفر رمان,قصف مدفعي,DUPLICATE_ROW,57660fdb-329e-40fa-98f1-d9ee8a2315f1,True
+00c2102f-0abe-431c-b550-d4a13cd4d0a0,31778,زوطر الشرقية,قصف مدفعي,DUPLICATE_ROW,08d23e71-d14f-44b2-8c31-633541870db5,True
+4c2a95e9-942d-4197-97c0-62d80a958f64,31778,مجدل زون,قصف مدفعي,DUPLICATE_ROW,967fcbc6-c422-498d-811c-4c32ec02f27a,True
+6caad2a9-112d-4318-b6cc-5c92574f17c8,31778,برعشيت,قصف مدفعي,DUPLICATE_ROW,bdf4b251-4e8a-46cf-8bea-785dc9760f5c,True
+95aa99f3-f4d5-41de-8d56-4c41fe5b19c5,31778,عدشيت القصير,قصف مدفعي,DUPLICATE_ROW,5fbfe4ad-16c9-410e-a375-a49596988369,True
+c7171601-33c9-4b31-b45d-5303dc04f32d,31778,بيت ياحون,قصف مدفعي,DUPLICATE_ROW,9caa4318-8f54-4cdb-ae53-1849e0da8a15,True
+e277695e-e3e5-4c40-a5d1-6bc476265a77,31778,القنطرة,قصف مدفعي,WRONG_ROW,,True
+1c9c265c-1efe-4018-a433-9093e9da37cd,28746,مجدل زون,قصف مدفعي,DUPLICATE_ROW,967fcbc6-c422-498d-811c-4c32ec02f27a,True
+7865c3e1-268d-4293-97af-20326a0950fe,28514,شيحين,قصف مدفعي,WRONG_ROW,,False
+025c769a-3301-46a0-8446-5ac871e29944,28514,كفر رمان,قصف مدفعي,DUPLICATE_ROW,57660fdb-329e-40fa-98f1-d9ee8a2315f1,True
+798dd36d-1b89-4bd0-9a76-2e4c6f4a3e6a,28514,المجدل,قصف مدفعي,WRONG_ROW,,False
+9b8aa3fb-bf47-4f2f-b31a-e2445a1cbe48,29733,دير ميماس,عملية تمشيط,WRONG_ROW,,False
+b8bbb7dd-9102-43f3-9098-272fb9c21852,29733,حلتا,عملية تمشيط,WRONG_ROW,,False
+fbe18025-43eb-44cc-9e6e-29e633100171,29733,حولا,قصف مدفعي,DUPLICATE_ROW,c279e37d-51a7-4ba5-a1a9-a42a35f6362e,True
+c538faa3-ef36-4566-b992-53734954808d,29733,عيناب,قصف مدفعي,DUPLICATE_ROW,8904d9d9-b4b9-43a9-abfd-bab6831a7ab6,True
+fd5a40fa-a8c5-493a-b22a-1c95f7991af9,29733,زبقين,قصف مدفعي,DUPLICATE_ROW,5509aa60-2e63-41f2-b170-1a08c5284f66,True
+213d7ac2-57af-476e-a241-0fc93e81ffbd,29733,كفر رمان,قصف مدفعي,UNIQUE_CORRECT,,True
+3de06cf0-b97b-46e1-88bb-80684a5214c2,29733,وادي الست,قصف مدفعي,DUPLICATE_ROW,c1c3cbb7-510f-43ec-a361-2db33f53bbb1,True
+93d83b65-78e3-41c3-b473-0f7ae99865e8,29733,ياطر,قصف مدفعي,UNIQUE_CORRECT,,True
+0b327561-9237-4c6e-b2d9-4751d55f9418,30629,دبية,عملية تمشيط,DUPLICATE_ROW,1704fc3d-a281-4c8d-bb88-b15496eb81d6,False
+34457adb-8c84-4bbc-bf22-633ae0a607f2,30629,الخريبة,عملية تمشيط,WRONG_ROW,,False
+f8a5c92b-53a5-44b4-9dab-e0a4dac144b8,29730,كفر رمان,عملية تمشيط,WRONG_ROW,,False
+a5f8c550-6b6e-4f3d-a19f-2a00de2cf7a9,29730,عيناب,قصف مدفعي,DUPLICATE_ROW,8904d9d9-b4b9-43a9-abfd-bab6831a7ab6,True
+659d2ea9-eb59-443b-b709-6ab3b0e28896,29730,زبقين,قصف مدفعي,DUPLICATE_ROW,5509aa60-2e63-41f2-b170-1a08c5284f66,True
+1a55c2a3-73af-4859-803c-92f4de65d997,29730,ميفدون,عملية تمشيط,WRONG_ROW,,False
+0bc7f70d-46e3-47b6-a13b-d618354b3dda,29730,المنصوري,قصف مدفعي,DUPLICATE_ROW,52c45009-c7a7-40d1-99be-53526ba234f8,False
+96050873-11d8-430b-8242-20fd29b799ab,29730,حلتا,قصف مدفعي,WRONG_ROW,,True
+05c6928a-9aac-478d-aede-5e5d70b44a45,29730,وادي الست,قصف مدفعي,DUPLICATE_ROW,c1c3cbb7-510f-43ec-a361-2db33f53bbb1,True
+cc562a40-9758-4160-9711-8db7a596e564,29730,دير ميماس,قصف مدفعي,UNIQUE_CORRECT,,True
+336f1ad2-e72a-4d85-9485-1faf3fbc27a5,30629,دير سريان,قصف مدفعي,WRONG_ROW,,True
+ddf90f4b-d33d-443d-be34-920ea3ff43b8,30629,ميس الجبل,قصف مدفعي,WRONG_ROW,,False
+ec990231-f36d-4459-9b75-d8a04acd2906,30629,حاريص,قصف مدفعي,DUPLICATE_ROW,940e3ce6-93f0-4e1f-9c51-28c072319eb6,True
+e88a5bac-f28c-46d8-bd05-33ff4c266295,30629,مجدل زون,قصف مدفعي,WRONG_ROW,,False
+2af3b597-32c8-4096-8546-03d141d2fd28,30628,عيناب,قصف مدفعي,DUPLICATE_ROW,8904d9d9-b4b9-43a9-abfd-bab6831a7ab6,True
+883d23ff-dac3-434e-9f6e-34e623941726,30628,ميفدون,قصف مدفعي,DUPLICATE_ROW,810488a4-6abb-4cbb-8823-6a4ae49a6d65,True
+11cfc6c2-6639-4fb5-b6ab-bbcf79abe9c3,30628,دير ميماس,قصف مدفعي,UNIQUE_CORRECT,,True
+9c629685-0bff-4686-be2c-789d1b158629,30628,وادي الست,قصف مدفعي,DUPLICATE_ROW,c1c3cbb7-510f-43ec-a361-2db33f53bbb1,True
+c528ba27-e62a-47e6-93eb-081329cf065e,30628,كفر رمان,قصف مدفعي,UNIQUE_CORRECT,,True
+59e0bfe7-7895-40c9-bd7c-329d8b5c7336,28539,صربين,عملية تمشيط,WRONG_ROW,,False
+d563e62c-1738-4d17-ba3c-e7aa48db68fe,28539,المنصوري,عملية تمشيط,WRONG_ROW,,False
+4448c3a3-3965-493d-b668-db28801aab52,28539,زوطر الشرقية,عملية تمشيط,WRONG_ROW,,False
+cf171818-c901-470b-b600-da2b37472823,28539,وادي الست,عملية تمشيط,WRONG_ROW,,False
+69c402ce-6af1-4428-8fc1-cea478628761,28539,حاريص,عملية تمشيط,WRONG_ROW,,False
+60bdda67-5fd4-4f50-a790-3fc0cb494cc0,28539,كفر رمان,عملية تمشيط,WRONG_ROW,,False
+25f03784-4d6e-49c8-b9e1-a14dee3dcfa4,28781,زبقين,عملية تمشيط,WRONG_ROW,,False
+e6a67bbf-7272-4221-8c8d-b551965b8e05,28781,وادي الست,عملية تمشيط,WRONG_ROW,,False
+34897fd5-a7c9-4f72-88aa-25bc4063b400,28781,بني حيان,قصف مدفعي,DUPLICATE_ROW,90d58264-20fa-45fb-93a3-cac265cd50eb,True
+62725b06-db18-4fe2-8174-6f65924016f7,28781,بيت ياحون,قصف مدفعي,DUPLICATE_ROW,3bd1ea8f-2cd9-4f11-8ab7-3eba7b17910a,True
+6963d839-6015-4de7-ab69-4b53c3daa0b6,28781,بيت ليف,قصف مدفعي,UNIQUE_CORRECT,,False
+ef0dc3e9-f1ef-4152-ae2b-dc214d78bab1,28781,علي الطاهر,قصف مدفعي,DUPLICATE_ROW,993616ed-a84e-4e6c-ba84-a364cf72593d,True
+1ee643b6-abfd-4256-9700-a72fe9ca8a3d,28781,مجدل زون,قصف مدفعي,UNIQUE_CORRECT,,True
+222828ef-bfbf-46a6-94bd-90fde467844d,28781,الخيام,قصف مدفعي,DUPLICATE_ROW,d732886a-1539-4e3f-b886-bbd9c78d2661,True
+566b676e-241d-4355-91a2-4bc22777293b,28781,طير حرفا,قصف مدفعي,DUPLICATE_ROW,d5f5d436-963a-46a5-b916-842d67d308bc,True
+62d11fa6-4f9b-46b4-bd40-d2ff0b74e4f1,28781,صربين,قصف مدفعي,DUPLICATE_ROW,964ac85c-4aaa-4f9f-ba58-841f24397c0b,True
+89340914-54da-4f56-88c3-0f162149c9c4,28781,برعشيت,قصف مدفعي,UNIQUE_CORRECT,,True
+8bc9e9d7-d304-4f45-8852-ddd226df23de,28426,زبقين,تلغيم وتفجير,WRONG_ROW,,False
+1372ac43-6115-4178-9e68-791b4d825a99,28426,علي الطاهر,عملية تمشيط,WRONG_ROW,,False
+8881b57c-5dec-4ae7-adb4-fca1e2773c13,28426,الخيام,عملية تمشيط,WRONG_ROW,,False
+459067ac-2498-4e1c-8168-7bb49e2c8e02,28426,القنطرة,عملية تمشيط,WRONG_ROW,,False
+278d32ef-e0dd-4256-8bfa-4ddeae2e03c1,28426,بني حيان,عملية تمشيط,WRONG_ROW,,False
+2c0e36f7-f4b3-4d44-b014-ba6099fd5938,28426,صربين,عملية تمشيط,WRONG_ROW,,True
+dbf8d519-4e65-41ad-bbd5-8ca1ebbcf351,28426,بيت ليف,عملية تمشيط,DUPLICATE_ROW,a9e879a7-3690-47c9-8457-417b876c4eda,True
+acf1516f-85ef-435e-948b-ed8308a4e920,28426,المنصوري,عملية تمشيط,UNIQUE_CORRECT,,True
+2e78acd7-c691-4560-8ed5-c2bbcce560f4,28426,وادي الست,عملية تمشيط,WRONG_ROW,,True
+83cf4189-7a6e-494d-b182-6d358937c1a0,30391,زبقين,قصف مدفعي,UNIQUE_CORRECT,,True
+bc5c9fee-7996-4d63-80fc-0248c51d8ef0,30391,وادي الست,قصف مدفعي,WRONG_ROW,,True
+334deaed-6205-424d-b879-5e728920efc5,28646,القنطرة,قصف مدفعي,DUPLICATE_ROW,ed2b7569-c062-4b18-a193-a712c390049b,True
+1bfba894-3f1b-429d-b104-fb47b225d20e,28646,وادي الست,قصف مدفعي,WRONG_ROW,,True
+932eca47-2094-4609-86a0-7fc29d7601d4,28646,زبقين,قصف مدفعي,UNIQUE_CORRECT,,True
+d333ca3f-a2f9-449e-9537-e97348b9c430,30080,حرف السياد,تلغيم وتفجير,WRONG_ROW,,False
+37df0502-9319-419d-8533-324ff9d92c40,30080,وادي الست,عملية تمشيط,WRONG_ROW,,True
+9f52d3d1-c6df-4a62-93dc-1644ba5aa3d0,30080,حداثا,عملية تمشيط,WRONG_ROW,,False
+f462f903-2fd0-4f9e-8e9f-5cb47548cfd7,30080,المنصوري,عملية تمشيط,WRONG_ROW,,True
+32121d60-67f3-450f-9a13-96fce1f915f2,30080,علي الطاهر,عملية تمشيط,WRONG_ROW,,True
+24b916b9-23dc-4505-929b-7b60c6a65275,30080,كفر رمان,عملية تمشيط,WRONG_ROW,,True
+0e027e0b-62e7-4b5a-8027-48d1f3a09e6a,30080,مجدل زون,عملية تمشيط,WRONG_ROW,,False
+b9149793-c3d4-4a5d-acfe-f225fe235657,30080,ميفدون,عملية تمشيط,WRONG_ROW,,False
+24e6bf05-5632-4441-8db0-180568219b6b,28581,نبطية الفوقا,عملية تمشيط,WRONG_ROW,,False
+98fc4457-65ac-473d-82cc-08f3ed21db0c,28581,وادي الست,عملية تمشيط,WRONG_ROW,,True
+e6b8e231-6fd4-4187-9d69-aa662f228334,28581,كفر رمان,عملية تمشيط,WRONG_ROW,,True
+fd5ae12e-2911-47a3-beb4-a36692dc0cca,29727,وادي الست,عملية تمشيط,WRONG_ROW,,True
+13032813-a15d-4f83-b030-d3f69bd6b52c,29727,ميفدون,عملية تمشيط,WRONG_ROW,,True
+d0c37f16-b695-43dc-9f23-2ec33fe48194,29727,نبطية الفوقا,عملية تمشيط,WRONG_ROW,,True
+fdc03d53-327b-4a4f-8b90-fb0408c33135,29727,كفر رمان,عملية تمشيط,WRONG_ROW,,True
+5fe6936d-422a-4fbe-99e1-09f5aeae3c62,28440,حولا,قصف مدفعي,DUPLICATE_ROW,19d1e0d4-69d3-4ee8-b6db-76254829fbea,True
+9ccc6236-b49e-454d-8263-d8a344efdf68,28440,المنصوري,قصف مدفعي,UNIQUE_CORRECT,,True
+d57b5015-07e3-45e0-9110-2e29815eac2d,28440,حرف السياد,قصف مدفعي,WRONG_ROW,,True
+ae60db4d-670e-40b0-8dee-9b70f93c7b0e,29379,بنت جبيل,قصف مدفعي,WRONG_ROW,,False
+0718395a-0e29-4f5e-a3d0-a880c9c3ec7b,29379,زبقين,قصف مدفعي,DUPLICATE_ROW,0b20bf99-a7f2-4ca3-b03d-80c4e2846fb0,True
+32148745-83d3-4969-a9ed-08f527f4bdf7,29379,دير سريان,قصف مدفعي,DUPLICATE_ROW,6e00c55e-3d94-4a49-8911-34775847df4c,True
+6de46ef8-6a64-4bf6-986a-a45a8e910575,29379,وادي الست,قصف مدفعي,DUPLICATE_ROW,564dca60-1746-4a7c-a8bd-2320358db4e2,True
+cf5b2ddc-4c7a-4c1e-bcfe-caa0e8f5cf91,29379,يحمر,عملية تمشيط,WRONG_ROW,,False
+774feba2-cff2-40ec-aab6-3ad569ce40cc,29379,كفر رمان,قصف مدفعي,DUPLICATE_ROW,e5a87b0b-d55c-4a97-8463-6025b73401fe,True
+f9cf7b31-4323-4715-8c11-2f54ad2afebc,29379,مجدل زون,قصف مدفعي,WRONG_ROW,,True
+fd4b8819-7015-497f-be51-9b85b43238ad,29379,علي الطاهر,قصف مدفعي,UNIQUE_CORRECT,,True
+2283d789-bae4-4025-a0e2-0108aa3e1ea2,29379,حرف السياد,قصف مدفعي,WRONG_ROW,,True
+6c131744-0e6f-46f2-8220-77ec043d375c,29379,برعشيت,قصف مدفعي,WRONG_ROW,,True
+edb54a25-2a23-4323-9aec-93a61edeaadb,29379,ميفدون,قصف مدفعي,UNIQUE_CORRECT,,True
+91e6f1d5-fefb-454a-b10c-58cda18d593b,30034,برعشيت,قصف وغارات,WRONG_ROW,,False
+1a63dbb2-cce9-4350-9ec8-54362e8baed7,30034,ميفدون,قصف وغارات,UNIQUE_CORRECT,,False
+b88db4eb-aa5b-4b86-b742-bd6eb647cc62,29882,نبطية الفوقا,قصف وغارات,UNIQUE_CORRECT,,False
+f1fb3f47-486a-4722-ae17-33dd979fcbe0,29857,كفر شوبا,قصف وغارات,WRONG_ROW,,False
+49798486-33a2-4ed7-817f-a8cfad53d108,29857,كفر رمان,قصف مدفعي,DUPLICATE_ROW,e5a87b0b-d55c-4a97-8463-6025b73401fe,True
+71066883-f54c-4d20-876d-e13684d8d17e,29857,برعشيت,قصف مدفعي,UNIQUE_CORRECT,,True
+a156fb66-111d-4126-a2bc-8574b1fab4f4,29857,علي الطاهر,قصف مدفعي,UNIQUE_CORRECT,,True
+3f8f12f6-fa79-45bb-9dba-d22f1982f1d2,29857,نبطية الفوقا,قصف مدفعي,UNIQUE_CORRECT,,True
+0fa1aff1-b194-4905-bc0a-48e8e2084a5f,29857,بيت ياحون,قصف مدفعي,UNIQUE_CORRECT,,False
+122783f8-229e-4137-9ead-1a034c7becb6,28477,كفر رمان,قصف وغارات,DUPLICATE_ROW,03269d21-6f68-444d-abea-db58d5a0ca22,False
+1eb2a30b-59a3-42b2-ac13-98fc273f8e9f,28477,حرف السياد,قصف وغارات,WRONG_ROW,,False
+6a7e7d9e-17ee-4015-82bc-a882ac7c5e34,28477,المنصوري,قنابل صوتية,DUPLICATE_ROW,3434ef48-7d0c-427f-aa42-d2a4d54c6210,False
+35afcf68-beb8-4c5b-a1f9-07bad2c92ce2,28477,ميس الجبل,قنابل صوتية,WRONG_ROW,,False
+57e54cf0-55c9-415c-8b0e-8f1403ca0b8d,28477,القنطرة,قنابل صوتية,WRONG_ROW,,False
+b1252ee9-1aa6-4773-a7d1-f21311dcfced,28477,دير سريان,قنابل صوتية,WRONG_ROW,,False
+644b04f1-c0d6-40ad-92b4-88a0b9782104,28477,نبطية الفوقا,قنابل صوتية,DUPLICATE_ROW,c79591c0-65b3-4e11-a0c9-f20e569d86ae,False
+0ed29f74-9e8b-476e-9036-d72eb42c3979,28477,وادي الست,قصف وغارات,DUPLICATE_ROW,dc44d1a5-865e-4683-ace1-97413c7475be,False
+7e893d23-1de2-400e-b851-0b36e9957adc,28477,علي الطاهر,قنابل صوتية,WRONG_ROW,,False
+28bad7a4-d6df-44ae-9ef2-3b3ab36c8b57,28477,برعشيت,قنابل صوتية,WRONG_ROW,,False
+f5127673-64c4-4713-ab62-b0aaf9d4b01f,28477,عرب صاليم,قنابل صوتية,WRONG_ROW,,False
+37152fe0-82e0-490f-93c1-d7e9f5aef4fc,28477,مجدل زون,قنابل صوتية,WRONG_ROW,,False
+f66b6d10-fafa-4658-886c-c90399c11379,28477,حولا,قنابل صوتية,WRONG_ROW,,False
+59d25f2b-fbdc-48b1-90e2-e4896a6e4f22,28487,حرف السياد,قصف وغارات,WRONG_ROW,,False
+8aac7463-471f-4ada-92bb-8b035ab1db55,28487,وادي الست,قصف وغارات,DUPLICATE_ROW,dc44d1a5-865e-4683-ace1-97413c7475be,False
+666b8970-0fab-448c-9829-9b9f5e9a62e2,28487,المنصوري,قصف مدفعي,DUPLICATE_ROW,1b38da98-c4aa-425d-8068-9245cf73bedf,False
+6854f19a-b7db-4050-94ae-1dea951744de,28487,عرب صاليم,قصف مدفعي,WRONG_ROW,,False
+f44fe27e-a6d6-4c87-9991-46f673a3991a,28487,حولا,قصف مدفعي,WRONG_ROW,,False
+28fe9b5c-d3fb-4039-b931-09a109e9d667,28487,ميس الجبل,قصف مدفعي,DUPLICATE_ROW,197e1744-ae3f-46ca-b0bd-164a504b489f,False
+89321610-f0a7-470a-a00e-37a9303fba69,28487,برعشيت,قصف مدفعي,DUPLICATE_ROW,ea249f05-ff7e-4566-b923-af6cc61c5479,False
+0455b576-b641-4492-9db5-c2a35797e76a,28487,دير سريان,قصف مدفعي,WRONG_ROW,,False
+52bf6292-a92c-47da-9b54-6c6a66ff001b,28487,القنطرة,قصف مدفعي,DUPLICATE_ROW,493eb919-a463-476a-8d54-f1c583978e23,False
+5bbf35fe-2d4f-40f0-b8d8-6418da119a5d,28487,كفر رمان,قصف مدفعي,DUPLICATE_ROW,e5a87b0b-d55c-4a97-8463-6025b73401fe,True
+232bee00-9fb6-4a0f-af7e-ae0c78f5fa84,29933,البياض صور,تلغيم وتفجير,WRONG_ROW,,False
+9d1f4fce-a762-4298-ae13-8a209ed40870,29933,وادي الدير,تلغيم وتفجير,WRONG_ROW,,False
+2dc20f39-6140-41ed-a014-816c589e9aca,29933,المنصوري,قصف مدفعي,WRONG_ROW,,True
+e6e44b5a-f3ff-4623-8f2e-bcecec1c2a82,29933,علي الطاهر,قصف مدفعي,UNIQUE_CORRECT,,False
+d65fd2e3-d161-45b0-80d9-35476be67ca0,29933,قنطرة,قصف مدفعي,WRONG_ROW,,False
+c36777b9-5845-4395-ab6f-3f783fc4b372,29933,وادي الست,قصف مدفعي,WRONG_ROW,,True
+04b086b2-23e5-4d73-8ce3-d1dadd2b8eaa,30158,البياض صور,قصف مدفعي,WRONG_ROW,,True
+8b046c33-b24d-43c7-9602-eb6dcf3b3e70,30158,وادي الست,قصف مدفعي,WRONG_ROW,,True
+3ea8a738-8bfc-4e4b-baf1-1e77d13f5256,30158,وادي الدير,قصف مدفعي,WRONG_ROW,,True
+0a294f47-3856-4d85-a09f-c278d7d8d254,29992,وادي الست,عملية تمشيط,DUPLICATE_ROW,35f23dd3-dc5d-4284-a5c7-64916c100a66,False
+a7525ae6-5261-4723-ad68-506842dee5f6,29992,البياض صور,عملية تمشيط,WRONG_ROW,,False
+a6100852-df61-4857-9021-db63971721b9,29992,وادي الدير,عملية تمشيط,WRONG_ROW,,False
+114ef2c9-64c7-4d10-bb03-202dafdb5333,29992,علي الطاهر,قصف مدفعي,UNIQUE_CORRECT,,False
+0704e357-bbcf-41d8-a6e9-ff0dfd692c06,29992,المنصوري,قصف مدفعي,WRONG_ROW,,False
+b35faf43-2f88-42f3-bf45-4a745c9a9f43,29992,قنطرة,قصف مدفعي,WRONG_ROW,,False
+5a2aeaaa-64b1-4d24-b138-e4e0695827bc,29992,حولا,قصف مدفعي,DUPLICATE_ROW,56f95610-b079-46b9-ada6-52fbcf150e17,False
+fadba998-d41f-4bb5-ac62-86574290a6e5,29818,إسكندرونة,عملية تمشيط,WRONG_ROW,,False
+0d8cc28c-cde7-45b9-96ca-757ab209824a,31274,ياطر,قصف مدفعي,DUPLICATE_ROW,4f27edd5-f983-4fa1-9696-dfce24110fec,True
+88451644-6221-4e28-9ec7-6ee1f6a4fff2,31274,زوطر الشرقية,قصف مدفعي,DUPLICATE_ROW,22f28510-2109-4766-93d8-7dd54992b3d1,True
+e4eda8c4-d743-4622-80bc-d0cb39086e39,31274,حداثا,قصف مدفعي,DUPLICATE_ROW,9fc09182-d600-44f5-a77c-86d05c33c967,True
+2f528eb9-9698-413f-b5b1-c687e1a673a9,31274,القنطرة,قصف مدفعي,DUPLICATE_ROW,ce0d92df-7612-4e9a-a9d5-bfca2aef9ffc,True
+03a21038-8e2e-4b90-95bb-7471825e9066,31274,طلوسة,قصف مدفعي,DUPLICATE_ROW,e8a736e5-26e9-47f8-be91-e726f61e5e0b,True
+a85e90a9-c051-4071-89c2-d7d40a337594,28655,القنطرة,قصف مدفعي,DUPLICATE_ROW,ce0d92df-7612-4e9a-a9d5-bfca2aef9ffc,True
+85a4ab05-aead-49bf-a122-c8259e99efeb,28655,زوطر الشرقية,قصف مدفعي,DUPLICATE_ROW,22f28510-2109-4766-93d8-7dd54992b3d1,True
+80421f39-c2f0-498e-a677-6f4687310e3e,28655,حداثا,قصف مدفعي,DUPLICATE_ROW,9fc09182-d600-44f5-a77c-86d05c33c967,True
+2c294681-da9f-4795-b02c-561280c09861,28655,طلوسة,قصف مدفعي,DUPLICATE_ROW,e8a736e5-26e9-47f8-be91-e726f61e5e0b,True
+51944262-cafc-4104-a380-115c2a8aff5c,28655,ياطر,قصف مدفعي,DUPLICATE_ROW,4f27edd5-f983-4fa1-9696-dfce24110fec,True
+0f11208b-5fae-4083-bc7d-8a9e6dd5c482,28453,كفر شوبا,قصف وغارات,WRONG_ROW,,False
+780528e2-e529-4a40-8605-acdca3ba0aad,28453,عرب صاليم,قصف وغارات,UNIQUE_CORRECT,,False
+bede4b4f-b29c-4d14-ae33-585dc02f6b49,28453,وادي الدير,قصف وغارات,WRONG_ROW,,False
+c7b02785-e94b-498b-8d17-523495bc0d75,28453,زبقين,قصف وغارات,WRONG_ROW,,False
+e5cc6252-ce2c-499a-9c80-cb0e1303047e,28453,دير سريان,قصف وغارات,WRONG_ROW,,False
+6e01e52e-3e31-4c34-bba3-948f513ad9b7,28453,المنصوري,قصف مدفعي,DUPLICATE_ROW,8e8a7239-6862-4976-8724-76c6ae6597e1,False
+9ada1971-a273-450d-a3c3-a30f0ce13c32,28453,حاريص,قصف مدفعي,WRONG_ROW,,False
+3210cdda-3c94-4c0d-bc54-4c3c3adfeb6b,28453,كفر رمان,قصف وغارات,DUPLICATE_ROW,7ee0ec4a-b139-4100-963b-1406caae55c7,False
+7df18cc6-cf95-4784-b57b-feb42c6de8e6,28453,حداثا,قصف مدفعي,DUPLICATE_ROW,9fc09182-d600-44f5-a77c-86d05c33c967,False
+23155b58-47a9-4b45-80e3-606f2bbd26d0,28453,أرنون,قصف مدفعي,WRONG_ROW,,False
+0029d8cd-1f71-4ae0-9359-1f94fd6ae795,28453,عيتا الجبل الزط,قصف مدفعي,WRONG_ROW,,False
+0090bd07-c0c3-43c3-91cc-a98d90e5207e,28453,بني حيان,قصف مدفعي,DUPLICATE_ROW,80b168c4-e34f-4018-8083-bee6c693eb0a,False
+185c91e5-b348-4ce5-959e-426b2edded7d,28453,نبطية الفوقا,قصف مدفعي,DUPLICATE_ROW,23ead0b5-987f-46f0-bd41-b73719836456,False
+e8cbb770-b052-46ba-873b-62304bcebae4,28453,وادي الست,قصف وغارات,WRONG_ROW,,False
+c978b64b-b033-4373-94ca-5674dafe0221,28453,القنطرة,قصف مدفعي,DUPLICATE_ROW,ce0d92df-7612-4e9a-a9d5-bfca2aef9ffc,False
+73363468-e3aa-4fae-99a9-7295298bcf52,28453,كفر تبنيت,قصف وغارات,WRONG_ROW,,False
+c71fae20-5bd1-4ab6-a14a-779121f1906e,28453,الدوير النبطية,قصف وغارات,DUPLICATE_ROW,895b8e38-94d0-45b8-9101-f83d8eaf73d3,False
+04a99f54-1f3f-4a69-8c12-73e62a35bfb5,28453,طلوسة,قصف مدفعي,DUPLICATE_ROW,e8a736e5-26e9-47f8-be91-e726f61e5e0b,False
+41c298be-6397-4f5a-9a77-7ef69d3b67eb,28453,مركبا,قصف مدفعي,WRONG_ROW,,False
+747fa613-861c-42a2-aabe-f5b59147dee9,28453,بيت ليف,قصف مدفعي,DUPLICATE_ROW,a6c32a19-e9a9-442a-ad95-82613974c6e5,False
+038033d0-161c-4ab5-b458-84209ea96a77,28453,زوطر الشرقية,قصف مدفعي,DUPLICATE_ROW,ffb3d835-b0bb-40b8-b36b-59f9b4dce597,False
+c40ea344-387b-41b3-8177-71c667550157,28453,حولا,قصف مدفعي,DUPLICATE_ROW,a70f2567-1347-475c-b571-5278c70e160e,False
+e30096c4-ae47-4f3f-8b49-77780263fcf4,28453,الخيام,قصف مدفعي,DUPLICATE_ROW,59d40f40-273a-41dc-8bd7-a3167115affe,False
+9112269a-4274-4739-9036-9e7b21ff31af,28453,علي الطاهر,قصف مدفعي,DUPLICATE_ROW,3b3e2232-1da9-4701-9d4e-8d7c98b31a03,False
+b9a626e5-15ac-4791-b45c-b8b1ae3d63cc,32355,الخيام,قصف مدفعي,UNIQUE_CORRECT,,False
+7f33eba6-f426-487d-adae-07af61d17c33,32355,القنطرة,قصف مدفعي,WRONG_ROW,,False
+e5783f65-f594-4440-8bf0-285b5ab06599,32355,حداثا,عملية تمشيط,UNIQUE_CORRECT,,False
+5634294c-1b1b-46d3-ba95-ef0eac5dd710,32016,نبطية الفوقا,قصف وغارات,DUPLICATE_ROW,5bebb17e-4be4-4cb4-9ba5-ec21a69bc3dd,False
+7c07caeb-ece3-4856-b332-55fa0c1e97c7,32016,رمادية,قصف وغارات,DUPLICATE_ROW,304d3298-3837-43d1-8d8f-59e8aed8410a,False
+edf1bc32-312d-4e74-a6fd-e839748e96ff,32016,وادي الست,قصف وغارات,WRONG_ROW,,False
+d6a387ed-eb2a-42de-949c-da5e326b4f5f,32016,نبطية التحتا,قصف وغارات,DUPLICATE_ROW,11d07799-b5cf-486f-9b02-1d311f90b8f6,False
+d63f2ca6-28e1-44ad-a44f-381b5d28f667,32016,الكفور,قصف وغارات,DUPLICATE_ROW,0064fc09-0ec4-4505-bbb6-e88513f3ad37,True
+2b408c43-f198-4d9f-bbe6-1e293e42ff91,32016,زوطر الشرقية,قصف وغارات,WRONG_ROW,,False
+6c35cf47-a5af-426e-843a-cbe25a7fba2c,32016,الخيام,قصف وغارات,WRONG_ROW,,False
+00f025d1-901f-4e86-a1bb-518789280d2f,32016,كفر رمان,قصف وغارات,DUPLICATE_ROW,b05c0b8b-b626-4fe8-8709-900c9f60a043,False
+03985620-104a-402e-90ed-01bae1451296,32016,بني حيان,قصف وغارات,WRONG_ROW,,False
+d2ab5f44-0df5-4c71-b85e-0b630ffb89e2,32016,برعشيت,قصف وغارات,WRONG_ROW,,False
+bd88cd6c-4355-4e07-9fd4-a68052b3e14c,32016,عين التينة بقاع الغربي,قصف وغارات,DUPLICATE_ROW,970268f1-baa7-46e4-85d1-ee6c357588ab,False
+f1a5bbe2-ca4b-4645-91ce-b65b47878205,32016,ميفدون,قصف وغارات,DUPLICATE_ROW,437bf22a-24ed-4731-942c-43b9c00276f3,False
+36967118-3ced-440a-b9ac-ea6288491c2b,32016,علي الطاهر,قصف وغارات,UNIQUE_CORRECT,,False
+766175e8-0a80-4461-af40-42a34435b67f,32016,المنصوري,قصف وغارات,DUPLICATE_ROW,9eab2ef8-523a-4f0d-ad0a-9210f0551e46,False
+0ca3e8e4-28f4-4a7c-b710-1743dc55524a,31605,وادي الست,قصف وغارات,DUPLICATE_ROW,41b70639-9bc0-42a9-855a-5d48c0571f9d,False
+355b2bd5-3a9f-49d0-9a4f-c762d5d79fc3,31605,حاريص,قصف وغارات,WRONG_ROW,,False
+4f5cce7d-5e5b-4ee1-8753-3fd51d0bb233,31605,نبطية الفوقا,قصف وغارات,DUPLICATE_ROW,38ffe579-2d9f-4b73-bbcb-3471591099e9,False
+ae68d3fe-3e08-4e88-a984-217209b87b10,31605,ميس الجبل,قصف وغارات,WRONG_ROW,,False
+ac1f0007-295d-4509-95c0-8471226c3e58,31605,برعشيت,قصف وغارات,WRONG_ROW,,False
+ce84fc6c-f0b8-4cdc-8553-55c52171654e,31605,بنت جبيل,قصف وغارات,WRONG_ROW,,False
+f2fbd6ab-c053-478a-baf8-e6f9f0105260,31605,كونين,قصف وغارات,WRONG_ROW,,False
+5a5ecd49-653f-47b5-94a6-ddf6eeb786d6,31605,زبقين,قصف وغارات,DUPLICATE_ROW,038cf425-912b-46b3-b66e-062fc9a2d4d5,False
+c42f65ed-5094-4d6f-be71-3a5eec28e0b2,31605,علي الطاهر,قصف وغارات,UNIQUE_CORRECT,,False
+bf1d3183-b853-4e3b-9cdd-cfadb48d9309,31605,كفر تبنيت,قصف وغارات,WRONG_ROW,,False
+43796bb5-b21e-486b-92e1-859e7eb23799,31605,دير سريان,قصف وغارات,WRONG_ROW,,False
+1aa9ede1-3e0e-411d-88e4-c52e20d72c2c,31605,بني حيان,قصف وغارات,WRONG_ROW,,False
+49d79eb3-66f8-4976-8104-99dae1f56ba2,31605,بيت ليف,قصف وغارات,WRONG_ROW,,False
+0b7ac51d-b302-4abe-b1d3-23ee41e93729,31605,كفر رمان,قصف وغارات,DUPLICATE_ROW,3413c928-f5f7-4f51-bfe8-4c514fa59611,True
+6059fe71-91ee-43a2-84ff-263f296e7535,29390,زوطر الشرقية,قصف وغارات,DUPLICATE_ROW,7def9e35-455b-4452-97de-1a91568eb2ce,True
+b055dc7d-d374-4856-90a6-2024efc521c9,29390,البياض صور,قصف وغارات,WRONG_ROW,,False
+49bb23f2-ae96-4937-bcea-3b68e0f9f742,29390,نبطية الفوقا,قصف وغارات,DUPLICATE_ROW,38ffe579-2d9f-4b73-bbcb-3471591099e9,True
+9a2508b2-5466-4751-ac81-616c6feef259,29390,المنصوري,قصف وغارات,DUPLICATE_ROW,2d36a140-4ea3-400a-ade2-7e2878ca0a51,False
+1252c037-4785-4a92-bc94-d5a5edeb4ec1,29390,زبقين,قصف وغارات,DUPLICATE_ROW,038cf425-912b-46b3-b66e-062fc9a2d4d5,True
+ad1b96c1-15f1-4d35-b874-e14db1922022,29390,وادي الست,قصف وغارات,DUPLICATE_ROW,41b70639-9bc0-42a9-855a-5d48c0571f9d,True
+3ac0d7a1-5127-4eeb-b125-b0f04442d4b2,31394,كفر رمان,قصف وغارات,DUPLICATE_ROW,0c5279cf-183a-4cea-86e9-73763fd8627d,True
+dd84699b-1d30-436c-ab61-f1b528c14e10,31394,الدوير النبطية,قصف وغارات,DUPLICATE_ROW,f6a40268-98f4-4d1e-b4c6-01dfe8ebf077,False
+05fe3aca-2625-4c72-b415-08089aea35db,31394,نبطية الفوقا,قصف وغارات,DUPLICATE_ROW,636e9cec-4223-467a-a7bd-d3c52721a299,True
+b5d0a9aa-da91-49bf-b422-cdb31af6d10f,31394,عرب صاليم,قصف وغارات,DUPLICATE_ROW,fbec6690-4569-4913-bfbb-797de5cae9fd,True
+c5ba43a0-3f1c-4f17-bfbe-f37887b2d45d,31394,المنصوري,قصف وغارات,WRONG_ROW,,False
+970eb53b-e568-4ee8-83a5-fb0123085fcf,29090,عرب صاليم,قصف وغارات,DUPLICATE_ROW,fbec6690-4569-4913-bfbb-797de5cae9fd,True
+74c2a84a-f545-4e07-a2ec-78c2081286d0,30354,حردين,قصف وغارات,WRONG_ROW,,False
+09561ebb-c4d7-4fb1-ba26-758bd3de28d1,30312,وادي الدير,قصف وغارات,WRONG_ROW,,False
+77586f69-5bb8-4405-9fb7-125ee183a6eb,30312,المنصوري,قصف وغارات,DUPLICATE_ROW,795ef525-78e7-4568-b6da-72a66ffe1bdb,False
+34d667c5-d076-45c0-b417-08df415dce10,30312,حداثا,قصف وغارات,WRONG_ROW,,False
+fce3a73b-008f-4f05-8527-55059aa9404a,30312,برعشيت,قصف وغارات,DUPLICATE_ROW,e1c421ec-cc5c-46a2-bccc-437c980c0c77,False
+46a38421-6553-4131-9f6f-71886caf38b3,30312,بيت ياحون,قصف وغارات,WRONG_ROW,,False
+ca21c268-017b-4d23-96cc-e517654dc934,30312,عيترون,قصف وغارات,DUPLICATE_ROW,0ffd4f13-4f07-499e-8bfb-0de98a567dc6,False
+836e7d08-fc5c-4197-8292-1e79a4468191,30312,زوطر الشرقية,قصف وغارات,DUPLICATE_ROW,7def9e35-455b-4452-97de-1a91568eb2ce,False
+1dd64133-57ba-4a78-b769-c860a175dc40,30312,كونين,قصف وغارات,DUPLICATE_ROW,60079a13-92c2-4d59-8778-b0989cf66d20,False
+c6b4166a-7981-493e-9160-d900977844b8,30312,زبقين,قصف وغارات,DUPLICATE_ROW,c472ee41-f82a-4228-8f33-739a0f956a83,False
+38980838-7ed6-402a-b27e-908a1b31ea01,30362,القنطرة,قصف وغارات,DUPLICATE_ROW,c366975d-8385-40f0-ba8f-3cfa3a654b48,False
+b2ab75fa-0cf1-4094-a4c9-5374f3db91d4,30365,زبدين,قصف وغارات,DUPLICATE_ROW,9753ad2f-01e6-41e8-857d-52c955907a79,False
+aa3b5b5a-6283-4d5a-8ec5-770820554977,30365,كفر تبنيت,قصف وغارات,WRONG_ROW,,False
+1d10d5b6-e75b-4231-bc0a-a34a505653ee,30365,علي الطاهر,قصف وغارات,DUPLICATE_ROW,6c5600bb-ba21-4371-814d-8d5f9d22ffa9,False
+a8ee0219-84a4-41f0-8ea7-23bcb60e0f18,31204,جبلا,قصف وغارات,WRONG_ROW,,False
+bc6bcd39-d27a-47e2-bb54-43fa8700521a,31204,زوطر الشرقية,قصف وغارات,DUPLICATE_ROW,968ff8dc-ffab-4085-8dfa-83d46f5a02a8,False
+d93f2758-4479-4c3e-b50d-ac7d25cf31dc,32489,جبلا,قصف وغارات,WRONG_ROW,,False
+b34da09f-2851-435c-8008-3110485e7e0b,32489,حولا,قصف وغارات,WRONG_ROW,,False
+f930b447-9165-4b06-8086-c794ceb985bb,32645,وادي الدير,عملية تمشيط,WRONG_ROW,,False
+3d0425fa-1b8d-4f75-8b6a-4a0b5c4f23d6,32645,كفر شوبا,عملية تمشيط,WRONG_ROW,,False
+ec41e699-d418-4392-83b7-dd52b3cea703,32645,وادي الدير,عملية تمشيط,WRONG_ROW,,False
+44356b2e-1bb9-4ce9-acd0-772a826e09cb,32645,كفر شوبا,قصف مدفعي,WRONG_ROW,,False
+1320ffb8-067d-431d-b2e9-91f1f2c5fc18,32271,نبطية الفوقا,قصف وغارات,UNIQUE_CORRECT,,False
+d9fa2139-9b49-4243-b22a-66279c359a82,32271,صربين,قصف وغارات,WRONG_ROW,,False
+0c1113a7-5348-4e85-aed6-54eb16aa0c30,32271,قنطرة,قصف وغارات,UNIQUE_CORRECT,,False
+86076a21-23f8-4788-8f24-c857e60e1520,32271,ميس الجبل,قصف وغارات,WRONG_ROW,,False
+93742ea7-5f1f-438c-9d6c-caca8055d07b,32271,كفر شوبا,قصف وغارات,WRONG_ROW,,False
+275cdf18-e68c-4d12-b9eb-b8eec263d45f,32495,حاريص,قصف وغارات,WRONG_ROW,,False
+d66eeb55-9894-4f49-b590-beefc787a540,32495,حولا,قصف وغارات,WRONG_ROW,,False
+1f6bfbcc-1a82-4ea0-907a-b40cf684a15c,32495,طير حرفا,قصف وغارات,WRONG_ROW,,False
+7bc8eae7-9183-46cc-b01c-5484efdd5e55,32495,قبريخا,قصف وغارات,WRONG_ROW,,False
+4c8ae6dc-229b-4846-873d-edc5077d2895,32495,مركبا,قصف وغارات,WRONG_ROW,,False
+3c116dd5-1ba0-4d35-b8ed-7a70c8b7071d,28588,قنطرة,قصف وغارات,WRONG_ROW,,False
+4307a18d-3776-4bd5-b19d-32dafea0fb06,28588,بيت ياحون,قصف وغارات,WRONG_ROW,,False
+4bef3aab-e52f-4acc-8a83-6bea29ab7aae,28588,ميفدون,قصف وغارات,WRONG_ROW,,False
+65570aaa-c6ad-412d-9af5-428e0d3e79fa,28588,زبدين النبطية,قصف وغارات,DUPLICATE_ROW,f1da006d-b4b0-41da-88db-21a1fdf9f9fe,False
+9cda1c88-c122-4a17-a0fd-fef27696848a,28588,طير حرفا,قصف وغارات,WRONG_ROW,,False
+c35154c0-42f8-474b-ac4c-393dc837c6d2,28588,كفر تبنيت,قصف وغارات,UNIQUE_CORRECT,,False
+af927dd4-7328-4e90-b941-4e395d5287f3,28588,نبطية الفوقا,قصف وغارات,WRONG_ROW,,False
+045b39dd-cf79-4e69-9344-871e3288e629,28588,قبريخا,قصف وغارات,WRONG_ROW,,False
+d987ae07-a97d-402a-8038-fc70181015c3,28588,الخيام,قصف وغارات,DUPLICATE_ROW,9d2e9713-8d5c-473c-b83c-51c86a857cd8,False
+5dad0376-2f35-4c19-82ac-2e7713e32c03,28038,المنصوري,قصف وغارات,DUPLICATE_ROW,8b99af11-6adc-4947-946e-cd4f32c19e72,False
+a5c9d513-7004-422a-be72-4e4c47c1e8fd,28038,زبقين,قصف وغارات,UNIQUE_CORRECT,,False
+113220c6-679f-4cbd-9bdc-eaf4007cb045,28038,حاريص,قصف وغارات,DUPLICATE_ROW,0834539d-8429-42b1-9354-91d1d1f73e13,False
+cb637806-9e45-41e6-96f9-610bb8ba272b,28038,الخيام,قصف وغارات,DUPLICATE_ROW,9d2e9713-8d5c-473c-b83c-51c86a857cd8,False
+5abe79ca-5ee8-4a8e-bd29-0c93ffdadcf4,28038,بني حيان,قصف وغارات,DUPLICATE_ROW,dfda38f6-ba00-43d1-b6b6-127519ed8417,False
+74d0bc1e-de8b-4a74-afcf-7d09564859c3,28038,كفر رمان,قصف وغارات,WRONG_ROW,,False
+7757529d-e40e-49e5-a066-a4dc7e5f9d00,28038,وادي الست,قصف وغارات,WRONG_ROW,,False
+b1e580a5-65cc-49e0-90a5-34d91fafbcd9,28038,عدشيت القصير,قصف وغارات,WRONG_ROW,,False
+b3c97b0c-173c-4ed8-ada7-740007c2e059,28038,قبريخا,قصف وغارات,WRONG_ROW,,False
+74080402-5b1c-4b00-b1d3-5797e7c1d444,28022,بيت ياحون,قصف وغارات,WRONG_ROW,,False
+9a716070-8888-471d-ad13-53d72eff0b62,28022,البياض صور,قصف وغارات,WRONG_ROW,,False
+5c221609-5654-43d8-b924-020fd28ffa7f,28022,قانا,قصف وغارات,WRONG_ROW,,False
+0102a70a-1947-4c84-b8b2-acb42a3984fa,28022,ميس الجبل,قصف وغارات,WRONG_ROW,,False
+299cb18b-4b09-4499-b172-c8b9d43940b2,28022,حداثا,قصف وغارات,UNIQUE_CORRECT,,False
+74d23631-085f-45a4-a758-9ebb6c26586e,28022,مجدل سلم,قصف وغارات,WRONG_ROW,,False
+cc8c3262-d381-48c4-b394-e03bf6a22014,28022,برعشيت,قصف وغارات,WRONG_ROW,,False
+eb820ac6-e9d3-454f-9033-a561fe514447,28022,مجدل زون,قصف وغارات,WRONG_ROW,,False
+a82245b7-1679-48c9-8aec-d3f07fe4e665,27996,ميفدون,قصف وغارات,WRONG_ROW,,False
+c48b2e34-364e-4a2e-849e-b40ee7ac1bd7,33187,حداثا,قصف وغارات,UNIQUE_CORRECT,,False
+fcab5eea-0fed-4970-b0ad-cd31e4f214eb,33187,صربين,قصف وغارات,WRONG_ROW,,False
+35037924-b1d3-4edd-8988-b367cc49d68d,33187,مركبا,قصف وغارات,WRONG_ROW,,False
+2c693b2d-5227-4303-b81b-a7c293500614,33187,بيت ياحون,قصف وغارات,WRONG_ROW,,False
+12e50bad-eb32-4421-8b1b-84f3f0678a24,33187,حولا,قصف وغارات,WRONG_ROW,,False
+61fc90b1-9064-4d32-9a62-b4709ee259d1,33187,ميفدون,قصف وغارات,UNIQUE_CORRECT,,False
+b09e1f05-46a8-41eb-a9d9-fa9179926ea2,33187,كونين,قصف وغارات,WRONG_ROW,,False
+428e0ddd-9c02-4d07-89af-32b5907fa8c1,33192,بيت ياحون,عملية تمشيط,UNIQUE_CORRECT,,False
+d3a6b38d-46c2-4efd-a591-64c0cf47e0ac,33192,بيت ياحون,قصف مدفعي,WRONG_ROW,,False
+b0bb15d8-71d2-4b2e-af2b-cefd7a513134,33192,بيت ياحون,طيران حربي,WRONG_ROW,,False
+3aa09f96-9c45-47b1-854a-414c03f17c27,33170,هبّارية,قصف وغارات,WRONG_ROW,,False
+afef3062-94ff-4dd4-80c9-f616329747de,33170,هبّارية,قصف وغارات,WRONG_ROW,,False
+2865c03f-ecfc-4a26-b2da-b7f1a96a9bc7,33170,بلاط,قصف وغارات,WRONG_ROW,,False
+d085ce7b-f9cc-42c4-b0de-54473959b325,33170,بلاط,قصف وغارات,WRONG_ROW,,False
+0da3435f-7446-4804-a61e-09c1916d9a6b,33170,شقرا,قصف وغارات,WRONG_ROW,,False
+2a537280-e0af-4a54-a8bd-4453ad8bddda,33170,أرنون,قصف مدفعي,WRONG_ROW,,False
+862f7089-2065-4dfc-8b22-ab10f5d96d4e,33170,أرنون,تلغيم وتفجير,WRONG_ROW,,False
+92a99cae-0527-4882-ac67-b5d806d682e8,33170,نبطية الفوقا,قصف مدفعي,UNIQUE_CORRECT,,False
+9db3deff-7a9b-409c-96ef-37a86d414df4,33170,شقرا,قصف مدفعي,WRONG_ROW,,False
+a9dd3138-505c-4c45-b000-ddd8be278d97,33170,نبطية الفوقا,قصف وغارات,WRONG_ROW,,False
+489b72da-aee1-4155-ae78-dc8427770757,33170,بلاط,قصف وغارات,WRONG_ROW,,False
+ec514700-d189-4ca8-ba09-6251d5bd2c58,33170,هبّارية,قصف وغارات,WRONG_ROW,,False
+c0d6c011-6361-4a0a-b040-7b3d7a0b96d4,33170,أرنون,قصف وغارات,WRONG_ROW,,False
+f4db38ee-b0b5-4ec0-b017-9c6ee0152ed5,33170,شقرا,تلغيم وتفجير,WRONG_ROW,,False
+fa1d9ddb-37fb-4982-83ae-fe0a968c2f03,33170,نبطية الفوقا,تلغيم وتفجير,WRONG_ROW,,False
+79990547-19e4-462c-b0f3-6600e5c251ef,32249,هبّارية,قصف وغارات,WRONG_ROW,,False
+0cd4337b-ded6-4b85-8c5a-495e8f2a2e34,32249,حنين,قصف وغارات,WRONG_ROW,,False
+7b1e1589-520b-4ec3-abf7-1e3a4bf61503,32249,القنطرة,قصف وغارات,WRONG_ROW,,False
+f4618b6a-6856-43bd-98d2-6f815829e669,32249,كفر شوبا,قصف وغارات,WRONG_ROW,,False
+e1067d81-9fab-445c-8be2-a5206f87dd8a,32249,بنت جبيل,قصف وغارات,WRONG_ROW,,False
+18930e92-744d-4a53-8060-cac5e53199cb,32249,الجرمق,قصف وغارات,DUPLICATE_ROW,557b56a7-9c09-4bef-972a-c4e8f6787e73,False
+32368761-b1e4-45de-8f60-410755df5dd5,32249,كفر رمان,قصف وغارات,WRONG_ROW,,False
+4d74adb4-fee4-4dc8-a9b1-c0a701a2eb9c,32249,علي الطاهر,قصف وغارات,WRONG_ROW,,False
+60849245-d9eb-4f35-a372-703af6b3401d,32249,زوطر الشرقية,قصف وغارات,UNIQUE_CORRECT,,False
+636f41a1-b6e2-45dd-997e-0c42aa07d378,32249,كفر تبنيت,قصف وغارات,DUPLICATE_ROW,aed834d5-c491-4bee-84a3-ce77a5943aba,False
+d8086e7a-e92f-4a41-8163-7ae3ac155218,32249,مجدل زون,قصف وغارات,WRONG_ROW,,False
+63a14609-490a-478a-90c5-4414e36a9dda,32249,زبقين,قصف وغارات,UNIQUE_CORRECT,,False
+c944e0f5-f396-4fef-be98-7a16c78046f4,32249,قنطرة,قصف وغارات,DUPLICATE_ROW,2f1d8672-d836-47fe-9628-2a9a2e6f3e9f,False
+ce287f44-8862-4686-9617-0877005dae4a,32249,نبطية الفوقا,قصف وغارات,UNIQUE_CORRECT,,False
+d20c6a1d-bbe9-4347-8424-dbcf18c6511e,32249,المنصوري,قصف وغارات,UNIQUE_CORRECT,,False
+2f39a9ff-9e06-4e22-b2f2-3979681fad07,32249,وادي الست,قصف وغارات,WRONG_ROW,,False
+475e918b-c9c8-4159-b6b4-83b7e316ed27,32375,زوطر الشرقية,قصف مدفعي,WRONG_ROW,,False
+d97d2753-b95e-49a5-b6c7-a382491d131d,32375,دبين,قصف مدفعي,WRONG_ROW,,False
+ec695fca-35a4-4360-84ed-3e1d59d83612,32375,مجدل زون,قصف مدفعي,WRONG_ROW,,False
+1b7fcb7e-8a55-4a09-b979-ce32e0973599,32375,القصير,قصف مدفعي,WRONG_ROW,,False
+8e6bfc4c-ae10-40af-8221-244743af5192,32375,كونين,قصف مدفعي,WRONG_ROW,,False
+fea13ff7-b170-4813-bffd-d39b53e04ea7,32375,برعشيت,قصف مدفعي,WRONG_ROW,,False
+99b15745-07d1-445e-bfb2-470d07373454,28044,تولين,قصف وغارات,WRONG_ROW,,False
+8eabe145-7224-44d0-8924-e8c851bcfcb4,28044,حردين,قصف وغارات,WRONG_ROW,,False
+bcec0230-0be0-4ad6-94ad-411315fc6f57,28044,برعشيت,قصف وغارات,WRONG_ROW,,False
+79422115-d2b9-414e-b4f0-95426bd5772c,28044,زوطر الشرقية,قصف وغارات,DUPLICATE_ROW,2668cbb0-013a-436e-90c6-e513daa3b2e2,False
+8428635f-9cdc-40a8-83a5-652033610fdb,28044,ميس الجبل,قصف وغارات,WRONG_ROW,,False
+9447c067-c076-450b-900c-e7a9d7eb1f13,28044,كفر تبنيت,قصف وغارات,WRONG_ROW,,False
+87486ca5-7630-4be9-a2e9-2fdf0b7565af,28044,حاريص,قصف وغارات,WRONG_ROW,,False
+6b7a71a1-5f7b-44f8-aeea-6285edf0dd15,28044,نبطية الفوقا,قصف وغارات,UNIQUE_CORRECT,,False
+4aa156ea-c18e-49d4-84e5-3eea1b73f908,28044,بيت ليف,قصف وغارات,WRONG_ROW,,False
+11666bae-00c3-45cc-a286-56bce1ba1d22,28044,مجدل زون,قصف وغارات,WRONG_ROW,,False
+15ed3f48-4f03-4e82-a022-1e65969cbb15,28044,قنطرة,قصف وغارات,UNIQUE_CORRECT,,False
+a967ef52-be85-4a06-9028-d29ec2674bae,28044,المنصوري,قصف وغارات,DUPLICATE_ROW,35342d1b-a933-4814-bf57-f2383b0f7672,False
+69df4b95-46c5-4326-9981-7c31e15644f0,28044,القصير,قصف وغارات,WRONG_ROW,,False
+0730c64c-56cb-44df-b3cf-1a3f8775ea4f,28044,وادي الحور,قصف وغارات,WRONG_ROW,,False
+22adec42-eaa1-4f73-a3d6-60f485b01e49,27977,حلتا,اقتحام/ سرقة منازل,WRONG_ROW,,False
+33d42401-8d8d-4552-8b6b-b443a051bcfe,34437,حداثا,قصف مدفعي,UNIQUE_CORRECT,,False
+b93dec4d-8eae-427f-87ad-3eccbbbde2ef,34437,يحمر,تلغيم وتفجير,UNIQUE_CORRECT,,False
+8502e97e-77f7-42aa-a834-1279ef96a11d,34437,زوطر الشرقية,قصف مدفعي,WRONG_ROW,,False
+0fcaf42e-a73c-4d0c-90ed-d66426011c26,34437,علي الطاهر,قصف مدفعي,UNIQUE_CORRECT,,False
+d710213b-a3ec-4e43-9d3c-fb393c164d25,34437,نبطية الفوقا,قصف مدفعي,UNIQUE_CORRECT,,False
+7ebc62c9-871c-4524-8518-35851dea50b7,34551,ياطر,قنابل صوتية,UNIQUE_CORRECT,,False
+84cf065c-d1a6-4255-879f-cf6ddd011c5d,34551,زوطر الغربية,قنابل صوتية,UNIQUE_CORRECT,,False
+dbc37ad7-1a36-4d13-9051-ef5d00b94904,34551,بيت ليف,قصف مدفعي,WRONG_ROW,,False
+fcdc17e7-8cc4-4aa9-86d1-061436b0a0c9,1240,حاريص,قنابل صوتية,UNIQUE_CORRECT,,True
+2523ba87-04c4-4a59-a6e4-6574b9f9ba72,1240,كونين,تلغيم وتفجير,UNIQUE_CORRECT,,True
+2c16da50-7f48-4c30-b803-2a68d16df8ea,1240,صربين,قصف مدفعي,UNIQUE_CORRECT,,True
+688befde-c45d-4602-952b-6c21dd892d1c,1240,المنصوري,تلغيم وتفجير,DUPLICATE_ROW,4001e8a2-f522-48ae-a259-288abcc43ac7,True
+99a49d1a-d89b-4667-b1d8-76740633ee12,1240,برعشيت,تلغيم وتفجير,UNIQUE_CORRECT,,True
+8d6b3783-09ab-44b5-81f1-f8000f8903ff,1240,برعشيت,تلغيم وتفجير,UNIQUE_CORRECT,,False
+2422821d-f909-448f-ad5d-672b9b28edf7,1240,صربين,قصف مدفعي,UNIQUE_CORRECT,,False
+41f201c8-35f0-4992-afe2-aa1683e74b3f,1240,حاريص,قنابل صوتية,UNIQUE_CORRECT,,False
+27492c80-4e4d-470b-992f-5b112f69c256,1240,كونين,تلغيم وتفجير,UNIQUE_CORRECT,,False
+cb611d31-87f7-43aa-be8b-beafc89b4c68,1240,المنصوري,تلغيم وتفجير,DUPLICATE_ROW,4001e8a2-f522-48ae-a259-288abcc43ac7,False
+13564fc6-b4c4-447d-986c-4aa5080529b3,34811,ميس الجبل,قصف مدفعي,UNIQUE_CORRECT,,False
+0abb0260-9201-46f9-9c02-b9a75c88fcf4,35070,برعشيت,قصف مدفعي,UNIQUE_CORRECT,,False
+75048530-0aa2-427a-8e64-b85a8c2b758a,35070,مجدل زون,قصف مدفعي,DUPLICATE_ROW,2230e8f7-a7f4-45d2-8ee6-10d12b844b2c,False
+efe97f07-2ada-481e-80be-67af59cd457d,35070,زبقين,قصف مدفعي,UNIQUE_CORRECT,,False
+f6d6d8b9-7996-4d20-9e87-0b4fda3406b0,35070,تولين,قصف مدفعي,UNIQUE_CORRECT,,False
+88867269-b5aa-41fd-b67e-bac43121069f,35070,بيت ياحون,قصف مدفعي,UNIQUE_CORRECT,,False
+f8609928-1c8e-4a10-a299-d30e3ab0cf73,35070,بني حيان,قصف مدفعي,UNIQUE_CORRECT,,False
+9a794a17-095d-4b4d-87d0-8ba665356d64,35070,طلوسة,قصف مدفعي,UNIQUE_CORRECT,,False
+da60c1c6-2641-4e00-8149-f2a3c1917acb,35070,عيتا الجبل الزط,قصف مدفعي,DUPLICATE_ROW,3f5f87c3-ea44-4a31-97f4-09c96b5cc635,False
+c92dd20e-de99-4d32-a3b1-1ac71e5a42c7,1115,كفر شوبا,قصف مدفعي,WRONG_ROW,,True
+cbb130d9-4a91-4131-9d3e-769959fe096e,1115,قنطرة,قصف مدفعي,UNIQUE_CORRECT,,True
+9c96d3bb-2f34-4997-9512-e4357e8b62a5,1276,وادي الست,قصف مدفعي,WRONG_ROW,,False
+888ecb7f-f0eb-47f0-9ea1-f8d9f827e219,1115,سلوقي,قصف مدفعي,WRONG_ROW,,True
+e095fd9e-6f81-4ed5-ad6c-1b207ffca770,1115,قنطرة,قصف مدفعي,UNIQUE_CORRECT,,False
+9da527a0-a926-4c26-a87b-2628ce87176a,1115,علي الطاهر,قصف مدفعي,UNIQUE_CORRECT,,True
+d8797909-36c2-4f87-a388-e7f4e210ce26,1276,مزرعة طمره,قصف مدفعي,WRONG_ROW,,False
+5beb771d-8b60-417a-a2d8-54464a39685c,1115,المنصوري,قصف مدفعي,WRONG_ROW,,True
+1d8b28c2-7cd7-4338-b697-4a25e9d6de49,1115,علي الطاهر,قصف مدفعي,UNIQUE_CORRECT,,False
+0bde5dd7-aa0c-40f1-ab2a-59fb2f672bf2,1115,حولا,قصف مدفعي,WRONG_ROW,,False
+04872673-ab7f-4b90-9223-fa4dc11a8c80,35659,كفر شوبا,عملية تمشيط,WRONG_ROW,,False
+e234c159-7901-4cc1-a612-1a70480ab870,35659,كفر شوبا,عملية تمشيط,WRONG_ROW,,False
+91e9033c-57d5-4f29-a720-6d083c60be1a,35837,تولين,قصف مدفعي,UNIQUE_CORRECT,,False
+c45d6ab5-ce10-42ad-a000-fa082f804643,35837,المنصوري,قصف وغارات,DUPLICATE_ROW,599e7b9b-2391-43e2-83bf-39274e045777,False
+73b16101-b8c2-471f-90dc-917e25895ddd,35837,زوطر الشرقية,قصف مدفعي,UNIQUE_CORRECT,,False
+6dd5ddec-2b53-4638-b00e-8572f289a695,35837,طلوسة,قصف مدفعي,UNIQUE_CORRECT,,False
+5197e9db-f116-461e-882a-83782edbe219,35837,حلتا,قصف مدفعي,WRONG_ROW,,False
+e9691286-356c-4f4a-bca5-8c18168e0abd,35837,علي الطاهر,قصف مدفعي,UNIQUE_CORRECT,,False
+77dedbcd-4b53-42d7-816b-867555c199fa,35837,طلوسة,قصف مدفعي,UNIQUE_CORRECT,,False
+2eefe4b0-54f4-4158-87aa-61b7cea65387,35837,ميس الجبل,قصف مدفعي,UNIQUE_CORRECT,,False
+610902a8-45f6-47df-843c-8fd5f88a3c43,36062,المنصوري,قصف وغارات,WRONG_ROW,,False
+5dd63bc8-a8a1-432f-b95e-3ba4413c3b63,36101,برعشيت,تلغيم وتفجير,UNIQUE_CORRECT,,False
+8b5a91b6-46b9-402e-b559-8ead4f0f249c,36101,تولين,قصف مدفعي,DUPLICATE_ROW,208d363f-8e63-4e69-8fe2-4824c35d5ac6,False
+3c4d6cfd-b67c-4247-aeb0-97cb9960651e,36363,كونين,قصف وغارات,WRONG_ROW,,False
+b5a609c5-ad56-4002-8308-e26d7351daa7,36363,كفر تبنيت,قصف وغارات,DUPLICATE_ROW,18ec5ba2-d47a-46dd-8641-03187a4007d2,False
+b11f1acb-aa65-4597-97bb-ff2733d80f33,36363,الخيام,قصف وغارات,WRONG_ROW,,False
+43aac8ec-6b87-4adb-aa42-71d06137091f,36363,نبطية الفوقا,قصف وغارات,DUPLICATE_ROW,5bf58ad1-b3bb-4a78-9b68-de7e49155f01,False
+1679a55c-78fe-4428-a720-a99da6c96797,36363,برعشيت,قصف وغارات,WRONG_ROW,,False
+a025c528-328f-4ef8-8436-3ee8e6c0b93b,36363,قنطرة,قصف وغارات,DUPLICATE_ROW,7fd93a90-555c-4db9-a6be-416ef3eac272,False
+ddc1dfe0-3a45-46d3-bdfc-2ccd162ca45c,36363,بيت ياحون,قصف وغارات,WRONG_ROW,,False
+d97e0301-f92c-4f76-8c3b-ce0c4480d1fe,36363,صربين,قصف وغارات,WRONG_ROW,,False
+70fcc2b0-2b71-44b1-99c4-5ce053821407,36455,هبّارية,قصف مدفعي,WRONG_ROW,,False
+0e1e3c0f-bd0b-452f-9469-19a439e18376,36483,مزارع شبعا,عملية تمشيط,WRONG_ROW,,False
+7fac5e24-c86c-4fbf-aaa7-4a32b1e1ef67,36483,بيت ليف,قصف مدفعي,UNIQUE_CORRECT,,False
+e14a05bb-cd76-46d8-beaf-d0f58f614a36,36727,تولين,قصف وغارات,UNIQUE_CORRECT,,False
+beae8f5a-a227-4959-9f7c-88aa16e8af78,36727,قاع وادي الخنزير,قصف وغارات,WRONG_ROW,,False
+b16ad8a0-75b1-4160-a6b1-960dae942332,36727,بني حيان,قصف وغارات,DUPLICATE_ROW,4d954dc8-eb68-493d-98bf-2aaed08ca3e0,False
+42683299-036b-4233-af3c-f1b8c855fe29,36727,حردين,قنابل مضيئة وحارقة,WRONG_ROW,,False
+510d50ed-85a8-43c2-b966-08332c3fdea2,36727,حولا,قصف وغارات,WRONG_ROW,,False
+5a0aa067-053b-4feb-9637-6919c3b17d2e,36727,بيت ليف,قصف وغارات,WRONG_ROW,,False
+e037ddeb-7e62-4df6-8941-9eff87538107,36727,زبقين,قصف وغارات,WRONG_ROW,,False
+201634d7-d631-48d0-9dfb-6b08a11f8b86,36727,زوطر الشرقية,قصف مدفعي,DUPLICATE_ROW,e020a20e-71b6-45ad-8792-556edcec928c,False
+39b7ecf8-c8d3-4109-91d6-b39beb709021,36727,هبّارية,قصف وغارات,WRONG_ROW,,False
+57838b40-a329-4ee7-a2d4-53c1d1c6bf8d,36727,كفر شوبا,قصف وغارات,WRONG_ROW,,False
+5a000b55-0469-49cc-89b6-bcb228730764,36727,المنصوري,تلغيم وتفجير,UNIQUE_CORRECT,,False
+72848c37-63d9-4e56-a059-61f86f6d6eeb,36728,دير سريان,تلغيم وتفجير,DUPLICATE_ROW,0adb9b5c-1d33-4c43-a594-3131cffe8fe1,False
+c855f243-757c-4147-aee1-198fb695d625,37336,الحميرة,تلغيم وتفجير,WRONG_ROW,,False
+067b5f71-3893-423d-9b43-8ce32d3f1f02,37340,حلتا,تلغيم وتفجير,WRONG_ROW,,False
+67a27ff3-738e-4bae-92ce-b2ce58fbf9db,38081,بيت ياحون,قصف وغارات,WRONG_ROW,,False
+a395fa0b-2099-4cf5-a4c0-b1fe6d7f9c98,38081,مجدل زون,غير مصنف / بحاجة إلى مراجعة,WRONG_ROW,,False
+81ea95a9-ee60-41f5-a75b-412a367eab99,38096,المنصوري,قصف وغارات,DUPLICATE_ROW,16f92924-8826-4a16-b4d1-cf0ed07308e3,False
+921abd0b-ca73-4e0c-a365-cdf53d14c3aa,38096,ميفدون,قصف وغارات,DUPLICATE_ROW,a0464796-c077-4c88-845e-02e654258d35,False
+1bf2baeb-d42e-4a9b-94dd-d1050cf6f022,38096,حداثا,قصف وغارات,DUPLICATE_ROW,aaba3704-f390-4e4d-91e1-415355a98d4a,False
+58a2334f-ad3d-48c9-805e-5ddc1ef692b3,38096,زبقين,قصف مدفعي,UNIQUE_CORRECT,,False
+dd856f7a-f0ca-4e70-aa6a-cea1301b1da0,38096,ميس الجبل,قصف وغارات,DUPLICATE_ROW,6d3bb043-34f2-4cc4-9400-863690aaeba9,False
+5f8dd8c4-db5d-47a0-b29a-94ec5e4823eb,38096,حولا,قصف مدفعي,UNIQUE_CORRECT,,False
+3712f760-9105-4636-be4f-da6cd087a0bb,38096,تولين,قصف مدفعي,DUPLICATE_ROW,0bb7183d-af49-49c7-80b0-6c22a353088f,False
+5b475214-69ca-461a-a91f-695b8421bea2,38096,حاريص,قصف وغارات,DUPLICATE_ROW,591e8524-5a3f-45cf-8a54-590bca3c9b24,False
+a6731b07-5cd8-4559-92cc-d45ce1483ae7,38096,بيت ياحون,تلغيم وتفجير,UNIQUE_CORRECT,,False
+5a304fe7-4b93-4e3f-b129-0b2da314eebd,38096,أرنون,قصف مدفعي,DUPLICATE_ROW,931d314a-1700-4ce8-b07d-49c92676590a,False
+156fb0e9-fabb-41f3-a13e-a58fa8afd730,38096,زوطر الشرقية,قصف مدفعي,DUPLICATE_ROW,ddec04a9-dbdd-4898-afe5-0c62aa938e2c,False
+1e853780-2ed5-4490-a5e4-1bd9db105fe0,38096,مجدل زون,تلغيم وتفجير,UNIQUE_CORRECT,,False
+405ec157-fd4a-4fdd-93c5-8b0664978ebc,38096,برعشيت,قصف مدفعي,UNIQUE_CORRECT,,False
+edb5219e-2d49-464f-b391-d43623009d8c,38096,الخيام,قصف وغارات,UNIQUE_CORRECT,,False
+63d2f05a-0544-4418-b1b9-4326b1d50997,38096,قبريخا,غير مصنف / بحاجة إلى مراجعة,WRONG_ROW,,False
+7ef58c56-8c40-462d-98b0-692419b58ca0,38096,كفر تبنيت,قصف وغارات,DUPLICATE_ROW,159cd7f4-7ebf-4892-9a12-ad4b35594347,False
+cac1e958-712f-477b-9009-72567de97f65,38096,عيترون,قصف مدفعي,UNIQUE_CORRECT,,False
+ec30e6a0-05a5-4795-825d-184a38d02594,38096,قنطرة,قصف وغارات,UNIQUE_CORRECT,,False
+4758bac0-2adf-4b82-be0d-010f5e8a1fe7,38286,نبطية الفوقا,قصف مدفعي,UNIQUE_CORRECT,,False
+c713df22-9a21-41cc-8ca6-f09370e5b5c3,38286,زبقين,قصف وغارات,UNIQUE_CORRECT,,False
+2030772b-e2f2-4528-8e70-2fc4f2276fd6,38286,وادي الدير,قصف مدفعي,WRONG_ROW,,False
+de38e663-1527-4e87-87db-af6c3c7a3f32,38286,تولين,قصف مدفعي,DUPLICATE_ROW,0bb7183d-af49-49c7-80b0-6c22a353088f,False
+2413f0d7-80ff-4708-95c8-d0d98a0a0fd7,38575,الخيام,قصف مدفعي,UNIQUE_CORRECT,,False
+ac2602ad-a8ef-4fb9-a79b-ee2b5c62bd05,38575,قبريخا,قنابل مضيئة وحارقة,UNIQUE_CORRECT,,False
+c86b9342-791c-4bb1-8b21-717e902428db,38575,صربين,قصف مدفعي,UNIQUE_CORRECT,,False
+cde7cd94-05ff-42d9-a904-796b183b1b24,38575,ميس الجبل,قصف مدفعي,UNIQUE_CORRECT,,False
+9219d3ad-deee-40b1-80f5-022aff2e2376,38575,الخيام,تلغيم وتفجير,UNIQUE_CORRECT,,True
+764893d0-9ccb-4fa6-a945-882cd46f1434,38575,ميفدون,قصف وغارات,UNIQUE_CORRECT,,True
+041c91fb-8ca7-491c-ac0f-5adcfc0f17e2,38575,بني حيان,قصف وغارات,UNIQUE_CORRECT,,True
+8477694e-2cc3-4225-8f36-230598157fb5,38575,الخيام,تلغيم وتفجير,UNIQUE_CORRECT,,True
+d6b91f99-a8f9-4132-b24d-bcefacdbf5cd,38575,وادي الدير,قنابل مضيئة وحارقة,WRONG_ROW,,True
+75f0fbb9-d10f-468b-baa1-90c0a93d1e55,38575,صربين,قصف مدفعي,UNIQUE_CORRECT,,True
+86742989-aa18-4887-9bfd-fdd219345055,38575,قبريخا,قنابل مضيئة وحارقة,UNIQUE_CORRECT,,True
+fa1d24b0-0de9-4e8c-9145-d7b99344bfa3,38575,الخيام,تلغيم وتفجير,UNIQUE_CORRECT,,True
+d112e148-af72-469c-822c-ff6d1c8dd8c1,38575,ميفدون,قصف وغارات,UNIQUE_CORRECT,,False
+f96e42eb-ca47-414c-8261-08496fedcd0e,38575,بني حيان,قصف وغارات,UNIQUE_CORRECT,,False
+1811fbc7-60a6-481a-9933-8c5059e6a05f,38575,بني حيان,قصف وغارات,UNIQUE_CORRECT,,True
+3302ff3d-2a82-4529-8852-0bfc91d7d098,38575,ميفدون,قصف وغارات,UNIQUE_CORRECT,,True
+6d9e0152-b047-4abe-91cd-336d1336528c,38575,حاريص,قصف مدفعي,UNIQUE_CORRECT,,True
+e4e5f7c5-9ff6-47ca-8e86-ff8cf6379c0e,38575,ميس الجبل,قصف مدفعي,UNIQUE_CORRECT,,True
+65fedbdf-98c0-4350-8daa-ec4f14697e74,38575,الخيام,قصف مدفعي,UNIQUE_CORRECT,,False
+843aa734-b14c-42fc-8721-03b0c4b73312,38575,حاريص,قصف مدفعي,UNIQUE_CORRECT,,False
+9763f531-40a9-4b8f-81f5-a32675dc835e,38575,نبطية الفوقا,قصف مدفعي,UNIQUE_CORRECT,,False
+78f1e090-f74a-47ba-9eb8-cccacbfd0990,38853,ميس الجبل,قصف وغارات,WRONG_ROW,,False
+8347d1bd-26ce-4d9b-9d2d-25ee07808d3e,38853,ميفدون,قصف وغارات,WRONG_ROW,,False
+8a82f97d-a551-4aee-b5d9-71582856cd27,38853,المنصوري,قصف وغارات,DUPLICATE_ROW,d486df35-d228-43d9-8c2c-6f2574ec2870,False
+8d3a9b77-9bc0-41cf-8c49-6370db0010d8,38853,المنصوري,قصف وغارات,DUPLICATE_ROW,d486df35-d228-43d9-8c2c-6f2574ec2870,False
+a7525563-c564-41b9-a87c-95bc62347375,38853,زوطر الشرقية,قصف وغارات,WRONG_ROW,,False
+c636b34f-2620-43cf-9e07-6fd026f3f25c,38853,زبقين,قصف وغارات,WRONG_ROW,,False
+e68fec74-fb03-4701-a779-351d3203f331,38853,كفر تبنيت,قصف وغارات,WRONG_ROW,,False
+fa5f0754-e30a-44fd-a63c-56eda61bf744,38853,بيت ياحون,قصف وغارات,DUPLICATE_ROW,71089682-e7c9-467a-936f-e016f5bd35a3,False
+2fc07475-716d-48b2-9d91-b206255b5a48,38853,تولين,قصف وغارات,WRONG_ROW,,False
+595ad61c-47ea-487e-9181-1fa3ac48b586,38853,برعشيت,قصف وغارات,DUPLICATE_ROW,73b23649-8cbe-48dd-98f3-ad8fc90dbdbd,False
+09519ac6-70df-4be4-a4c1-c86e91b6d201,38853,المنصوري,قصف وغارات,DUPLICATE_ROW,d486df35-d228-43d9-8c2c-6f2574ec2870,False
+17fc2264-0911-4c18-8191-410eb9236453,38853,رشاف,قصف وغارات,WRONG_ROW,,False
+85373f26-fdd2-4e84-b83a-1ebf4cd2bc9a,38853,شبعا,قصف وغارات,WRONG_ROW,,False
+cc5c20c3-dc6f-400f-9d35-5d2aacf18905,38853,عيترون,تلغيم وتفجير,DUPLICATE_ROW,9428da42-bc50-4ecf-990a-47d0fd9e6776,False
+09c4ed40-d349-43f5-97e3-d0336a38fd75,38854,بيت ليف,تلغيم وتفجير,UNIQUE_CORRECT,,False
+550448d3-65db-4270-ad06-28f712640621,38854,مجدل زون,تلغيم وتفجير,UNIQUE_CORRECT,,False
+c1183fa5-5389-4102-a445-ae461650cbdd,38917,نبطية الفوقا,قصف مدفعي,UNIQUE_CORRECT,,False
+96804d7b-be1f-4978-aafa-edc9955ff197,39079,القنطرة,غير مصنف / بحاجة إلى مراجعة,WRONG_ROW,,False
+b98fae1f-4e8b-4a07-947e-d238e5e0781a,39079,نبطية الفوقا,قصف وغارات,DUPLICATE_ROW,06404ea3-ae4b-417a-9750-1781e30e51cc,False
+e8c081da-8b5d-40e9-ad88-5ad573dca2d3,39079,المنصوري,تلغيم وتفجير,UNIQUE_CORRECT,,False
+412900c3-b1bd-4532-8a50-58bc4cd62320,39079,نبطية الفوقا,قصف وغارات,DUPLICATE_ROW,06404ea3-ae4b-417a-9750-1781e30e51cc,False
+42f30d52-c9f9-4082-845d-d11d077a47fa,39079,المنصوري,تلغيم وتفجير,UNIQUE_CORRECT,,False
+54dc1c16-38ea-4c73-968f-b230d70adb5e,39082,قبريخا,قصف مدفعي,UNIQUE_CORRECT,,False
+672aa8d6-b785-4511-8820-71351a97b50c,39082,برعشيت,قصف مدفعي,DUPLICATE_ROW,696b9d42-83b9-489b-a3a9-2906b3b9eb14,False
+8abd0e75-c64d-4bf8-9a73-1705c4039e41,39082,بيت ياحون,تلغيم وتفجير,UNIQUE_CORRECT,,False
+1558301e-3978-49ce-b1af-38c5c90b03d3,39082,تولين,قصف وغارات,UNIQUE_CORRECT,,False
+7c8dfaa5-125c-47b5-924d-8ab4a53fa77d,39082,زبقين,قصف مدفعي,DUPLICATE_ROW,de5bcead-3c74-4aae-9d01-872c402d4def,False
+7ca1a2e2-7cba-4ecf-8812-7df272b40500,39082,برعشيت,قصف مدفعي,DUPLICATE_ROW,696b9d42-83b9-489b-a3a9-2906b3b9eb14,False
+82519926-8f65-4d84-ae8f-c399432edd8b,39082,كونين,قنابل مضيئة وحارقة,UNIQUE_CORRECT,,False
+e49d2e00-9e4f-40f2-984c-aca30adeb45f,39082,حداثا,قصف مدفعي,UNIQUE_CORRECT,,False
+33d48e19-d5fb-42b4-b12b-a6386536e5d3,39082,زوطر الشرقية,قصف مدفعي,UNIQUE_CORRECT,,False
+30e7e2c0-dc5f-4c3d-99cb-d680296d79f4,39082,طلوسة,تلغيم وتفجير,UNIQUE_CORRECT,,False
+8405d0c4-cbd9-4198-822c-361c78aaa6e5,39082,المنصوري,قصف وغارات,DUPLICATE_ROW,0f66ea9d-1a3f-4da5-83b2-dc0f61df6a93,False
+1fdf0f15-4987-4a8e-84d4-4c02c33019fe,39082,المنصوري,قصف وغارات,DUPLICATE_ROW,0f66ea9d-1a3f-4da5-83b2-dc0f61df6a93,False
+0716447b-b880-4cc8-8b73-c4f7b1c701ce,39082,حولا,تلغيم وتفجير,UNIQUE_CORRECT,,False
+58a88145-0a5c-4b2e-a7fe-915aebd16565,39082,الخيام,قصف مدفعي,UNIQUE_CORRECT,,False
+c36ffb36-96a7-4de0-b75e-9504bf59f030,39082,عيترون,تلغيم وتفجير,UNIQUE_CORRECT,,False
+49cb1f03-a2ce-40d7-8d57-cadd0f317b6b,39289,كفر رمان,قصف وغارات,DUPLICATE_ROW,89f51236-cf81-463b-a55a-e583f6d299c9,False
+66add4b2-f579-4c93-b608-20f6d4e3e5f5,39289,زوطر الشرقية,قصف وغارات,DUPLICATE_ROW,72fc148d-dee4-47bf-b9de-a3f065446e5e,False
+b17e2ad1-6dec-4f38-bdbc-c1f505c8f94e,39289,الخيام,قصف وغارات,DUPLICATE_ROW,200b7bd6-b1a9-454c-9523-414e0a8b8a87,False
+c089260e-2f9f-4064-a5cf-a62b1f6523a2,39289,قنطرة,قصف وغارات,DUPLICATE_ROW,c7a0b0e3-f0b6-4ac8-8880-d55cdf4b8b37,False
+c2be5895-c3ec-463a-b27e-cde25fe0be68,39289,برعشيت,قصف وغارات,DUPLICATE_ROW,dfe79383-97ba-4859-8880-e52cd416a997,False
+b9bd6d61-16de-4138-897f-4f316fc86584,39289,كفر تبنيت,قصف وغارات,DUPLICATE_ROW,80a70d2a-6201-49ed-88b7-14f8d6abc94e,False
+08f48f62-c265-42da-887f-5ecaf5967eab,39289,حولا,قصف وغارات,DUPLICATE_ROW,a65390b1-4996-4f86-9447-c191b4276597,False
+1a50fee4-f410-4b7f-a5a0-9dcaa140394c,39289,تولين,قصف وغارات,DUPLICATE_ROW,9c9014ae-3924-49c4-b8d3-a955e1d0e13e,False
+30d4f3cc-0ad9-4b2c-9a2d-959f1d1cf71c,39289,حردين,قصف وغارات,DUPLICATE_ROW,a5789b4e-83ce-48c5-9a75-0e141b785290,False
+ed0d51e1-8a97-4a3d-bd74-8a5bd972775d,39289,قبريخا,قصف وغارات,DUPLICATE_ROW,2f6d0378-463d-4901-95b7-a2462aa9de97,False
+c8a51aed-a236-466b-a9ea-72ec42b190a3,39289,ميفدون,قصف وغارات,DUPLICATE_ROW,3f0f772b-2f62-4e41-8208-514c34fd4039,False
+f83cbbde-1517-4664-bf05-c196ddb4c181,39289,كونين,قصف وغارات,WRONG_ROW,,False
+7a9fc0b5-2810-4f60-b932-aac43844f6b3,39289,قبريخا,قصف مدفعي,UNIQUE_CORRECT,,False
+a91aaf8b-a03c-4027-96f7-94b09834a530,39266,كفر تبنيت,قصف وغارات,DUPLICATE_ROW,80a70d2a-6201-49ed-88b7-14f8d6abc94e,False
+cd3546fc-4f51-4599-aa31-c97f4fde80a6,39266,المنصوري,قصف وغارات,DUPLICATE_ROW,844800be-2d2d-4792-9152-659edd998f77,False
+b386fefd-4fc6-4121-b408-bab1e943396f,39266,نبطية الفوقا,قصف وغارات,WRONG_ROW,,False
+fdbd9b82-3bb4-428f-a6b2-c7abca3f03e5,39266,المنصوري,قصف وغارات,DUPLICATE_ROW,844800be-2d2d-4792-9152-659edd998f77,False
+3cca2e4c-f492-4df9-973b-ae5c8635bdc6,39266,حداثا,قصف وغارات,UNIQUE_CORRECT,,False
+60dfc1c1-9467-4802-a0c7-7cc7111b2b2f,40279,ميفدون,قصف مدفعي,DUPLICATE_ROW,525aed6b-e05c-4332-a766-1dbf1bd733f6,False
+778432fd-53bd-4790-aba5-42d48b7030a7,40279,تولين,قصف وغارات,UNIQUE_CORRECT,,False
+7c082a6f-5368-4ddf-9f08-193c7f56bbb1,40279,محيبيب,قصف وغارات,DUPLICATE_ROW,f8ac7738-b3a7-4438-8f76-620a3d29371f,False
+dc06c913-4004-40d1-83a7-a8fb5209e88a,40279,مجدل زون,قنابل مضيئة وحارقة,DUPLICATE_ROW,aef52e9d-7e16-4b29-8dff-f0488f254f5e,False
+e1325ef5-5677-4228-8c4c-eef94d6e322d,40279,برعشيت,قصف وغارات,UNIQUE_CORRECT,,False
+492241fa-776a-40bf-9353-c4f2327c3ce9,40279,حردين,قصف مدفعي,DUPLICATE_ROW,3702d809-ff14-41b6-93aa-1f58f5b8cf53,False
+88b3abe9-9023-4809-8d8a-cbc11c7628c3,40279,حدث,قصف مدفعي,WRONG_ROW,,False
+ee7647de-782a-49eb-bf56-ddcf018606cd,40279,قبريخا,قصف وغارات,UNIQUE_CORRECT,,False
+1e46453a-e293-4864-a780-fda170e467bb,40281,المنصوري,قصف مدفعي,DUPLICATE_ROW,26339673-b73e-47c2-9e68-01b6206b6fdd,False
+6d7f7857-36f2-4008-a7f8-c156d19f3716,40281,كفر تبنيت,قصف وغارات,DUPLICATE_ROW,1099ee39-84ab-4e55-a40d-be59784403b2,False
+b229eb3c-a79a-4020-a91b-8629f5e09af4,40281,مجدل زون,قصف مدفعي,UNIQUE_CORRECT,,False
+9a7a5b20-0b9f-40ce-9853-fb0b7b311319,40281,عيترون,قصف وغارات,DUPLICATE_ROW,6ff4685b-5544-4fc8-986d-db868a0f7fe1,False
+5b6062d5-00bf-4774-94ac-62a0e0ecf899,40281,نبطية الفوقا,قصف مدفعي,DUPLICATE_ROW,ce4daa60-b340-45ce-8232-23061b3230fd,False
+4be666ce-03f1-4b23-bea3-eba66045c883,40281,زوطر الشرقية,قصف مدفعي,DUPLICATE_ROW,8ec6e34a-10e3-4508-ae51-24f4e3ca4e10,False
+7b8eba53-fe7c-45cb-a279-628d1b28d531,40281,قبريخا,قصف وغارات,UNIQUE_CORRECT,,False
+8dc49620-e82e-4e20-81f4-6082568fe55c,40281,برعشيت,قصف مدفعي,DUPLICATE_ROW,391cc0c3-412d-4498-8c8d-5e968f9972e9,False
+a0485630-ca76-42f6-b2fd-f585dac07bae,40281,تولين,قصف وغارات,UNIQUE_CORRECT,,False
+c5a817d5-c7d1-4ea0-b0b0-9deeab32d1c4,40281,زبقين,قصف مدفعي,DUPLICATE_ROW,0fb6a1f2-1143-4af4-a644-d8e52abf2036,False
+cc4c37c4-943e-4e60-a184-bd498e197314,40281,بيت ياحون,قصف مدفعي,DUPLICATE_ROW,b875ad7a-cab8-4c6d-952a-a14a3c41cfce,False
+fd26e74e-4c53-497a-a561-881768aa1e84,40281,حداثا,قصف مدفعي,DUPLICATE_ROW,e679f609-266c-49d6-8d7f-ca9a9323a8f8,False
+4f20860c-c221-4d21-b87f-409623e28fc9,40282,أرنون,تلغيم وتفجير,UNIQUE_CORRECT,,False
+cb389e74-c21a-4277-b2de-99d64062e3fb,40315,حلتا,توغل بري,WRONG_ROW,,False
+2f61f5e3-2e5c-4ad2-bea5-6dc40b0e9856,40459,عدشيت القصير,قصف مدفعي,WRONG_ROW,,False
+d8f119a1-2051-4efe-9375-36e4e0b40abd,40459,بيت ياحون,قصف مدفعي,UNIQUE_CORRECT,,False
+26ff6cd4-66ef-4cf5-b1f2-6310909dcdc2,40459,عيناتا بنت جبيل,قصف مدفعي,DUPLICATE_ROW,baa91543-4aab-4e5b-8ebe-3e620fa1c9f1,False
+b7cc992a-f876-4aef-ace1-55b9b7298fa6,40459,ميس الجبل,قصف مدفعي,UNIQUE_CORRECT,,False
+02bcdfab-a6a3-4c4a-8725-5770e1ab2a1b,40459,مزارع شبعا,قنابل مضيئة وحارقة,WRONG_ROW,,False
+6c13eecc-a151-4be3-a975-dcfc4ccc91a0,40459,نبطية الفوقا,قصف مدفعي,UNIQUE_CORRECT,,False
+ec5e4702-dc2a-47d3-a33e-af9bd8d9b13e,40459,كونين,قصف مدفعي,DUPLICATE_ROW,648e50ef-cfd0-47a4-9e04-64562801206d,False
+36816f0c-bdcb-4ac3-9376-4035470d9ff6,40459,المنصوري,قصف مدفعي,UNIQUE_CORRECT,,False
+849a8ba3-303b-41d6-80ab-2d93bd7245a8,40459,حولا,قصف مدفعي,DUPLICATE_ROW,05e6492e-d636-45ae-8c3a-d7e1804c1302,False
+9f60d995-311b-4958-be0e-0e1808a6ae3f,40459,الخيام,قصف مدفعي,UNIQUE_CORRECT,,False
+a57088f9-201e-4294-b735-a588b6050af8,40459,حاريص,قنابل صوتية,UNIQUE_CORRECT,,False
+63909a9b-467c-460f-b5ea-de586a71550e,40459,قنطرة,تلغيم وتفجير,DUPLICATE_ROW,c549513c-2f79-4062-8b88-daceb385dee3,False
+d4ebcd25-388e-4ac2-bdf8-b46c7d8d8187,40459,ميفدون,قصف مدفعي,UNIQUE_CORRECT,,False
+a8684226-6c7c-4221-b88c-a24020347d09,40459,زبقين,قصف مدفعي,UNIQUE_CORRECT,,False
+fbc29c99-c3d6-4ea7-b0e1-ab7536b5e224,40463,تولين,قصف وغارات,UNIQUE_CORRECT,,False
+1c8e7cb7-59b2-4c88-866f-d373493ddd49,41091,برعشيت,قصف مدفعي,DUPLICATE_ROW,aec77acb-8f74-45d2-8c80-1313b83a85d4,False
+7ffb6f76-8d53-48a9-b1ec-e27d1c975ada,41091,كفر تبنيت,قصف مدفعي,DUPLICATE_ROW,82ab9fa7-27e1-4138-8d65-4d18b247c359,False
+cf2de088-078b-427d-8b73-1b0e4cd12e39,41091,كفر رمان,قصف مدفعي,DUPLICATE_ROW,710aa8a6-d9db-4752-ab76-f5b4adf4eb44,False
+89cbdd98-89c3-4d3a-9f8a-51f4377a0bf4,41091,كفر شوبا,قصف مدفعي,DUPLICATE_ROW,9a16e63c-d96f-4559-a936-ed6d005706d1,False
+d2703644-61b5-4015-a851-35b18d67655e,41091,مجيدية حاصبيا,قصف مدفعي,DUPLICATE_ROW,a4203f44-29fe-471d-ba07-8fe6a1432734,False
+11d90b8f-1f95-4a09-a6e1-3c34ee61194e,41091,قاع وادي الخنزير,قصف مدفعي,WRONG_ROW,,False
+472fb1c8-58ee-4d52-8564-11d9eaefcba0,41103,المنصوري,قصف وغارات,DUPLICATE_ROW,2032ce9e-ef85-4a60-a2c1-45ab361e285b,False
+6b02215d-71f9-451f-9c89-d16dc59ed001,41103,الخيام,قصف مدفعي,DUPLICATE_ROW,94711e42-c0fb-4b1a-a422-f381e08958f1,False
+2130f8d6-3d43-4113-a449-c2e437f3638f,41103,زبقين,قصف مدفعي,UNIQUE_CORRECT,,False
+ab50ac7f-63d2-487d-a35d-ba1f16bd3cb3,41103,كونين,قصف مدفعي,UNIQUE_CORRECT,,False
+49d051cc-5ea9-4ab3-9a2a-e0abc5aceab8,41103,تولين,قصف مدفعي,DUPLICATE_ROW,76814287-2a54-46cc-946d-bc04e94a9f07,False
+167554bd-8749-4c20-85d2-f63eb7005e5e,41103,حاريص,قصف مدفعي,UNIQUE_CORRECT,,False
