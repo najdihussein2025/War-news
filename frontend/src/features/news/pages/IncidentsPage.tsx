@@ -400,14 +400,10 @@ export const IncidentsPage = () => {
           ) : null}
           <span
             className={`inline-block h-2.5 w-2.5 rounded-full ${
-              qualityFlagText(row) ? "bg-danger" : "bg-success"
+              row.verification_status === "rejected" ? "bg-danger" : "bg-success"
             }`}
-            title={qualityFlagText(row) || "No verification issues"}
-            aria-label={
-              qualityFlagText(row)
-                ? `Verification needs attention: ${qualityFlagText(row)}`
-                : "No verification issues"
-            }
+            title={row.verification_status === "rejected" ? "Rejected" : "Not rejected"}
+            aria-label={row.verification_status === "rejected" ? "Rejected" : "Not rejected"}
           />
         </div>
       ),
