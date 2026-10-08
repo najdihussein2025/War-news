@@ -1448,15 +1448,8 @@ class IncidentRepository(IncidentRepositoryInterface):
                     performed_by=user_id,
                 )
             )
-            incident.is_deleted = True
-            incident.deleted_reason = DeletedReason.duplicate_merge.value
-            incident.duplicate_flag = False
-            self._record_soft_delete(
-                incident,
-                reason=DeletedReason.duplicate_merge,
-                canonical_incident_id=canonical.id,
-                performed_by=user_id,
-            )
+            soft_delete_incident(self.db, incident, reason="DUPLICATE_MERGE", canonical_incident_id=canonical.id, performed_by=user_id)
+            evaluate_casualty_flags_safely(self.db, incident.id)
             match.status = MatchStatus.confirmed_duplicate
             self.db.flush()
             if (
@@ -2513,12 +2506,9 @@ class IncidentRepository(IncidentRepositoryInterface):
         note: str,
     ) -> None:
         """Retire an old-path incident the summary backfill replaced (never a non-summary one)."""
-        incident.is_deleted = True
-        incident.deleted_reason = DeletedReason.summary_superseded.value
-        incident.duplicate_flag = False
+        soft_delete_incident(self.db, incident, reason="SUMMARY_SUPERSEDED", canonical_incident_id=canonical_incident_id)
         incident.note = f"{incident.note}\n\n{note}" if incident.note else note
-        self._record_soft_delete(incident, reason=DeletedReason.summary_superseded, canonical_incident_id=canonical_incident_id)
-        self.db.add(incident)
+        evaluate_casualty_flags_safely(self.db, incident.id)
 
     def _record_soft_delete(
         self,
@@ -2573,17 +2563,8 @@ class IncidentRepository(IncidentRepositoryInterface):
                 retired_incident=incident,
                 canonical_incident=representative_incident,
             )
-            incident.is_deleted = True
-            incident.deleted_reason = reason.value
-            incident.duplicate_flag = False
-            self._record_soft_delete(
-                incident,
-                reason=reason,
-                canonical_incident_id=(
-                    representative_incident.id if representative_incident else None
-                ),
-            )
-            self.db.add(incident)
+            soft_delete_incident(self.db, incident, reason="RAW_MESSAGE_SOFT_DELETE", canonical_incident_id=(representative_incident.id if representative_incident else None))
+            evaluate_casualty_flags_safely(self.db, incident.id)
             if representative_incident is not None:
                 self.create_duplicate_match(
                     incident=incident,
@@ -2627,15 +2608,8 @@ class IncidentRepository(IncidentRepositoryInterface):
                 retired_incident=incident,
                 canonical_incident=matched_incident,
             )
-            incident.is_deleted = True
-            incident.deleted_reason = reason.value
-            incident.duplicate_flag = False
-            self._record_soft_delete(
-                incident,
-                reason=reason,
-                canonical_incident_id=matched_incident.id if matched_incident else None,
-            )
-            self.db.add(incident)
+            soft_delete_incident(self.db, incident, reason="RAW_MESSAGE_SOFT_DELETE", canonical_incident_id=matched_incident.id if matched_incident else None)
+            evaluate_casualty_flags_safely(self.db, incident.id)
             if matched_incident is not None:
                 self.create_duplicate_match(
                     incident=incident,

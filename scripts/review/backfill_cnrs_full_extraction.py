@@ -115,6 +115,7 @@ def print_review(candidates: list[BackfillCandidate], examples: int) -> None:
 
 
 def apply_backfill(db: Session, candidates: list[BackfillCandidate]) -> int:
+    raise SystemExit("refusing --apply: this legacy script still uses a bulk SQL soft-delete and must be converted to soft_delete_incident before use")
     safe_ids = [
         item.raw_message_id for item in candidates if item.safe_to_requeue
     ]
