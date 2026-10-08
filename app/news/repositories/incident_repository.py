@@ -2513,6 +2513,21 @@ class IncidentRepository(IncidentRepositoryInterface):
         candidates.sort(key=lambda c: c.time_gap_seconds)
         return candidates
 
+    def soft_delete_superseded_by_summary(
+        self,
+        incident: Incident,
+        *,
+        canonical_incident_id: UUID | None,
+        note: str,
+    ) -> None:
+        """Retire an old-path incident the summary backfill replaced (never a non-summary one)."""
+        incident.is_deleted = True
+        incident.deleted_reason = DeletedReason.summary_superseded.value
+        incident.duplicate_flag = False
+        incident.note = f"{incident.note}\n\n{note}" if incident.note else note
+        self._record_soft_delete(incident, reason=DeletedReason.summary_superseded, canonical_incident_id=canonical_incident_id)
+        self.db.add(incident)
+
     def _record_soft_delete(
         self,
         incident: Incident,
