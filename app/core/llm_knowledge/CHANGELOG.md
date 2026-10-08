@@ -1,5 +1,28 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-08 - Summary LLM cross-check (Phase 3)
+
+Added an add-only larger-model cross-check to summary intake. Real example: in the
+5 October nabatiehchannel bulletin `بين محيبيب و برعشيت` must stay ONE entry (the
+prompt says so), and a place the model names that the strict matcher cannot resolve
+goes to the review task instead of becoming an item. Every proposal needs a verbatim
+evidence span, a resolvable header and a resolvable place. See
+`tests/test_summary_crosscheck.py` (valid addition, non-verbatim evidence, unknown
+header, unresolved location, duplicate, removal ignored, timeout, invalid JSON,
+disabled, wrapper signature).
+
+## 2026-10-08 - Summary reconciliation (Phase 2)
+
+Summary items now reconcile against the incidents of their window: matched items leave
+one confirmation note, missing items become casualty-free `origin=summary` incidents,
+casualty wording goes to the single review task. Real example: the 5 October
+nabatiehchannel `بين محيبيب و برعشيت` reconciles on either village, and
+`وادي السلوقي (٢)` is one item with `reported_count=2`, never two incidents.
+Rules are in `rules/summary_bulletins.md`; tests are
+`tests/test_summary_reconcile.py` (matching, families, hidden, dry run, SKIP LOCKED),
+`tests/test_summary_enrichment.py` (live report enriches a summary incident) and
+`tests/test_summary_routing.py` (Tier 1 bypass, false-positive guard).
+
 ## 2026-10-08 - Summary bulletin shadow intake
 
 Added Phase 1 shadow persistence for deterministic summary bulletins. The 5 October
