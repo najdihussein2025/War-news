@@ -25,6 +25,7 @@ import type { Incident, IncidentBulletinGroup } from "../types";
 import { CasualtyCheckPanel } from "../../casualtyChecks/components/CasualtyCheckPanel";
 import { SummaryOriginBadge } from "../../summaries/components/SummaryOriginBadge";
 import { SummaryReviewTable } from "../../summaries/components/SummaryReviewTable";
+import { SummaryReviewDrawer } from "../../summaries/components/SummaryReviewDrawer";
 import { ReasonChips, summarizeVerificationReasons } from "../verificationReasons";
 import {
   CompactIncidentList,
@@ -160,6 +161,7 @@ export const IncidentsPage = () => {
   const verificationType = verificationTypeFromSearch(location.search) ?? "";
   // "Summary review" lists open summary review tasks (one per summary), not incidents.
   const summaryReviewView = params.get("verification_type") === "summary_review";
+  const summaryReviewId = Number(params.get("summary_id")) || null;
   const eventDateFrom = normalizeDateInputValue(params.get("event_date_from")) || DEFAULT_EVENT_DATE_FROM;
   const eventDateTo = normalizeDateInputValue(params.get("event_date_to")) || getBeirutDate();
   const sortOrder = (params.get("sort_order") as "newest" | "oldest" | null) ?? "newest";
@@ -709,7 +711,7 @@ export const IncidentsPage = () => {
           </section>
 
           {summaryReviewView ? (
-            <SummaryReviewTable roleBase={roleBase} />
+            <SummaryReviewTable onOpen={(id) => updateParam("summary_id", String(id))} />
           ) : (
           <section className="space-y-3">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -848,6 +850,8 @@ export const IncidentsPage = () => {
             )}
           </section>
           )}
+
+          {summaryReviewId ? <SummaryReviewDrawer summaryId={summaryReviewId} roleBase={roleBase} onClose={() => updateParam("summary_id", "")} /> : null}
 
           {!summaryReviewView && total > pageSize ? (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { Button, DataTable, EmptyState, type DataTableColumn } from "../../../components/ui";
 import { formatDateTime } from "../../../lib/formatters";
@@ -24,10 +23,9 @@ export const SummaryReasonChips = ({ reasons }: { reasons: SummaryListItem["reas
 );
 
 /** One row per open summary review task (never one per item). */
-export const SummaryReviewTable = ({ roleBase }: { roleBase: string }) => {
-  const navigate = useNavigate();
+export const SummaryReviewTable = ({ onOpen }: { onOpen: (summaryId: number) => void }) => {
   const { data, isLoading, isError, refetch } = useSummariesQuery({ hasOpenTask: true, page: 1, pageSize: 100 });
-  const open = (summary: SummaryListItem) => navigate(`${roleBase}/summaries/${summary.id}`);
+  const open = (summary: SummaryListItem) => onOpen(summary.id);
 
   const columns: Array<DataTableColumn<SummaryListItem>> = [
     {

@@ -43,7 +43,7 @@ describe("SummaryOriginBadge", () => {
       </MemoryRouter>,
     );
     expect(html).toContain("من الملخص");
-    expect(html).toContain('href="/admin/summaries/12"');
+    expect(html).toContain('href="/admin/incidents?verification_type=summary_review&amp;summary_id=12"');
     expect(html).toContain("Created from a summary bulletin");
   });
 

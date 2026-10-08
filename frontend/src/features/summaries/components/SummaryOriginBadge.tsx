@@ -23,7 +23,7 @@ export const SummaryOriginBadge = ({ origin, summaryId, channel, windowEnd, role
     </span>
   );
   return summaryId ? (
-    <Link to={`${roleBase}/summaries/${summaryId}`} aria-label={title} className="inline-flex" onClick={(event) => event.stopPropagation()}>
+    <Link to={`${roleBase}/incidents?verification_type=summary_review&summary_id=${summaryId}`} aria-label={title} className="inline-flex" onClick={(event) => event.stopPropagation()}>
       {badge}
     </Link>
   ) : (
