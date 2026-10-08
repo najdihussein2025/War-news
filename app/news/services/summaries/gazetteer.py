@@ -47,7 +47,6 @@ class GazetteerSnapshot:
 def build_gazetteer_snapshot(session) -> GazetteerSnapshot:
     """DB adapter kept here deliberately; the snapshot and lookup stay pure."""
     from sqlalchemy import text
-    session.execute(text("SET TRANSACTION READ ONLY"))
     rows = session.execute(text("""
       select v.id,v.ref_name_ar,v.acs_name,v.caza_en,v.coord_x,v.coord_y,
              a.alias_text,a.note

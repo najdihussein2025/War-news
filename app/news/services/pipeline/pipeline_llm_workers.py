@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import asyncio
 
 from app.api.factories.action_factory import build_extraction_classifier
 from app.core.database import SessionLocal
@@ -17,6 +18,7 @@ from app.llm.services.transient_llm_errors import (
 from app.llm.services.ollama_auth_failures import coerce_ollama_auth_failure
 from app.news.models import MessageStatus
 from app.news.models.raw_message import FAILED_STAGE_EXTRACTION
+from app.core.config import settings
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
 from app.news.repositories.raw_message_repository import RawMessageRepository
 from app.news.services.incident_details.casualty_gender_evidence import (
@@ -55,6 +57,16 @@ def run_tier1_extraction_for_message(raw_message_id: int) -> None:
             return
         post_text = message.raw_text or ""
         cnrs_classification = message.cnrs_classification
+        if settings.summary_flow_mode == "live":
+            raise NotImplementedError("SUMMARY_FLOW_MODE=live is not available until Phase 2 reconciliation is implemented")
+        if settings.summary_flow_mode == "shadow":
+            try:
+                from app.news.services.summaries.intake_service import intake_summary
+                asyncio.run(intake_summary(db, message))
+                db.commit()
+            except Exception:
+                db.rollback()
+                logger.warning("summary shadow intake failed raw_message_id=%s; continuing Tier 1", raw_message_id, exc_info=True)
 
     classifier = build_extraction_classifier()
     try:
