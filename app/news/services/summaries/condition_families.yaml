@@ -1,0 +1,28 @@
+# Condition "families" used only by summary reconciliation: a summary item matches a
+# live incident when their conditions are identical or listed together here.
+#
+# Keyed by conditions.action_en (stable across databases, unlike numeric IDs) and
+# resolved to IDs at load time. Names that do not exist in the connected
+# conditions table are ignored, never guessed.
+#
+# REVIEW NEEDED: these groupings decide when a summary line counts as "already
+# reported". Too wide hides a missed event; too narrow creates a duplicate.
+families:
+  strike:
+    - Bombs                  # قصف وغارات - the generic strike/raid bucket (airstrike, drone, Apache)
+    - Warning Raid           # غارة تحذيرية - the raid itself, announced first
+  artillery:
+    - Artillery Shelling     # قصف مدفعي
+    - Tank Fire              # قذائف الدبابات
+    - Phosphorus Bombs       # قذائف فوسفورية - fired by artillery
+    - Fissile Shells         # قذائف انشطارية
+  flares:
+    - Flare Bomb             # قنابل مضيئة وحارقة
+    - Decoy Flares           # القاء بالونات حرارية
+  grenades:
+    - Grenades               # قنابل
+    - Hand Grenades          # قنابل يدوية
+    - Sound Bombs            # قنابل صوتية
+  sweeping:
+    - Sweeping Operations    # عملية تمشيط
+    - Aerial Sweep           # عملية تمشيط مروحي

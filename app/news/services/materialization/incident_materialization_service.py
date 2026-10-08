@@ -30,6 +30,7 @@ from app.news.models import (
     Condition,
     Incident,
     IncidentDetail,
+    IncidentOrigin,
     IncidentUpdate,
     MatchStatus,
     MessageStatus,
@@ -177,6 +178,7 @@ def _extraction_review_reason(
 
 
 EXACT_HASH_CONSTRAINT = "uq_incidents_exact_hash_active"
+SUMMARY_ENRICHED_NOTE = "تم تأكيد الحدث من خبر مباشر بعد إنشائه من الملخص؛ بيانات الخبر المباشر هي المعتمدة."
 AMBIGUOUS_SUB_EVENT_SCOPE_REVIEW_REASON = (
     "Multiple sub-events lack explicit location binding in a multi-village bulletin; "
     "ambiguous incident rows were not materialized."
@@ -443,6 +445,42 @@ class IncidentMaterializationService:
             if holds_village_lock:
                 assert village_id is not None
                 acquire_fast_path_village_lock(self.db, village_id, condition_id)
+
+            if holds_village_lock:
+                assert village_id is not None
+                summary_incident = self.find_summary_incident(
+                    village_id=village_id,
+                    condition_id=condition_id,
+                    event_datetime=event_datetime,
+                )
+                if summary_incident is not None:
+                    # A summary already created this event: the live report wins.
+                    materializable_villages += 1
+                    try:
+                        self.enrich_summary_incident(
+                            incident=summary_incident,
+                            representative=representative,
+                            extraction=extraction,
+                            village_casualties=village_casualties,
+                            village_deaths=village_deaths,
+                            village_injuries=village_injuries,
+                            origin_villages=origin_villages,
+                            is_multi_village=is_multi_village,
+                            village_id=village_id,
+                            event_datetime=event_datetime,
+                        )
+                        self.db.commit()
+                    except Exception:
+                        self.db.rollback()
+                        raise
+                    logger.info(
+                        "raw_message_id=%s village_id=%s enriched summary incident_id=%s",
+                        representative.id,
+                        village_id,
+                        summary_incident.id,
+                    )
+                    created.append(summary_incident)
+                    continue
 
             decision = fast_dedup.decide_for_village(
                 village_match_status=village_status,
@@ -1244,6 +1282,181 @@ class IncidentMaterializationService:
         except Exception:
             self.db.rollback()
             raise
+
+    def create_summary_incident(
+        self,
+        *,
+        village_id: int,
+        condition_id: int,
+        event_datetime: datetime,
+        khabar: str,
+        note: str | None,
+        source_id: int | None,
+        source_summary_item_id: int,
+        hash_suffix: str,
+        village_display_name: str | None = None,
+    ) -> Incident | None:
+        """Insert a casualty-free incident for a summary item, without committing.
+
+        Reuses the fast path's verification gate, exact-hash key, detail row and
+        new-incident NOTIFY, but never touches a raw message: ``raw_message_id``
+        stays NULL so no later stage (Tier 2, clustering, reconciliation) can
+        re-read the whole bulletin as if it described this one incident. The
+        caller owns the transaction; the insert runs in a savepoint so an
+        exact-hash conflict (already created for this item) does not poison it.
+        Returns the existing incident for that item on conflict.
+        """
+        sanitized_khabar = strip_boilerplate(strip_emoji_and_pictographs(khabar))
+        exact_hash = self._build_exact_hash(
+            khabar=sanitized_khabar,
+            village_id=village_id,
+            condition_id=condition_id,
+            event_date=event_datetime.date().isoformat(),
+            hash_suffix=hash_suffix,
+        )
+        verification_status, verification_reasons, _flags, verification_payload = (
+            decide_verification(None, VerificationSignals(village_id=village_id))
+        )
+        incident = Incident(
+            raw_message_id=None,
+            village_id=village_id,
+            village_display_name=village_display_name,
+            condition_id=condition_id,
+            source_id=source_id,
+            event_date=event_datetime.date(),
+            event_time=event_datetime.time(),
+            khabar=sanitized_khabar,
+            note=note,
+            exact_hash=exact_hash,
+            details_pending=False,
+            verification_status=verification_status,
+            verification_reason="; ".join(verification_reasons) or None,
+            quality_flags=verification_payload,
+            origin=IncidentOrigin.summary,
+            source_summary_item_id=source_summary_item_id,
+            created_by=None,
+        )
+        try:
+            with self.db.begin_nested():
+                self.db.add(incident)
+                self.db.flush()
+                self.db.add(IncidentDetail(incident_id=incident.id))
+                self.db.flush()
+        except IntegrityError as exc:
+            if not self._is_exact_hash_conflict(exc):
+                raise
+            return self.db.scalar(
+                select(Incident).where(
+                    Incident.source_summary_item_id == source_summary_item_id,
+                    Incident.is_deleted.is_(False),
+                )
+            )
+        _notify_new_incident(self.db, incident)
+        return incident
+
+    def find_summary_incident(
+        self,
+        *,
+        village_id: int,
+        condition_id: int,
+        event_datetime: datetime,
+    ) -> Incident | None:
+        """Earliest summary-created incident for the same village, condition family and day."""
+        from app.news.models import IncidentOrigin as _Origin
+        from app.news.services.summaries.condition_families import load_condition_families
+
+        if not hasattr(self, "_condition_families"):
+            self._condition_families = load_condition_families(self.db)
+        found = self.db.scalar(
+            select(Incident)
+            .where(
+                Incident.origin == _Origin.summary,
+                Incident.village_id == village_id,
+                Incident.condition_id.in_(
+                    sorted(self._condition_families.equivalents(condition_id))
+                ),
+                Incident.event_date == event_datetime.date(),
+                Incident.is_deleted.is_(False),
+                Incident.verification_status.is_distinct_from("rejected"),
+            )
+            .order_by(Incident.event_time.asc().nulls_first(), Incident.created_at.asc())
+            .limit(1)
+        )
+        return found if isinstance(found, Incident) else None
+
+    def enrich_summary_incident(
+        self,
+        *,
+        incident: Incident,
+        representative: RawMessage,
+        extraction: ExtractionResult,
+        village_casualties: ExtractionCasualties,
+        village_deaths: int | None,
+        village_injuries: int | None,
+        origin_villages: list[str],
+        is_multi_village: bool,
+        village_id: int | None,
+        event_datetime: datetime,
+    ) -> None:
+        """A live message reports the event a summary created: live data wins.
+
+        Casualties go through the normal merge (the summary row has none, so the
+        live values land unchanged); the live time and text replace the summary's
+        window midpoint and synthetic line; ``origin`` flips to ``live`` while
+        ``source_summary_item_id`` is kept. Tier 2 then runs for the live message.
+        """
+        mapped_fields = map_categories(
+            extraction.categories,
+            emergency_org_matcher=self.emergency_org_matcher,
+        )
+        if is_multi_village:
+            mapped_fields, _ = suppress_category_casualties(mapped_fields)
+        total_deaths, total_injuries = compute_rollups(mapped_fields, village_casualties)
+        payload = {
+            "deaths": village_deaths,
+            "injuries": village_injuries,
+            "total_deaths": total_deaths,
+            "total_injuries": total_injuries,
+            "khabar": representative.raw_text or "",
+            "origin_villages": origin_villages,
+            "mapped_fields": mapped_fields,
+            "casualty_transitions": [
+                item.model_dump(mode="json") for item in extraction.casualty_transitions
+            ],
+            **self._casualty_status_values(
+                representative, extraction, village_casualties, village_id
+            ),
+        }
+        if self.dedup_service is not None:
+            self.dedup_service.merge_into_incident(
+                existing=incident,
+                new_candidate_data=payload,
+                raw_message_id=representative.id,
+            )
+        else:
+            self.story_router.incidents.merge_existing(
+                existing=incident,
+                new_candidate_data=payload,
+                raw_message_id=representative.id,
+            )
+        incident.event_date = event_datetime.date()
+        incident.event_time = event_datetime.time()
+        incident.khabar = (
+            strip_boilerplate(strip_emoji_and_pictographs(representative.raw_text or ""))
+            or incident.khabar
+        )
+        incident.raw_message_id = representative.id
+        incident.source_id = representative.source_id or incident.source_id
+        incident.origin = IncidentOrigin.live
+        incident.details_pending = True
+        if SUMMARY_ENRICHED_NOTE not in (incident.note or ""):
+            incident.note = (
+                incident.note + "\n\n" + SUMMARY_ENRICHED_NOTE
+                if incident.note
+                else SUMMARY_ENRICHED_NOTE
+            )
+        self.db.add(incident)
+        self._mark_materialized(representative, fast_path=True)
 
     def materialize(self, representative: RawMessage) -> list[Incident]:
         """Create one Incident per eligible village_match entry.

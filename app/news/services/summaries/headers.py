@@ -87,3 +87,32 @@ def load_header_dictionary(path: str | Path) -> HeaderDictionarySnapshot:
 def default_header_dictionary() -> HeaderDictionarySnapshot:
     root = Path(__file__).resolve().parents[3] / "core" / "llm_knowledge" / "terminology" / "summary_headers.yaml"
     return load_header_dictionary(root)
+
+
+def header_dictionary_for_session(session) -> HeaderDictionarySnapshot:
+    """YAML dictionary first, then admin-learned ``summary_header_mappings`` rows.
+
+    A YAML entry always wins: a learned mapping is only added for a header text the
+    YAML does not already define, so an admin save can never override reviewed data.
+    """
+    base = default_header_dictionary()
+    try:
+        from sqlalchemy import select
+
+        from app.news.models.summary_bulletin import SummaryHeaderMapping
+
+        with session.begin_nested():  # savepoint: a missing table must not poison the caller's transaction
+            rows = session.execute(
+                select(SummaryHeaderMapping.header_text_normalized, SummaryHeaderMapping.condition_ids)
+            ).all()
+    except Exception:  # table missing (migration 0077 not applied) -> YAML only
+        return base
+    known = {key for key, entry in base.by_name.items() if entry.status == "approved"}
+    learned = [
+        HeaderEntry(normalize_token(text), tuple(ids), "approved", "learned")
+        for text, ids in rows
+        if normalize_token(text) not in known and ids
+    ]
+    if not learned:
+        return base
+    return HeaderDictionarySnapshot((*base.entries, *learned), base.action_cores, base.header_fillers)
