@@ -42,7 +42,7 @@ def _fingerprint(raw_text: str) -> str:
 
 
 def _kind(rule: str) -> SummaryKind:
-    if rule in {"default", "explicit_date"}:
+    if rule in {"default", "explicit_date", "explicit_date:posted_after_midnight"} or rule.endswith(":end_of_day"):
         return SummaryKind.full_day
     if rule:
         return SummaryKind.partial
