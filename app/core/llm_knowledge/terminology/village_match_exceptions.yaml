@@ -1,2 +1,7 @@
 # Village mention exceptions that must not be trusted to fuzzy matching.
 # Shape follows the other terminology YAML catalogs: term/category/meaning/notes/normalized.
+
+- term: "مشاع"
+  category: village_do_not_fuzzy_match
+  meaning: common_land_qualifier
+  notes: "A bare 'mashaa' is an area qualifier, not the northern village Mchaa Ej-Jibbe. For example, 'منطقة المشاع في المنصوري' targets Mansouri."
