@@ -25,6 +25,7 @@ from app.llm.services.sectioned_bulletin import recover_sectioned_sub_events
 from app.news.models import Incident, IncidentUpdate, RawMessage
 from app.news.repositories.condition_repository import ConditionRepository
 from app.news.repositories.incident_repository import IncidentRepository
+from app.news.services.incidents.soft_delete import soft_delete_incident
 from app.news.repositories.village_repository import VillageRepository
 from app.news.services.dedup.dedup_matching_service import DedupMatchingService
 from app.news.services.matching.matching_service import MatchingService
@@ -111,8 +112,7 @@ def repair(raw_id: int, *, apply: bool) -> None:
             ).all()
         )
         for incident in active:
-            incident.is_deleted = True
-            db.add(incident)
+            soft_delete_incident(db, incident, reason="SCRIPT_SECTIONED_REPROCESS")
         db.execute(
             delete(IncidentUpdate).where(
                 IncidentUpdate.new_values["merged_from"]["raw_message_id"].astext

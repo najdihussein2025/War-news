@@ -16,6 +16,7 @@ import app.sources.models  # noqa: F401
 from app.core.database import SessionLocal
 from app.news.constants.air_violation_conditions import AIR_VIOLATION_CONDITION_ID_TUPLE
 from app.news.models import AirViolation, Incident
+from app.news.services.incidents.soft_delete import soft_delete_incident
 
 AIR_VIOLATION_CONDITION_IDS = AIR_VIOLATION_CONDITION_ID_TUPLE
 
@@ -51,8 +52,7 @@ def main() -> None:
             if air_violation_id is None:
                 missing_air_violation_raw_message_ids.append(incident.raw_message_id)
 
-            incident.is_deleted = True
-            db.add(incident)
+            soft_delete_incident(db, incident, reason="SCRIPT_AIR_VIOLATION_CLEANUP")
             deleted_ids.append(str(incident.id))
             logger.info(
                 "Soft-deleted incident id=%s raw_message_id=%s condition_id=%s "

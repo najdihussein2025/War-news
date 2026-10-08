@@ -213,8 +213,11 @@ an agent. Required before that switch:
 - [ ] A shadow report (`python -m scripts.summary_shadow_report --since ... --until ...`)
   reviewed for at least 2 days of real traffic, with the open-review-task count and the
   old-path "wrong" count both acceptably small.
-- [ ] Migrations `20261008_0076` and `20261008_0077` applied on deploy
-  (`docker compose exec backend alembic upgrade head` against the **deploy** stack).
+- [ ] Migrations `20261008_0076` → `20261008_0077` → `20261008_0078` → `20261008_0079` applied on deploy
+  (`docker compose -p war-news --env-file .env.main exec backend alembic upgrade head`).
+- [ ] After the summary-cleanup backfill has assigned reasons to all legacy soft-deletes, validate the guard:
+  `ALTER TABLE incidents VALIDATE CONSTRAINT ck_incidents_deleted_has_reason;`.
+  If it fails, list `id` values where `is_deleted AND deleted_reason IS NULL` and stop.
 - [ ] The alias SQL applied on deploy.
 - [ ] The `summary-reconcile-worker` service running on deploy.
 - [ ] A backfill dry run (`python -m scripts.reprocess_summaries --since ... --until ...`,

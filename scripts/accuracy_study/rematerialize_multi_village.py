@@ -7,6 +7,7 @@ from sqlalchemy import select, text
 from app.core.database import SessionLocal
 from app.news.models import Incident, MessageStatus, RawMessage
 from app.news.repositories.incident_repository import IncidentRepository
+from app.news.services.incidents.soft_delete import soft_delete_incident
 from app.news.services.dedup.dedup_matching_service import DedupMatchingService
 from app.news.services.incidents.imported_incident_enrichment import (
     _apply_import_metadata,
@@ -53,8 +54,7 @@ def main() -> None:
             for incident in db.scalars(
                 select(Incident).where(Incident.raw_message_id == raw_id)
             ).all():
-                incident.is_deleted = True
-                db.add(incident)
+                soft_delete_incident(db, incident, reason="SCRIPT_REMATERIALIZE")
             rm.status = MessageStatus.parsed
             db.add(rm)
             db.commit()

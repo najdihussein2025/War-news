@@ -72,6 +72,7 @@ from app.news.models import (
 from app.news.models.raw_message import RawMessage
 from app.news.models.village_location_alias import VillageLocationAlias
 from app.news.repositories.incident_repository import IncidentRepository
+from app.news.services.incidents.soft_delete import soft_delete_incident
 from app.news.repositories.village_repository import VillageRepository
 from app.news.services.clustering.clustering_service import (
     TRUST_TIER_RANK,
@@ -1031,9 +1032,7 @@ def apply_cluster(
                 status=MatchStatus.confirmed_duplicate,
             )
         )
-        dupe.is_deleted = True
-        dupe.duplicate_flag = False
-        db.add(dupe)
+        soft_delete_incident(db, dupe, reason="DUPLICATE_MERGE", canonical_incident_id=canonical.id)
         merged += 1
 
     if (
