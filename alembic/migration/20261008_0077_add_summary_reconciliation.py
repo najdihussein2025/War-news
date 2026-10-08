@@ -18,12 +18,15 @@ def upgrade() -> None:
     # migration, so it is safe inside the migration transaction on PostgreSQL 12+.
     op.execute("ALTER TYPE message_status ADD VALUE IF NOT EXISTS 'summary_handled'")
 
-    sa.Enum("live", "summary", name="incident_origin").create(op.get_bind(), checkfirst=True)
+    incident_origin = postgresql.ENUM(
+        "live", "summary", name="incident_origin", create_type=False
+    )
+    incident_origin.create(op.get_bind(), checkfirst=True)
     op.add_column(
         "incidents",
         sa.Column(
             "origin",
-            postgresql.ENUM("live", "summary", name="incident_origin", create_type=False),
+            incident_origin,
             nullable=False,
             server_default="live",
         ),
@@ -58,5 +61,7 @@ def downgrade() -> None:
     op.drop_constraint("fk_incidents_source_summary_item_id", "incidents", type_="foreignkey")
     op.drop_column("incidents", "source_summary_item_id")
     op.drop_column("incidents", "origin")
-    sa.Enum(name="incident_origin").drop(op.get_bind(), checkfirst=True)
+    postgresql.ENUM(
+        "live", "summary", name="incident_origin", create_type=False
+    ).drop(op.get_bind(), checkfirst=True)
     # PostgreSQL cannot drop a value from message_status; 'summary_handled' stays (harmless).

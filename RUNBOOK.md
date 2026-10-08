@@ -175,6 +175,19 @@ extraction, `ollama show qwen2.5:7b`), never guessed.
 | `TIER1_LLM_MAX_CONCURRENT_REQUESTS` / `TIER2_LLM_MAX_CONCURRENT_REQUESTS` / `OLLAMA_MAX_CONCURRENT_REQUESTS` | app `.env` | 2 / 2 / 4 | Placeholders until the Phase 0 latency numbers are in. |
 # Summary bulletin deployment
 
+### Migration round-trip check
+
+Before deploying a summary-flow migration, run its full upgrade/downgrade/upgrade
+cycle on a disposable database in the dev stack:
+
+```powershell
+docker compose -p war_news_dev -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev run --rm --no-deps --entrypoint sh backend -lc 'python -m scripts.check_migrations_roundtrip --database-url "$DATABASE_URL"'
+```
+
+The command creates and drops its own `war_news_migtest_*` database. It fails if
+Alembic cannot round-trip or metadata differs for summary tables, their enums, or
+incident provenance columns.
+
 The backend image includes `Data/` because runtime seed services and their tests read
 the reference files. Summary-parser tests appear in a container only after rebuilding
 the backend image. For the dev stack, run:
