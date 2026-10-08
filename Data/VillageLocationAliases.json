@@ -1,4 +1,8 @@
 [
+    {"alias_text":"عيتا الجبل","parent_acs_code":72224,"note":"Summary bulletin alias -> Aita al Jabal al Zot.","confidence":"confirmed","evidence":"2026-10-08 South-scope candidate review."},
+    {"alias_text":"الطيبة","parent_acs_code":73232,"note":"Summary bulletin alias -> Taybeh Marjaayoun; Baalbek homonym excluded by scope.","confidence":"confirmed","evidence":"2026-10-08 South-scope candidate review."},
+    {"alias_text":"يحمر الشقيف","parent_acs_code":71394,"note":"Summary bulletin alias -> Yahmor Nabatieh.","confidence":"confirmed","evidence":"2026-10-08 candidate review."},
+    {"alias_text":"دوحه كفرمان","parent_acs_code":71133,"note":"Summary bulletin source variant -> Kfar Roummane.","confidence":"confirmed","evidence":"2026-10-08 candidate review."},
     {
         "alias_text": "Ø§Ù„Ù†Ø¨Ø·ÙŠØ©",
         "parent_acs_code": 71111,

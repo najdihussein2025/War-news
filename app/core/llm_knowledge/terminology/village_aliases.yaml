@@ -1,6 +1,26 @@
 # Village location aliases (proposed seeds).
 # Source: village_aliases.py / Data/VillageLocationAliases.json
 
+- term: "عيتا الجبل"
+  category: village_location_alias
+  meaning: "acs:72224"
+  notes: "Summary bulletin alias -> Aita al Jabal al Zot. confidence=confirmed by South scope."
+
+- term: "الطيبة"
+  category: village_location_alias
+  meaning: "acs:73232"
+  notes: "Summary bulletin alias -> Taybeh Marjaayoun; Baalbek homonym excluded by scope."
+
+- term: "يحمر الشقيف"
+  category: village_location_alias
+  meaning: "acs:71394"
+  notes: "Summary bulletin alias -> Yahmor Nabatieh."
+
+- term: "دوحه كفرمان"
+  category: village_location_alias
+  meaning: "acs:71133"
+  notes: "Summary bulletin source variant -> Kfar Roummane."
+
 - term: "النبطية"
   category: village_location_alias
   meaning: "acs:71111"
