@@ -10,6 +10,33 @@ from app.llm.dtos import ExtractionCasualties, ExtractionResult, ExtractionSubEv
 _ARABIC_LETTER = r"\u0600-\u06ff"
 _CASUALTY_GENDER_YAML = "terminology/casualty_gender.yaml"
 
+# Grammatical masculine forms (for example ``شهيدان``) are not demographic
+# evidence.  These deliberately narrow lists are the only automatic gender
+# evidence accepted from text; children may overlap female/male only when the
+# source explicitly says so.
+_EXPLICIT_DEMOGRAPHIC_TERMS = {
+    "male": ("رجل", "رجال", "شاب", "شبان", "فتى", "صبي", "ذكر"),
+    "female": ("امرأة", "سيدة", "سيدات", "نساء", "فتاة", "فتيات", "طفلة", "شهيدة", "جريحة", "مواطنة", "أنثى", "أم", "ابنة", "زوجة", "شقيقة"),
+    "children": ("طفل", "طفلة", "أطفال", "طفلان", "طفلين", "رضيع", "رضيعة", "قاصر", "قاصرين"),
+}
+
+
+def reject_unproven_demographics(text: str, casualties: ExtractionCasualties) -> ExtractionCasualties:
+    """Drop LLM demographic claims not supported by explicit demographic words.
+
+    A masculine casualty noun is Arabic grammar, not proof that the people are
+    male.  This guard is intentionally conservative: it removes unsupported
+    values instead of putting the incident in the verification queue.
+    """
+    normalized = normalize_arabic_text(text or "")
+    values = casualties.model_dump(mode="python")
+    for group, terms in _EXPLICIT_DEMOGRAPHIC_TERMS.items():
+        supported = any(_standalone(re.escape(normalize_arabic_text(term))).search(normalized) for term in terms)
+        if not supported:
+            values[f"{group}_deaths"] = None
+            values[f"{group}_injuries"] = None
+    return ExtractionCasualties.model_validate(values)
+
 # ---------------------------------------------------------------------------
 # Fragment classification (Phase 3.5):
 #   knowledge  — Arabic term lists (loaded from casualty_gender.yaml)
@@ -238,26 +265,26 @@ def apply_casualty_gender_backstops(
     """Apply explicit-form and occupation gender backstops to root and sub-events."""
     if not isinstance(result, ExtractionResult):
         return result
-    root = apply_gendered_occupation_casualty_evidence(
+    root = reject_unproven_demographics(text, apply_gendered_occupation_casualty_evidence(
         text,
         apply_explicit_arabic_gender_evidence(
             text,
             infer_singular_death_count(text, result.casualties),
         ),
-    )
+    ))
     sub_events: list[ExtractionSubEvent] = []
     for sub_event in result.sub_events:
         span = sub_event.evidence_span or text
         sub_events.append(
             sub_event.model_copy(
                 update={
-                    "casualties": apply_gendered_occupation_casualty_evidence(
+                    "casualties": reject_unproven_demographics(span, apply_gendered_occupation_casualty_evidence(
                         span,
                         apply_explicit_arabic_gender_evidence(
                             span,
                             infer_singular_death_count(span, sub_event.casualties),
                         ),
-                    )
+                    ))
                 }
             )
         )
