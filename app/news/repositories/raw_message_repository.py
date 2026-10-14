@@ -141,12 +141,18 @@ class RawMessageRepository(RawMessageRepositoryInterface):
         self.db.commit()
         return messages
 
+    def release_relevance_batch(self, messages: list[RawMessage]) -> None:
+        """Undo leases after an LLM transport outage without changing status."""
+        for message in messages:
+            self._clear_processing_claim(message)
+            self.db.add(message)
+        self.db.commit()
+
     def get_pending_unfiltered_batch(
         self,
         limit: int,
     ) -> list[RawMessage]:
-        messages = list(
-            self.db.scalars(
+        stmt = (
                 select(RawMessage)
                 .options(joinedload(RawMessage.source, innerjoin=True))
                 .where(
@@ -154,11 +160,24 @@ class RawMessageRepository(RawMessageRepositoryInterface):
                     RawMessage.filter_result.is_(None),
                     self.relevance_claim_available_clause(),
                 )
-                .order_by(RawMessage.id.asc())
-                .limit(limit)
                 .with_for_update(skip_locked=True)
-            ).all()
         )
+        # Off must retain today's id-ascending order exactly.
+        if settings.fresh_lane_share <= 0:
+            messages = list(self.db.scalars(stmt.order_by(RawMessage.id.asc()).limit(limit)).all())
+        else:
+            fresh_limit = min(limit, max(0, int(limit * settings.fresh_lane_share)))
+            cutoff = datetime.now(timezone.utc) - timedelta(minutes=settings.fresh_lane_window_minutes)
+            fresh = list(self.db.scalars(stmt.where(RawMessage.received_at >= cutoff).order_by(RawMessage.received_at.desc(), RawMessage.id.desc()).limit(fresh_limit)).all())
+            remaining = limit - len(fresh)
+            selected_ids = [row.id for row in fresh]
+            backlog_stmt = stmt.where(RawMessage.received_at < cutoff)
+            if remaining:
+                fresh.extend(self.db.scalars(backlog_stmt.order_by(RawMessage.id.asc()).limit(remaining)).all())
+            # if fresh was undersubscribed, old rows fill; if old is empty fresh fills.
+            if len(fresh) < limit:
+                fresh.extend(self.db.scalars(stmt.where(RawMessage.received_at >= cutoff, RawMessage.id.not_in(selected_ids)).order_by(RawMessage.received_at.desc(), RawMessage.id.desc()).limit(limit - len(fresh))).all())
+            messages = fresh
         return self.lease_relevance_batch(messages)
 
     def get_pending_extraction_batch(

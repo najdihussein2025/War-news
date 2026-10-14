@@ -7,6 +7,9 @@ from typing import Mapping, TypeAlias, cast
 
 import httpx
 
+from app.core.llm_availability import LLMUnavailableError, is_llm_connection_error, llm_availability
+from app.core.config import settings
+
 JsonValue: TypeAlias = (
     str | int | float | bool | None | list["JsonValue"] | dict[str, "JsonValue"]
 )
@@ -56,13 +59,13 @@ class OllamaChatClient:
         headers = {"Authorization": f"Bearer {api_key}"} if api_key else None
         self._client = httpx.Client(
             base_url=base_url.rstrip("/"),
-            timeout=timeout_seconds,
+            timeout=httpx.Timeout(timeout_seconds, connect=settings.llm_connect_timeout_seconds),
             headers=headers,
             transport=transport,
         )
         self._async_client = httpx.AsyncClient(
             base_url=base_url.rstrip("/"),
-            timeout=timeout_seconds,
+            timeout=httpx.Timeout(timeout_seconds, connect=settings.llm_connect_timeout_seconds),
             headers=headers,
             transport=transport,
         )
@@ -121,6 +124,8 @@ class OllamaChatClient:
         path: str,
         request_payload: JsonObject,
     ) -> httpx.Response:
+        if not llm_availability.permit_request():
+            raise LLMUnavailableError("LLM unavailable (circuit breaker open)")
         last_exc: BaseException | None = None
         for attempt in range(self._max_request_retries + 1):
             try:
@@ -129,6 +134,8 @@ class OllamaChatClient:
                     response.raise_for_status()
                 return response
             except (httpx.TimeoutException, httpx.NetworkError, httpx.HTTPStatusError) as exc:
+                if is_llm_connection_error(exc):
+                    llm_availability.mark_unavailable()
                 if not self._is_retryable_exception(exc) or attempt >= self._max_request_retries:
                     raise
                 last_exc = exc
@@ -142,6 +149,8 @@ class OllamaChatClient:
         path: str,
         request_payload: JsonObject,
     ) -> httpx.Response:
+        if not llm_availability.permit_request():
+            raise LLMUnavailableError("LLM unavailable (circuit breaker open)")
         last_exc: BaseException | None = None
         for attempt in range(self._max_request_retries + 1):
             try:
@@ -150,6 +159,8 @@ class OllamaChatClient:
                     response.raise_for_status()
                 return response
             except (httpx.TimeoutException, httpx.NetworkError, httpx.HTTPStatusError) as exc:
+                if is_llm_connection_error(exc):
+                    llm_availability.mark_unavailable()
                 if not self._is_retryable_exception(exc) or attempt >= self._max_request_retries:
                     raise
                 last_exc = exc

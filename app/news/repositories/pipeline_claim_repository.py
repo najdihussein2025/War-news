@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 import os
 import threading
 
-from sqlalchemy import or_, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -47,6 +47,23 @@ class PipelineClaimRepository:
 
     def _claimable_raw_messages(self):
         return select(RawMessage).where(claimable_lease_filter())
+
+    @staticmethod
+    def _fresh_then_backlog(stmt, *, newest_legacy: bool = False):
+        """Apply the two-lane policy without changing legacy ordering at share=0.
+
+        This helper is for one-row claims.  A fair fresh share is achieved by
+        alternating lane selection based on the current minute; batch users use
+        the equivalent split in RawMessageRepository.
+        """
+        share = min(1.0, max(0.0, settings.fresh_lane_share))
+        if share == 0:
+            return stmt.order_by(RawMessage.id.desc() if newest_legacy else RawMessage.id.asc())
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=settings.fresh_lane_window_minutes)
+        fresh = RawMessage.received_at >= cutoff
+        # Fresh first is intentional for a single claim; when fresh is empty the
+        # CASE naturally falls through to the old backlog.
+        return stmt.order_by(case((fresh, 0), else_=1), RawMessage.received_at.desc(), RawMessage.id.desc())
 
     def _mark_claimed(self, message: RawMessage, *, stage: str) -> RawMessage:
         message.processing_claim_stage = stage

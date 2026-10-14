@@ -3,12 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
-import httpx
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.news.models import Incident, MessageStatus, RawMessage
+from app.news.models.pipeline_stage_run import PipelineStageRun
+from app.logs.models.ingestion_log import IngestionLog
 from app.sources.models.source import Source
 from app.news.models.sweep_cursor import LIVE_SWEEP_NAME, SweepCursor
 from app.news.repositories.pipeline_claim_repository import claimable_lease_filter
@@ -198,16 +199,29 @@ class PipelineHealthService:
         ]
 
     def ollama_health(self) -> DependencyHealth:
-        """Read-only reachability probe; it never sends an LLM generation."""
+        """Use the latest real Tier-1 outcome, never an unrelated HTTP probe."""
         checked_at = datetime.now(timezone.utc)
-        try:
-            response = httpx.get(
-                f"{settings.ollama_base_url.rstrip('/')}/api/tags", timeout=2.0
+        latest = self.db.execute(
+            select(
+                PipelineStageRun.finished_at,
+                PipelineStageRun.rows_succeeded,
+                PipelineStageRun.rows_failed,
             )
-            status = "healthy" if response.is_success else "unhealthy"
-        except httpx.HTTPError:
-            status = "unhealthy"
-        return DependencyHealth(status=status, checked_at=checked_at)
+            .where(
+                PipelineStageRun.stage_name == "tier1_extraction",
+                PipelineStageRun.rows_claimed > 0,
+            )
+            .order_by(PipelineStageRun.finished_at.desc())
+            .limit(1)
+        ).first()
+        if latest is None:
+            return DependencyHealth(status="waiting", checked_at=checked_at)
+        finished_at, succeeded, failed = latest
+        return DependencyHealth(
+            status="available" if succeeded > 0 else "unavailable",
+            checked_at=checked_at,
+            last_received_at=finished_at if failed > 0 and succeeded == 0 else None,
+        )
 
     def cnrs_webhook_health(self) -> DependencyHealth:
         """Webhook configuration and receipt freshness, without a test POST."""
@@ -219,17 +233,21 @@ class PipelineHealthService:
         )
         if source_id is None:
             return DependencyHealth(status="not_configured", checked_at=checked_at)
-        last_received_at = self.db.scalar(
-            select(func.max(RawMessage.received_at)).where(RawMessage.source_id == source_id)
-        )
-        if last_received_at is None:
+        latest = self.db.execute(
+            select(
+                IngestionLog.finished_at,
+                IngestionLog.messages_failed,
+                IngestionLog.status,
+            )
+            .where(IngestionLog.source_id == source_id)
+            .order_by(IngestionLog.created_at.desc())
+            .limit(1)
+        ).first()
+        if latest is None:
             return DependencyHealth(status="waiting", checked_at=checked_at)
+        last_received_at, messages_failed, log_status = latest
         return DependencyHealth(
-            status=(
-                "healthy"
-                if self._age_seconds(last_received_at, checked_at) <= 15 * 60
-                else "stale"
-            ),
+            status=("unavailable" if messages_failed > 0 or log_status == "failed" else "available"),
             checked_at=checked_at,
             last_received_at=last_received_at,
         )

@@ -78,9 +78,9 @@ def _apply_pre_dedup_candidate_narrowing(
     if mode == "same_source_time_bucket":
         bucket_hours = max(1, settings.pre_dedup_time_bucket_hours)
         stmt = stmt.where(
-            RawMessage.received_at
+            func.coalesce(RawMessage.message_datetime, RawMessage.received_at)
             >= received_at - text(f"INTERVAL '{bucket_hours} hours'"),
-            RawMessage.received_at
+            func.coalesce(RawMessage.message_datetime, RawMessage.received_at)
             <= received_at + text(f"INTERVAL '{bucket_hours} hours'"),
         )
     return stmt
@@ -110,7 +110,7 @@ def find_pre_dedup_match(
                     MessageStatus.materialized,
                 ]
             ),
-            RawMessage.received_at
+            func.coalesce(RawMessage.message_datetime, RawMessage.received_at)
             >= func.now() - text(f"INTERVAL '{window_hours} hours'"),
             RawMessage.id != raw_message_id,
             RawMessage.raw_text.is_not(None),
@@ -161,7 +161,7 @@ def process_pre_dedup_message(
         db,
         raw_message_id=raw_message_id,
         source_id=msg.source_id,
-        received_at=msg.received_at,
+        received_at=msg.message_datetime or msg.received_at,
         raw_text=msg.raw_text,
         threshold=threshold,
     )

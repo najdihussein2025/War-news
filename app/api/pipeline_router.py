@@ -82,7 +82,8 @@ def pipeline_health(
         ),
         failures=PipelineFailureCountsResponse(**vars(failures)),
         ollama=DependencyHealthResponse(
-            status=ollama.status, checked_at=ollama.checked_at.isoformat()
+            status=ollama.status, checked_at=ollama.checked_at.isoformat(),
+            offline_since=(ollama.last_received_at.isoformat() if ollama.status == "unavailable" and ollama.last_received_at else None),
         ),
         cnrs_webhook=DependencyHealthResponse(
             status=cnrs_webhook.status,

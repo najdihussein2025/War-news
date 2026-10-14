@@ -27,6 +27,7 @@ from app.llm.services.relevance_guardrails import (
 from app.news.interfaces import RawMessageRepositoryInterface
 from app.news.models import RawMessage
 from app.news.models.raw_message import FAILED_STAGE_RELEVANCE
+from app.core.llm_availability import LLMUnavailableError, is_llm_connection_error
 
 logger = logging.getLogger(__name__)
 
@@ -249,6 +250,10 @@ class FilterRelevanceAction:
                         )
                 except Exception as retry_exc:
                     self.raw_messages.rollback()
+                    if isinstance(retry_exc, LLMUnavailableError) or is_llm_connection_error(retry_exc):
+                        # Keep rows pending and release their relevance leases.
+                        self.raw_messages.release_relevance_batch(chunk)
+                        raise
                     auth_failure = coerce_ollama_auth_failure(
                         retry_exc,
                         stage="relevance_filter",

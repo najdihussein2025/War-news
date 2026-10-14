@@ -18,6 +18,7 @@ from app.llm.services.ollama_auth_failures import coerce_ollama_auth_failure
 from app.news.models import MessageStatus
 from app.news.models.raw_message import FAILED_STAGE_EXTRACTION
 from app.core.config import settings
+from app.core.llm_availability import LLMUnavailableError, is_llm_connection_error
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
 from app.news.repositories.raw_message_repository import RawMessageRepository
 from app.news.services.incident_details.casualty_gender_evidence import (
@@ -86,6 +87,12 @@ def run_tier1_extraction_for_message(raw_message_id: int) -> None:
             cnrs_classification=cnrs_classification,
         )
     except Exception as exc:
+        # Transport outages are a pause, not an extraction attempt.  Releasing
+        # the lease makes the row available immediately when the breaker closes.
+        if isinstance(exc, LLMUnavailableError) or is_llm_connection_error(exc):
+            with SessionLocal() as db:
+                PipelineClaimRepository(db).release_claim(raw_message_id)
+            raise
         auth_failure = coerce_ollama_auth_failure(
             exc,
             stage="tier1_extraction",

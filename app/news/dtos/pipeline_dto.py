@@ -77,6 +77,7 @@ class DependencyHealthResponse(BaseModel):
     status: str
     checked_at: str
     last_received_at: str | None = None
+    offline_since: str | None = None
 
 
 class PipelineHealthResponse(BaseModel):

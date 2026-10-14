@@ -77,3 +77,6 @@ class RawMessageRepositoryInterface(ABC):
     @abstractmethod
     def rollback(self) -> None:
         pass
+
+    def release_relevance_batch(self, messages: list[RawMessage]) -> None:
+        raise NotImplementedError
