@@ -6,6 +6,7 @@ from app.api.deps import require_super_admin
 from app.core.database import get_db
 from app.news.dtos.pipeline_dto import (
     CursorGapResponse,
+    DependencyHealthResponse,
     LatencyCohortResponse,
     LatencySummaryResponse,
     PipelineFailureCountsResponse,
@@ -54,6 +55,8 @@ def pipeline_health(
     gap = service.cursor_gap()
     latency = service.latency_summary()
     failures = service.failure_counts()
+    ollama = service.ollama_health()
+    cnrs_webhook = service.cnrs_webhook_health()
     return PipelineHealthResponse(
         stages=[
             StageQueueDepthResponse(
@@ -78,4 +81,16 @@ def pipeline_health(
             ),
         ),
         failures=PipelineFailureCountsResponse(**vars(failures)),
+        ollama=DependencyHealthResponse(
+            status=ollama.status, checked_at=ollama.checked_at.isoformat()
+        ),
+        cnrs_webhook=DependencyHealthResponse(
+            status=cnrs_webhook.status,
+            checked_at=cnrs_webhook.checked_at.isoformat(),
+            last_received_at=(
+                cnrs_webhook.last_received_at.isoformat()
+                if cnrs_webhook.last_received_at is not None
+                else None
+            ),
+        ),
     )

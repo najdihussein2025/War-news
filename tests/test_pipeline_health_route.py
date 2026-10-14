@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -11,6 +12,7 @@ from app.api.deps import require_super_admin
 from app.core.database import get_db
 from app.main import app
 from app.news.services.pipeline.pipeline_health_service import (
+    DependencyHealth,
     PipelineFailureCounts,
     CursorGap,
     LatencyCohort,
@@ -80,6 +82,12 @@ def test_pipeline_health_returns_stages_and_cursor_gap(
         def failure_counts(self):
             return _failure_counts()
 
+        def ollama_health(self):
+            return DependencyHealth("healthy", datetime(2026, 10, 14, 8, 0, tzinfo=timezone.utc))
+
+        def cnrs_webhook_health(self):
+            return DependencyHealth("healthy", datetime(2026, 10, 14, 8, 0, tzinfo=timezone.utc), datetime(2026, 10, 14, 7, 59, tzinfo=timezone.utc))
+
     monkeypatch.setattr(pipeline_router_module, "PipelineHealthService", _Service)
 
     response = client.get("/api/pipeline/health")
@@ -128,6 +136,8 @@ def test_pipeline_health_returns_stages_and_cursor_gap(
             "held_for_review": 2,
             "oldest_details_pending_seconds": None,
         },
+        "ollama": {"status": "healthy", "checked_at": "2026-10-14T08:00:00+00:00", "last_received_at": None},
+        "cnrs_webhook": {"status": "healthy", "checked_at": "2026-10-14T08:00:00+00:00", "last_received_at": "2026-10-14T07:59:00+00:00"},
     }
 
 
@@ -155,6 +165,12 @@ def test_pipeline_health_returns_200_even_when_cursor_unhealthy(
 
         def failure_counts(self):
             return _failure_counts()
+
+        def ollama_health(self):
+            return DependencyHealth("unhealthy", datetime(2026, 10, 14, 8, 0, tzinfo=timezone.utc))
+
+        def cnrs_webhook_health(self):
+            return DependencyHealth("stale", datetime(2026, 10, 14, 8, 0, tzinfo=timezone.utc))
 
     monkeypatch.setattr(pipeline_router_module, "PipelineHealthService", _Service)
 
