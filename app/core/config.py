@@ -35,6 +35,14 @@ class Settings(BaseSettings):
     )
     ollama_model: str = "gpt-oss:20b"
     ollama_timeout_seconds: int = 90
+    # Connection establishment is intentionally short; model read timeout stays above.
+    llm_connect_timeout_seconds: float = 5.0
+    llm_health_recheck_seconds: float = 30.0
+    # 0 preserves the historic oldest-first claim order exactly.
+    fresh_lane_share: float = 0.5
+    fresh_lane_window_minutes: int = 60
+    live_sweep_seconds: int = 60
+    pipeline_max_attempts: int = 3
     # PLACEHOLDER — set from the Phase 0 measurement, not guessed. num_ctx must
     # cover the largest system prompt (Tier 1 general + multi-village block,
     # roughly 9-11k tokens) plus the post and the JSON answer, with headroom;
@@ -45,7 +53,7 @@ class Settings(BaseSettings):
     # How long Ollama keeps the model loaded between calls, e.g. "30m" or "-1"
     # (forever). None = server default (5m). Set per deployment.
     ollama_keep_alive: str | None = None
-    ollama_max_concurrent_requests: int = 4
+    ollama_max_concurrent_requests: int = 6
     relevance_ollama_model: str = "gpt-oss:20b"
     extraction_ollama_model: str = "qwen2.5:7b"
     # Summary bulletin flow: off | shadow (parse + dry-run reconcile, Tier 1 still
@@ -60,7 +68,7 @@ class Settings(BaseSettings):
     summary_crosscheck_model: str = "gpt-oss:20b"
     summary_crosscheck_timeout_seconds: int = 120
     extraction_llm_timeout_seconds: int = 240
-    extraction_llm_max_concurrent_requests: int = 2
+    extraction_llm_max_concurrent_requests: int = 4
     # Independent Tier 1 / Tier 2 LLM concurrency pools (see ollama_concurrency.py).
     tier1_llm_max_concurrent_requests: int = 2
     tier2_llm_max_concurrent_requests: int = 2
