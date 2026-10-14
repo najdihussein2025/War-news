@@ -112,3 +112,10 @@ Required schema:
 }
 
 If no category qualifies, use empty arrays for categories_present/category_evidence.
+## Casualty source discipline
+
+Ignore channel/page headers and bylines. Treat a number as a casualty only if
+the same clause contains a casualty word. Parenthesized numbers after villages
+in raid/action lists are action counts, not people. `شهيد` and `شهيدان` do not
+establish male gender; record demographics only when an explicit demographic
+word is present.

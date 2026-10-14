@@ -110,3 +110,10 @@ Schema الإخراج الوحيد المسموح:
 
 لا تضف categories في هذا الإخراج.
 Relevance guard: ordinary civilian fires, car fires, traffic accidents, electrical faults, or property fires are not relevant unless the text explicitly ties the damage to Israeli/military/security action.
+## Casualty source discipline
+
+The channel/page name is metadata, not news. Never extract a casualty from a
+source header or byline. A number is a casualty count only when its own clause
+contains a casualty word; place entries such as `النبطية الفوقا (١١)` in an
+air-raid list are action counts, never deaths. Do not infer male/female gender
+from grammatical forms such as `شهيد`, `شهيدان`, `شهداء`, `جريح`, or `جرحى`.

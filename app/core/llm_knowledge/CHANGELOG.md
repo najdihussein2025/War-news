@@ -1077,3 +1077,10 @@ Updated:
 - `rules/tier1_core.md`
 - `terminology/condition_labels.yaml`
 
+## 2026-10-14 — Casualty source grounding
+
+- Added `terminology/source_headers.yaml` and shared prompt-copy cleaning.
+  Real example: `صفحة الإعلامي الشهيد علي شعيب` is a page label, not a death.
+- Tier 1 rules now reject `النبطية الفوقا (١١)` in an air-raid list as a
+  casualty count and require explicit demographic wording; `شهيدان` alone is
+  grammatical, not male evidence.
