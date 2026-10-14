@@ -3,11 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
+import httpx
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.news.models import Incident, MessageStatus, RawMessage
+from app.sources.models.source import Source
 from app.news.models.sweep_cursor import LIVE_SWEEP_NAME, SweepCursor
 from app.news.repositories.pipeline_claim_repository import claimable_lease_filter
 from app.news.services.dedup.fast_path_eligibility import fast_path_materializable_clause
@@ -28,6 +30,13 @@ class StageQueueDepth:
     stage_name: str
     queue_depth: int
     oldest_waiting_seconds: float | None
+
+
+@dataclass(frozen=True)
+class DependencyHealth:
+    status: str
+    checked_at: datetime
+    last_received_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -187,6 +196,43 @@ class PipelineHealthService:
                 ),
             ),
         ]
+
+    def ollama_health(self) -> DependencyHealth:
+        """Read-only reachability probe; it never sends an LLM generation."""
+        checked_at = datetime.now(timezone.utc)
+        try:
+            response = httpx.get(
+                f"{settings.ollama_base_url.rstrip('/')}/api/tags", timeout=2.0
+            )
+            status = "healthy" if response.is_success else "unhealthy"
+        except httpx.HTTPError:
+            status = "unhealthy"
+        return DependencyHealth(status=status, checked_at=checked_at)
+
+    def cnrs_webhook_health(self) -> DependencyHealth:
+        """Webhook configuration and receipt freshness, without a test POST."""
+        checked_at = datetime.now(timezone.utc)
+        source_id = self.db.scalar(
+            select(Source.id).where(
+                Source.external_id == "cnrs_webhook", Source.is_active.is_(True)
+            )
+        )
+        if source_id is None:
+            return DependencyHealth(status="not_configured", checked_at=checked_at)
+        last_received_at = self.db.scalar(
+            select(func.max(RawMessage.received_at)).where(RawMessage.source_id == source_id)
+        )
+        if last_received_at is None:
+            return DependencyHealth(status="waiting", checked_at=checked_at)
+        return DependencyHealth(
+            status=(
+                "healthy"
+                if self._age_seconds(last_received_at, checked_at) <= 15 * 60
+                else "stale"
+            ),
+            checked_at=checked_at,
+            last_received_at=last_received_at,
+        )
 
     def _raw_message_stage(
         self,

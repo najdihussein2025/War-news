@@ -35,6 +35,8 @@ type PipelineHealth = {
   stages: StageHealth[];
   cursor_gap: { gap: number; unhealthy: boolean };
   latency: { materialized: { p50_seconds: number | null; sample_size: number } };
+  ollama: { status: string };
+  cnrs_webhook: { status: string; last_received_at: string | null };
 };
 
 const stageLabels: Record<string, string> = {
@@ -51,6 +53,7 @@ const stageLabels: Record<string, string> = {
 const fallbackStages = Object.keys(stageLabels).map((stage_name) => ({ stage_name, queue_depth: 0, oldest_waiting_seconds: null }));
 const age = (seconds: number | null) => seconds == null ? "—" : seconds < 60 ? `${Math.round(seconds)}s` : seconds < 3600 ? `${Math.round(seconds / 60)}m` : `${Math.round(seconds / 3600)}h`;
 const time = (value?: string | null) => value ? new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
+const dependencyLabel = (status?: string) => status === "healthy" ? "ONLINE" : status === "stale" ? "STALE" : status === "waiting" ? "WAITING" : status === "not_configured" ? "NOT CONFIGURED" : "OFFLINE";
 
 const FlowNode = ({ eyebrow, label, tone = "neutral", active = false }: { eyebrow: string; label: string; tone?: string; active?: boolean }) => (
   <div className={`if-node if-${tone} ${active ? "if-active" : ""}`}>
@@ -128,6 +131,10 @@ export const IntelligenceFlowPage = () => {
 
       <section className="if-pulse">
         <div className="if-pulse-head"><div><i /><small>LIVE PIPELINE STATE</small><strong>{totalQueued} items currently queued</strong></div><p>Cursor gap <b className={health?.cursor_gap.unhealthy ? "if-warn" : ""}>{health?.cursor_gap.gap ?? "—"}</b> P50 latency <b>{age(health?.latency.materialized.p50_seconds ?? null)}</b> Sample <b>{health?.latency.materialized.sample_size ?? "—"}</b></p></div>
+        <div className="if-dependencies" aria-label="Live dependency status">
+          <span><small>OLLAMA LLM</small><b className={health?.ollama.status === "healthy" ? "if-ok" : "if-bad"}>{dependencyLabel(health?.ollama.status)}</b></span>
+          <span><small>CNRS WEBHOOK</small><b className={health?.cnrs_webhook.status === "healthy" ? "if-ok" : health?.cnrs_webhook.status === "stale" ? "if-warn" : "if-bad"}>{dependencyLabel(health?.cnrs_webhook.status)}</b><em>{health?.cnrs_webhook.last_received_at ? `last received ${time(health.cnrs_webhook.last_received_at)}` : "no receipt recorded"}</em></span>
+        </div>
         <div className="if-stages">{stages.map((stage, index) => <div className={stage.queue_depth ? "if-working" : ""} key={stage.stage_name}><span>{String(index + 1).padStart(2, "0")}<i /></span><strong>{stageLabels[stage.stage_name] ?? stage.stage_name.replaceAll("_", " ")}</strong><small><b>{stage.queue_depth}</b> queued<br />oldest {age(stage.oldest_waiting_seconds)}</small></div>)}</div>
       </section>
 

@@ -71,6 +71,14 @@ class PipelineFailureCountsResponse(BaseModel):
     oldest_details_pending_seconds: float | None = None
 
 
+class DependencyHealthResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    status: str
+    checked_at: str
+    last_received_at: str | None = None
+
+
 class PipelineHealthResponse(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -78,3 +86,5 @@ class PipelineHealthResponse(BaseModel):
     cursor_gap: CursorGapResponse
     latency: LatencySummaryResponse
     failures: PipelineFailureCountsResponse | None = None
+    ollama: DependencyHealthResponse
+    cnrs_webhook: DependencyHealthResponse
