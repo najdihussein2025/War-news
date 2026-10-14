@@ -33,7 +33,15 @@ def clean_message_text(text: str | None) -> str:
     while lines:
         candidate = lines[0].strip()
         normalized = re.sub(r"^[#🔴🔵🚨📌\s]+", "", candidate).strip()
-        if not candidate or any(normalized == header or normalized.startswith(header + ":") for header in known):
+        if not candidate:
+            lines.pop(0)
+            continue
+        header = next((item for item in known if normalized == item or normalized.startswith(item + ":") or normalized.startswith(item + " ")), None)
+        if header:
+            remainder = normalized[len(header):].lstrip(" :|-—–•\t")
+            if remainder:
+                lines[0] = remainder
+                break
             lines.pop(0)
             continue
         break

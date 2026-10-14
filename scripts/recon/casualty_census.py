@@ -16,9 +16,12 @@ import app.logs.models  # noqa: F401
 import app.news.models  # noqa: F401
 import app.sources.models  # noqa: F401
 from app.core.database import SessionLocal
+from app.core.llm_knowledge.message_text import clean_message_text
 from app.news.models.bulletin_casualty_group import BulletinCasualtyGroup
+from app.news.models.duplicate_match import DuplicateMatch
 from app.news.models.incident import Incident
 from app.news.models.incident_detail import IncidentDetail
+from app.news.models.incident_update import IncidentUpdate
 from app.news.models.raw_message import RawMessage
 
 IMAGE_CREATED = datetime.fromisoformat("2026-10-14T08:18:57.780702+00:00")
@@ -27,9 +30,26 @@ GENDER_WORDS = ("رجل", "رجال", "امرأة", "نساء", "أنثى", "ذ�
 
 
 def raws(db: Any, incident: Incident) -> list[RawMessage]:
+    """All auditable raw-message routes, including merge provenance."""
     ids = {incident.raw_message_id} if incident.raw_message_id else set()
-    if ids:
-        ids.update(db.scalars(select(RawMessage.id).where(RawMessage.duplicate_of_id.in_(ids))))
+    for match in db.scalars(select(DuplicateMatch).where(or_(DuplicateMatch.incident_id == incident.id, DuplicateMatch.matched_incident_id == incident.id))):
+        if match.raw_message_id:
+            ids.add(match.raw_message_id)
+    for update in db.scalars(select(IncidentUpdate).where(IncidentUpdate.incident_id == incident.id)):
+        for payload in (update.old_values or {}, update.new_values or {}):
+            for key in ("raw_message_id", "source_raw_message_id", "incoming_raw_message_id"):
+                if isinstance(payload.get(key), int):
+                    ids.add(payload[key])
+            merged_from = payload.get("merged_from")
+            if isinstance(merged_from, dict) and isinstance(merged_from.get("raw_message_id"), int):
+                ids.add(merged_from["raw_message_id"])
+    changed = True
+    while ids and changed:
+        changed = False
+        for raw_id in db.scalars(select(RawMessage.id).where(or_(RawMessage.id.in_(ids), RawMessage.duplicate_of_id.in_(ids)))):
+            if raw_id not in ids:
+                ids.add(raw_id)
+                changed = True
     return list(db.scalars(select(RawMessage).where(RawMessage.id.in_(ids)))) if ids else []
 
 
@@ -59,9 +79,9 @@ def main() -> None:
             if (incident.total_deaths is not None and sum(x or 0 for x in demographic) > incident.total_deaths) or (incident.total_injuries is not None and sum(x or 0 for x in demographic_i) > incident.total_injuries): buckets["2"].append(iid)
             if ((incident.deaths != incident.total_deaths) or (incident.injuries != incident.total_injuries)) and incident.raw_message_id not in groups: buckets["3"].append(iid)
             if any((getattr(incident, field) or 0) > (extracted_max(rows, field) or 0) for field in ("total_deaths", "total_injuries")): buckets["4"].append(iid)
-            body = "\n".join("\n".join((r.raw_text or "").split("\n")[1:]) for r in rows)
+            cleaned_rows = [clean_message_text(r.raw_text) for r in rows]
             if (incident.total_deaths or incident.total_injuries or incident.deaths or incident.injuries) and not any(word in text for word in WORDS): buckets["5"].append(iid)
-            if (incident.total_deaths or incident.total_injuries) and any(word in text.split("\n")[0] for word in WORDS) and not any(word in body for word in WORDS): buckets["6"].append(iid)
+            if (incident.total_deaths or incident.total_injuries) and any(word in text for word in WORDS) and not any(word in "\n".join(cleaned_rows) for word in WORDS): buckets["6"].append(iid)
             if incident.origin.value == "summary" and (incident.total_deaths or incident.total_injuries or incident.deaths or incident.injuries): buckets["7"].append(iid)
             if detail and (detail.male_d is not None or detail.male_i is not None) and any(word in text for word in ("شهيد", "شهيدان", "شهداء", "جريح", "جرحى")) and not any(word in text for word in GENDER_WORDS): buckets["8"].append(iid)
         result = {}
