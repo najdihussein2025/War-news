@@ -11,6 +11,7 @@ import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.core.llm_knowledge.prompt_assembly import build_stage_system_prompt
+from app.core.llm_knowledge.message_text import clean_message_text
 from app.core.ollama_client import OllamaChatClient, OllamaChatMessage
 from app.llm.dtos import (
     ClassificationResultDTO,
@@ -139,7 +140,7 @@ class LocalLLMRelevanceClassifier(RelevanceClassifierInterface):
             [
                 {
                     "raw_message_id": message.id,
-                    "text": message.raw_text or "",
+                    "text": clean_message_text(message.raw_text),
                 }
                 for message in messages
             ],

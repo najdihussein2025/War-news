@@ -18,6 +18,7 @@ from app.news.models.raw_message import FAILED_STAGE_EXTRACTION
 from app.news.services.incident_details.casualty_gender_evidence import (
     apply_casualty_gender_backstops,
 )
+from app.core.llm_knowledge.message_text import clean_message_text
 
 logger = logging.getLogger(__name__)
 
@@ -47,17 +48,18 @@ class ExtractIncidentsAction:
             if self.summary_router is not None and self.summary_router(message):
                 continue
             try:
+                prompt_text = clean_message_text(message.raw_text)
                 result = self.classifier.extract_tier1(
-                    post_text=message.raw_text or "",
+                    post_text=prompt_text,
                     raw_message_id=message.id,
                 )
                 result = apply_casualty_gender_backstops(
-                    message.raw_text or "",
+                    prompt_text,
                     result,
                 )
                 result = finalize_extraction_action(
                     result,
-                    post_text=message.raw_text or "",
+                    post_text=prompt_text,
                     cnrs_classification=message.cnrs_classification,
                 )
                 self.raw_messages.save_extraction_result(
@@ -114,17 +116,18 @@ class ExtractIncidentsAction:
             return
 
         try:
+            prompt_text = clean_message_text(message.raw_text)
             result = self.classifier.extract_tier1(
-                post_text=message.raw_text or "",
+                post_text=prompt_text,
                 raw_message_id=message.id,
             )
             result = apply_casualty_gender_backstops(
-                message.raw_text or "",
+                prompt_text,
                 result,
             )
             result = finalize_extraction_action(
                 result,
-                post_text=message.raw_text or "",
+                post_text=prompt_text,
                 cnrs_classification=message.cnrs_classification,
             )
             self.raw_messages.save_extraction_result(

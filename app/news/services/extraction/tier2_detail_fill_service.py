@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.llm_knowledge.message_text import clean_message_text
 from app.llm.dtos import CasualtyScope, ExtractionCategory, ExtractionCategoryKey, ExtractionResult
 from app.llm.services.ollama_extraction_service import OllamaExtractionService
 from app.news.models import (
@@ -84,7 +85,7 @@ class Tier2DetailFillService:
         tier2_categories = None
         if extraction.extraction_tier < 2:
             tier2_categories = self.classifier.extract_tier2_details(
-                post_text=raw_message.raw_text or "",
+                post_text=clean_message_text(raw_message.raw_text),
                 presence_category_keys=extraction.presence_category_keys,
                 root_casualties=extraction.casualties,
                 villages=extraction.village,
@@ -285,7 +286,7 @@ class Tier2DetailFillService:
                     reason=casualty_reason,
                 )
             row_status = status_for_incident_row(
-                raw_message.raw_text or "",
+                clean_message_text(raw_message.raw_text),
                 extraction,
                 {
                     "deaths": incident.deaths,

@@ -28,6 +28,7 @@ from app.news.interfaces import RawMessageRepositoryInterface
 from app.news.models import RawMessage
 from app.news.models.raw_message import FAILED_STAGE_RELEVANCE
 from app.core.llm_availability import LLMUnavailableError, is_llm_connection_error
+from app.core.llm_knowledge.message_text import clean_message_text
 
 logger = logging.getLogger(__name__)
 
@@ -201,7 +202,7 @@ class FilterRelevanceAction:
                     )
                 continue
 
-            if self.keyword_prefilter.has_candidate_keywords(message.raw_text or ""):
+            if self.keyword_prefilter.has_candidate_keywords(clean_message_text(message.raw_text)):
                 candidates.append(message)
                 continue
 
