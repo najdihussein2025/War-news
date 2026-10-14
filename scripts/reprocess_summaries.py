@@ -33,6 +33,7 @@ from pathlib import Path
 from typing import Literal
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -172,7 +173,9 @@ def classify_old_incidents(
         (item.secondary_village_id, item.condition_id) for item in parsed_items if item.secondary_village_id
     }
     rows: list[OldIncidentRow] = []
-    for incident in _old_path_incidents(session, raw_message.id):
+    old = _old_path_incidents(session, raw_message.id)
+    kept_here: list[Incident] = []
+    for incident in [i for i in old if not i.is_deleted] + [i for i in old if i.is_deleted]:
         legacy = bool(incident.is_deleted and incident.deleted_reason is None)
         other, is_summary_row = _other_covering_incident(
             session, incident=incident, raw_message=raw_message, summary_ids=summary_ids, families=families, order=order,
@@ -182,8 +185,15 @@ def classify_old_incidents(
             rows.append(OldIncidentRow(str(incident.id), incident.village_id, incident.condition_id, kind,
                 f"incident {other.id} already covers this event", legacy, str(other.id)))
         elif (incident.village_id, incident.condition_id) in parsed_pairs:
-            rows.append(OldIncidentRow(str(incident.id), incident.village_id, incident.condition_id,
-                "unique_correct", "matches a parsed summary item; kept active so reconciliation links it", legacy))
+            twin = next((k for k in kept_here if k.village_id == incident.village_id
+                and families.same(k.condition_id, incident.condition_id) and abs((k.event_date - incident.event_date).days) <= 1), None)
+            if twin is not None:
+                rows.append(OldIncidentRow(str(incident.id), incident.village_id, incident.condition_id, "duplicate_of_summary_row",
+                    f"incident {twin.id} from the same summary already covers this event", legacy, str(twin.id)))
+            else:
+                kept_here.append(incident)
+                rows.append(OldIncidentRow(str(incident.id), incident.village_id, incident.condition_id,
+                    "unique_correct", "matches a parsed summary item; kept active so reconciliation links it", legacy))
         else:
             rows.append(OldIncidentRow(str(incident.id), incident.village_id, incident.condition_id,
                 "wrong", "village/condition is not among the parsed items", legacy))
@@ -236,6 +246,34 @@ def _names(session: Session, incident: Incident) -> tuple[str, str]:
     return village, action
 
 
+def _soft_remove(session: Session, state: RunState, summary: SummaryBulletin, summary_date: str, row: OldIncidentRow, incident: Incident, suffix: str) -> None:
+    reason = REASON_BY_CLASS[row.classification]
+    if incident.decision_reason == reason and incident.deleted_reason is not None:
+        row.action = "soft_removed"
+        return
+    village, action = _names(session, incident)
+    kept = session.get(Incident, row.kept_incident_id) if row.kept_incident_id else None
+    kept_channel = (session.scalar(select(RawMessage.source_name).where(RawMessage.id == kept.raw_message_id)) if kept is not None and kept.raw_message_id else "") or ""
+    incident.decision_reason = reason
+    incident.decision_source_summary_id = summary.id
+    incident.decision_ref_incident_id = kept.id if kept is not None else None
+    incident.decided_at = datetime.now(timezone.utc)
+    incident.note = append_note(incident.note, decision_note(
+        reason, village=village, action=action, summary_channel=summary.channel, summary_date=summary_date,
+        dup_short_id=str(kept.id)[:8] if kept is not None else "", dup_channel=kept_channel,
+        dup_time=kept.event_time.strftime("%H:%M") if kept is not None and kept.event_time else "",
+        kept_short_id=str(kept.id)[:8] if kept is not None else "", hint="",
+    ) + suffix)
+    state.changes["decision_stamped"] += 1
+    if incident.is_deleted:
+        if record_missing_deleted_reason(session, incident, reason=reason):
+            state.changes["deleted_reason_filled"] += 1
+    else:
+        soft_delete_incident(session, incident, reason=reason, canonical_incident_id=kept.id if kept is not None else None)
+        state.changes["soft_deleted"] += 1
+    row.action = "soft_removed"
+
+
 def phase_old_rows(session: Session, result: MessageResult, *, state: RunState) -> None:
     raw_message = session.get(RawMessage, result.raw_message_id)
     summary = session.get(SummaryBulletin, result.summary_id)
@@ -256,14 +294,25 @@ def phase_old_rows(session: Session, result: MessageResult, *, state: RunState) 
                 row.action = "kept"
                 continue
             if incident.is_deleted:
-                incident.is_deleted = False
-                incident.deleted_reason = None
-                record_incident_change(
-                    session, incident_id=incident.id, action=UpdateAction.status_change,
-                    old_values={"is_deleted": True, "deleted_reason": None},
-                    new_values={"is_deleted": False, "decision_reason": "ACCEPTED_CONFIRMED_BY_SUMMARY"},
-                    performed_by=None,
-                )
+                try:
+                    with session.begin_nested():
+                        incident.is_deleted = False
+                        incident.deleted_reason = None
+                        record_incident_change(
+                            session, incident_id=incident.id, action=UpdateAction.status_change,
+                            old_values={"is_deleted": True, "deleted_reason": None},
+                            new_values={"is_deleted": False, "decision_reason": "ACCEPTED_CONFIRMED_BY_SUMMARY"},
+                            performed_by=None,
+                        )
+                        session.flush()
+                except IntegrityError:
+                    session.refresh(incident)
+                    twin = session.scalar(select(Incident).where(
+                        Incident.exact_hash == incident.exact_hash, Incident.is_deleted.is_(False), Incident.id != incident.id))
+                    row.classification, row.kept_incident_id = "duplicate_of_summary_row", str(twin.id) if twin else None
+                    row.detail = "restoring would duplicate an active incident with the same exact hash"
+                    _soft_remove(session, state, summary, summary_date, row, incident, suffix)
+                    continue
                 state.changes["restored"] += 1
                 row.action = "restored"
             else:
@@ -280,31 +329,7 @@ def phase_old_rows(session: Session, result: MessageResult, *, state: RunState) 
                     item.matched_incident_id = incident.id
                     break
             continue
-        reason = REASON_BY_CLASS[row.classification]
-        if incident.decision_reason == reason and incident.deleted_reason is not None:
-            row.action = "soft_removed"
-            continue
-        village, action = _names(session, incident)
-        kept = session.get(Incident, row.kept_incident_id) if row.kept_incident_id else None
-        kept_channel = (session.scalar(select(RawMessage.source_name).where(RawMessage.id == kept.raw_message_id)) if kept is not None and kept.raw_message_id else "") or ""
-        incident.decision_reason = reason
-        incident.decision_source_summary_id = summary.id
-        incident.decision_ref_incident_id = kept.id if kept is not None else None
-        incident.decided_at = datetime.now(timezone.utc)
-        incident.note = append_note(incident.note, decision_note(
-            reason, village=village, action=action, summary_channel=summary.channel, summary_date=summary_date,
-            dup_short_id=str(kept.id)[:8] if kept is not None else "", dup_channel=kept_channel,
-            dup_time=kept.event_time.strftime("%H:%M") if kept is not None and kept.event_time else "",
-            kept_short_id=str(kept.id)[:8] if kept is not None else "", hint="",
-        ) + suffix)
-        state.changes["decision_stamped"] += 1
-        if incident.is_deleted:
-            if record_missing_deleted_reason(session, incident, reason=reason):
-                state.changes["deleted_reason_filled"] += 1
-        else:
-            soft_delete_incident(session, incident, reason=reason, canonical_incident_id=kept.id if kept is not None else None)
-            state.changes["soft_deleted"] += 1
-        row.action = "soft_removed"
+        _soft_remove(session, state, summary, summary_date, row, incident, suffix)
     session.flush()
 
 

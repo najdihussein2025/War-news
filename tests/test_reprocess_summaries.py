@@ -239,3 +239,15 @@ def test_classify_old_incidents_marks_duplicates_against_other_messages(world):
     from app.news.services.summaries.condition_families import load_condition_families
     rows = classify_old_incidents(world.session, raw, [], load_condition_families(world.session))
     assert {r.incident_id: r.classification for r in rows}[str(dup.id)] == "duplicate_of_live"
+
+
+def test_deleted_twin_of_an_active_row_from_the_same_summary_stays_removed(legacy_world):
+    world = legacy_world
+    raw = _raw(world)
+    active = _row(world, raw, village="A", exact_hash="same-hash")
+    twin = _row(world, raw, village="A", deleted=True, exact_hash="same-hash")
+    _run(world, apply=True)
+    active, twin = _fresh(world, active), _fresh(world, twin)
+    assert active.is_deleted is False and active.decision_reason == "ACCEPTED_CONFIRMED_BY_SUMMARY"
+    assert twin.is_deleted and twin.deleted_reason == "REJECTED_DUPLICATE_SUMMARY_ROW" and twin.decision_ref_incident_id == active.id
+    assert "(حُذف سابقاً بدون سبب مسجل)" in twin.note
