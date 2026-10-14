@@ -1,0 +1,11 @@
+{
+  "raw_id": 42520,
+  "source_id": 3,
+  "received_at": "2026-10-14T07:27:16.874543+00:00",
+  "raw_text": "صفحة الاعلامي الشهيد علي شعيب \n\nالطيران الحربي المعادي أغار مستهدفا اطراف بلدة شقرا",
+  "origin": "raw_messages",
+  "expected": {
+    "casualty_status": "none",
+    "casualties": []
+  }
+}

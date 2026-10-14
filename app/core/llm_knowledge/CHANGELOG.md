@@ -1084,3 +1084,9 @@ Updated:
 - Tier 1 rules now reject `النبطية الفوقا (١١)` in an air-raid list as a
   casualty count and require explicit demographic wording; `شهيدان` alone is
   grammatical, not male evidence.
+
+## 2026-10-14 — Within-message casualty reconciliation
+
+- A headline toll is a cross-check against explicitly scoped parts, never an
+  additional toll. Matching parts are retained without stacking; a disagreement
+  becomes an aggregate/review conflict and is not distributed among villages.

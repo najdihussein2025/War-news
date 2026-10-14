@@ -44,6 +44,9 @@ from app.news.services.matching.emergency_organization_matching_service import (
     EmergencyOrganizationMatchingService,
 )
 from app.news.services.incident_details.incident_detail_merge import merge_incident_detail_fields
+from app.news.services.incident_details.incident_casualty_recompute import (
+    recompute_incident_casualties,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -318,6 +321,12 @@ class Tier2DetailFillService:
                     for item in extraction.casualty_transitions
                 ],
             )
+            recompute_incident_casualties(
+                self.db,
+                incident,
+                raw_message_ids=[raw_message_id],
+                reason_code="reconciled",
+            )
             self.db.add(incident)
             self.db.add(detail)
             updated += 1
@@ -450,6 +459,7 @@ class Tier2DetailFillService:
                 action=UpdateAction.pipeline_merge,
                 old_values={"casualty_scope": "unsupported_model_claim"},
                 new_values={
+                    "reason_code": "reconciled",
                     "casualty_scope": CasualtyScope.unspecified.value,
                     "casualty_scope_source_raw_message_id": raw_message_id,
                     "downgrade_reason": reason,

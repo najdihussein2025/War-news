@@ -1,0 +1,14 @@
+{
+  "raw_id": 5052,
+  "source_id": null,
+  "received_at": "2026-09-07T08:03:00.932949+00:00",
+  "raw_text": "🚨 وزارة الصحة: 8 شهـ من بينهم طفل وسيدتان، و11 جريحاً من بينهم 4 أطفال وسيدتان ومسعف في الهيئة الصحية، إثر الغارة التي استهدفت منزلاً في بلدة كفررمان قضاء النبطية\n\nــــــــــــــ\n\n🚨 Ministry of Health: 8 martyrs, including a child and two women, and 11 wounded, including 4 children, two women, and a paramedic with the Islamic Health Organization, following the airstrike that targeted a house in the town of Kfar Roummane, Nabatieh district\n\nــــــــــــــ\n\n📲 قناة بنت جبيل على واتساب\nhttps://whatsapp.com/channel/0029VaG3H3R8fewmfDqRKX0Q",
+  "origin": "merged_from_snapshot",
+  "source": "bintjbeilnews",
+  "expected": {
+    "casualty_status": "per_village_exact",
+    "casualties": [
+      {"village": "Kfarroumane", "deaths": 8, "injuries": 11}
+    ]
+  }
+}

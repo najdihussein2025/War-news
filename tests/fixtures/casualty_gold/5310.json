@@ -1,0 +1,14 @@
+{
+  "raw_id": 5310,
+  "source_id": null,
+  "received_at": "2026-09-07T09:05:17.403369+00:00",
+  "raw_text": "بلدية كفررمان تنعى الموظفة في البلدية زهراء أيوب، التي ارتقت شهيـ مع أفراد عائلتها إثر الغارة الإسرائيلية التي استهدفت منزلهم ليلاً في البلدة\n\nــــــــــــــ\n\nKfar Roummane Municipality mourns municipal employee Zahraa Ayoub, who was martyred along with members of her family in the Israeli airstrike that targeted their home overnight in the town\n\nــــــــــــــ\n\n قناة بنت جبيل على واتساب\nhttps://whatsapp.com/channel/0029VaG3H3R8fewmfDqRKX0Q",
+  "origin": "merged_from_snapshot",
+  "source": "bintjbeilnews",
+  "expected": {
+    "casualty_status": "per_village_exact",
+    "casualties": [
+      {"village": "Kfarroumane", "deaths": 1, "injuries": null}
+    ]
+  }
+}

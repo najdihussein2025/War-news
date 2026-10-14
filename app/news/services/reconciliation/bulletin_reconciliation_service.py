@@ -21,6 +21,9 @@ from app.news.services.incident_details.casualty_scope_backstop import (
     validate_casualty_scope,
 )
 from app.news.services.incident_details.casualty_status import merge_casualty_status
+from app.news.services.incident_details.incident_casualty_recompute import (
+    recompute_incident_casualties,
+)
 from app.news.services.casualty_flag_evaluator import evaluate_casualty_flags_safely
 
 logger = logging.getLogger(__name__)
@@ -217,12 +220,19 @@ class BulletinReconciliationService:
                     "casualty_status_evidence"
                 ]
             self.db.add(incident)
+            recompute_incident_casualties(
+                self.db,
+                incident,
+                raw_message_ids=[candidate.id],
+                reason_code="reconciled",
+            )
             self.db.add(
                 IncidentUpdate(
                     incident_id=incident.id,
                     action=UpdateAction.pipeline_merge,
                     old_values=old_values,
                     new_values={
+                        "reason_code": "reconciled",
                         "deaths": incident.deaths,
                         "injuries": incident.injuries,
                         "casualty_status": getattr(incident, "casualty_status", None),

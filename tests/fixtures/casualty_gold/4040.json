@@ -1,0 +1,15 @@
+{
+  "raw_id": 4040,
+  "source_id": null,
+  "received_at": "2026-09-07T08:27:02.030346+00:00",
+  "raw_text": "لبنان: مراسل الميادين: إصابة 5 أشخاص في قصف مدفعي إسرائيلي استهدف منزلاً في بلدة كفررمان في قضاء النبطية",
+  "origin": "merged_from_snapshot",
+  "source": "almayadeen",
+  "expected": {
+    "villages": {
+      "كفررمان": {
+        "injuries": 5
+      }
+    }
+  }
+}

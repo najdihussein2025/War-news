@@ -74,10 +74,13 @@ export const IncidentBulletinHeading = ({ group }: { group: IncidentBulletinGrou
 };
 
 const casualtyText = (incident: Incident) => {
-  const deaths = incident.total_deaths ?? 0;
-  const injuries = incident.total_injuries ?? 0;
-  if (deaths === 0 && injuries === 0) return "no casualties";
-  return `${deaths} ${deaths === 1 ? "death" : "deaths"} · ${injuries} ${injuries === 1 ? "injury" : "injuries"}`;
+  const deaths = incident.total_deaths;
+  const injuries = incident.total_injuries;
+  if (deaths == null && injuries == null) return "—";
+  const resolvedDeaths = deaths ?? 0;
+  const resolvedInjuries = injuries ?? 0;
+  if (resolvedDeaths === 0 && resolvedInjuries === 0) return "no casualties";
+  return `${resolvedDeaths} ${resolvedDeaths === 1 ? "death" : "deaths"} · ${resolvedInjuries} ${resolvedInjuries === 1 ? "injury" : "injuries"}`;
 };
 
 export const CompactIncidentList = ({ group }: { group: IncidentBulletinGroup }) => {

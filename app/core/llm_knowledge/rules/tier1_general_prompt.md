@@ -112,6 +112,14 @@ Schema الإخراج الوحيد المسموح:
 Relevance guard: ordinary civilian fires, car fires, traffic accidents, electrical faults, or property fires are not relevant unless the text explicitly ties the damage to Israeli/military/security action.
 ## Casualty source discipline
 
+### Within-message reconciliation
+
+When a report has a headline toll and detailed parts, the headline is a
+cross-check only: if it equals the sum of explicitly scoped parts, emit only
+the parts. Never add headline plus parts. If it conflicts, preserve the scoped
+parts and route the unallocated headline to bulletin/review; never distribute a
+remainder across villages.
+
 The channel/page name is metadata, not news. Never extract a casualty from a
 source header or byline. A number is a casualty count only when its own clause
 contains a casualty word; place entries such as `النبطية الفوقا (١١)` in an

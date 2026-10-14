@@ -65,6 +65,9 @@ from app.news.services.incident_details.casualty_status import (
     status_for_incident_row,
     target_location_count_from_extraction,
 )
+from app.news.services.incident_details.incident_casualty_recompute import (
+    recompute_incident_casualties,
+)
 from app.news.services.casualty_flag_evaluator import evaluate_casualty_flags_safely
 from app.news.services.matching.emergency_organization_matching_service import (
     EmergencyOrganizationMatchingService,
@@ -1250,6 +1253,14 @@ class IncidentMaterializationService:
                     children_i=casualties.children_injuries,
                 )
             )
+            self.db.flush()
+            recompute_incident_casualties(
+                self.db,
+                incident,
+                raw_message_ids=[representative.id],
+                reason_code="created",
+                creating=True,
+            )
             self._record_scope_downgrade(
                 incident,
                 raw_message_id=representative.id,
@@ -1803,6 +1814,14 @@ class IncidentMaterializationService:
                         children_i=village_casualties.children_injuries,
                         **mapped_fields,
                     )
+                )
+                self.db.flush()
+                recompute_incident_casualties(
+                    self.db,
+                    incident,
+                    raw_message_ids=[representative.id],
+                    reason_code="created",
+                    creating=True,
                 )
                 self._record_scope_downgrade(
                     incident,

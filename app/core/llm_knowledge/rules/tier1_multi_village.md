@@ -90,6 +90,12 @@ Correct output: `action_description="multiple actions across 2 villages"` plus t
 Multi-village bulletins suppress per-category casualty fields at Tier 2 until manually confirmed per village. Materialization still fans out one incident row per target village for both per-village-exact and bulletin-aggregate scopes; aggregate totals live on the shared bulletin casualty group, not duplicated onto every village row.
 ## Casualties
 
+### Within-message reconciliation
+
+When a headline equals the sum of the explicitly scoped parts, retain the
+parts only. Never add headline plus parts. A disagreement is an unresolved
+aggregate/review item, not a remainder to allocate among villages.
+
 Keep per-village casualty parts separate. A headline that equals the sum of
 the parts is a check, never an additional toll. Do not assign one village's
 count to another village.
