@@ -23,12 +23,17 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import StaleDataError
 
 from app.core.config import settings
+from app.core.llm_knowledge.message_text import clean_message_text
 from app.core.text_normalization import normalize_arabic_sql
 from app.core.text_sanitizer import strip_emoji_and_pictographs
 from app.llm.dtos import ExtractedCandidate
 from app.news.constants.air_violation_conditions import AIR_VIOLATION_CONDITION_ID_TUPLE
 from app.news.dtos import (
     CasualtyDemographicsDTO,
+    CasualtiesDTO,
+    CasualtyEvidenceDTO,
+    CasualtyHistoryDTO,
+    StrippedHeaderDTO,
     DuplicateCandidateIncidentDTO,
     IncidentDetailDTO,
     IncidentDuplicateCandidateDTO,
@@ -83,7 +88,9 @@ from app.news.services.incident_details.casualty_transition_backstop import (
 from app.news.services.incident_details.casualty_status import merge_casualty_status
 from app.news.services.incident_details.casualty_merge_guard import guard_casualty_merge
 from app.news.services.incident_details.incident_casualty_recompute import (
+    connected_casualty_sources,
     recompute_incident_casualties,
+    validate_incident_casualty_sources,
 )
 from app.news.services.incident_details.casualty_status import target_location_count_from_extraction
 from app.news.services.incident_details.incident_detail_merge import (
@@ -299,6 +306,9 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
             func.coalesce(RawMessage.source_name, SummaryBulletin.channel).label("source_name"),
             Incident.total_deaths,
             Incident.total_injuries,
+            Incident.deaths.label("killed"),
+            Incident.injuries.label("injured"),
+            Incident.casualty_status,
             case(
                 (needs_verification, False),
                 else_=True,
@@ -724,6 +734,7 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                 children_d=detail.children_d if detail is not None else None,
                 children_i=detail.children_i if detail is not None else None,
             ),
+            **self._casualty_detail_payload(incident, detail),
             "bulletin_group": bulletin_group,
             "toll_revisions": self._toll_revisions_for(incident.id),
             "related_incidents": self._related_incidents_for(incident),
@@ -732,6 +743,58 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
             **serialize_incident_category_sections(detail),
         }
         return IncidentDetailDTO.model_validate(values)
+
+    def _casualty_detail_payload(self, incident: Incident, detail: IncidentDetail | None) -> dict[str, Any]:
+        breakdown = {
+            key: value for key, value in {
+                "men_killed": detail.male_d if detail else None, "men_injured": detail.male_i if detail else None,
+                "women_killed": detail.female_d if detail else None, "women_injured": detail.female_i if detail else None,
+                "children_killed": detail.children_d if detail else None, "children_injured": detail.children_i if detail else None,
+            }.items() if value is not None
+        }
+        status = "reported"
+        inconsistent = (incident.total_deaths is None and any(value is not None for value in (detail.male_d, detail.female_d, detail.children_d)) if detail else False) or (incident.total_injuries is None and any(value is not None for value in (detail.male_i, detail.female_i, detail.children_i)) if detail else False)
+        if inconsistent or incident.verification_status == "needs_verification": status = "needs_verification"
+        elif incident.casualty_status == "aggregate_only": status = "shared_toll"
+        elif incident.casualty_status == "count_missing": status = "mentioned_no_number"
+        elif incident.casualty_status == "explicit_none" or (incident.total_deaths == 0 and incident.total_injuries == 0): status = "explicit_none"
+        elif incident.casualty_status == "none_mentioned" or (incident.total_deaths is None and incident.total_injuries is None): status = "none"
+        if "conflict" in (incident.verification_reason or "").lower(): status = "conflicting"
+        updates = list(self.db.scalars(select(IncidentUpdate).where(IncidentUpdate.incident_id == incident.id).order_by(IncidentUpdate.created_at.asc())))
+        history = []
+        for update in updates:
+            old, new = update.old_values or {}, update.new_values or {}
+            for field in ("deaths", "injuries", "total_deaths", "total_injuries"):
+                if field in new and old.get(field) != new.get(field):
+                    raw_ids = new.get("raw_message_ids") or []
+                    history.append(CasualtyHistoryDTO(at=update.created_at, reason_code=new.get("reason_code", update.action.value), field=field, old=old.get(field), new=new.get(field), raw_message_id=raw_ids[0] if raw_ids else None, quote=new.get("quote")))
+        evidence = []
+        sources = connected_casualty_sources(self.db, incident)
+        source_by_id = {source.raw_message_id: source for source in sources}
+        validation = validate_incident_casualty_sources(self.db, incident)
+        seen_evidence: set[tuple[int, str, str]] = set()
+        for claim in validation.claims:
+            if claim.village_id != incident.village_id:
+                continue
+            source = source_by_id.get(claim.raw_message_id)
+            if source is None:
+                continue
+            for field, quote in claim.quotes.items():
+                key = (claim.raw_message_id, field, quote)
+                if key in seen_evidence:
+                    continue
+                seen_evidence.add(key)
+                start = source.text.find(quote)
+                if start < 0:
+                    continue
+                evidence.append(CasualtyEvidenceDTO(field=field, value=claim.values.get(field), quote=quote, raw_message_id=source.raw_message_id, origin=source.origin, source_name=source.source, received_at=source.received_at, start=start, end=start + len(quote)))
+        raw_text = incident.raw_message.raw_text if incident.raw_message else incident.khabar
+        cleaned = clean_message_text(raw_text)
+        header = None
+        if raw_text and cleaned and raw_text.find(cleaned) > 0:
+            end = raw_text.find(cleaned); header = StrippedHeaderDTO(text=raw_text[:end], start=0, end=end)
+        verification_reason = "casualty totals and demographics disagree" if inconsistent else incident.verification_reason
+        return {"casualties": CasualtiesDTO(killed=incident.total_deaths, injured=incident.total_injuries, breakdown=breakdown, status=status, verification_reason=verification_reason), "casualty_evidence": evidence, "casualty_history": history, "stripped_header": header}
 
     def _summary_origin_payload(self, incident: Incident) -> dict[str, Any]:
         """Where the incident came from, plus its summary (channel/date) for display."""

@@ -83,9 +83,11 @@
 - term: "طفل"
   category: demographic_noun
   meaning: children
+  normalized: "1"
 - term: "طفلة"
   category: demographic_noun
   meaning: children
+  normalized: "1"
 - term: "طفلان"
   category: demographic_noun
   meaning: children
@@ -100,24 +102,84 @@
 - term: "رضيع"
   category: demographic_noun
   meaning: children
+  normalized: "1"
+- term: "رضيعة"
+  category: demographic_noun
+  meaning: children
+  normalized: "1"
+- term: "قاصر"
+  category: demographic_noun
+  meaning: children
+  normalized: "1"
+- term: "فتى"
+  category: demographic_noun
+  meaning: children
+  normalized: "1"
+- term: "ولد"
+  category: demographic_noun
+  meaning: children
+  normalized: "1"
 - term: "سيدة"
   category: demographic_noun
   meaning: female
+  normalized: "1"
+- term: "سيدتان"
+  category: demographic_noun
+  meaning: female
+  normalized: "2"
+- term: "سيدتين"
+  category: demographic_noun
+  meaning: female
+  normalized: "2"
 - term: "سيدات"
   category: demographic_noun
   meaning: female
 - term: "امرأة"
   category: demographic_noun
   meaning: female
+  normalized: "1"
 - term: "نساء"
   category: demographic_noun
   meaning: female
+- term: "فتاة"
+  category: demographic_noun
+  meaning: female
+  normalized: "1"
+- term: "شابة"
+  category: demographic_noun
+  meaning: female
+  normalized: "1"
+- term: "والدة"
+  category: demographic_noun
+  meaning: female
+  normalized: "1"
+- term: "زوجة"
+  category: demographic_noun
+  meaning: female
+  normalized: "1"
 - term: "رجال"
   category: demographic_noun
   meaning: male
 - term: "رجل"
   category: demographic_noun
   meaning: male
+  normalized: "1"
+- term: "شاب"
+  category: demographic_noun
+  meaning: male
+  normalized: "1"
+- term: "شابين"
+  category: demographic_noun
+  meaning: male
+  normalized: "2"
+- term: "والد"
+  category: demographic_noun
+  meaning: male
+  normalized: "1"
+- term: "زوج"
+  category: demographic_noun
+  meaning: male
+  normalized: "1"
 
 # --- Vague quantifiers: never a number ---
 
@@ -357,6 +419,70 @@
   category: spelled_number
   meaning: number
   normalized: "10"
+- term: "عشرون"
+  category: spelled_number
+  meaning: number
+  normalized: "20"
+- term: "عشرين"
+  category: spelled_number
+  meaning: number
+  normalized: "20"
+- term: "ثلاثون"
+  category: spelled_number
+  meaning: number
+  normalized: "30"
+- term: "ثلاثين"
+  category: spelled_number
+  meaning: number
+  normalized: "30"
+- term: "أربعون"
+  category: spelled_number
+  meaning: number
+  normalized: "40"
+- term: "أربعين"
+  category: spelled_number
+  meaning: number
+  normalized: "40"
+- term: "خمسون"
+  category: spelled_number
+  meaning: number
+  normalized: "50"
+- term: "خمسين"
+  category: spelled_number
+  meaning: number
+  normalized: "50"
+- term: "ستون"
+  category: spelled_number
+  meaning: number
+  normalized: "60"
+- term: "ستين"
+  category: spelled_number
+  meaning: number
+  normalized: "60"
+- term: "سبعون"
+  category: spelled_number
+  meaning: number
+  normalized: "70"
+- term: "سبعين"
+  category: spelled_number
+  meaning: number
+  normalized: "70"
+- term: "ثمانون"
+  category: spelled_number
+  meaning: number
+  normalized: "80"
+- term: "ثمانين"
+  category: spelled_number
+  meaning: number
+  normalized: "80"
+- term: "تسعون"
+  category: spelled_number
+  meaning: number
+  normalized: "90"
+- term: "تسعين"
+  category: spelled_number
+  meaning: number
+  normalized: "90"
 
 # --- «استشهاد مسعف»، «إصابة مواطن»: verbal noun + indefinite singular person = 1 ---
 

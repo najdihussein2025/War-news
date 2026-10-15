@@ -39,6 +39,7 @@ def _detail(**overrides):
         "event_time": None, "created_at": datetime(2026, 9, 4, tzinfo=timezone.utc), "matched": True,
         "duplicate_flag": "possible",
         "casualty_demographics": {k: None for k in ("male_d", "male_i", "female_d", "female_i", "children_d", "children_i")},
+        "casualties": {"killed": None, "injured": None, "status": "none"},
     }
     return {**row, **overrides}
 

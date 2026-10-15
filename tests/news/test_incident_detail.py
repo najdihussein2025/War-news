@@ -14,7 +14,7 @@ from app.accounts.models import Role, RoleName, User
 from app.api.deps import require_admin
 from app.core.database import get_db
 from app.main import app
-from app.news.dtos import CasualtyDemographicsDTO, IncidentCreateDTO, IncidentDetailDTO
+from app.news.dtos import CasualtiesDTO, CasualtyDemographicsDTO, IncidentCreateDTO, IncidentDetailDTO
 from app.news.models import Condition, Incident, IncidentDetail, RawMessage, Village
 from app.news.repositories import IncidentRepository
 from app.sources.models import Source, SourceType
@@ -53,6 +53,7 @@ def _detail_dto() -> IncidentDetailDTO:
             children_d=None,
             children_i=None,
         ),
+        casualties=CasualtiesDTO(killed=1, injured=2, status="reported"),
     )
 
 

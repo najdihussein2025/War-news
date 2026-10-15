@@ -119,12 +119,6 @@ const reviewRuleBadge = (row: Incident) => {
   return null;
 };
 
-const qualityFlagText = (row: Incident) =>
-  (row.quality_flags ?? [])
-    .map((flag) => flag.message || flag.detail || String(flag.flag || "Quality flag").replaceAll("_", " "))
-    .filter(Boolean)
-    .join("\n");
-
 const PlusIcon = () => (
   <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none">
     <path

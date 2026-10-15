@@ -18,8 +18,8 @@ import { WhyNeedsReviewSection } from "../verificationReasons";
 import { fieldGroupForSection, incidentCategorySections } from "../incidentCategorySections";
 import type { IncidentCategorySectionKey } from "../incidentCategorySections";
 import { reportedCount } from "../incidentSchema";
+import { casualtyChip, casualtyHeadline } from "../casualtyPresentation";
 import type {
-  CasualtyDemographics,
   IncidentDuplicateDecision,
   IncidentSource,
 } from "../types";
@@ -59,18 +59,6 @@ const villageSpecificReport = (text: string, arabicVillage: string | null | unde
 
   return matchingLines.length > 0 ? matchingLines.join("\n") : report;
 };
-
-const casualtyFields: Array<{
-  key: keyof CasualtyDemographics;
-  label: string;
-}> = [
-  { key: "male_d", label: "Male deaths" },
-  { key: "male_i", label: "Male injuries" },
-  { key: "female_d", label: "Female deaths" },
-  { key: "female_i", label: "Female injuries" },
-  { key: "children_d", label: "Children deaths" },
-  { key: "children_i", label: "Children injuries" },
-];
 
 const BackLink = ({ to }: { to: string }) => (
   <Link className="font-semibold text-accent hover:text-accent-hover" to={to}>
@@ -523,10 +511,19 @@ export const IncidentDetailPage = () => {
         </div>
       </section>
 
-      <section className="rounded-lg border border-border bg-surface-raised p-5">
-        <h2 className="text-h4 font-semibold text-text-primary">
-          Casualty demographics
-        </h2>
+      <section className="rounded-lg border border-border bg-surface-raised p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-h4 font-semibold text-text-primary">Casualties</h2>
+            <p className="mt-2 text-h3 font-semibold text-text-primary">
+              {casualtyHeadline(incident.casualties)}
+            </p>
+          </div>
+          {incident.casualties.status !== "none" && incident.casualties.status !== "reported" ? (
+            <StatusBadge label={incident.casualties.status.replaceAll("_", " ")} variant={incident.casualties.status === "conflicting" || incident.casualties.status === "needs_verification" ? "warning" : "neutral"} />
+          ) : null}
+        </div>
+        {incident.casualties.verification_reason ? <p className="mt-2 text-small text-text-muted">{incident.casualties.verification_reason}</p> : null}
         {(incident.toll_revisions ?? []).length > 0 ? (
           <div className="mt-3 space-y-1">
             {(incident.toll_revisions ?? []).map((revision) => (
@@ -548,36 +545,18 @@ export const IncidentDetailPage = () => {
             ))}
           </div>
         ) : null}
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {casualtyFields.map(({ key, label }) => (
-            <div
-              key={key}
-              className="rounded-md border border-border bg-surface p-4"
-            >
-              <p className="text-caption font-semibold uppercase text-text-muted">
-                {label}
-              </p>
-              <p className="mt-2 text-h4 font-semibold text-text-primary">
-                {incident.casualty_demographics[key] ?? "No data"}
-              </p>
-            </div>
-          ))}
+        <div className="mt-4 flex flex-wrap gap-2">
+          {Object.entries(incident.casualties.breakdown).length ? Object.entries(incident.casualties.breakdown).map(([key, value]) => (
+            <span key={key} className="rounded-full bg-surface-muted px-3 py-1 text-small text-text-primary">{casualtyChip(key, value)}</span>
+          )) : <p className="text-small text-text-muted">Breakdown not reported</p>}
         </div>
-        <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            ["Total deaths", incident.total_deaths],
-            ["Total injuries", incident.total_injuries],
-            ["Reported deaths", incident.deaths],
-            ["Reported injuries", incident.injuries],
-          ].map(([label, value]) => (
-            <div key={String(label)} className="rounded-md bg-surface-muted p-3">
-              <dt className="text-caption text-text-muted">{label}</dt>
-              <dd className="mt-1 font-semibold text-text-primary">
-                {value ?? "No data"}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        {incident.casualty_evidence.length ? <div className="mt-5 space-y-3">
+          <h3 className="text-small font-semibold text-text-primary">Evidence</h3>
+          {incident.casualty_evidence.map((item) => <blockquote key={`${item.raw_message_id}-${item.field}-${item.start}`} className="rounded-md border border-border bg-surface p-3 text-right text-small" dir="rtl">
+            <p>{item.quote}</p><footer className="mt-1 text-caption text-text-muted" dir="ltr">{item.source_name || `Source #${item.raw_message_id}`}{item.origin === "merged_from_snapshot" ? " · archived text" : ""}</footer>
+          </blockquote>)}
+        </div> : null}
+        {incident.casualty_history.length ? <details className="mt-5"><summary className="cursor-pointer text-small font-semibold text-text-primary">History</summary><ul className="mt-2 space-y-1 text-small text-text-muted">{incident.casualty_history.map((item, index) => <li key={`${item.at}-${item.field}-${index}`}>{formatDateTime(item.at)} · {item.field}: {item.old ?? "—"} → {item.new ?? "—"} ({item.reason_code}){item.quote ? ` — ${item.quote}` : ""}</li>)}</ul></details> : null}
       </section>
 
       {(incident.related_incidents ?? []).length > 0 ? (

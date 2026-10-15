@@ -16,9 +16,11 @@ from app.news.services.air_violations.air_violation_eligibility import (
 from app.news.services.matching.condition_evidence_override import (
     condition_fallback_from_text,
 )
+from app.news.services.matching.location_ownership_rules import (
+    apply_location_ownership_rules,
+)
 
 TIER1_IRRELEVANT_REASON = "tier1_extraction: model marked the post is_relevant=false"
-
 
 class MatchIncidentAction:
     def __init__(
@@ -50,6 +52,11 @@ class MatchIncidentAction:
             raise ValueError(
                 f"raw_message id={raw_message_id} has an invalid extraction_result."
             ) from exc
+
+        extraction_result = apply_location_ownership_rules(
+            extraction_result,
+            getattr(message, "raw_text", None),
+        )
 
         if (
             extraction_result.is_relevant is False

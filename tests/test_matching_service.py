@@ -701,6 +701,36 @@ def test_action_reads_extraction_and_persists_match_result() -> None:
     assert repository.saved == (message, expected)
 
 
+def test_action_forces_dabsheh_over_nabatieh_district_false_positive() -> None:
+    expected = MatchResultDTO(
+        village_matches=[],
+        any_village_low_confidence=False,
+        matched_condition_id=None,
+        condition_confidence=None,
+        condition_match_status=MatchResultStatus.unmatched,
+        condition_review_required=False,
+        raw_condition_text=None,
+    )
+    message = SimpleNamespace(
+        id=42,
+        raw_text=(
+            "لبنان: مدفعية الاحتلال الإسرائيلي تستهدف محيط تلة الدبشة "
+            "في قضاء النبطية"
+        ),
+        extraction_result=_extraction(
+            village=["النبطية"],
+            action="قصف مدفعي",
+        ).model_dump(mode="json"),
+    )
+    repository = _RawMessageRepositoryStub(message)
+    service = _MatchingServiceStub(expected)
+
+    MatchIncidentAction(repository, service).execute(42)
+
+    assert service.received is not None
+    assert service.received.village == ["الدبشة"]
+
+
 def test_action_rejects_message_without_extraction_result() -> None:
     repository = _RawMessageRepositoryStub(
         SimpleNamespace(id=42, extraction_result=None)

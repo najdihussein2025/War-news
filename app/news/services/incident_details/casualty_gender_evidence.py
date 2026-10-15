@@ -15,9 +15,9 @@ _CASUALTY_GENDER_YAML = "terminology/casualty_gender.yaml"
 # evidence accepted from text; children may overlap female/male only when the
 # source explicitly says so.
 _EXPLICIT_DEMOGRAPHIC_TERMS = {
-    "male": ("رجل", "رجال", "شاب", "شبان", "فتى", "صبي", "ذكر"),
-    "female": ("امرأة", "سيدة", "سيدات", "نساء", "فتاة", "فتيات", "طفلة", "شهيدة", "جريحة", "مواطنة", "أنثى", "أم", "ابنة", "زوجة", "شقيقة"),
-    "children": ("طفل", "طفلة", "أطفال", "طفلان", "طفلين", "رضيع", "رضيعة", "قاصر", "قاصرين"),
+    "male": ("رجل", "رجال", "شاب", "شبان", "والد", "زوج"),
+    "female": ("امرأة", "سيدة", "سيدات", "نساء", "فتاة", "شابة", "والدة", "زوجة"),
+    "children": ("طفل", "طفلة", "أطفال", "طفلان", "طفلين", "رضيع", "رضيعة", "قاصر", "فتى", "ولد"),
 }
 
 
@@ -132,7 +132,9 @@ def apply_explicit_arabic_gender_evidence(
     text: str,
     casualties: ExtractionCasualties,
 ) -> ExtractionCasualties:
-    """Fill gender only when an unambiguous Arabic singular/dual form covers the total."""
+    """Do not derive demographics from grammatical casualty-word gender."""
+    return casualties
+    # Kept below temporarily as documentation of the superseded implementation.
     text = normalize_arabic_text(text or "")
     values = casualties.model_dump(mode="python")
     for outcome, reported_key, total_key in (
@@ -200,12 +202,14 @@ def apply_gendered_occupation_casualty_evidence(
     text: str,
     casualties: ExtractionCasualties,
 ) -> ExtractionCasualties:
-    """Fill gender from unambiguous occupation grammar, without covering the total.
+    """Occupations and roles do not establish adult gender.
 
     ``شهيد مسعف`` / ``استشهاد مسعف`` increment ``male_deaths`` even when the
     bulletin also reports a larger mixed toll. Existing gender fields are left
     unchanged.
     """
+    return casualties
+    # Kept below temporarily as documentation of the superseded implementation.
     normalized = normalize_arabic_text(text or "")
     if not normalized:
         return casualties

@@ -168,22 +168,6 @@ class BulletinReconciliationService:
             if self._already_applied(incident, group, candidate):
                 continue
             deaths, injuries = exact_counts[incident.village_id]
-            old_values = {
-                "deaths": incident.deaths,
-                "injuries": incident.injuries,
-                "casualty_status": getattr(incident, "casualty_status", None),
-                "casualty_deaths_status": getattr(incident, "casualty_deaths_status", None),
-                "casualty_injuries_status": getattr(incident, "casualty_injuries_status", None),
-                "casualty_status_remaining_total": getattr(
-                    incident, "casualty_status_remaining_total", None
-                ),
-                "casualty_is_preliminary": getattr(
-                    incident, "casualty_is_preliminary", None
-                ),
-                "casualty_status_evidence": getattr(
-                    incident, "casualty_status_evidence", None
-                ),
-            }
             if deaths is not None:
                 incident.deaths = deaths
             if injuries is not None:
@@ -225,16 +209,7 @@ class BulletinReconciliationService:
                 incident,
                 raw_message_ids=[candidate.id],
                 reason_code="reconciled",
-            )
-            self.db.add(
-                IncidentUpdate(
-                    incident_id=incident.id,
-                    action=UpdateAction.pipeline_merge,
-                    old_values=old_values,
-                    new_values={
-                        "reason_code": "reconciled",
-                        "deaths": incident.deaths,
-                        "injuries": incident.injuries,
+                audit_values={
                         "casualty_status": getattr(incident, "casualty_status", None),
                         "casualty_deaths_status": getattr(incident, "casualty_deaths_status", None),
                         "casualty_injuries_status": getattr(incident, "casualty_injuries_status", None),
@@ -249,9 +224,7 @@ class BulletinReconciliationService:
                         ),
                         "bulletin_group_id": group.id,
                         "resolved_by_raw_message_id": candidate.id,
-                    },
-                    performed_by=None,
-                )
+                },
             )
         self.groups.mark_resolved(
             group,

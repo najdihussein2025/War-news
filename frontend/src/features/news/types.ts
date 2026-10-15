@@ -22,6 +22,9 @@ export type Incident = {
   source_name: string | null;
   total_deaths?: number | null;
   total_injuries?: number | null;
+  killed?: number | null;
+  injured?: number | null;
+  casualty_status?: string | null;
   matched: boolean;
   verification_status: "auto_processed" | "needs_verification" | "verified" | "rejected";
   verification_reason: string | null;
@@ -201,6 +204,16 @@ export type IncidentDetail = Incident & {
   alternate_candidate_village_id?: number | null;
   alternate_candidate_village_name?: string | null;
   casualty_demographics: CasualtyDemographics;
+  casualties: {
+    killed: number | null;
+    injured: number | null;
+    breakdown: Record<string, number>;
+    status: "none" | "explicit_none" | "reported" | "updated" | "conflicting" | "shared_toll" | "mentioned_no_number" | "needs_verification";
+    verification_reason: string | null;
+  };
+  casualty_evidence: Array<{ field: string; value: number | null; quote: string; raw_message_id: number; origin: string; source_name: string | null; received_at: string | null; start: number; end: number }>;
+  casualty_history: Array<{ at: string; reason_code: string; field: string; old: number | null; new: number | null; raw_message_id: number | null; quote: string | null }>;
+  stripped_header: { text: string; start: number; end: number } | null;
   bulletin_group?: BulletinCasualtyGroup | null;
   toll_revisions?: TollRevision[];
   related_incidents?: RelatedIncident[];

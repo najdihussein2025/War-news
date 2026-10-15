@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 from datetime import date, datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy import or_, select
@@ -26,16 +27,12 @@ from app.news.models.incident_verification_flag import IncidentVerificationFlag
 from app.news.models.raw_message import RawMessage
 from app.news.models.village import Village
 
-CASES = {
-    "1-chaqra-page-name": ["4dab80b0-55d2-4f22-a7e1-04df1c4a15da"],
-    "2-summary-bulletin": ["af927dd4-7328-4e90-b941-4e395d5287f3"],
-    "3-moh-maslakh": ["a876b81c-b70e-4b20-a14a-84c7557d3c78"],
-    "4-kfarroumane-11-5": ["711adf5b-5d46-4a5c-8e21-1554c7d975b1"],
-    "5-kfarroumane-arabsalim": [
-        "cbb16d56-f0f9-456c-9547-39945de9ff96",
-        "f88a14c9-3d3e-4a40-ad4e-64705cd0eb6e",
-    ],
-}
+_MANIFEST = Path("Docs/recon/casualty_proven_cases.json")
+
+
+def reviewed_cases() -> dict[str, list[str]]:
+    ids = json.loads(_MANIFEST.read_text(encoding="utf-8"))["incident_ids"]
+    return {f"reviewed-case-{index + 1}": [incident_id] for index, incident_id in enumerate(ids)}
 CASUALTY_KEYS = (
     "deaths", "injuries", "total_deaths", "total_injuries", "male_deaths",
     "male_injuries", "female_deaths", "female_injuries", "children_deaths",
@@ -127,7 +124,7 @@ def trace(db: Any, incident_id: str) -> dict[str, Any]:
 def main() -> None:
     db = SessionLocal()
     try:
-        for case, ids in CASES.items():
+        for case, ids in reviewed_cases().items():
             print(json.dumps({"case": case, "traces": [trace(db, item) for item in ids]}, ensure_ascii=False, indent=2, default=value))
     finally:
         db.close()

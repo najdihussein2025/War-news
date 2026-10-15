@@ -143,7 +143,7 @@ def _client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
             assert performed_by == USER_ID
             assert version == 1
             assert fields == {"lam_d": 4}
-            from app.news.dtos import CasualtyDemographicsDTO, IncidentDetailDTO
+            from app.news.dtos import CasualtiesDTO, CasualtyDemographicsDTO, IncidentDetailDTO
 
             return IncidentDetailDTO(
                 id=incident_id,
@@ -175,6 +175,7 @@ def _client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
                     children_d=None,
                     children_i=None,
                 ),
+                casualties=CasualtiesDTO(killed=4, injured=None, status="reported"),
                 lebanese_army={"la": 1, "la_did": "D", "lam_d": 4, "la_td": 4},
             )
 

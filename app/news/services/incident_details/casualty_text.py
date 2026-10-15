@@ -26,7 +26,7 @@ INJURIES = "injuries"
 _GENDER_YAML = "terminology/casualty_gender.yaml"
 _WORDING_YAML = "terminology/casualty_wording.yaml"
 
-_DROPPED_CHARS = re.compile(r"[ً-ْٰـ]")
+_DROPPED_CHARS = re.compile(r"[ً-ْٰـ\u200b-\u200f\u2060\ufeff]")
 _LETTER_MAP = str.maketrans("أإآٱةى", "ااااهي")
 _AR = "ء-يٱ-ۓ"
 _DIGIT = "0-9٠-٩"
@@ -38,7 +38,10 @@ _BREAK_CHARS = "؛!؟?•●▪📌\n"
 _ATTACHED_PREFIXES = ("و", "ف", "ب", "ل", "ك")
 # Obfuscated martyr stem used to dodge platform moderation: «4 شهـ..» → «شه».
 _OBFUSCATED_DEATH_STEM = "شه"
-_CENSORED_DEATH_WORD = re.compile(r"(?<![ء-ي])(?P<article>ال)?(?:شه[.,،…_\-]+|شهي)(?![ء-ي])")
+_CENSORED_CASUALTY_WORD = re.compile(
+    r"(?<![ء-ي])(?P<article>ال)?(?P<stem>شه|جر|قت)[.,،…_\-]+(?![ء-ي])"
+)
+_CENSORED_COMPLETIONS = {"شه": "شهيد", "جر": "جريح", "قت": "قتيل"}
 
 
 # ---------------------------------------------------------------------------
@@ -73,8 +76,8 @@ def normalize_with_offsets(text: str | None) -> NormalizedText:
     normalized = "".join(chars)
     # Restore moderation-censored martyr spellings before token detection:
     # «الشهـ..» / «الشهـ,,,» / «شهيـ» -> «الشهيد» / «شهيد».
-    while (match := _CENSORED_DEATH_WORD.search(normalized)) is not None:
-        replacement = f"{match.group('article') or ''}شهيد"
+    while (match := _CENSORED_CASUALTY_WORD.search(normalized)) is not None:
+        replacement = f"{match.group('article') or ''}{_CENSORED_COMPLETIONS[match.group('stem')]}"
         source_offset = offsets[max(match.start(), match.end() - 1)]
         normalized = normalized[: match.start()] + replacement + normalized[match.end() :]
         offsets = (
@@ -82,6 +85,12 @@ def normalize_with_offsets(text: str | None) -> NormalizedText:
             + [source_offset] * len(replacement)
             + offsets[match.end() :]
         )
+    partial_death = re.compile(r"(?<![ء-ي])(?P<article>ال)?شهي(?![ء-ي])")
+    while (match := partial_death.search(normalized)) is not None:
+        replacement = f"{match.group('article') or ''}شهيد"
+        source_offset = offsets[max(match.start(), match.end() - 1)]
+        normalized = normalized[: match.start()] + replacement + normalized[match.end() :]
+        offsets = offsets[: match.start()] + [source_offset] * len(replacement) + offsets[match.end() :]
     return NormalizedText(source=source, text=normalized, offsets=tuple(offsets))
 
 
@@ -367,6 +376,7 @@ def _token_digit_value(token: _Token) -> int | None:
     stripped = raw.strip("،,.؛:!؟?«»\"'")
     if re.fullmatch(rf"\([{_DIGIT}]+\)", stripped):
         return None
+    stripped = re.sub(rf"^[^{_DIGIT}وف]+|[^{_DIGIT}]+$", "", stripped)
     body = stripped
     if body[:1] in ("و", "ف"):
         body = body[1:]
@@ -381,6 +391,17 @@ def _token_spelled_value(token: _Token) -> int | None:
         if stem in numbers:
             return numbers[stem]
     return None
+
+
+def _is_age_number(tokens: list[_Token], index: int) -> bool:
+    """True for ages such as «عمره 4 سنوات» / «4 أعوام»."""
+    nearby = {
+        stem
+        for j in range(max(0, index - 2), min(len(tokens), index + 3))
+        if j != index
+        for stem in _stems(tokens[j].core)
+    }
+    return bool(nearby & {"عمره", "عمرها", "سنوات", "سنه", "اعوام", "عاما"})
 
 
 # ---------------------------------------------------------------------------
@@ -437,6 +458,13 @@ class CountMention:
     # False when a demographic noun is closer than the casualty noun:
     # «33 جريحا من بينهم 6 أطفال» — 6 is a sub-count, not the injury total.
     counts_total: bool = True
+    start: int = -1
+    end: int = -1
+    # Position of the token that supplies the numeric value.  Evidence spans
+    # may begin at the casualty noun (for example, ``جرحى بينهم 4 أطفال``),
+    # so claim-unit ownership must not use ``start`` for ordering.
+    anchor_start: int = -1
+    anchor_end: int = -1
 
 
 def _neighbours(tokens: list[_Token], index: int, direction: int):
@@ -503,14 +531,28 @@ def _find_count_mentions(prepared: NormalizedText) -> list[CountMention]:
     tokens = _tokens(prepared.text)
     regions = _strike_list_regions(prepared.text)
     mentions: list[CountMention] = []
+    consumed_number_tokens: set[int] = set()
     for index, token in enumerate(tokens):
+        if index in consumed_number_tokens:
+            continue
         digit = _token_digit_value(token)
         spelled = None if digit is not None else _token_spelled_value(token)
+        compound_end = index
+        if (
+            spelled in range(3, 10)
+            and index + 1 < len(tokens)
+            and _token_spelled_value(tokens[index + 1]) == 10
+        ):
+            spelled += 10
+            compound_end = index + 1
+            consumed_number_tokens.add(index + 1)
         if digit is not None or spelled is not None:
-            kind, j, group, counts_total = _bind_number(tokens, index)
+            if _is_age_number(tokens, index):
+                continue
+            kind, j, group, counts_total = _bind_number(tokens, compound_end)
             if kind is None and group is None:
                 continue
-            if spelled is not None and (j is None or abs(j - index) != 1):
+            if spelled is not None and (j is None or abs(j - compound_end) != 1):
                 # Spelled numbers only count right next to a casualty noun:
                 # «ثلاثة شهداء»، «إصابة اثنين».
                 continue
@@ -518,9 +560,10 @@ def _find_count_mentions(prepared: NormalizedText) -> list[CountMention]:
                 continue
             value = digit if digit is not None else spelled
             if group is None and j is not None and value in (1, 2):
-                # «1 شهيد»، «2 جريحتين»: a gendered singular/dual noun genders the count.
-                word = _count_word(tokens[j])
-                group = (word[3] or None) if word is not None else None
+                # Grammatical gender in a casualty noun is never demographic
+                # evidence.  Only an explicit noun such as طفل/سيدة/رجل may
+                # populate a demographic field.
+                group = None
             first = min(index, j) if j is not None else index
             last = max(index, j) if j is not None else index
             start = tokens[first].start
@@ -534,6 +577,10 @@ def _find_count_mentions(prepared: NormalizedText) -> list[CountMention]:
                     text=prepared.source_slice(start, tokens[last].end).strip(_TOKEN_EDGE),
                     gender_or_group=group,
                     counts_total=counts_total,
+                    start=start,
+                    end=tokens[last].end,
+                    anchor_start=token.start,
+                    anchor_end=tokens[compound_end].end,
                 )
             )
             continue
@@ -547,6 +594,10 @@ def _find_count_mentions(prepared: NormalizedText) -> list[CountMention]:
                     rule="dual",
                     text=prepared.source_slice(token.start, token.end).strip(_TOKEN_EDGE),
                     gender_or_group=group,
+                    start=token.start,
+                    end=token.end,
+                    anchor_start=token.start,
+                    anchor_end=token.end,
                 )
             )
             continue
@@ -567,7 +618,11 @@ def _find_count_mentions(prepared: NormalizedText) -> list[CountMention]:
                     value=value,
                     rule=rule,
                     text=prepared.source_slice(token.start, token.end).strip(_TOKEN_EDGE),
-                    gender_or_group=gender or None,
+                    gender_or_group=None,
+                    start=token.start,
+                    end=token.end,
+                    anchor_start=token.start,
+                    anchor_end=token.end,
                 )
             )
             continue
@@ -583,6 +638,10 @@ def _find_count_mentions(prepared: NormalizedText) -> list[CountMention]:
                         _TOKEN_EDGE
                     ),
                     gender_or_group=group,
+                    start=tokens[first].start,
+                    end=tokens[last].end,
+                    anchor_start=token.start,
+                    anchor_end=token.end,
                 )
             )
             continue
@@ -595,6 +654,10 @@ def _find_count_mentions(prepared: NormalizedText) -> list[CountMention]:
                     rule="named_singular",
                     text=prepared.source_slice(token.start, token.end).strip(_TOKEN_EDGE),
                     gender_or_group=named or None,
+                    start=token.start,
+                    end=token.end,
+                    anchor_start=token.start,
+                    anchor_end=token.end,
                 )
             )
     return mentions
@@ -628,7 +691,10 @@ def _singular_verbal_count(
     if following is not None and not _has_article(following.core):
         for stem in _stems(following.core, allow_article=False):
             if stem in vocab.singular_persons:
-                return kind, vocab.singular_persons[stem], index, index + 1
+                # مواطن/مسعف/عنصر/person names establish a singular casualty,
+                # not adult gender. Explicit demographic nouns are handled by
+                # the demographic vocabulary only.
+                return kind, vocab.demographic.get(stem), index, index + 1
     previous = tokens[index - 1] if index > 0 else None
     if (
         previous is not None

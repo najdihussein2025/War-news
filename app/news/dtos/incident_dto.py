@@ -40,6 +40,9 @@ class IncidentListItemDTO(BaseModel):
     source_name: str | None = None
     total_deaths: int | None = None
     total_injuries: int | None = None
+    killed: int | None = None
+    injured: int | None = None
+    casualty_status: str | None = None
     matched: bool
     verification_status: Literal["auto_processed", "needs_verification", "verified", "rejected"] = "auto_processed"
     verification_reason: str | None = None
@@ -138,6 +141,46 @@ class CasualtyDemographicsDTO(BaseModel):
     female_i: int | None
     children_d: int | None
     children_i: int | None
+
+
+class CasualtiesDTO(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    killed: int | None = None
+    injured: int | None = None
+    breakdown: dict[str, int] = Field(default_factory=dict)
+    status: Literal["none", "explicit_none", "reported", "updated", "conflicting", "shared_toll", "mentioned_no_number", "needs_verification"]
+    verification_reason: str | None = None
+
+
+class CasualtyEvidenceDTO(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    field: str
+    value: int | None = None
+    quote: str
+    raw_message_id: int
+    origin: str
+    source_name: str | None = None
+    received_at: datetime | None = None
+    start: int
+    end: int
+
+
+class CasualtyHistoryDTO(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    at: datetime
+    reason_code: str
+    field: str
+    old: int | None = None
+    new: int | None = None
+    raw_message_id: int | None = None
+    quote: str | None = None
+
+
+class StrippedHeaderDTO(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    text: str
+    start: int
+    end: int
 
 
 class IncidentVillageDetailDTO(BaseModel):
@@ -257,6 +300,10 @@ class IncidentDetailDTO(BaseModel):
     alternate_candidate_village_id: int | None = None
     alternate_candidate_village_name: str | None = None
     casualty_demographics: CasualtyDemographicsDTO
+    casualties: CasualtiesDTO
+    casualty_evidence: list[CasualtyEvidenceDTO] = Field(default_factory=list)
+    casualty_history: list[CasualtyHistoryDTO] = Field(default_factory=list)
+    stripped_header: StrippedHeaderDTO | None = None
     bulletin_group: BulletinCasualtyGroupDTO | None = None
     toll_revisions: list[TollRevisionDTO] = Field(default_factory=list)
     related_incidents: list[RelatedIncidentDTO] = Field(default_factory=list)

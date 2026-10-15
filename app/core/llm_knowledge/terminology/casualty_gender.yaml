@@ -143,6 +143,20 @@
 
 # --- Death count synonyms (casualty_count_backstop) ---
 
+- term: "ضحية"
+  category: death_count_word
+  meaning: death
+
+- term: "ضحيتان"
+  category: death_count_word
+  meaning: death
+  normalized: "2"
+
+- term: "ضحيتين"
+  category: death_count_word
+  meaning: death
+  normalized: "2"
+
 - term: "قتيل"
   category: death_count_word
   meaning: death

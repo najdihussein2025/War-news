@@ -284,10 +284,10 @@ def test_eligible_representative_inserts_incident_and_detail() -> None:
 
     assert len(result) == 1
     assert isinstance(result[0], Incident)
-    assert db.flush_calls == 1
+    assert db.flush_calls == 2  # incident id, then detail before one create audit
     assert db.commit_calls == 1
     assert db.rollback_calls == 0
-    assert len(db.committed) == 2
+    assert len(db.committed) == 3
 
     incident = next(value for value in db.committed if isinstance(value, Incident))
     detail = next(
@@ -492,7 +492,7 @@ def test_zero_casualty_scope_downgrade_does_not_flag_incident() -> None:
 
     assert result[0].verification_status == "auto_processed"
     assert result[0].verification_reason is None
-    assert not any(isinstance(value, IncidentUpdate) for value in db.committed)
+    assert sum(isinstance(value, IncidentUpdate) for value in db.committed) == 1
 
 
 def test_materialization_strips_emoji_from_khabar_and_hash() -> None:
@@ -728,7 +728,7 @@ def test_incident_and_detail_commit_atomically() -> None:
     with pytest.raises(RuntimeError, match="commit failed"):
         service.materialize(_representative())
 
-    assert len(db.added) == 2
+    assert len(db.added) == 3  # incident + detail + atomic create audit
     assert any(isinstance(value, Incident) for value in db.added)
     assert any(isinstance(value, IncidentDetail) for value in db.added)
     assert db.commit_calls == 1
@@ -1078,7 +1078,8 @@ def test_category_fields_passed_to_incident_detail() -> None:
     assert detail.hosp is True
     assert detail.hos_n == "مستشفى طرابلس"
     assert detail.hosd == 3
-    # root deaths=3 + la_td=1 + hosd=3
+    # This lightweight session bypasses the source-validated writer; assert the
+    # materializer's pre-writer category rollup here (root 3 + LA 1 + hospital 3).
     assert incident.total_deaths == 7
 
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "../../../components/ui/Button";
 import { StatusBadge } from "../../../components/StatusBadge";
 import type { Incident, IncidentBulletinGroup } from "../types";
+import { compactCasualtyText } from "../casualtyPresentation";
 import {
   ReasonChips,
   summarizeManyVerificationReasons,
@@ -74,13 +75,9 @@ export const IncidentBulletinHeading = ({ group }: { group: IncidentBulletinGrou
 };
 
 const casualtyText = (incident: Incident) => {
-  const deaths = incident.total_deaths;
-  const injuries = incident.total_injuries;
-  if (deaths == null && injuries == null) return "—";
-  const resolvedDeaths = deaths ?? 0;
-  const resolvedInjuries = injuries ?? 0;
-  if (resolvedDeaths === 0 && resolvedInjuries === 0) return "no casualties";
-  return `${resolvedDeaths} ${resolvedDeaths === 1 ? "death" : "deaths"} · ${resolvedInjuries} ${resolvedInjuries === 1 ? "injury" : "injuries"}`;
+  const deaths = incident.killed ?? incident.total_deaths;
+  const injuries = incident.injured ?? incident.total_injuries;
+  return compactCasualtyText(deaths ?? null, injuries ?? null);
 };
 
 export const CompactIncidentList = ({ group }: { group: IncidentBulletinGroup }) => {
