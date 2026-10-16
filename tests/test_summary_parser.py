@@ -33,6 +33,13 @@ def test_ambiguous_and_out_of_scope_and_leftover():
     assert p.ambiguous_places and p.leftover_tokens and not p.auto_acceptable
 def test_out_of_south_absent():
     assert parse('القصف المدفعي: جبيل').unresolved_places==('جبيل',)
+
+
+def test_surface_to_surface_missile_does_not_inherit_artillery():
+    result = parse('القصف المدفعي: كفرتبنيت(صاروخ أرض أرض)')
+    assert len(result.items) == 1
+    assert result.items[0].condition_id == 45
+    assert result.items[0].condition_source == 'parenthetical'
 def test_d2_merge_and_deterministic_key():
     text='القصف المدفعي: ميفدون، اطراف ميفدون'
     a=parse(text); b=parse(text)

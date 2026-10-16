@@ -1335,7 +1335,8 @@ class IncidentMaterializationService:
             condition_id=condition_id,
             source_id=source_id,
             event_date=event_datetime.date(),
-            event_time=event_datetime.time(),
+            # The window midpoint anchors the date; it is not an observed time.
+            event_time=None,
             khabar=sanitized_khabar,
             note=note,
             exact_hash=exact_hash,
@@ -1347,6 +1348,9 @@ class IncidentMaterializationService:
             source_summary_item_id=source_summary_item_id,
             created_by=None,
         )
+        if condition_id == 45:
+            incident.verification_status = "needs_verification"
+            incident.verification_reason = "Explicit source action has no supported category; condition review required."
         try:
             with self.db.begin_nested():
                 self.db.add(incident)

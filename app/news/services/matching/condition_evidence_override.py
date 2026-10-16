@@ -48,7 +48,7 @@ _WARNING_RAID = re.compile(r"غار[ةه].{0,15}تحذيري|تحذيري.{0,15}
 _FEIGNED_RAID = re.compile(r"غارات?.{0,15}وهمي|وهمي.{0,15}غارات?")
 _AIRSTRIKE = re.compile(r"(?:غار[ةه]|غارات|أغار|اغار)")
 _SMOKE_BOMB = re.compile(r"قنابل?.{0,15}دخاني")
-_SOUND_BOMB = re.compile(r"قنابل?.{0,15}صوتي")
+_SOUND_BOMB = re.compile(r"(?:قنابل|قنبل[هة]).{0,15}صوتي")
 _TEAR_GAS_BOMB = re.compile(r"قنابل?.{0,25}(?:مسيل|مسيله|مسيلة).{0,25}دموع")
 _FLARE_BOMB = re.compile(
     r"(?:قنابل?|قذائف?|بالونات).{0,25}(?:مضيئ|انار|إنار|ضوئ|حراري)"

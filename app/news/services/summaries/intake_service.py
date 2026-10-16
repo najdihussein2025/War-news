@@ -62,6 +62,18 @@ def _assert_evidence(raw_text: str, evidence: str) -> None:
         raise ValueError("summary parser evidence span is not a verbatim substring of raw_message.raw_text")
 
 
+def _original_evidence(raw_text: str, evidence: str) -> str:
+    """Recover verbatim text for normalized unresolved parser labels."""
+    if evidence and evidence in raw_text:
+        return evidence
+    normalized = normalize_summary_text(raw_text)
+    needle = normalize_summary_text(evidence).text
+    start = normalized.text.find(needle) if needle else -1
+    if start < 0:
+        _assert_evidence(raw_text, evidence)
+    return normalized.original_span(start, start + len(needle)).text
+
+
 async def intake_summary(session, raw_message, *, crosscheck_enabled: bool | None = None) -> SummaryIntakeResult:
     """Persist a parser result without ever changing the legacy message flow."""
     raw_text = raw_message.raw_text or ""
@@ -116,29 +128,33 @@ async def intake_summary(session, raw_message, *, crosscheck_enabled: bool | Non
         for item in result.items:
             evidence = item.evidence_spans[0].text if item.evidence_spans else ""
             _assert_evidence(raw_text, evidence)
-            session.add(SummaryItem(summary_id=summary.id, position=position, header_text=item.header_text,
+            row = SummaryItem(summary_id=summary.id, position=position, header_text=item.header_text,
                 condition_id=item.condition_id, location_text=" | ".join(item.location_texts),
                 primary_village_id=item.primary_village.id, secondary_village_id=item.secondary_village.id if item.secondary_village else None,
                 modifier=_modifier(item), reported_count=item.reported_count, evidence_span=evidence,
-                origin=SummaryItemOrigin.parser, resolution=SummaryResolution.resolved))
+                origin=SummaryItemOrigin.parser, resolution=SummaryResolution.resolved)
+            session.add(row)
+            if item.condition_id == 45:
+                session.flush()
+                reasons.append({"type": "unknown_header", "item_ids": [row.id], "text": evidence})
             parser_pairs.append(ParserPair(item.header_text, " | ".join(item.location_texts), item.condition_id,
                 item.primary_village.id, item.secondary_village.id if item.secondary_village else None))
             position += 1
         section_of_place = {r.text: r.section_header for r in result.residual if r.kind == "unresolved_place" and r.section_header}
         for text in result.unresolved_places:
-            _assert_evidence(raw_text, text)
+            evidence = _original_evidence(raw_text, text)
             # Keep the section's action with the place so a reviewer only has to pick the village.
             header_text = section_of_place.get(text)
             entry = headers.resolve(header_text)[0] if header_text else None
             condition_id = entry.condition_ids[0] if entry is not None and entry.status == "approved" and len(entry.condition_ids) == 1 else None
             row = SummaryItem(summary_id=summary.id, position=position, location_text=text, header_text=header_text, condition_id=condition_id,
-                evidence_span=text, origin=SummaryItemOrigin.parser, resolution=SummaryResolution.unresolved_location)
+                evidence_span=evidence, origin=SummaryItemOrigin.parser, resolution=SummaryResolution.unresolved_location)
             session.add(row); session.flush(); reasons.append({"type": "unresolved_location", "item_ids": [row.id], "text": text})
             position += 1
         for text in result.unresolved_headers:
-            _assert_evidence(raw_text, text)
+            evidence = _original_evidence(raw_text, text)
             row = SummaryItem(summary_id=summary.id, position=position, header_text=text, location_text=text,
-                evidence_span=text, origin=SummaryItemOrigin.parser, resolution=SummaryResolution.unknown_header)
+                evidence_span=evidence, origin=SummaryItemOrigin.parser, resolution=SummaryResolution.unknown_header)
             session.add(row); session.flush(); reasons.append({"type": "unknown_header", "item_ids": [row.id], "text": text})
             position += 1
         # Add-only LLM cross-check: it can append items or review reasons, never change the above.

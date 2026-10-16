@@ -347,6 +347,7 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
             SummaryItem.summary_id.label("summary_id"),
             SummaryBulletin.channel.label("summary_channel"),
             SummaryBulletin.window_end.label("summary_window_end"),
+            SummaryBulletin.window_start.label("summary_window_start"),
             Incident.decision_reason,
             Incident.decision_ref_incident_id,
             Incident.note,
@@ -805,7 +806,7 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
         if incident.source_summary_item_id is None:
             return payload
         summary = self.db.execute(
-            select(SummaryBulletin.id, SummaryBulletin.channel, SummaryBulletin.window_end)
+            select(SummaryBulletin.id, SummaryBulletin.channel, SummaryBulletin.window_end, SummaryBulletin.window_start)
             .join(SummaryItem, SummaryItem.summary_id == SummaryBulletin.id)
             .where(SummaryItem.id == incident.source_summary_item_id)
         ).one_or_none()
@@ -814,6 +815,7 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                 summary_id=summary.id,
                 summary_channel=summary.channel,
                 summary_window_end=summary.window_end,
+                summary_window_start=summary.window_start,
             )
         return payload
 

@@ -20,10 +20,10 @@ import { roleBaseFromPath } from "../../../lib/rolePath";
 import { ConditionSelect } from "../components/ConditionSelect";
 import { useConditionsQuery, useIncidentStream, useIncidentsQuery, useVillagesQuery } from "../hooks";
 import { createIncident, reviewIncident } from "../api";
+import { incidentEventTime } from "../incidentEventTime";
 import { useContentSourcesQuery } from "../../sources/hooks";
 import type { Incident, IncidentBulletinGroup } from "../types";
 import { CasualtyCheckPanel } from "../../casualtyChecks/components/CasualtyCheckPanel";
-import { SummaryOriginBadge } from "../../summaries/components/SummaryOriginBadge";
 import { SummaryReviewTable } from "../../summaries/components/SummaryReviewTable";
 import { SummaryReviewDrawer } from "../../summaries/components/SummaryReviewDrawer";
 import { ReasonChips, summarizeVerificationReasons } from "../verificationReasons";
@@ -316,7 +316,6 @@ export const IncidentsPage = () => {
             <span className="font-semibold text-text-primary">
               {row.village || "Unknown village"}
             </span>
-            <SummaryOriginBadge origin={row.origin} summaryId={row.summary_id} channel={row.summary_channel} windowEnd={row.summary_window_end} roleBase={roleBase} />
             {row.decision_reason ? <StatusBadge label={row.decision_reason} variant="neutral" /> : null}
             {row.duplicate_flag === "possible" && row.verification_status !== "needs_verification" ? (
               <StatusBadge label="Possible duplicate" variant="warning" />
@@ -411,8 +410,8 @@ export const IncidentsPage = () => {
       render: (row) => (
         <div className="space-y-1 whitespace-nowrap">
           <p>{formatDate(row.event_date)}</p>
-          <p className="text-caption text-text-muted">
-            {row.event_time ? row.event_time.slice(0, 5) : "Time not recorded"}
+          <p className="text-caption text-text-muted whitespace-nowrap" title={!row.event_time && row.summary_window_start && row.summary_window_end ? "Reported time range; exact attack time is not stated." : undefined}>
+            {incidentEventTime(row)}
           </p>
         </div>
       ),

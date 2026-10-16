@@ -46,7 +46,13 @@ class IncidentRepositoryListQueryMixin:
                 Incident.origin == IncidentOrigin.summary,
                 and_(
                     RawMessage.id.is_not(None),
-                    RawMessage.status == MessageStatus.materialized,
+                    or_(
+                        RawMessage.status == MessageStatus.materialized,
+                        and_(
+                            RawMessage.status == MessageStatus.summary_handled,
+                            Incident.decision_reason == "ACCEPTED_CONFIRMED_BY_SUMMARY",
+                        ),
+                    ),
                     ~RawMessage.raw_payload.op("?")("ocr_text"),
                 ),
             ),

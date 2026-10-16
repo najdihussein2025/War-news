@@ -70,6 +70,7 @@ class IncidentListItemDTO(BaseModel):
     summary_id: int | None = None
     summary_channel: str | None = None
     summary_window_end: datetime | None = None
+    summary_window_start: datetime | None = None
     decision_reason: str | None = None
     decision_ref_incident_id: UUID | None = None
     note: str | None = None
@@ -313,6 +314,7 @@ class IncidentDetailDTO(BaseModel):
     summary_id: int | None = None
     summary_channel: str | None = None
     summary_window_end: datetime | None = None
+    summary_window_start: datetime | None = None
     lebanese_army: IncidentCategorySectionDTO | None = None
     unifil: IncidentCategorySectionDTO | None = None
     municipality: IncidentCategorySectionDTO | None = None
