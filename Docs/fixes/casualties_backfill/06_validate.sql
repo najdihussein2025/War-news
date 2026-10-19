@@ -1,0 +1,5 @@
+-- Read-only invariant and allocation checks; every count should be zero.
+SELECT count(*) AS negative_counts FROM incidents WHERE LEAST(total_deaths,total_injuries,deaths,injuries) < 0;
+SELECT count(*) AS death_breakdown_exceeds_total FROM incidents i JOIN incident_details d ON d.incident_id=i.id WHERE COALESCE(d.male_d,0)+COALESCE(d.female_d,0)+COALESCE(d.children_d,0)>COALESCE(i.total_deaths,0);
+SELECT count(*) AS injury_breakdown_exceeds_total FROM incidents i JOIN incident_details d ON d.incident_id=i.id WHERE COALESCE(d.male_i,0)+COALESCE(d.female_i,0)+COALESCE(d.children_i,0)>COALESCE(i.total_injuries,0);
+SELECT g.id, g.total_deaths, sum(COALESCE(i.total_deaths,0)) assigned_deaths, g.total_injuries, sum(COALESCE(i.total_injuries,0)) assigned_injuries FROM bulletin_casualty_groups g JOIN bulletin_casualty_group_members m ON m.group_id=g.id JOIN incidents i ON i.id=m.incident_id GROUP BY g.id HAVING (sum(COALESCE(i.total_deaths,0))<>g.total_deaths OR sum(COALESCE(i.total_injuries,0))<>g.total_injuries) AND NOT g.total_overridden;
