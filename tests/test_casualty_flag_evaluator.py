@@ -84,7 +84,7 @@ def test_partial_missing_update_keeps_same_flag_open():
     assert result["updated"] == 1 and result["auto_cleared"] == 0
 
 
-def test_aggregate_detail_is_identical_for_three_siblings():
+def test_aggregate_detail_names_owner_and_members_for_three_siblings():
     rows=[incident(raw_message_id=20, casualty_status="aggregate_only",
                    casualty_status_remaining_total={"deaths": 5}, total_deaths=5,
                    village_display_name=name) for name in ("Tyre", "Nabatieh", "Beirut")]
@@ -92,7 +92,10 @@ def test_aggregate_detail_is_identical_for_three_siblings():
     for row in rows:
         evaluator=Evaluator(row, siblings=rows); evaluator.evaluate_incident(row.id)
         details.append(evaluator.repository.opened[0]["detail"])
-    assert details[0] == details[1] == details[2]
+    assert "تم وضع الحصيلة كاملة على هذا السجل" in details[0]["summary"]
+    assert "مسجلة على سجل Tyre" in details[1]["summary"]
+    assert "مسجلة على سجل Tyre" in details[2]["summary"]
+    assert all(detail["bulletin_totals"] == details[0]["bulletin_totals"] for detail in details)
     assert len(details[0]["sibling_incident_ids"]) == 3
 
 
