@@ -3,6 +3,7 @@ from app.news.models.air_violation import AirViolation, AirViolationLocation
 from app.news.models.bulletin_casualty_group import (
     BulletinBreakdownStatus,
     BulletinCasualtyGroup,
+    BulletinCasualtyGroupMember,
     CasualtyScope,
 )
 from app.news.models.channel_trust_tier import ChannelTrustTier, TrustTier
@@ -35,6 +36,7 @@ __all__ = [
     "AirViolationLocation",
     "BulletinBreakdownStatus",
     "BulletinCasualtyGroup",
+    "BulletinCasualtyGroupMember",
     "CasualtyScope",
     "ChannelTrustTier",
     "Condition",

@@ -88,6 +88,15 @@ class VillageRoleEntry(BaseModel):
     role: VillageRole = VillageRole.target
     deaths: int | None = Field(default=None, ge=0)
     injuries: int | None = Field(default=None, ge=0)
+    # Optional per-village breakdown, only when the text states it for this
+    # village. None means "not stated here": consumers fall back to the
+    # message-level breakdown rules, never to a guess.
+    male_deaths: int | None = Field(default=None, ge=0)
+    male_injuries: int | None = Field(default=None, ge=0)
+    female_deaths: int | None = Field(default=None, ge=0)
+    female_injuries: int | None = Field(default=None, ge=0)
+    children_deaths: int | None = Field(default=None, ge=0)
+    children_injuries: int | None = Field(default=None, ge=0)
     evidence_span: str | None = None
     qualifier_text: str | None = None
 

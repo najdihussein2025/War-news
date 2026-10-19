@@ -91,14 +91,16 @@ def test_tier2_stores_bulletin_total_without_backfilling_village() -> None:
     )
 
     assert updated == 1
-    assert (incident.deaths, incident.injuries) == (None, None)
-    assert (incident.total_deaths, incident.total_injuries) == (None, None)
+    # Village 10 is first in the match order, so it owns the shared toll (target C).
+    assert (incident.deaths, incident.injuries) == (4, 20)
+    assert (incident.total_deaths, incident.total_injuries) == (4, 20)
     assert detail.lam_d is None
     assert incident.verification_status == "needs_verification"
     assert "manual per-village confirmation" in incident.verification_reason
     bulletin_groups.create_for_message.assert_called_once_with(
         raw_message_id=7,
         village_ids=[10, 20],
+        owner_village_id=10,
         casualty_scope=StoredCasualtyScope.bulletin_aggregate,
         total_deaths=4,
         total_injuries=20,

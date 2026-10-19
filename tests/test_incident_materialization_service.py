@@ -78,6 +78,9 @@ class _SessionStub:
         self.scalar_calls += 1
         return self.scalar_result
 
+    def scalars(self, _statement):
+        return SimpleNamespace(all=lambda: [])
+
     def execute(self, _statement, _params=None):
         return SimpleNamespace(all=lambda: [])
 
@@ -537,20 +540,24 @@ def test_fast_path_strips_emoji_from_khabar_and_hash() -> None:
     assert representative.status == MessageStatus.materialized
 
 
-def test_fast_path_keeps_bulletin_aggregate_out_of_village_totals() -> None:
+def test_fast_path_puts_bulletin_aggregate_on_first_mentioned_village_only() -> None:
+    """Target C: the whole shared toll goes on the first village in the TEXT."""
     db = _SessionStub()
-    bulletin_groups = SimpleNamespace(create_for_message=MagicMock())
+    bulletin_groups = SimpleNamespace(
+        create_for_message=MagicMock(),
+        get_by_raw_message_id=MagicMock(return_value=None),
+    )
     service = IncidentMaterializationService(
         db,  # type: ignore[arg-type]
         bulletin_groups=bulletin_groups,  # type: ignore[arg-type]
     )
     representative = _representative(match_result=_two_village_match_result())
+    # Text order (بنت جبيل first) differs from extraction order (المنصوري first).
+    representative.raw_text = "غارات على بنت جبيل والمنصوري حصيلتها 4 شهداء و20 جريحا"
     representative.extraction_result.update(
         {
             "casualty_scope": "bulletin_aggregate",
-            "casualty_scope_evidence": (
-                "حصيلة الغارات على النبطية وكفررمان بلغت 4 شهداء و20 جريحا"
-            ),
+            "casualty_scope_evidence": representative.raw_text,
         }
     )
     representative.extraction_result["casualties"].update(
@@ -572,14 +579,17 @@ def test_fast_path_keeps_bulletin_aggregate_out_of_village_totals() -> None:
     result = service.process_fast_path(representative, fast_dedup)  # type: ignore[arg-type]
 
     assert len(result) == 2
-    assert all(
-        (incident.deaths, incident.injuries) == (None, None)
-        and (incident.total_deaths, incident.total_injuries) == (None, None)
-        for incident in result
-    )
+    by_village = {incident.village_id: incident for incident in result}
+    owner, member = by_village[977], by_village[976]
+    assert (owner.total_deaths, owner.total_injuries) == (4, 20)
+    assert (owner.deaths, owner.injuries) == (4, 20)
+    assert (member.deaths, member.injuries) == (None, None)
+    assert (member.total_deaths, member.total_injuries) == (None, None)
+    kwargs = bulletin_groups.create_for_message.call_args.kwargs
     bulletin_groups.create_for_message.assert_called_once()
-    assert bulletin_groups.create_for_message.call_args.kwargs["total_deaths"] == 4
-    assert bulletin_groups.create_for_message.call_args.kwargs["total_injuries"] == 20
+    assert kwargs["village_ids"] == [977, 976]
+    assert kwargs["owner_village_id"] == 977
+    assert kwargs["total_deaths"] == 4 and kwargs["total_injuries"] == 20
 
 
 def test_exact_multi_village_bulletin_is_visible_only_as_bulletin_toll() -> None:
@@ -627,11 +637,17 @@ def test_exact_multi_village_bulletin_is_visible_only_as_bulletin_toll() -> None
 
     incidents = service.materialize(representative)
 
+    # The toll sits on the first village the text names (عربصاليم), nowhere else.
+    holders = [incident for incident in incidents if incident.total_deaths is not None]
+    assert [(incident.village_id, incident.total_deaths, incident.total_injuries) for incident in holders] == [(978, 4, 20)]
     assert all(
         (incident.deaths, incident.injuries) == (None, None)
         for incident in incidents
+        if incident.village_id != 978
     )
     group_values = bulletin_groups.create_for_message.call_args.kwargs
+    assert group_values["village_ids"][0] == 978 and group_values["owner_village_id"] == 978
+    group_values = {key: value for key, value in group_values.items() if key != "owner_village_id"}
     api_group = BulletinCasualtyGroupDTO.model_validate(
         SimpleNamespace(
             **group_values,
@@ -1219,13 +1235,13 @@ def test_fast_path_confident_merge_uses_only_village_local_casualties() -> None:
     service.process_fast_path(representative, fast_dedup)  # type: ignore[arg-type]
 
     assert len(dedup.merge_calls) == 2
-    assert all(
-        call[1]["deaths"] is None
-        and call[1]["injuries"] is None
-        and call[1]["total_deaths"] is None
-        and call[1]["total_injuries"] is None
-        for call in dedup.merge_calls
+    # Only the owner's merge carries the shared toll; the other village carries nothing.
+    totals = sorted(
+        (call[1]["total_deaths"], call[1]["total_injuries"]) for call in dedup.merge_calls
+        if call[1]["total_deaths"] is not None
     )
+    assert totals == [(4, 20)]
+    assert sum(call[1]["deaths"] is None and call[1]["total_deaths"] is None for call in dedup.merge_calls) == 1
 
 
 def test_terminalized_message_leaves_stage_timestamps_null() -> None:

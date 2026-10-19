@@ -64,6 +64,7 @@ from app.news.services.incident_details.casualty_extraction_validation import (
     enforce_casualty_invariants,
     validate_casualty_evidence,
 )
+from app.news.services.incident_details.casualty_text import find_supporting_mention
 from app.news.services.incident_details.casualty_status import (
     derive_casualty_status,
     status_fields,
@@ -193,6 +194,13 @@ GENERAL_EXTRACTION_RESPONSE_SCHEMA: JsonObject = {
                     },
                     "deaths": {"type": ["integer", "null"], "minimum": 0},
                     "injuries": {"type": ["integer", "null"], "minimum": 0},
+                    # Optional per-village breakdown (only when the text states it).
+                    "male_deaths": {"type": ["integer", "null"], "minimum": 0},
+                    "male_injuries": {"type": ["integer", "null"], "minimum": 0},
+                    "female_deaths": {"type": ["integer", "null"], "minimum": 0},
+                    "female_injuries": {"type": ["integer", "null"], "minimum": 0},
+                    "children_deaths": {"type": ["integer", "null"], "minimum": 0},
+                    "children_injuries": {"type": ["integer", "null"], "minimum": 0},
                     "evidence_span": {"type": ["string", "null"]},
                     "qualifier_text": {"type": ["string", "null"]},
                 },
@@ -1447,11 +1455,31 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                     evidence,
                     raw_message_id=raw_message_id,
                 )
+                # A per-village breakdown stands only if this village's own evidence
+                # span states that exact typed count; otherwise it stays null.
+                breakdown = {
+                    name: (
+                        value
+                        if value is not None
+                        and evidence_span
+                        and find_supporting_mention(evidence_span, name, value) is not None
+                        else None
+                    )
+                    for name, value in (
+                        ("male_deaths", entry.male_deaths),
+                        ("male_injuries", entry.male_injuries),
+                        ("female_deaths", entry.female_deaths),
+                        ("female_injuries", entry.female_injuries),
+                        ("children_deaths", entry.children_deaths),
+                        ("children_injuries", entry.children_injuries),
+                    )
+                }
                 validated.append(
                     entry.model_copy(
                         update={
                             "deaths": village_casualties.deaths,
                             "injuries": village_casualties.injuries,
+                            **breakdown,
                             "evidence_span": evidence_span,
                             "qualifier_text": qualifier_text,
                         }

@@ -524,6 +524,32 @@ def _candidate_values(source: ConnectedCasualtySource) -> tuple[ExtractionCasual
     return None, [], []
 
 
+def _shared_toll_owner_label(db: Session, incident: Incident, raw_message_id: int, aliases) -> str | None:
+    if not isinstance(db, Session) or incident.village_id is None:
+        return None
+    from app.news.models.bulletin_casualty_group import BulletinCasualtyGroup, CasualtyScope
+
+    group = db.scalar(
+        select(BulletinCasualtyGroup.id).where(
+            BulletinCasualtyGroup.raw_message_id == raw_message_id,
+            BulletinCasualtyGroup.casualty_scope == CasualtyScope.bulletin_aggregate,
+            BulletinCasualtyGroup.owner_village_id == incident.village_id,
+        )
+    )
+    if group is None:
+        return None
+    return next((label for _, village_id, label in aliases if village_id == incident.village_id), str(incident.village_id))
+
+
+def _attributed_village_or_owner(text, quote, aliases, source, *, qualifier_names, incident_village_id, shared_owner_label=None):
+    attributed = _attributed_village(text, quote, aliases, source, qualifier_names=qualifier_names, incident_village_id=incident_village_id)
+    if attributed is None and shared_owner_label is not None and incident_village_id is not None:
+        clause = _claim_clause(text, quote)
+        if len({item[2] for item in village_mentions(clause, aliases, qualifier_names)}) > 1:
+            return incident_village_id, shared_owner_label
+    return attributed
+
+
 def validate_incident_casualty_sources(db: Session, incident: Incident) -> CasualtyValidationResult:
     sources, aliases = connected_casualty_sources(db, incident), _village_catalog(db)
     qualifier_names = _qualifier_catalog(db)
@@ -536,6 +562,14 @@ def validate_incident_casualty_sources(db: Session, incident: Incident) -> Casua
         casualties, evidence, roles = _candidate_values(source)
         if not source.text.strip():
             continue
+        # Shared toll: the full figure belongs to the group owner (first village in
+        # the text). A clause naming several villages is the owner's claim; for
+        # every other village it stays an unattributed aggregate (null).
+        owner_label = _shared_toll_owner_label(db, incident, source.raw_message_id, aliases)
+
+        def attribute(*args, _owner_label=owner_label, **kwargs):
+            return _attributed_village_or_owner(*args, shared_owner_label=_owner_label, **kwargs)
+
         cleaned = strip_page_header(clean_message_text(source.text))
         cleaned_by_source[source.raw_message_id] = cleaned
         approximate_quotes.extend(_approximate_casualty_phrases(cleaned))
@@ -552,7 +586,7 @@ def validate_incident_casualty_sources(db: Session, incident: Incident) -> Casua
             if casualties is not None:
                 stored_sources += 1
             for unit_id, claim_text, values, _filled_from_people in deterministic_units:
-                attributed = _attributed_village(
+                attributed = attribute(
                     cleaned,
                     claim_text,
                     aliases,
@@ -593,7 +627,7 @@ def validate_incident_casualty_sources(db: Session, incident: Incident) -> Casua
             if not isinstance(quote, str) or quote not in cleaned:
                 continue
             claim_span = _claim_clause(cleaned, quote)
-            attributed = _attributed_village(cleaned, quote, aliases, source, qualifier_names=qualifier_names, incident_village_id=incident.village_id)
+            attributed = attribute(cleaned, quote, aliases, source, qualifier_names=qualifier_names, incident_village_id=incident.village_id)
             values = {key: None for key in INCIDENT_FIELDS + DETAIL_FIELDS}
             for key in ("deaths", "injuries"):
                 value = role.get(key)
@@ -614,7 +648,7 @@ def validate_incident_casualty_sources(db: Session, incident: Incident) -> Casua
             quote = _clean_evidence(cleaned, extraction_field, value, kept_by_field.get(extraction_field))
             if not quote or _is_subset_breakdown(quote, value):
                 continue
-            attributed = _attributed_village(cleaned, quote, aliases, source, qualifier_names=qualifier_names, incident_village_id=incident.village_id)
+            attributed = attribute(cleaned, quote, aliases, source, qualifier_names=qualifier_names, incident_village_id=incident.village_id)
             if attributed is None:
                 aggregate_quotes.append(quote)
                 continue
@@ -652,7 +686,7 @@ def validate_incident_casualty_sources(db: Session, incident: Incident) -> Casua
                     kind = next(iter(kinds)) if len(kinds) == 1 else None
             if kind not in {"deaths", "injuries"}:
                 continue
-            attributed = _attributed_village(
+            attributed = attribute(
                 cleaned,
                 mention.text,
                 aliases,
@@ -696,7 +730,7 @@ def validate_incident_casualty_sources(db: Session, incident: Incident) -> Casua
             if not candidates:
                 continue
             _, _, mention, claim_span = min(candidates, key=lambda item: (item[0], item[1]))
-            attributed = _attributed_village(cleaned, mention.text, aliases, source, qualifier_names=qualifier_names, incident_village_id=incident.village_id)
+            attributed = attribute(cleaned, mention.text, aliases, source, qualifier_names=qualifier_names, incident_village_id=incident.village_id)
             if attributed is None:
                 aggregate_quotes.append(claim_span)
                 continue

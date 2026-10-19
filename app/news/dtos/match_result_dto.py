@@ -22,6 +22,12 @@ class VillageMatchResult(BaseModel):
     village_role: VillageRole = VillageRole.target
     deaths: int | None = None
     injuries: int | None = None
+    male_deaths: int | None = None
+    male_injuries: int | None = None
+    female_deaths: int | None = None
+    female_injuries: int | None = None
+    children_deaths: int | None = None
+    children_injuries: int | None = None
     evidence_span: str | None = None
     matched_condition_id: int | None = None
     condition_confidence: float | None = None

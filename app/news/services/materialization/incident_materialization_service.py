@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.text_normalization import normalize_arabic_text
+from app.news.services.materialization.shared_toll import first_mention_village_ids
 from app.core.text_sanitizer import strip_emoji_and_pictographs
 from app.llm.dtos import (
     CasualtyScope,
@@ -390,7 +391,7 @@ class IncidentMaterializationService:
                 representative.id,
             )
             return []
-        self._ensure_bulletin_group(
+        shared_toll_owner = self._ensure_bulletin_group(
             representative,
             extraction,
             target_matches=target_matches,
@@ -431,14 +432,12 @@ class IncidentMaterializationService:
                 continue
             village_status = village_match.get("village_match_status")
             village_id = self._optional_int(village_match.get("matched_village_id"))
-            village_casualties = (
-                unit.casualties
-                if unit.casualties is not None
-                else self._casualties_for_village(
-                    extraction,
-                    village_match,
-                    is_multi_village=is_multi_village,
-                )
+            village_casualties = self._casualties_for_village(
+                extraction,
+                village_match,
+                is_multi_village=is_multi_village,
+                shared_toll_owner_village_id=shared_toll_owner,
+                precomputed=unit.casualties,
             )
             village_deaths = village_casualties.deaths
             village_injuries = village_casualties.injuries
@@ -827,6 +826,7 @@ class IncidentMaterializationService:
                 representative.id,
                 representative_raw_message_id,
             )
+            self._link_group_incidents(representative, created, enabled=shared_toll_owner is not None)
             return created
 
         if (
@@ -839,6 +839,7 @@ class IncidentMaterializationService:
             # already exists, so the message is complete rather than empty.
             self._mark_materialized(representative, fast_path=True)
             self.db.commit()
+            self._link_group_incidents(representative, created, enabled=shared_toll_owner is not None)
             return created
 
         if not created and representative.status == MessageStatus.parsed:
@@ -855,6 +856,7 @@ class IncidentMaterializationService:
                 reason,
             )
 
+        self._link_group_incidents(representative, created, enabled=shared_toll_owner is not None)
         return created
 
     def _merge_into_canonical(
@@ -1559,7 +1561,7 @@ class IncidentMaterializationService:
             target_count=len(target_matches),
             category_casualties_suppressed=category_casualties_suppressed,
         )
-        self._ensure_bulletin_group(
+        shared_toll_owner = self._ensure_bulletin_group(
             representative,
             extraction,
             target_matches=target_matches,
@@ -1606,6 +1608,7 @@ class IncidentMaterializationService:
                 extraction,
                 village_match,
                 is_multi_village=is_multi_village,
+                shared_toll_owner_village_id=shared_toll_owner,
             )
             village_deaths = village_casualties.deaths
             village_injuries = village_casualties.injuries
@@ -1878,6 +1881,7 @@ class IncidentMaterializationService:
             representative.materialized_at = datetime.now(timezone.utc)
             self.db.commit()
 
+        self._link_group_incidents(representative, created, enabled=shared_toll_owner is not None)
         return created
 
     # ------------------------------------------------------------------
@@ -2213,15 +2217,17 @@ class IncidentMaterializationService:
         injuries = cls._optional_int(village_match.get("injuries"))
         location_count = cls._optional_int(village_match.get("event_location_count"))
         if location_count is not None and location_count > 1:
-            if deaths is None and injuries is None:
+            breakdown = cls._village_breakdown(village_match)
+            if deaths is None and injuries is None and not breakdown:
                 return ExtractionCasualties()
-            return sub_event.casualties.model_copy(
-                update={
-                    "deaths": deaths,
-                    "total_deaths": deaths,
-                    "injuries": injuries,
-                    "total_injuries": injuries,
-                }
+            # Fresh object: the sub-event's own demographics describe the whole
+            # event and are never copied onto each local village row.
+            return ExtractionCasualties(
+                deaths=deaths,
+                total_deaths=deaths,
+                injuries=injuries,
+                total_injuries=injuries,
+                **breakdown,
             )
         return sub_event.casualties.model_copy(
             update={
@@ -2241,18 +2247,31 @@ class IncidentMaterializationService:
         village_match: dict[str, Any],
         *,
         is_multi_village: bool,
+        shared_toll_owner_village_id: int | None = None,
+        precomputed: ExtractionCasualties | None = None,
     ) -> ExtractionCasualties:
         event_index = cls._optional_int(village_match.get("event_index"))
-        if event_index is not None and 0 <= event_index < len(extraction.sub_events):
-            return cls._event_casualties_for_match(
+        if precomputed is not None:
+            casualties = precomputed
+        elif event_index is not None and 0 <= event_index < len(extraction.sub_events):
+            casualties = cls._event_casualties_for_match(
                 extraction.sub_events[event_index],
                 village_match,
             )
-        return cls._root_casualties_for_village(
-            village_match,
-            extraction.casualties,
-            is_multi_village=is_multi_village,
-        )
+        else:
+            casualties = cls._root_casualties_for_village(
+                village_match,
+                extraction.casualties,
+                is_multi_village=is_multi_village,
+            )
+        if shared_toll_owner_village_id is not None:
+            return cls._shared_toll_casualties(
+                extraction,
+                village_match,
+                owner_village_id=shared_toll_owner_village_id,
+                current=casualties,
+            )
+        return casualties
 
     @classmethod
     def _event_hash_suffix(
@@ -2283,7 +2302,11 @@ class IncidentMaterializationService:
             # Null is meaningful here: it means this village had no explicit
             # local count. Falling back to the bulletin total would recreate
             # the multi-village casualty misattribution bug.
-            return ExtractionCasualties(deaths=deaths, injuries=injuries)
+            return ExtractionCasualties(
+                deaths=deaths,
+                injuries=injuries,
+                **IncidentMaterializationService._village_breakdown(village_match),
+            )
         return casualties.model_copy(
             update={
                 "deaths": deaths if deaths is not None else casualties.deaths,
@@ -2291,36 +2314,105 @@ class IncidentMaterializationService:
             }
         )
 
+    _BREAKDOWN_FIELDS = (
+        "male_deaths",
+        "male_injuries",
+        "female_deaths",
+        "female_injuries",
+        "children_deaths",
+        "children_injuries",
+    )
+
+    @classmethod
+    def _village_breakdown(cls, village_match: dict[str, Any]) -> dict[str, int]:
+        """Typed per-village counts the text stated for this village (non-null only)."""
+        return {
+            field: value
+            for field in cls._BREAKDOWN_FIELDS
+            if isinstance((value := village_match.get(field)), int)
+            and not isinstance(value, bool)
+        }
+
+    @staticmethod
+    def _first_mention_village_ids(
+        raw_text: str | None,
+        target_matches: list[dict[str, Any]],
+    ) -> list[int]:
+        return first_mention_village_ids(raw_text, target_matches)
+
     def _ensure_bulletin_group(
         self,
         representative: RawMessage,
         extraction: ExtractionResult,
         *,
         target_matches: list[dict[str, Any]],
-    ) -> None:
+    ) -> int | None:
+        """Create/refresh the shared-toll group; return the owner village id.
+
+        The owner is the first village mentioned in the text. It alone carries the
+        full toll; the other rows stay null.
+        """
         if (
             extraction.casualty_scope != CasualtyScope.bulletin_aggregate
             or len(target_matches) <= 1
         ):
-            return
-        village_ids = sorted(
-            {
-                village_id
-                for item in target_matches
-                if isinstance((village_id := item.get("matched_village_id")), int)
-                and not isinstance(village_id, bool)
-            }
+            return None
+        village_ids = self._first_mention_village_ids(
+            representative.raw_text, target_matches
         )
         if len(village_ids) <= 1:
-            return
-        self.bulletin_groups.create_for_message(
+            return None
+        group = self.bulletin_groups.create_for_message(
             raw_message_id=representative.id,
             village_ids=village_ids,
+            owner_village_id=village_ids[0],
             casualty_scope=StoredCasualtyScope.bulletin_aggregate,
             total_deaths=extraction.casualties.total_deaths,
             total_injuries=extraction.casualties.total_injuries,
             created_at=representative.message_datetime,
         )
+        owner = getattr(group, "owner_village_id", None)
+        return owner if isinstance(owner, int) and not isinstance(owner, bool) else village_ids[0]
+
+    @staticmethod
+    def _shared_toll_casualties(
+        extraction: ExtractionResult,
+        village_match: dict[str, Any],
+        *,
+        owner_village_id: int,
+        current: ExtractionCasualties,
+    ) -> ExtractionCasualties:
+        """Owner row: the whole shared toll plus any stated breakdown. Others: null."""
+        village_id = IncidentMaterializationService._optional_int(
+            village_match.get("matched_village_id")
+        )
+        if village_id != owner_village_id:
+            # Members keep only what the text states for that village itself.
+            return ExtractionCasualties(
+                deaths=current.deaths if current.deaths is not None else None,
+                injuries=current.injuries if current.injuries is not None else None,
+            )
+        root = extraction.casualties
+        values = root.model_dump(mode="python")
+        for total, base in (("total_deaths", "deaths"), ("total_injuries", "injuries")):
+            figure = values[total] if values[total] is not None else values[base]
+            values[total] = figure
+            values[base] = figure
+        return ExtractionCasualties.model_validate(values)
+
+    def _link_group_incidents(
+        self,
+        representative: RawMessage,
+        incidents: list[Incident],
+        *,
+        enabled: bool,
+    ) -> None:
+        if not enabled:
+            return
+        group = self.bulletin_groups.get_by_raw_message_id(representative.id)
+        if group is not None and incidents:
+            self.bulletin_groups.link_incidents(group, incidents)
+            self.db.commit()
 
     def _record_scope_downgrade(
         self,

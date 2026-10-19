@@ -407,12 +407,13 @@ def test_bulletin_aggregate_materializes_one_row_per_target_village() -> None:
 
     assert len(created) == 3
     assert {incident.village_id for incident in created} == {101, 102, 103}
-    assert {(incident.deaths, incident.injuries) for incident in created} == {
-        (None, None)
-    }
-    assert {
-        (incident.total_deaths, incident.total_injuries) for incident in created
-    } == {(None, None)}
+    # The shared toll is on the first village named in the text (ميس الجبل) only.
+    by_village = {incident.village_id: incident for incident in created}
+    assert (by_village[101].total_deaths, by_village[101].total_injuries) == (2, 6)
+    for member_id in (102, 103):
+        member = by_village[member_id]
+        assert (member.deaths, member.injuries) == (None, None)
+        assert (member.total_deaths, member.total_injuries) == (None, None)
 
 
 def test_locationless_multi_village_sub_events_are_flagged_not_multiplied() -> None:

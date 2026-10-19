@@ -36,6 +36,7 @@ from app.news.services.incident_details.casualty_status import (
     status_for_incident_row,
     target_location_count_from_extraction,
 )
+from app.news.services.materialization.shared_toll import first_mention_village_ids
 from app.news.services.materialization.verification_signals import casualty_review_reason
 from app.news.services.casualty_flag_evaluator import evaluate_casualty_flags_safely
 from app.news.services.dedup.dedup_matching_service import DedupMatchingService
@@ -201,15 +202,29 @@ class Tier2DetailFillService:
             target_count=len(target_village_ids),
             category_casualties_suppressed=category_casualties_suppressed,
         )
+        shared_toll_owner: int | None = None
         if is_multi_village_aggregate:
-            self.bulletin_groups.create_for_message(
+            # Text order (not sorted): the first village mentioned owns the toll.
+            ordered_ids = first_mention_village_ids(
+                raw_message.raw_text,
+                [
+                    item
+                    for item in (raw_message.match_result or {}).get("village_matches", [])
+                    if isinstance(item, dict) and item.get("village_role", "target") == "target"
+                ],
+            ) or target_village_ids
+            group = self.bulletin_groups.create_for_message(
                 raw_message_id=raw_message_id,
-                village_ids=target_village_ids,
+                village_ids=ordered_ids,
+                owner_village_id=ordered_ids[0],
                 casualty_scope=StoredCasualtyScope.bulletin_aggregate,
                 total_deaths=extraction.casualties.total_deaths,
                 total_injuries=extraction.casualties.total_injuries,
                 created_at=raw_message.message_datetime,
             )
+            owner = getattr(group, "owner_village_id", None)
+            shared_toll_owner = owner if isinstance(owner, int) else ordered_ids[0]
+            self.bulletin_groups.link_incidents(group, incidents)
 
         embedding = raw_message.content_embedding
 
@@ -234,7 +249,9 @@ class Tier2DetailFillService:
                 "children_d": root.children_deaths,
                 "children_i": root.children_injuries,
             }
-            if is_multi_village:
+            if is_multi_village and incident.village_id != shared_toll_owner:
+                # The owner of a shared toll keeps the breakdown the text states
+                # for it; every other row stays null.
                 root_demographics = {
                     field: None for field in root_demographics
                 }
@@ -265,7 +282,9 @@ class Tier2DetailFillService:
             # Multi-village rows keep fast-path's per-village counts: copying the
             # bulletin-wide root toll recreated the multi-village casualty
             # misattribution bug, whatever casualty_scope said.
-            if not is_multi_village:
+            # The shared-toll owner is the one multi-village row allowed to hold the
+            # bulletin figure (target C); members stay null.
+            if not is_multi_village or incident.village_id == shared_toll_owner:
                 if incident.deaths is None and root.deaths is not None:
                     incident.deaths = root.deaths
                 if incident.injuries is None and root.injuries is not None:
@@ -274,6 +293,19 @@ class Tier2DetailFillService:
                     incident.total_deaths = total_deaths
                 if incident.total_injuries is None and total_injuries is not None:
                     incident.total_injuries = total_injuries
+            if is_multi_village and incident.village_id == shared_toll_owner:
+                # An aggregate bulletin states its figure as the root TOTAL; the
+                # owner row takes it as both the count and the total.
+                if root.total_deaths is not None:
+                    if incident.deaths is None:
+                        incident.deaths = root.total_deaths
+                    if incident.total_deaths is None:
+                        incident.total_deaths = root.total_deaths
+                if root.total_injuries is not None:
+                    if incident.injuries is None:
+                        incident.injuries = root.total_injuries
+                    if incident.total_injuries is None:
+                        incident.total_injuries = root.total_injuries
             self._fill_missing_matches(
                 incident,
                 getattr(raw_message, "match_result", None),

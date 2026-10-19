@@ -21,6 +21,9 @@ def test_create_for_message_refreshes_existing_unresolved_totals() -> None:
         breakdown_status=BulletinBreakdownStatus.n_a,
         window_expires_at=None,
         updated_at=None,
+        total_overridden=False,
+        owner_village_id=None,
+        id=1,
     )
     repository = BulletinCasualtyGroupRepository(db)
     repository.get_by_raw_message_id = MagicMock(return_value=existing)  # type: ignore[method-assign]
@@ -36,9 +39,10 @@ def test_create_for_message_refreshes_existing_unresolved_totals() -> None:
     )
 
     assert result is existing
-    assert existing.village_ids == [10, 20]
+    # First-mention order is preserved (never sorted); the first village owns the toll.
+    assert existing.village_ids == [20, 10]
+    assert existing.owner_village_id == 20
     assert (existing.total_deaths, existing.total_injuries) == (4, 20)
     assert existing.breakdown_status == BulletinBreakdownStatus.pending
     assert existing.window_expires_at is not None
-    db.add.assert_called_once_with(existing)
-    db.flush.assert_called_once()
+    db.add.assert_any_call(existing)

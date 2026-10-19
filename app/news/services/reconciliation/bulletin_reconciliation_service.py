@@ -80,7 +80,14 @@ class BulletinReconciliationService:
                     summary["pending"] += 1
                     summary["succeeded"] += 1
                     continue
-                self._apply_candidate(group, candidate, resolved_at=now)
+                resolved = self._apply_candidate(group, candidate, resolved_at=now)
+                if not resolved:
+                    # Owner-held shared toll: the later per-village report is only
+                    # a proposal for an admin; the group stays open.
+                    self.db.commit()
+                    summary["pending"] += 1
+                    summary["succeeded"] += 1
+                    continue
                 for incident in self.db.scalars(select(Incident).where(
                     Incident.raw_message_id == group.raw_message_id,
                     Incident.is_deleted.is_(False),
@@ -150,7 +157,18 @@ class BulletinReconciliationService:
         candidate: RawMessage,
         *,
         resolved_at: datetime,
-    ) -> None:
+    ) -> bool:
+        """Apply a later per-village report. Returns False when it was only recorded.
+
+        A shared toll has an owner (the first village in the text) that holds the
+        full figure. Reconciliation never moves it off the owner and never writes
+        numbers onto the member rows by itself: the later report is recorded as a
+        proposal on the owner and the incident is flagged for an admin, who
+        distributes the toll (the group total must stay equal unless overridden).
+        """
+        if group.owner_village_id is not None:
+            self._record_owner_proposal(group, candidate)
+            return False
         group_ids = {
             village_id
             for village_id in group.village_ids
@@ -231,6 +249,62 @@ class BulletinReconciliationService:
             resolved_at=resolved_at,
             resolved_by_raw_message_id=candidate.id,
         )
+        return True
+
+    def _record_owner_proposal(
+        self,
+        group: BulletinCasualtyGroup,
+        candidate: RawMessage,
+    ) -> None:
+        owner = (
+            self.db.get(Incident, group.owner_incident_id)
+            if group.owner_incident_id is not None
+            else None
+        )
+        if owner is None or owner.is_deleted:
+            return
+        updates = self.db.scalars(
+            select(IncidentUpdate).where(
+                IncidentUpdate.incident_id == owner.id,
+                IncidentUpdate.action == UpdateAction.pipeline_merge,
+            )
+        ).all()
+        if any(
+            isinstance(update.new_values, dict)
+            and update.new_values.get("bulletin_group_id") == group.id
+            and update.new_values.get("proposed_by_raw_message_id") == candidate.id
+            for update in updates
+        ):
+            return
+        group_ids = {v for v in group.village_ids if isinstance(v, int) and not isinstance(v, bool)}
+        proposed = {
+            str(village_id): {"deaths": deaths, "injuries": injuries}
+            for village_id, (deaths, injuries) in self._exact_counts(candidate, group_ids).items()
+        }
+        self.db.add(
+            IncidentUpdate(
+                incident_id=owner.id,
+                action=UpdateAction.pipeline_merge,
+                old_values={
+                    "total_deaths": owner.total_deaths,
+                    "total_injuries": owner.total_injuries,
+                },
+                new_values={
+                    "reason_code": "reconciled_proposal",
+                    "bulletin_group_id": group.id,
+                    "proposed_by_raw_message_id": candidate.id,
+                    "proposed_breakdown": proposed,
+                    "note": "Later per-village report recorded; the shared toll stays on the owner until an admin distributes it.",
+                },
+                performed_by=None,
+            )
+        )
+        owner.verification_status = "needs_verification"
+        owner.verification_reason = (
+            "صدر خبر لاحق يحدد الأعداد لكل بلدة. تم الإبقاء على الحصيلة الإجمالية على هذا السجل، "
+            "يرجى مراجعة توزيع الأعداد يدوياً."
+        )
+        self.db.add(owner)
 
     def _already_applied(
         self,

@@ -1,5 +1,25 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-19 - Shared toll on the first village mentioned (Step 3)
+
+- **Real example:** `قصف على صور والنبطية وبيروت والحصيلة 10 شهداء` (shape of the
+  existing shared-bulletin groups): every village row used to be created with null
+  casualties and the toll lived only on the bulletin group, so a casualty filter or
+  a sum missed it and the villages had no owner for an admin to resolve.
+- **Rule changed:** `tier1_multi_village.md` (rules 1 and 5 plus two examples). Village
+  entries follow text order. For `bulletin_aggregate` the full toll and any stated
+  breakdown go on the owner row (first village in the text); members stay null;
+  all rows are flagged and linked to one `bulletin_casualty_groups` row with
+  `owner_village_id`/`owner_incident_id` and ordered `bulletin_casualty_group_members`.
+  `VillageRoleEntry` gained optional per-village breakdown fields (validated against
+  the entry's own evidence span). A sub-event's demographics are no longer copied onto
+  every local event. Reconciliation never moves the toll off the owner: a later
+  per-village report is recorded as a proposal for an admin.
+- **Regression:** `tests/test_shared_toll_owner.py` (case 1 per-village exact, case 2
+  owner = Tyre with the others null, reprocessing keeps the owner, recompute keeps the
+  toll on the owner, reconciliation proposal) and the updated aggregate tests in
+  `tests/test_incident_materialization_service.py` / `tests/test_sub_event_splitting.py`.
+
 ## 2026-10-19 - Merge provenance guard for casualty values (Step 2)
 
 - **Real examples:** Qantara (raw 45002 own, 45022 linked, story/revision merge),

@@ -20,12 +20,13 @@ Load when the message appears to name multiple target locations.
 
 - Every sub-event `evidence_span` must be a complete grounded clause or phrase connecting the action to the target. Never emit a generic action token such as `قصف` or a bare location such as `وادي الحجير`; those fragments are not standalone event evidence.
 
-1. Each target village gets its own `village_roles` entry.
+1. Each target village gets its own `village_roles` entry. List the entries in the order the villages are FIRST MENTIONED in the message text (not alphabetical, not by importance): the first-mentioned village owns a shared toll (rule 5).
 2. Route endpoints (`طريق X - Y`, `طريق عام X - Y`, or `طريق بين X و Y`): emit both `X` and `Y` as separate target locations (and inside the same `sub_event.locations` if a single route action occurred). Plain `بين X و Y`, `بين بلدتي X و Y`, and `في المنطقة الواقعة بين X و Y` without a road/route are one fuzzy target attributed to the first village with the other village kept as review context.
 3. For non-route dash phrases that are clearly a village pair, emit both villages. For neighborhood or qualifier dash phrases, emit the target village only and preserve the qualifier; `حي X - المدينة` resolves to the city after the dash unless a known full-neighborhood alias exists.
 4. Copy per-village deaths/injuries only from that village's sentence or phrase. Singular/dual words are exact counts for that village: «النبطية الفوقا: شهيدان وجريحان» → deaths=2, injuries=2; «الريحان قضاء جزين: شهيد» → deaths=1. «مصابين» is plural, not a count.
    A number in parentheses after a place in a strike/shelling/demolition list is a strike count, never casualties: «عمليات التفجير: • حولا (٢)» → deaths null. Vague wording («وقوع إصابات»، «عشرات الجرحى»، «سقوط ضحايا») stays null.
-5. If only a shared toll is given covering all villages → `casualty_scope: bulletin_aggregate`.
+5. If only a shared toll is given covering all villages → `casualty_scope: bulletin_aggregate`. Downstream the FULL toll (and any breakdown the text states for it) is placed on one row only, the owner = the first village mentioned in the text; the other villages keep null casualties and are all flagged for verification. Do not split the toll across villages and do not repeat it on each `village_roles` entry.
+   Per-village breakdown: when the text types a village's own count («بيروت: 4 شهداء بينهم طفلان»), you may fill that entry's `male_deaths`/`male_injuries`/`female_deaths`/`female_injuries`/`children_deaths`/`children_injuries` (optional, `null` when not stated for that village; never guessed, never copied from another village or from the message-level breakdown). The `evidence_span` of the entry must contain the typed count.
 6. Put shared figures in `casualties.total_deaths` / `total_injuries`; leave `deaths`/`injuries` null.
 7. `casualty_scope_evidence` must be the full clause showing whether the toll is shared or per-village.
 8. A genuine bulletin aggregate still keeps every named target village as its own `village_roles` entry. Downstream materialization must create one incident row per named target village, linked by the same bulletin casualty group; never collapse an aggregate bulletin to only the first village.
@@ -67,6 +68,12 @@ Correct output: `action_description="multiple actions across 2 villages"` plus t
 
 **Several connector-led events with separate tolls:**
 «قصف في بلدة ميس الجبل أدى إلى إصابة 4 أشخاص دون وفيات. أيضا غارة أخرى في بلدة ياطر أسفرت عن شهيد و2 جرحى. وفي سياق متصل استهداف في بلدة عيترون أدى إلى إصابة 1» → three `sub_events`, one for each village, with local casualties only for that village.
+
+**Per-village numbers with a typed breakdown:**
+«قصف على صور والنبطية وبيروت: صور 2 شهداء، النبطية 3 جرحى، بيروت 4 شهداء بينهم طفلان» → `per_village_exact`; `صور` deaths=2, `النبطية` injuries=3, `بيروت` deaths=4 with `children_deaths=2`. No casualty verification.
+
+**Shared total only (owner = first village in the text):**
+«قصف على صور والنبطية وبيروت والحصيلة 10 شهداء» → three entries in text order (`صور`, `النبطية`, `بيروت`), `casualty_scope=bulletin_aggregate`, `casualties.total_deaths=10`. Downstream: `صور` carries 10, `النبطية` and `بيروت` stay null, all three are flagged.
 
 **Shared aggregate across a list:**
 «سلسلة غارات طالت بلدات عيتا الشعب ورامية ورميش، ما أسفر عن سقوط شهيدين و6 جرحى في حصيلة إجمالية» → three target `village_roles`, `casualty_scope=bulletin_aggregate`, `casualties.total_deaths=2`, `casualties.total_injuries=6`, and no per-village `deaths`/`injuries`.
