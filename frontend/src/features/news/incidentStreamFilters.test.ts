@@ -28,4 +28,16 @@ describe("live incident stream filter", () => {
     expect(matchesFilters(event, { limit: 150, eventDateFrom: "2026-09-01", eventDateTo: "2026-09-28" })).toBe(true);
     expect(matchesFilters(event, { limit: 150, verificationStatus: "needs_verification" })).toBe(false);
   });
+
+  it.each([
+    { total_deaths: 1 },
+    { casualty_status: "count_missing" },
+    { verification_types: ["casualty_aggregate_toll"] },
+  ])("includes casualty-bearing events: %o", (fields) => {
+    expect(matchesFilters({ ...event, ...fields } as IncidentStreamEvent, { limit: 150, hasCasualties: true })).toBe(true);
+  });
+
+  it("excludes header-only false positives", () => {
+    expect(matchesFilters({ ...event, casualty_status: "none_mentioned", verification_types: [] } as IncidentStreamEvent, { limit: 150, hasCasualties: true })).toBe(false);
+  });
 });

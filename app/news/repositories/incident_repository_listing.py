@@ -120,6 +120,9 @@ class IncidentRepositoryListQueryMixin:
                 or_(
                     func.coalesce(Incident.total_deaths, 0) > 0,
                     func.coalesce(Incident.total_injuries, 0) > 0,
+                    Incident.casualty_status == "count_missing",
+                    cls._visible_flag_exists("count_missing"),
+                    cls._visible_flag_exists("aggregate_no_breakdown"),
                 )
             )
         if params.summary_added:

@@ -52,7 +52,13 @@ export const matchesFilters = (incident: IncidentStreamEvent, filters: IncidentF
   if (filters.duplicateOnly && incident.duplicate_flag !== "possible") return false;
   if (
     filters.hasCasualties &&
-    !((incident.total_deaths ?? 0) > 0 || (incident.total_injuries ?? 0) > 0)
+    !(
+      (incident.total_deaths ?? 0) > 0 ||
+      (incident.total_injuries ?? 0) > 0 ||
+      incident.casualty_status === "count_missing" ||
+      incident.verification_types?.includes("casualty_missing_number") ||
+      incident.verification_types?.includes("casualty_aggregate_toll")
+    )
   ) {
     return false;
   }
