@@ -77,6 +77,10 @@ from app.news.services.incident_details.incident_detail_edit_service import (
     IncidentDetailEditError,
     apply_incident_detail_edits,
 )
+from app.news.services.incident_details.admin_casualty_validation import (
+    DEMOGRAPHIC_FIELDS,
+    validate_admin_casualties,
+)
 from app.news.services.incident_details.casualty_transition_merge import (
     apply_casualty_transitions,
     parse_casualty_transitions,
@@ -1073,18 +1077,45 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
         # Partial update: only fields the client sent are touched. The UI never
         # sends source_link_2, and a full dump used to null it on every save.
         submitted = payload.model_dump(exclude={"version"}, exclude_unset=True)
+        demographic_values = {
+            field: submitted.pop(field) for field in DEMOGRAPHIC_FIELDS if field in submitted
+        }
+        detail = None
+        if demographic_values or any(field in submitted for field in ("total_deaths", "total_injuries")):
+            detail = self.db.scalar(
+                select(IncidentDetail).where(IncidentDetail.incident_id == incident_id).with_for_update()
+            )
+            if detail is None and demographic_values:
+                detail = IncidentDetail(incident_id=incident_id)
+                self.db.add(detail)
+                self.db.flush()
+        if demographic_values or any(field in submitted for field in ("total_deaths", "total_injuries")):
+            validate_admin_casualties({
+                "total_deaths": submitted.get("total_deaths", incident.total_deaths),
+                "total_injuries": submitted.get("total_injuries", incident.total_injuries),
+                **{
+                    field: demographic_values.get(field, getattr(detail, field, None))
+                    for field in DEMOGRAPHIC_FIELDS
+                },
+            })
         before = {field: getattr(incident, field) for field in submitted}
+        before.update({field: getattr(detail, field) for field in demographic_values})
         for field, value in submitted.items():
             if field in text_fields:
                 value = self._sanitize_optional_text(value)
                 if field == "khabar" and value is None:
                     value = ""
             setattr(incident, field, value)
+        for field, value in demographic_values.items():
+            setattr(detail, field, value)
         if "event_date" in submitted:
             incident.event_month = payload.event_date.strftime("%B")
         old_values, new_values = changed_fields(
             before,
-            {field: getattr(incident, field) for field in submitted},
+            {
+                **{field: getattr(incident, field) for field in submitted},
+                **{field: getattr(detail, field) for field in demographic_values},
+            },
         )
         if new_values:
             record_incident_change(
@@ -1097,7 +1128,7 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
             )
         incident.locked_by_user_id = None
         incident.edit_lock_expires_at = None
-        if any(field in submitted for field in ("deaths", "injuries", "total_deaths", "total_injuries")):
+        if demographic_values or any(field in submitted for field in ("deaths", "injuries", "total_deaths", "total_injuries")):
             evaluate_casualty_flags_safely(self.db, incident.id)
         self.db.commit()
         return self.get_by_id(incident_id)

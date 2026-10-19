@@ -13,18 +13,39 @@ from sqlalchemy.orm import Session
 from app.accounts.models import User
 from app.api.deps import require_admin
 from app.core.database import get_db
-from app.news.models import Incident, IncidentUpdate, RawMessage, UpdateAction
+from app.news.models import (
+    BulletinCasualtyGroup,
+    BulletinCasualtyGroupMember,
+    Incident,
+    IncidentDetail,
+    IncidentUpdate,
+    RawMessage,
+    UpdateAction,
+)
+from app.news.models.bulletin_casualty_group import BulletinBreakdownStatus
 from app.news.models.incident_verification_flag import IncidentVerificationFlag
 from app.news.repositories.incident_verification_flag_repository import IncidentVerificationFlagRepository
 from app.news.services.casualty_flag_evaluator import CasualtyFlagEvaluator
+from app.news.services.incident_details.admin_casualty_validation import (
+    AdminCasualtyValidationError,
+    CASUALTY_EDIT_FIELDS,
+    DEMOGRAPHIC_FIELDS,
+    validate_admin_casualties,
+)
 
 router = APIRouter(prefix="/api/verification-flags", tags=["verification-flags"])
 
 
 class ResolutionEntry(BaseModel):
     incident_id: UUID
-    deaths: int | float | None = None
-    injuries: int | float | None = None
+    total_deaths: int | float | None = None
+    total_injuries: int | float | None = None
+    male_d: int | float | None = None
+    female_d: int | float | None = None
+    children_d: int | float | None = None
+    male_i: int | float | None = None
+    female_i: int | float | None = None
+    children_i: int | float | None = None
     unknown_deaths: bool = False
     unknown_injuries: bool = False
 
@@ -33,6 +54,8 @@ class ResolveRequest(BaseModel):
     entries: list[ResolutionEntry] = Field(default_factory=list)
     confirmed_unknown: bool = False
     note: str | None = None
+    override: bool = False
+    override_reason: str | None = None
 
 class DismissRequest(BaseModel):
     reason: str = Field(min_length=3)
@@ -129,7 +152,7 @@ def _open_types(flag: IncidentVerificationFlag) -> set[str]:
 def _entry_fields(entry: ResolutionEntry, *, legacy_unknown: bool = False) -> set[str]:
     return {
         kind for kind in ("deaths", "injuries")
-        if getattr(entry, kind) is not None or getattr(entry, f"unknown_{kind}") or legacy_unknown
+        if getattr(entry, f"total_{kind}") is not None or getattr(entry, f"unknown_{kind}") or legacy_unknown
     }
 
 
@@ -197,11 +220,19 @@ def get_flag(flag_id: UUID, db: Session = Depends(get_db), _user: User = Depends
             "message_snapshot_used": message is None and bool(snapshot_text),
             "group_size": len(group_flags), "incident_ids": sibling_ids[:50],
             "locations": list(dict.fromkeys(name for i in incidents if (name := CasualtyFlagEvaluator._location_name(i))))[:10],
-            "incidents": [{"id": i.id, "village_name": CasualtyFlagEvaluator._location_name(i), "deaths": i.deaths, "injuries": i.injuries} for i in incidents]}
+            "incidents": [{
+                "id": i.id,
+                "village_name": CasualtyFlagEvaluator._location_name(i),
+                "total_deaths": i.total_deaths,
+                "total_injuries": i.total_injuries,
+                **{
+                    field: getattr(getattr(i, "details", None), field, None)
+                    for field in DEMOGRAPHIC_FIELDS
+                },
+            } for i in incidents]}
 
 
-@router.post("/{flag_id}/resolve")
-def resolve(flag_id: UUID, payload: ResolveRequest, db: Session = Depends(get_db), user: User = Depends(require_admin)) -> dict:
+def _legacy_resolve(flag_id: UUID, payload: ResolveRequest, db: Session, user: User) -> dict:
     repo = IncidentVerificationFlagRepository(db)
     flag = repo.get_by_id(flag_id)
     if flag is None or flag.status != "open": raise HTTPException(404, "Open verification flag was not found.")
@@ -298,6 +329,212 @@ def resolve(flag_id: UUID, payload: ResolveRequest, db: Session = Depends(get_db
         if isinstance(totals.get(kind), int): remaining_total[kind] = max(totals[kind] - assigned[kind], 0)
     db.commit()
     return {"results": results, "totals": {kind: {"assigned": assigned[kind], "bulletin_total": totals.get(kind)} for kind in ("deaths", "injuries")}, "remaining_total": remaining_total}
+
+
+def _entry_values(entry: ResolutionEntry) -> dict[str, int | None]:
+    raw = entry.model_dump()
+    return {field: raw.get(field) for field in CASUALTY_EDIT_FIELDS}
+
+
+def _apply_casualty_values(
+    incident: Incident,
+    detail: IncidentDetail,
+    values: dict[str, int | None],
+) -> tuple[dict, dict]:
+    old = {
+        "total_deaths": incident.total_deaths,
+        "total_injuries": incident.total_injuries,
+        **{field: getattr(detail, field) for field in DEMOGRAPHIC_FIELDS},
+        "casualty_status": incident.casualty_status,
+        "casualty_deaths_status": incident.casualty_deaths_status,
+        "casualty_injuries_status": incident.casualty_injuries_status,
+        "verification_status": incident.verification_status,
+        "verification_reason": incident.verification_reason,
+    }
+    incident.total_deaths = values["total_deaths"]
+    incident.total_injuries = values["total_injuries"]
+    # Keep the legacy aggregate columns synchronized with the canonical totals.
+    incident.deaths = values["total_deaths"]
+    incident.injuries = values["total_injuries"]
+    for field in DEMOGRAPHIC_FIELDS:
+        setattr(detail, field, values[field])
+    incident.casualty_deaths_status = "exact" if values["total_deaths"] is not None else "none_mentioned"
+    incident.casualty_injuries_status = "exact" if values["total_injuries"] is not None else "none_mentioned"
+    incident.casualty_status = (
+        "exact" if values["total_deaths"] is not None or values["total_injuries"] is not None
+        else "none_mentioned"
+    )
+    incident.casualty_status_remaining_total = None
+    if old["casualty_status"] in {"count_missing", "aggregate_only"}:
+        incident.verification_status = "verified"
+        incident.verification_reason = None
+    new = {
+        "total_deaths": incident.total_deaths,
+        "total_injuries": incident.total_injuries,
+        **{field: getattr(detail, field) for field in DEMOGRAPHIC_FIELDS},
+        "casualty_status": incident.casualty_status,
+        "casualty_deaths_status": incident.casualty_deaths_status,
+        "casualty_injuries_status": incident.casualty_injuries_status,
+        "verification_status": incident.verification_status,
+        "verification_reason": incident.verification_reason,
+    }
+    return old, new
+
+
+def _distribution_errors(
+    values_by_incident: dict[UUID, dict[str, int | None]],
+    total_deaths: int | None,
+    total_injuries: int | None,
+    *,
+    override: bool,
+) -> tuple[dict[str, int], list[dict]]:
+    assigned = {
+        "total_deaths": sum(values["total_deaths"] or 0 for values in values_by_incident.values()),
+        "total_injuries": sum(values["total_injuries"] or 0 for values in values_by_incident.values()),
+    }
+    errors = []
+    for field, expected in (("total_deaths", total_deaths), ("total_injuries", total_injuries)):
+        if expected is not None and assigned[field] != expected and not override:
+            errors.append(_resolution_error(
+                None, field, "sum_mismatch",
+                f"مجموع الأعداد الموزعة ({assigned[field]}) لا يساوي إجمالي النشرة ({expected}).",
+            ))
+    return assigned, errors
+
+
+@router.post("/{flag_id}/resolve")
+def resolve(flag_id: UUID, payload: ResolveRequest, db: Session = Depends(get_db), user: User = Depends(require_admin)) -> dict:
+    repo = IncidentVerificationFlagRepository(db)
+    flag = repo.get_by_id(flag_id)
+    if flag is None or flag.status != "open":
+        raise HTTPException(404, "Open verification flag was not found.")
+
+    is_group = flag.reason_code == "aggregate_no_breakdown"
+    group = None
+    member_rows: list[BulletinCasualtyGroupMember] = []
+    if is_group:
+        member = db.scalar(select(BulletinCasualtyGroupMember).where(
+            BulletinCasualtyGroupMember.incident_id == flag.incident_id
+        ))
+        if member is None:
+            raise HTTPException(409, "This casualty group is no longer available.")
+        group = db.scalar(
+            select(BulletinCasualtyGroup)
+            .where(BulletinCasualtyGroup.id == member.group_id)
+            .with_for_update()
+        )
+        if group is None or group.breakdown_status != BulletinBreakdownStatus.pending:
+            raise HTTPException(409, "This casualty group was already resolved by another administrator.")
+        member_rows = list(db.scalars(
+            select(BulletinCasualtyGroupMember)
+            .where(BulletinCasualtyGroupMember.group_id == group.id)
+            .order_by(BulletinCasualtyGroupMember.ordinal)
+        ).all())
+        allowed = {row.incident_id for row in member_rows if row.incident_id is not None}
+    else:
+        allowed = {flag.incident_id}
+
+    entries = payload.entries
+    entry_ids = [entry.incident_id for entry in entries]
+    errors: list[dict] = []
+    if len(entry_ids) != len(set(entry_ids)):
+        errors.append(_resolution_error(None, "entries", "duplicate", "Each linked incident may appear only once."))
+    if set(entry_ids) != allowed:
+        errors.append(_resolution_error(None, "entries", "incomplete_group", "Submit casualty values for every linked incident in one request."))
+    if payload.override and not (payload.override_reason or "").strip():
+        errors.append(_resolution_error(None, "override_reason", "required", "An override reason is required."))
+    if not payload.override and (payload.override_reason or "").strip():
+        errors.append(_resolution_error(None, "override_reason", "unexpected", "Enable override before providing an override reason."))
+
+    validated: dict[UUID, dict[str, int | None]] = {}
+    for entry in entries:
+        raw = _entry_values(entry)
+        for field, value in raw.items():
+            if value is not None and (isinstance(value, bool) or not float(value).is_integer() or value < 0):
+                errors.append(_resolution_error(entry.incident_id, field, "invalid_integer", f"{field} must be a non-negative integer or null."))
+        if any(error["incident_id"] == str(entry.incident_id) for error in errors):
+            continue
+        try:
+            validated[entry.incident_id] = validate_admin_casualties({
+                field: int(value) if value is not None else None for field, value in raw.items()
+            })
+        except AdminCasualtyValidationError as exc:
+            errors.append(_resolution_error(entry.incident_id, exc.field, "invariant", str(exc)))
+
+    assigned, distribution_errors = _distribution_errors(
+        validated,
+        getattr(group, "total_deaths", None),
+        getattr(group, "total_injuries", None),
+        override=payload.override,
+    )
+    if group is not None:
+        errors.extend(distribution_errors)
+    if errors:
+        return _validation_response(errors)
+
+    incidents = list(db.scalars(
+        select(Incident).where(Incident.id.in_(allowed)).with_for_update()
+    ).all())
+    if {incident.id for incident in incidents} != allowed:
+        raise HTTPException(404, "One or more linked incidents were not found.")
+    details = {
+        detail.incident_id: detail for detail in db.scalars(
+            select(IncidentDetail).where(IncidentDetail.incident_id.in_(allowed)).with_for_update()
+        ).all()
+    }
+    now = datetime.now(timezone.utc)
+    results: list[dict] = []
+    for incident in incidents:
+        detail = details.get(incident.id)
+        if detail is None:
+            detail = IncidentDetail(incident_id=incident.id)
+            db.add(detail)
+        old, new = _apply_casualty_values(incident, detail, validated[incident.id])
+        db.add(IncidentUpdate(
+            incident_id=incident.id,
+            action=UpdateAction.edit if old != new else UpdateAction.status_change,
+            old_values=old,
+            new_values={**new, "casualty_resolution": "linked_group" if is_group else "count_missing"},
+            performed_by=user.id,
+        ))
+        for open_flag in repo.list_open_for_incident(incident.id):
+            if open_flag.flag_type == flag.flag_type and open_flag.reason_code == flag.reason_code:
+                repo.resolve_flag(open_flag.id, user.id, {
+                    "entry": next(entry.model_dump(mode="json") for entry in entries if entry.incident_id == incident.id),
+                    "note": payload.note,
+                    "override": payload.override,
+                    "override_reason": payload.override_reason,
+                })
+        results.append({"incident_id": incident.id, "resolved": True, "still_open": False, "reason": "all_values_saved"})
+
+    if group is not None:
+        group.breakdown_status = BulletinBreakdownStatus.resolved
+        group.resolved_at = now
+        group.total_overridden = payload.override
+        group.total_override_reason = payload.override_reason.strip() if payload.override_reason else None
+        group.total_override_by_user_id = user.id if payload.override else None
+        group.total_override_at = now if payload.override else None
+        if payload.override:
+            owner_id = group.owner_incident_id or incidents[0].id
+            db.add(IncidentUpdate(
+                incident_id=owner_id,
+                action=UpdateAction.status_change,
+                old_values={"group_total_deaths": group.total_deaths, "group_total_injuries": group.total_injuries, "total_overridden": False},
+                new_values={"assigned_total_deaths": assigned["total_deaths"], "assigned_total_injuries": assigned["total_injuries"], "total_overridden": True, "override_reason": group.total_override_reason},
+                performed_by=user.id,
+            ))
+    db.flush()
+    for incident in incidents:
+        CasualtyFlagEvaluator(db, enabled=True).evaluate_incident(incident.id)
+    db.commit()
+    return {
+        "results": results,
+        "totals": {
+            "deaths": {"assigned": assigned["total_deaths"], "bulletin_total": getattr(group, "total_deaths", None)},
+            "injuries": {"assigned": assigned["total_injuries"], "bulletin_total": getattr(group, "total_injuries", None)},
+        },
+        "remaining_total": {"deaths": 0, "injuries": 0} if group is not None else {},
+    }
 
 
 @router.post("/{flag_id}/dismiss")

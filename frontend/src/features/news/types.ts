@@ -249,8 +249,12 @@ export type IncidentUpdatePayload = {
   source_link: string | null;
   total_deaths: number | null;
   total_injuries: number | null;
-  deaths: number | null;
-  injuries: number | null;
+  male_d: number | null;
+  female_d: number | null;
+  children_d: number | null;
+  male_i: number | null;
+  female_i: number | null;
+  children_i: number | null;
 };
 
 export type IncidentCreatePayload = {

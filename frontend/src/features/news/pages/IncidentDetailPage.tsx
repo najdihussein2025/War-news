@@ -191,11 +191,11 @@ export const IncidentDetailPage = () => {
             } catch (error) {
               setActionError(isAxiosError(error) && error.response?.status === 409
                 ? "This incident is currently being edited by another administrator."
-                : "Could not lock this incident for deletion.");
+                : "Could not lock this incident for rejection.");
               await refetch();
             }
           }}>
-            Delete
+            Reject news
           </Button>
         </div>
       </div>
@@ -815,8 +815,12 @@ export const IncidentDetailPage = () => {
                   source_link: nullable("source_link"),
                   total_deaths: numberOrNull("total_deaths"),
                   total_injuries: numberOrNull("total_injuries"),
-                  deaths: numberOrNull("deaths"),
-                  injuries: numberOrNull("injuries"),
+                  male_d: numberOrNull("male_d"),
+                  female_d: numberOrNull("female_d"),
+                  children_d: numberOrNull("children_d"),
+                  male_i: numberOrNull("male_i"),
+                  female_i: numberOrNull("female_i"),
+                  children_i: numberOrNull("children_i"),
                 });
                 await refetch();
                 setIsEditing(false);
@@ -838,8 +842,8 @@ export const IncidentDetailPage = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               <div><Label htmlFor="incident-worker">Data worker</Label><Input id="incident-worker" name="worker_name" defaultValue={incident.worker_name ?? ""} /></div>
               <div><Label htmlFor="incident-source-1">Source link 1</Label><Input id="incident-source-1" name="source_link" type="url" defaultValue={incident.source_link ?? ""} /></div>
-              {(["total_deaths", "total_injuries", "deaths", "injuries"] as const).map((field) => (
-                <div key={field}><Label htmlFor={`incident-${field}`}>{field.split("_").map((word) => word[0].toUpperCase() + word.slice(1)).join(" ")}</Label><Input id={`incident-${field}`} name={field} type="number" min="0" defaultValue={incident[field] ?? ""} /></div>
+              {(["male_d", "female_d", "children_d", "total_deaths", "male_i", "female_i", "children_i", "total_injuries"] as const).map((field) => (
+                <div key={field}><Label htmlFor={`incident-${field}`}>{field.split("_").map((word) => word[0].toUpperCase() + word.slice(1)).join(" ")}</Label><Input id={`incident-${field}`} name={field} type="number" min="0" defaultValue={field in incident.casualty_demographics ? incident.casualty_demographics[field as keyof typeof incident.casualty_demographics] ?? "" : incident[field as "total_deaths" | "total_injuries"] ?? ""} /></div>
               ))}
             </div>
             {actionError ? <p className="text-small text-danger">{actionError}</p> : null}
@@ -857,9 +861,9 @@ export const IncidentDetailPage = () => {
 
       {isDeleting ? (
         <ConfirmDialog
-          title="Delete incident?"
-          description="This incident will be removed from the active records."
-          confirmLabel="Delete incident"
+          title="Move this news to Rejected News?"
+          description="This removes the incident from the active records and keeps the source report in Rejected News, where it can be restored later."
+          confirmLabel="Reject news"
           destructive
           isLoading={isSaving}
           onCancel={async () => {
@@ -874,9 +878,9 @@ export const IncidentDetailPage = () => {
             setIsSaving(true);
             try {
               await deleteIncident(incidentId, openedVersion ?? incident.version);
-              navigate(incidentsPath, { replace: true });
+              navigate(`${roleBase}/rejected-news`, { replace: true });
             } catch {
-              setActionError("Could not delete the incident. Please try again.");
+              setActionError("Could not move this news to Rejected News. Please try again.");
               setIsDeleting(false);
             } finally {
               setIsSaving(false);

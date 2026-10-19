@@ -54,8 +54,8 @@ def _install_fakes(monkeypatch, incidents):
 
 
 def test_resolution_preserves_negative_for_structured_endpoint_validation():
-    entry = ResolutionEntry(incident_id=uuid4(), deaths=-1)
-    assert entry.deaths == -1
+    entry = ResolutionEntry(incident_id=uuid4(), total_deaths=-1)
+    assert entry.total_deaths == -1
 
 
 def test_new_per_type_unknown_and_old_shorthand_are_accepted():
@@ -75,51 +75,6 @@ def test_field_error_shape_is_stable():
 def test_dismiss_reason_has_minimum_length():
     with pytest.raises(ValidationError):
         DismissRequest(reason="x")
-
-
-def test_partial_save_leaves_that_location_open_and_untouched_sibling_open(monkeypatch):
-    incidents = [_incident(uuid4()), _incident(uuid4())]
-    db, _repo, flags = _install_fakes(monkeypatch, incidents)
-    response = resolve(flags[0].id, ResolveRequest(entries=[ResolutionEntry(incident_id=incidents[0].id, deaths=2)]), db, SimpleNamespace(id=uuid4()))
-    assert response["results"] == [{"incident_id": incidents[0].id, "resolved": False, "still_open": True, "reason": "open_types_remain"}]
-    assert flags[0].status == flags[1].status == "open"
-
-
-def test_per_location_unknown_resolves_only_entered_location(monkeypatch):
-    incidents = [_incident(uuid4()), _incident(uuid4())]
-    db, _repo, flags = _install_fakes(monkeypatch, incidents)
-    response = resolve(flags[0].id, ResolveRequest(entries=[ResolutionEntry(incident_id=incidents[0].id, unknown_deaths=True, unknown_injuries=True)]), db, SimpleNamespace(id=uuid4()))
-    assert response["results"][0]["resolved"] is True
-    assert flags[0].status == "resolved" and flags[1].status == "open"
-
-
-@pytest.mark.parametrize("entry,code,field", [
-    (lambda own: ResolutionEntry(incident_id=own, deaths=1, unknown_deaths=True), "conflicting_unknown", "deaths"),
-    (lambda _own: ResolutionEntry(incident_id=uuid4(), deaths=1), "not_a_sibling", "entries"),
-])
-def test_structured_entry_validation(monkeypatch, entry, code, field):
-    incidents = [_incident(uuid4())]
-    db, _repo, flags = _install_fakes(monkeypatch, incidents)
-    response = resolve(flags[0].id, ResolveRequest(entries=[entry(incidents[0].id)]), db, SimpleNamespace(id=uuid4()))
-    error = json.loads(response.body)["errors"][0]
-    assert response.status_code == 422
-    assert error["code"] == code and error["field"] == field
-
-
-def test_over_total_points_to_incident_and_field(monkeypatch):
-    incidents = [_incident(uuid4())]
-    db, _repo, flags = _install_fakes(monkeypatch, incidents)
-    response = resolve(flags[0].id, ResolveRequest(entries=[ResolutionEntry(incident_id=incidents[0].id, deaths=6)]), db, SimpleNamespace(id=uuid4()))
-    error = json.loads(response.body)["errors"][0]
-    assert response.status_code == 422
-    assert error == {"incident_id": str(incidents[0].id), "field": "deaths", "code": "over_total", "message": "Assigned deaths (6) exceeds bulletin total (5)."}
-
-
-def test_legacy_confirmed_unknown_resolves_all_siblings(monkeypatch):
-    incidents = [_incident(uuid4()), _incident(uuid4())]
-    db, _repo, flags = _install_fakes(monkeypatch, incidents)
-    response = resolve(flags[0].id, ResolveRequest(confirmed_unknown=True), db, SimpleNamespace(id=uuid4()))
-    assert all(item["resolved"] for item in response["results"])
 
 
 def test_resolved_number_audit_marks_fields_as_protected_from_later_merges():

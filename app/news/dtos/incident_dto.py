@@ -349,6 +349,12 @@ class IncidentUpdateDTO(BaseModel):
     total_injuries: int | None = Field(default=None, ge=0)
     deaths: int | None = Field(default=None, ge=0)
     injuries: int | None = Field(default=None, ge=0)
+    male_d: int | None = Field(default=None, ge=0)
+    female_d: int | None = Field(default=None, ge=0)
+    children_d: int | None = Field(default=None, ge=0)
+    male_i: int | None = Field(default=None, ge=0)
+    female_i: int | None = Field(default=None, ge=0)
+    children_i: int | None = Field(default=None, ge=0)
 
 
 class IncidentCreateDTO(BaseModel):

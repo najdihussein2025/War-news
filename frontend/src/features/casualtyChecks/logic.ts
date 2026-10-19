@@ -1,4 +1,4 @@
-import type { CasualtyFlagFilters, CasualtyFlagStatus, CasualtyKind, ResolutionEntry, ResolveFieldError } from "./types";
+import type { CasualtyField, CasualtyFlagFilters, CasualtyFlagStatus, ResolutionEntry, ResolveFieldError } from "./types";
 
 const statuses: CasualtyFlagStatus[] = ["open", "resolved", "dismissed", "auto_cleared"];
 
@@ -25,12 +25,13 @@ export const filtersToSearch = (filters: CasualtyFlagFilters, selected?: string)
   return params;
 };
 
-export type AllocationValues = Record<string, Partial<Record<CasualtyKind, string>>>;
+export const casualtyFields: CasualtyField[] = ["male_d", "female_d", "children_d", "total_deaths", "male_i", "female_i", "children_i", "total_injuries"];
+export type AllocationValues = Record<string, Partial<Record<CasualtyField, string>>>;
 
-export const assignedTotal = (values: AllocationValues, kind: CasualtyKind) =>
+export const assignedTotal = (values: AllocationValues, kind: CasualtyField) =>
   Object.values(values).reduce((sum, row) => sum + (row[kind] === undefined || row[kind] === "" ? 0 : Number(row[kind])), 0);
 
-export const isOverTotal = (values: AllocationValues, kind: CasualtyKind, total: number | null | undefined) =>
+export const isOverTotal = (values: AllocationValues, kind: CasualtyField, total: number | null | undefined) =>
   typeof total === "number" && assignedTotal(values, kind) > total;
 
 // Sibling locations of an aggregate toll that this save did not resolve, in panel order.
@@ -49,15 +50,13 @@ export const dismissReasonError = (reason: string) => reason.trim().length < 3 ?
 export const canSubmitResolution = (confirmedUnknown: boolean, entryCount: number, overTotal: boolean, unknownLocationCount = 0) =>
   !overTotal && (confirmedUnknown || entryCount > 0 || unknownLocationCount > 0);
 
-export const buildResolutionEntries = (values: AllocationValues, unknown: Record<string, Partial<Record<CasualtyKind, boolean>>>): ResolutionEntry[] => {
-  const incidentIds = new Set([...Object.keys(values), ...Object.keys(unknown)]);
+export const buildResolutionEntries = (values: AllocationValues): ResolutionEntry[] => {
+  const incidentIds = new Set(Object.keys(values));
   return [...incidentIds].flatMap((incident_id) => {
     const row = values[incident_id] ?? {};
-    const markers = unknown[incident_id] ?? {};
     const entry: ResolutionEntry = { incident_id };
-    for (const kind of ["deaths", "injuries"] as const) {
-      if (markers[kind]) entry[`unknown_${kind}`] = true;
-      else if (row[kind] !== undefined && row[kind] !== "") entry[kind] = Number(row[kind]);
+    for (const kind of casualtyFields) {
+      if (row[kind] !== undefined && row[kind] !== "") entry[kind] = Number(row[kind]);
     }
     return Object.keys(entry).length > 1 ? [entry] : [];
   });
@@ -69,7 +68,7 @@ export const mapFieldErrors = (error: unknown): { fields: Record<string, string>
   const fields: Record<string, string> = {};
   const summary: string[] = [];
   for (const item of errors) {
-    if (item.incident_id && (item.field === "deaths" || item.field === "injuries")) fields[`${item.incident_id}.${item.field}`] = item.message;
+    if (item.incident_id && casualtyFields.includes(item.field as CasualtyField)) fields[`${item.incident_id}.${item.field}`] = item.message;
     else summary.push(item.message);
   }
   return { fields, summary };

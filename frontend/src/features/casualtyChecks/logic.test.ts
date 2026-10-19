@@ -9,11 +9,11 @@ describe("casualty check logic", () => {
   });
 
   it("calculates allocation totals and detects an over-allocation", () => {
-    const values = { a: { deaths: "2", injuries: "" }, b: { deaths: "3", injuries: "4" } };
-    expect(assignedTotal(values, "deaths")).toBe(5);
-    expect(assignedTotal(values, "injuries")).toBe(4);
-    expect(isOverTotal(values, "deaths", 4)).toBe(true);
-    expect(isOverTotal(values, "deaths", 5)).toBe(false);
+    const values = { a: { total_deaths: "2", total_injuries: "" }, b: { total_deaths: "3", total_injuries: "4" } };
+    expect(assignedTotal(values, "total_deaths")).toBe(5);
+    expect(assignedTotal(values, "total_injuries")).toBe(4);
+    expect(isOverTotal(values, "total_deaths", 4)).toBe(true);
+    expect(isOverTotal(values, "total_deaths", 5)).toBe(false);
     expect(canSubmitResolution(false, 2, true)).toBe(false);
   });
 
@@ -32,22 +32,18 @@ describe("casualty check logic", () => {
     expect(mapApiError({ response: { data: { detail: "Assigned deaths exceeds total" } } })).toBe("Assigned deaths exceeds total");
   });
 
-  it("builds partial entries with per-type unknown markers", () => {
-    expect(buildResolutionEntries(
-      { tyre: { deaths: "2" }, beirut: {} },
-      { tyre: { injuries: true }, beirut: { deaths: true } },
-    )).toEqual([
-      { incident_id: "tyre", deaths: 2, unknown_injuries: true },
-      { incident_id: "beirut", unknown_deaths: true },
+  it("builds entries containing all supplied casualty dimensions", () => {
+    expect(buildResolutionEntries({ tyre: { total_deaths: "2", male_d: "1", children_d: "1" } })).toEqual([
+      { incident_id: "tyre", total_deaths: 2, male_d: 1, children_d: 1 },
     ]);
   });
 
   it("maps structured validation errors to incident fields and summary", () => {
     const mapped = mapFieldErrors({ response: { data: { errors: [
-      { incident_id: "tyre", field: "deaths", code: "over_total", message: "Too many deaths." },
+      { incident_id: "tyre", field: "total_deaths", code: "over_total", message: "Too many deaths." },
       { incident_id: null, field: "entries", code: "required", message: "Add an entry." },
     ] } } });
-    expect(mapped.fields).toEqual({ "tyre.deaths": "Too many deaths." });
+    expect(mapped.fields).toEqual({ "tyre.total_deaths": "Too many deaths." });
     expect(mapped.summary).toEqual(["Add an entry."]);
   });
 });
