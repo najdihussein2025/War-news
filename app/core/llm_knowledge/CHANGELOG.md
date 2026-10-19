@@ -1141,3 +1141,9 @@ Updated:
 - A headline toll is a cross-check against explicitly scoped parts, never an
   additional toll. Matching parts are retained without stacking; a disagreement
   becomes an aggregate/review conflict and is not distributed among villages.
+## 2026-10-19 — Arabic casualty allocation review messages
+
+- Real example: `10 شهداء و5 جرحى` across صور، النبطية، بيروت without a per-village split.
+- Rule: show an Arabic owner message on the first village, an owner-referencing message on each member, and an Arabic instruction for numberless mentions.
+- Regression: `tests/test_casualty_verification_messages.py` covers totals and all three messages.
+

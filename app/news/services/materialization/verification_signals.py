@@ -24,6 +24,27 @@ CATEGORY_CASUALTY_REVIEW_REASON = (
 )
 
 
+def natural_casualty_total(deaths: int | None, injuries: int | None) -> str:
+    parts = []
+    if isinstance(deaths, int) and deaths > 0:
+        parts.append(f"{deaths} شهداء")
+    if isinstance(injuries, int) and injuries > 0:
+        parts.append(f"{injuries} جرحى")
+    return " و".join(parts) or "إصابات"
+
+
+def count_missing_reason() -> str:
+    return "الخبر ذكر وقوع إصابات دون تحديد العدد. يرجى التحقق وإدخال الأعداد يدوياً."
+
+
+def shared_toll_owner_reason(total: str, villages: str) -> str:
+    return f"الخبر ذكر حصيلة إجمالية ({total}) لعدة بلدات ({villages}) دون تحديد العدد لكل بلدة. تم وضع الحصيلة كاملة على هذا السجل مؤقتاً. يرجى التحقق وتوزيع الأعداد يدوياً."
+
+
+def shared_toll_member_reason(total: str, owner_village: str) -> str:
+    return f"هذه البلدة مشمولة بحصيلة إجمالية ({total}) مسجلة على سجل {owner_village}. يرجى التحقق من عدد الإصابات في هذه البلدة وتعديله يدوياً."
+
+
 def _get(value: object, key: str, default: Any = None) -> Any:
     if isinstance(value, dict):
         return value.get(key, default)

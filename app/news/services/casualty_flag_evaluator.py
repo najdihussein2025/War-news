@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.news.models import Incident, IncidentUpdate, RawMessage
+from app.news.services.materialization.verification_signals import count_missing_reason, natural_casualty_total, shared_toll_member_reason, shared_toll_owner_reason
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +71,7 @@ class CasualtyFlagEvaluator:
                     kind: getattr(incident, kind)
                     for kind in ("deaths", "injuries") if kind not in missing
                 },
-                "summary": f"{label} reported but no exact number: «{evidence or ''}»",
+                "summary": count_missing_reason(),
             }
         remaining = dict(incident.casualty_status_remaining_total or {})
         if incident.casualty_status == "aggregate_only" and any(
@@ -98,7 +99,7 @@ class CasualtyFlagEvaluator:
                 "remaining_total": remaining,
                 "sibling_incident_ids": sibling_ids,
                 "source_message_id": incident.raw_message_id,
-                "summary": self._aggregate_summary(totals, siblings),
+                "summary": self._aggregate_summary(totals, siblings, incident),
             }
 
         for reason, flag in open_by_reason.items():
@@ -202,10 +203,13 @@ class CasualtyFlagEvaluator:
         return item.village_display_name or getattr(getattr(item, "village", None), "ref_name_en", None)
 
     @classmethod
-    def _aggregate_summary(cls, totals: dict[str, int | None], siblings: list[Incident]) -> str:
-        parts = [f"{value} {kind}" for kind, value in totals.items() if isinstance(value, int)]
-        locations = ", ".join(cls._location_name(item) or "Unknown" for item in siblings)
-        return f"Total of {' and '.join(parts) or 'casualties'} reported across {locations} with no per-location breakdown"
+    def _aggregate_summary(cls, totals: dict[str, int | None], siblings: list[Incident], incident: Incident) -> str:
+        owner = siblings[0] if siblings else incident
+        total = natural_casualty_total(totals.get("deaths"), totals.get("injuries"))
+        if incident.id == owner.id:
+            villages = "، ".join(cls._location_name(item) or "بلدة غير معروفة" for item in siblings)
+            return shared_toll_owner_reason(total, villages)
+        return shared_toll_member_reason(total, cls._location_name(owner) or "البلدة الأولى")
 
     @staticmethod
     def _log(incident: Incident, decision: str, reason: str) -> None:

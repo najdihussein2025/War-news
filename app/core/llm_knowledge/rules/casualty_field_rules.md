@@ -1,5 +1,10 @@
 # Casualty field rules
 
+Numberless mentions and shared multi-village tolls use Arabic review messages
+built from stored totals and villages. The first-mentioned village is the
+temporary owner; linked members name that owner. These messages never infer a
+count.
+
 This file is authoritative for incident casualty fields. `null` means unknown
 or unstated; `0` is permitted only when the source explicitly states that no
 casualties of that type occurred.
