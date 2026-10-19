@@ -53,6 +53,17 @@ def test_bare_plural_and_vague_injury_wording_is_count_missing() -> None:
         assert result.status == "count_missing"
 
 
+def test_numberless_injury_phrases_keep_counts_null_and_are_not_dropped() -> None:
+    for text in ("سقوط إصابات جراء القصف", "عدد من الجرحى جراء الغارة"):
+        result = derive_casualty_status(
+            text,
+            ExtractionCasualties(),
+            target_location_count=1,
+        )
+        assert result.status == "count_missing"
+        assert result.injuries_status == "count_missing"
+
+
 def test_dual_count_filled_for_one_location_is_exact() -> None:
     result = derive_casualty_status(
         "وزارة الصحة: شهيدان في غارة استهدفت دراجة نارية في كفررمان",

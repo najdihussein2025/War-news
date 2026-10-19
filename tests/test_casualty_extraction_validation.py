@@ -6,6 +6,7 @@ from app.news.services.incident_details.casualty_extraction_validation import (
 from app.news.services.incident_details.casualty_gender_evidence import (
     reject_unproven_demographics,
 )
+from app.news.services.incident_details.casualty_status import derive_casualty_status
 
 
 def test_header_evidence_is_dropped_from_cleaned_body():
@@ -64,3 +65,15 @@ def test_breakdown_sum_raises_total_and_negative_is_dropped():
     assert values.total_injuries == 3
     assert values.female_injuries is None
     assert {item["reason"] for item in adjustments} == {"negative_count_dropped", "raised_to_breakdown_sum"}
+
+
+def test_numberless_injury_status_survives_validation():
+    values, _, dropped = validate_casualty_evidence(
+        "سقوط إصابات جراء القصف",
+        ExtractionCasualties(),
+        [],
+    )
+    status = derive_casualty_status("سقوط إصابات جراء القصف", values, target_location_count=1)
+    assert values.injuries is None and values.total_injuries is None
+    assert dropped == []
+    assert status.status == status.injuries_status == "count_missing"
