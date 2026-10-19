@@ -59,5 +59,6 @@ def test_rule_file_is_not_duplicated(path: Path) -> None:
 
 def test_guard_detects_the_original_corruption() -> None:
     assert REPLACED_TEXT.search('such as "?? ?????? ?????? ?????"')
-    assert MOJIBAKE.search("described `ØªÙ…Ø´ÙŠØ·` / sweeping")
+    corrupted = "تمشيط".encode("utf-8").decode("cp1252")
+    assert MOJIBAKE.search(f"described `{corrupted}` / sweeping")
     assert not MOJIBAKE.search("described `تمشيط` / sweeping")

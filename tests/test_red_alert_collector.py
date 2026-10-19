@@ -487,11 +487,11 @@ def test_matches_village_from_plain_text() -> None:
 
 
 def test_focused_red_zone_ocr_with_multiple_villages_is_not_single_place() -> None:
-    arnoun = _village(15, "Ø£Ø±Ù†ÙˆÙ†", caza_en="Nabatiye")
-    mayfadoun = _village(16, "Ù…ÙŠÙØ¯ÙˆÙ†", caza_en="Nabatiye")
+    arnoun = _village(15, "أرنون", caza_en="Nabatiye")
+    mayfadoun = _village(16, "ميفدون", caza_en="Nabatiye")
 
     matched = match_village(
-        f"map labels outside circle {RED_ZONE_OCR_MARKER} Ø£Ø±Ù†ÙˆÙ† Ù…ÙŠÙØ¯ÙˆÙ†",
+        f"map labels outside circle {RED_ZONE_OCR_MARKER} أرنون ميفدون",
         [arnoun, mayfadoun],
     )
 

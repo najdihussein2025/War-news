@@ -324,7 +324,7 @@ def test_clean_resolved_merge_clears_verification_reason() -> None:
             source_name="CNRS Webhook",
             origin_account=None,
             source_platform=None,
-            raw_text="Ø£ØµÙŠØ¨ Ø´Ø®ØµØ§Ù† ÙÙŠ Ø§Ù„Ø­Ø§Ø¯Ø«.",
+            raw_text="أصيب شخصان في الحادث.",
         )
     )
     repo = IncidentRepository(db)  # type: ignore[arg-type]

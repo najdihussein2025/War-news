@@ -4,130 +4,130 @@
     {"alias_text":"يحمر الشقيف","parent_acs_code":71394,"note":"Summary bulletin alias -> Yahmor Nabatieh.","confidence":"confirmed","evidence":"2026-10-08 candidate review."},
     {"alias_text":"دوحه كفرمان","parent_acs_code":71133,"note":"Summary bulletin source variant -> Kfar Roummane.","confidence":"confirmed","evidence":"2026-10-08 candidate review."},
     {
-        "alias_text": "Ø§Ù„Ù†Ø¨Ø·ÙŠØ©",
+        "alias_text": "النبطية",
         "parent_acs_code": 71111,
         "note": "Bare city/caza-seat mention â†’ Nabatieh Et-Tahta (not a new village row).",
         "confidence": "proposed",
-        "evidence": "recon 2026-09-07: Ø§Ù„Ù†Ø¨Ø·ÙŠØ© fuzzy-matched Douair (543) at 0.615 via Ø§Ù„-suffix trap"
+        "evidence": "recon 2026-09-07: النبطية fuzzy-matched Douair (543) at 0.615 via ال-suffix trap"
     },
     {
-        "alias_text": "Ù…Ø¯ÙŠÙ†Ø© Ø§Ù„Ù†Ø¨Ø·ÙŠØ©",
+        "alias_text": "مدينة النبطية",
         "parent_acs_code": 71111,
         "note": "Explicit city phrasing â†’ Nabatieh Et-Tahta.",
         "confidence": "proposed",
-        "evidence": "recon 2026-09-07: Ù…Ø¯ÙŠÙ†Ø© Ø§Ù„Ù†Ø¨Ø·ÙŠØ© fuzzy-matched Zibdine (1529) at 0.474"
+        "evidence": "recon 2026-09-07: مدينة النبطية fuzzy-matched Zibdine (1529) at 0.474"
     },
     {
-        "alias_text": "Ø­ÙŠ Ø§Ù„Ù…Ø³Ù„Ø®",
+        "alias_text": "حي المسلخ",
         "parent_acs_code": 71111,
         "note": "Nabatiyeh-city neighborhood â†’ parent city seat (Et-Tahta), not Masqa.",
         "confidence": "proposed",
-        "evidence": "recon 2026-09-07 maslakh cluster; Masqa (995) is Ø§Ù„Ù…ØªÙ†/Ø¬Ø¨Ù„ Ù„Ø¨Ù†Ø§Ù†"
+        "evidence": "recon 2026-09-07 maslakh cluster; Masqa (995) is المتن/جبل لبنان"
     },
     {
-        "alias_text": "Ø§Ù„Ù…Ø³Ù„Ø®",
+        "alias_text": "المسلخ",
         "parent_acs_code": 71111,
-        "note": "Extractor often strips Ø­ÙŠ; same parent as Ø­ÙŠ Ø§Ù„Ù…Ø³Ù„Ø®.",
+        "note": "Extractor often strips حي; same parent as حي المسلخ.",
         "confidence": "proposed",
-        "evidence": "recon: extracted raw_village_text=Ø§Ù„Ù…Ø³Ù„Ø® â†’ Masqa 0.40"
+        "evidence": "recon: extracted raw_village_text=المسلخ → Masqa 0.40"
     },
     {
-        "alias_text": "Ù…Ø­ÙŠØ· Ø§Ù„Ù†Ø¨Ø·ÙŠØ© Ø§Ù„ÙÙˆÙ‚Ø§",
+        "alias_text": "محيط النبطية الفوقا",
         "parent_acs_code": 71113,
         "note": "Descriptor+name compound seen splitting Houmine vs Douair; pin to El-Faouka.",
         "confidence": "proposed",
-        "evidence": "14d scope: identical Ù‚ØµÙ Ù…Ø­ÙŠØ· Ø§Ù„Ù†Ø¨Ø·ÙŠØ© Ø§Ù„ÙÙˆÙ‚Ø§ â†’ Houmine 703 vs Douair 543"
+        "evidence": "14d scope: identical قصف محيط النبطية الفوقا → Houmine 703 vs Douair 543"
     },
     {
-        "alias_text": "Ø¯ÙˆØ­Ø© ÙƒÙØ±Ø±Ù…Ø§Ù†",
+        "alias_text": "دوحة كفررمان",
         "parent_acs_code": 71133,
-        "note": "Neighborhood/compound of Kfar Roummane (Ø¯ÙˆØ­Ø© â€¦).",
+        "note": "Neighborhood/compound of Kfar Roummane (دوحة …).",
         "confidence": "proposed",
         "evidence": "89-pair backlog: 21 msgs, matched_low_confidence â†’ 851 at 0.43"
     },
     {
-        "alias_text": "ÙˆØ§Ø¯ÙŠ Ø²Ø¨Ù‚ÙŠÙ†",
+        "alias_text": "وادي زبقين",
         "parent_acs_code": 62286,
         "note": "Valley-of-village compound â†’ Zebqine.",
         "confidence": "proposed",
         "evidence": "89-pair backlog: 9 msgs, matched_low_confidence â†’ 1523 at 0.55"
     },
     {
-        "alias_text": "Ø­Ø±Ø´ ÙƒÙˆÙ†ÙŠÙ†",
+        "alias_text": "حرش كونين",
         "parent_acs_code": 72251,
         "note": "Grove descriptor + village â†’ Kounine.",
         "confidence": "proposed",
         "evidence": "89-pair backlog: 3 msgs; descriptor strip still pending"
     },
     {
-        "alias_text": "Ø­Ø±Ø´ Ø¹Ù„ÙŠ Ø§Ù„Ø·Ø§Ù‡Ø±",
+        "alias_text": "حرش علي الطاهر",
         "parent_acs_code": 71115,
         "note": "Grove descriptor + village â†’ Aali Et-Taher.",
         "confidence": "proposed",
         "evidence": "89-pair backlog: 3 msgs"
     },
     {
-        "alias_text": "Ù…Ø­ÙŠØ· Ø§Ù„Ù…Ù†ØµÙˆØ±ÙŠ",
+        "alias_text": "محيط المنصوري",
         "parent_acs_code": 62296,
-        "note": "Outskirts phrasing â†’ Mansouri Sour (same pattern as Ù…Ø­ÙŠØ· Ø§Ù„Ù†Ø¨Ø·ÙŠØ© Ø§Ù„ÙÙˆÙ‚Ø§).",
+        "note": "Outskirts phrasing → Mansouri Sour (same pattern as محيط النبطية الفوقا).",
         "confidence": "proposed",
-        "evidence": "89-pair backlog: Ø§Ù„Ù…Ù†ØµÙˆØ±ÙŠ is top non-Nabatiyeh mention (26 msgs); fuzzy Ù…Ø­ÙŠØ· Ø§Ù„Ù…Ù†ØµÙˆØ±ÙŠ â†’ 976 at 0.64"
+        "evidence": "89-pair backlog: المنصوري is top non-Nabatiyeh mention (26 msgs); fuzzy محيط المنصوري → 976 at 0.64"
     },
     {
-        "alias_text": "Ø£Ø·Ø±Ø§Ù Ø§Ù„Ù…Ù†ØµÙˆØ±ÙŠ",
+        "alias_text": "أطراف المنصوري",
         "parent_acs_code": 62296,
         "note": "Outskirts phrasing â†’ Mansouri Sour.",
         "confidence": "proposed",
-        "evidence": "common bulletin phrasing paired with Ø§Ù„Ù…Ù†ØµÙˆØ±ÙŠ in daily summaries"
+        "evidence": "common bulletin phrasing paired with المنصوري in daily summaries"
     },
     {
-        "alias_text": "Ù…Ø­ÙŠØ· Ø¹Ù„ÙŠ Ø§Ù„Ø·Ø§Ù‡Ø±",
+        "alias_text": "محيط علي الطاهر",
         "parent_acs_code": 71115,
         "note": "Outskirts phrasing â†’ Aali Et-Taher.",
         "confidence": "proposed",
-        "evidence": "89-pair backlog: Ø¹Ù„ÙŠ Ø§Ù„Ø·Ø§Ù‡Ø± appears in 10 msgs; same descriptor pattern"
+        "evidence": "89-pair backlog: علي الطاهر appears in 10 msgs; same descriptor pattern"
     },
     {
-        "alias_text": "Ø£Ø·Ø±Ø§Ù Ø¹Ù„ÙŠ Ø§Ù„Ø·Ø§Ù‡Ø±",
+        "alias_text": "أطراف علي الطاهر",
         "parent_acs_code": 71115,
         "note": "Outskirts phrasing â†’ Aali Et-Taher.",
         "confidence": "proposed",
-        "evidence": "common bulletin phrasing with Ø¹Ù„ÙŠ Ø§Ù„Ø·Ø§Ù‡Ø±"
+        "evidence": "common bulletin phrasing with علي الطاهر"
     },
     {
-        "alias_text": "Ø§Ù„Ù‚Ù†Ø·Ø±Ø©",
+        "alias_text": "القنطرة",
         "parent_acs_code": 73276,
-        "note": "South-Lebanon Ù‚Ù†Ø·Ø±Ø© (Marjayoun), not Akkar Qantarat Aakkar (ref has Ø§Ù„).",
+        "note": "South-Lebanon قنطرة (Marjayoun), not Akkar Qantarat Aakkar (ref has ال).",
         "confidence": "proposed",
-        "evidence": "89-pair backlog: 11 msgs matched id=1229 Akkar; ACS 73276 ref=Ù‚Ù†Ø·Ø±Ø© caza=Ù…Ø±Ø¬Ø¹ÙŠÙˆÙ†"
+        "evidence": "89-pair backlog: 11 msgs matched id=1229 Akkar; ACS 73276 ref=قنطرة caza=مرجعيون"
     },
     {
-        "alias_text": "Ø¹ÙŠÙ†Ø§Ø«Ø§",
+        "alias_text": "عيناثا",
         "parent_acs_code": 72119,
-        "note": "South-Lebanon Ainata (Bint Jbeil), not Metn Aaynab (Ø¹ÙŠÙ†Ø§Ø¨).",
+        "note": "South-Lebanon Ainata (Bint Jbeil), not Metn Aaynab (عيناب).",
         "confidence": "proposed",
-        "evidence": "89-pair backlog: 4 msgs matched_low_confidence â†’ 142 Aaynab; correct ACS 72119 Ø¹ÙŠÙ†Ø§ØªØ§ Ø¨Ù†Øª Ø¬Ø¨ÙŠÙ„"
+        "evidence": "89-pair backlog: 4 msgs matched_low_confidence → 142 Aaynab; correct ACS 72119 عيناتا بنت جبيل"
     },
     {
-        "alias_text": "Ø¹ÙŠÙ†Ø§ØªØ§",
+        "alias_text": "عيناتا",
         "parent_acs_code": 72119,
-        "note": "Spelling variant of Ø¹ÙŠÙ†Ø§Ø«Ø§ â†’ Aaynata Bent Jbayl (war-news default; Baalbek Ø¹ÙŠÙ†Ø§ØªØ§ also exists).",
+        "note": "Spelling variant of عيناثا → Aaynata Bent Jbayl (war-news default; Baalbek عيناتا also exists).",
         "confidence": "proposed",
-        "evidence": "same family as Ø¹ÙŠÙ†Ø§Ø«Ø§; war-news southern usage dominates the 14d backlog"
+        "evidence": "same family as عيناثا; war-news southern usage dominates the 14d backlog"
     },
     {
-        "alias_text": "Ø§Ù„Ù…Ø¬ÙŠØ¯ÙŠØ©",
+        "alias_text": "المجيدية",
         "parent_acs_code": 74177,
-        "note": "Majidiye Hasbaya, not MassaaoudiyÃ© (Akkar).",
+        "note": "Majidiye Hasbaya, not Massaaoudiyé (Akkar).",
         "confidence": "proposed",
-        "evidence": "89-pair backlog: 2 msgs matched_low_confidence â†’ 998 Ø§Ù„Ù…Ø³Ø¹ÙˆØ¯ÙŠØ©; ACS 74177 Ù…Ø¬ÙŠØ¯ÙŠØ© Ø­Ø§ØµØ¨ÙŠØ§"
+        "evidence": "89-pair backlog: 2 msgs matched_low_confidence → 998 المسعودية; ACS 74177 مجيدية حاصبيا"
     },
     {
-        "alias_text": "Ø­Ø§Ø±ÙˆÙ",
+        "alias_text": "حاروف",
         "parent_acs_code": 71331,
         "note": "Common Arabic spelling of Harouf En-Nabatiyeh; ACS ref_name_ar omits the internal alef.",
         "confidence": "proposed",
-        "evidence": "Confirmed road bulletin spelling Ø­Ø§Ø±ÙˆÙ; gazetteer ACS 71331 stores Ø­Ø±ÙˆÙ."
+        "evidence": "Confirmed road bulletin spelling حاروف; gazetteer ACS 71331 stores حروف."
     },
     {
         "alias_text": "وادي السلوقي",

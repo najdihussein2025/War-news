@@ -269,7 +269,7 @@ def test_repository_get_by_id_falls_back_to_external_message_id_when_source_name
         )
         condition = Condition(
             action_en=f"Condition {marker}",
-            action_ar=f"Ø­Ø§Ù„Ø© {marker}",
+            action_ar=f"حالة {marker}",
         )
         db.add_all([source, village, condition])
         db.flush()

@@ -203,5 +203,5 @@ def test_news_item_mentioning_summary_is_not_a_summary(monkeypatch):
 
 
 def test_intake_signature_and_return_shape_are_stable():
-    assert list(inspect.signature(intake_service.intake_summary).parameters) == ["session", "raw_message"]
+    assert list(inspect.signature(intake_service.intake_summary).parameters) == ["session", "raw_message", "crosscheck_enabled"]
     assert list(inspect.signature(routing.route_summary).parameters) == ["session", "message", "mode"]

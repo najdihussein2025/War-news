@@ -42,6 +42,8 @@ class SummaryWindow:
     evidence: str | None
     anchor_date: date
     note: str | None = None
+    source: str = "fallback"
+    window_invalid: bool = False
 
 
 @dataclass(frozen=True)
