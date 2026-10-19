@@ -569,6 +569,9 @@ def test_list_all_returns_casualties_summary_count() -> None:
     ).lower()
     assert "coalesce(incidents.total_deaths, 0) > 0" in summary_sql
     assert "coalesce(incidents.total_injuries, 0) > 0" in summary_sql
+    # Same shared rule as the list filter: demographic counts count, wording does not.
+    assert "incident_details.children_d" in summary_sql
+    assert "count_missing" not in summary_sql
 
 
 

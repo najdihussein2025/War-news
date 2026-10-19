@@ -29,6 +29,10 @@ class FakeSession:
     def execute(self, statement: TextClause, params: dict[str, str]) -> None:
         self.calls.append((str(statement), params))
 
+    def scalar(self, statement: object) -> bool:
+        # The shared casualties expression is evaluated by the database.
+        return True
+
 
 def test_notify_new_incident_publishes_expected_pg_notify_payload() -> None:
     session = FakeSession()
@@ -90,6 +94,7 @@ def test_notify_new_incident_publishes_expected_pg_notify_payload() -> None:
         "source_name": None,
         "total_deaths": 1,
         "total_injuries": 0,
+        "has_reported_casualties": True,
         "matched": True,
         "verification_status": "auto_processed",
         "verification_reason": None,

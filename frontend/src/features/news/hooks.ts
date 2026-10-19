@@ -50,18 +50,8 @@ export const matchesFilters = (incident: IncidentStreamEvent, filters: IncidentF
   if (filters.flaggedOnly && incident.duplicate_flag !== "possible" && incident.verification_status !== "needs_verification") return false;
   if (filters.verificationStatus && incident.verification_status !== filters.verificationStatus) return false;
   if (filters.duplicateOnly && incident.duplicate_flag !== "possible") return false;
-  if (
-    filters.hasCasualties &&
-    !(
-      (incident.total_deaths ?? 0) > 0 ||
-      (incident.total_injuries ?? 0) > 0 ||
-      incident.casualty_status === "count_missing" ||
-      incident.verification_types?.includes("casualty_missing_number") ||
-      incident.verification_types?.includes("casualty_aggregate_toll")
-    )
-  ) {
-    return false;
-  }
+  // The casualties rule lives in the backend; the stream carries its result.
+  if (filters.hasCasualties && !incident.has_reported_casualties) return false;
   return true;
 };
 
@@ -111,10 +101,9 @@ export const useIncidentStream = (filters: IncidentFilters) => {
             incident.verification_status === "needs_verification"
               ? current.needs_verification_count + 1
               : current.needs_verification_count,
-          casualties_count:
-            (incident.total_deaths ?? 0) > 0 || (incident.total_injuries ?? 0) > 0
-              ? current.casualties_count + 1
-              : current.casualties_count,
+          casualties_count: incident.has_reported_casualties
+            ? current.casualties_count + 1
+            : current.casualties_count,
         };
       });
     };

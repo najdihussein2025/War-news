@@ -49,6 +49,7 @@ from app.news.services.matching.condition_evidence_override import (
     condition_fallback_from_text,
 )
 from app.news.repositories.incident_repository import IncidentRepository
+from app.news.repositories.reported_casualties import has_reported_casualties_expression
 from app.news.repositories.emergency_organization_repository import (
     EmergencyOrganizationRepository,
 )
@@ -189,7 +190,26 @@ AMBIGUOUS_SUB_EVENT_SCOPE_REVIEW_REASON = (
 )
 
 
-def _new_incident_payload(incident: Incident) -> str:
+def _has_reported_casualties(db: Session, incident: Incident) -> bool:
+    """Evaluate the shared casualties rule in SQL so the stream cannot drift from the list."""
+    try:
+        with db.begin_nested():
+            return bool(
+                db.scalar(
+                    select(has_reported_casualties_expression()).where(
+                        Incident.id == incident.id
+                    )
+                )
+            )
+    except Exception:
+        logger.exception(
+            "Failed to evaluate has_reported_casualties for incident_id=%s",
+            incident.id,
+        )
+        return False
+
+
+def _new_incident_payload(incident: Incident, has_reported_casualties: bool = False) -> str:
     village = incident.village
     condition = incident.condition
     raw_message = incident.raw_message
@@ -233,6 +253,7 @@ def _new_incident_payload(incident: Incident) -> str:
         "source_name": raw_message.source_name if raw_message is not None else None,
         "total_deaths": incident.total_deaths,
         "total_injuries": incident.total_injuries,
+        "has_reported_casualties": has_reported_casualties,
         "matched": True,
         "verification_status": incident.verification_status,
         "verification_reason": incident.verification_reason,
@@ -260,7 +281,9 @@ def _new_incident_payload(incident: Incident) -> str:
 
 def _notify_new_incident(db: Session, incident: Incident) -> None:
     try:
-        payload = _new_incident_payload(incident)
+        payload = _new_incident_payload(
+            incident, _has_reported_casualties(db, incident)
+        )
         with db.begin_nested():
             db.execute(
                 text("SELECT pg_notify('new_incident', :payload)"),

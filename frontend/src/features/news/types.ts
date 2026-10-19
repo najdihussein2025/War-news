@@ -27,6 +27,7 @@ export type Incident = {
   killed?: number | null;
   injured?: number | null;
   casualty_status?: string | null;
+  has_reported_casualties?: boolean;
   matched: boolean;
   verification_status: "auto_processed" | "needs_verification" | "verified" | "rejected";
   verification_reason: string | null;

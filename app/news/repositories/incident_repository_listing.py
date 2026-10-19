@@ -23,6 +23,7 @@ from app.news.models import (
     Village,
 )
 from app.news.models.summary_bulletin import SummaryBulletin
+from app.news.repositories.reported_casualties import has_reported_casualties_expression
 from app.sources.models import Source
 
 
@@ -116,15 +117,8 @@ class IncidentRepositoryListQueryMixin:
         if params.duplicate_only:
             filters.append(Incident.duplicate_flag.is_(True))
         if params.has_casualties:
-            filters.append(
-                or_(
-                    func.coalesce(Incident.total_deaths, 0) > 0,
-                    func.coalesce(Incident.total_injuries, 0) > 0,
-                    Incident.casualty_status == "count_missing",
-                    cls._visible_flag_exists("count_missing"),
-                    cls._visible_flag_exists("aggregate_no_breakdown"),
-                )
-            )
+            # Counts only; wording-only rows are found via the Verification filter.
+            filters.append(has_reported_casualties_expression())
         if params.summary_added:
             filters.append(Incident.origin == IncidentOrigin.summary)
         if params.decision_reason:

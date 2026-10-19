@@ -29,15 +29,17 @@ describe("live incident stream filter", () => {
     expect(matchesFilters(event, { limit: 150, verificationStatus: "needs_verification" })).toBe(false);
   });
 
-  it.each([
-    { total_deaths: 1 },
-    { casualty_status: "count_missing" },
-    { verification_types: ["casualty_aggregate_toll"] },
-  ])("includes casualty-bearing events: %o", (fields) => {
-    expect(matchesFilters({ ...event, ...fields } as IncidentStreamEvent, { limit: 150, hasCasualties: true })).toBe(true);
+  it("includes events the backend marks as having reported casualties", () => {
+    expect(matchesFilters({ ...event, has_reported_casualties: true } as IncidentStreamEvent, { limit: 150, hasCasualties: true })).toBe(true);
   });
 
-  it("excludes header-only false positives", () => {
-    expect(matchesFilters({ ...event, casualty_status: "none_mentioned", verification_types: [] } as IncidentStreamEvent, { limit: 150, hasCasualties: true })).toBe(false);
+  it.each([
+    { has_reported_casualties: false },
+    { has_reported_casualties: false, casualty_status: "count_missing" },
+    { has_reported_casualties: false, verification_types: ["casualty_aggregate_toll"] },
+    { total_deaths: 1 },
+    {},
+  ])("trusts only the backend flag, never counts or status: %o", (fields) => {
+    expect(matchesFilters({ ...event, ...fields } as IncidentStreamEvent, { limit: 150, hasCasualties: true })).toBe(false);
   });
 });

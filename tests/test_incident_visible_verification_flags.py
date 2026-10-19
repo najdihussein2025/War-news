@@ -36,13 +36,15 @@ def test_verification_type_filters_map_to_reason_codes() -> None:
     assert "duplicate_flag IS true" in duplicate
 
 
-def test_has_casualties_includes_positive_missing_and_shared_toll_rows() -> None:
+def test_has_casualties_is_decided_by_counts_only() -> None:
     sql = " ".join(_sql(item) for item in IncidentRepository._list_filters(
         IncidentListParams(has_casualties=True)
     ))
     assert "total_deaths" in sql and "total_injuries" in sql
-    assert "count_missing" in sql
-    assert "aggregate_no_breakdown" in sql
+    assert "incident_details.children_d" in sql
+    assert "count_missing" not in sql
+    assert "aggregate_no_breakdown" not in sql
+    assert "incident_verification_flags" not in sql
 
 
 def test_duplicate_only_filter_is_separate_from_needs_verification() -> None:

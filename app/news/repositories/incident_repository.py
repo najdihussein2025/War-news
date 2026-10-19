@@ -52,6 +52,7 @@ from app.news.interfaces import IncidentRepositoryInterface
 from app.news.repositories.incident_repository_listing import (
     IncidentRepositoryListQueryMixin,
 )
+from app.news.repositories.reported_casualties import has_reported_casualties_expression
 from app.news.models import (
     BulletinCasualtyGroup,
     Condition,
@@ -316,6 +317,7 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
             Incident.deaths.label("killed"),
             Incident.injuries.label("injured"),
             Incident.casualty_status,
+            has_reported_casualties_expression().label("has_reported_casualties"),
             case(
                 (needs_verification, False),
                 else_=True,
@@ -422,12 +424,7 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                     .filter(self._needs_verification_column())
                     .label("needs_verification_count"),
                     func.count(Incident.id)
-                    .filter(
-                        or_(
-                            func.coalesce(Incident.total_deaths, 0) > 0,
-                            func.coalesce(Incident.total_injuries, 0) > 0,
-                        )
-                    )
+                    .filter(has_reported_casualties_expression())
                     .label("casualties_count"),
                 )
             )

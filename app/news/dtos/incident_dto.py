@@ -45,6 +45,7 @@ class IncidentListItemDTO(BaseModel):
     killed: int | None = None
     injured: int | None = None
     casualty_status: str | None = None
+    has_reported_casualties: bool = False
     matched: bool
     verification_status: Literal["auto_processed", "needs_verification", "verified", "rejected"] = "auto_processed"
     verification_reason: str | None = None
