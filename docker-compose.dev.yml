@@ -1,64 +1,190 @@
-name: war_news_dev
+# Dev / test stack. STANDALONE file: use it ALONE, never combined with docker-compose.yml.
+#
+#   .\scripts\dev.ps1 up -d --build          (wrapper, recommended)
+#   docker compose -p war-news-dev -f docker-compose.dev.yml --env-file .env.dev up -d --build
+#
+# Isolation from the deployment stack (project "war-news"):
+#   * its own project name, network, volumes and containers (prefix war-news-dev-)
+#   * its own database  war_news_dev_test  (name ends in _test; tests refuse anything else)
+#   * its own host ports  db 5434, backend 8001, frontend 5174  (deployment: 5433/8000/5173)
+#   * env_file is exactly .env.dev: nothing is merged in from .env / .env.main
+#   * "./" mounts resolve relative to THIS file, i.e. the checkout it lives in
+# See Docs/dev_stack.md.
+name: war-news-dev
+
+x-dev-env: &dev-env
+  POSTGRES_DB: war_news_dev_test
+  DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?start the dev stack with scripts/dev.ps1 (it loads .env.dev)}@db:5432/war_news_dev_test
+  REDIS_URL: redis://redis:6379/0
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: app/Dockerfile
+  env_file:
+    - .env.dev
+  volumes:
+    - .:/app
+  networks:
+    - appnet
+  depends_on:
+    db:
+      condition: service_healthy
 
 services:
   db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
     env_file:
       - .env.dev
-    environment: !reset []
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?start the dev stack with scripts/dev.ps1 (it loads .env.dev)}
+      POSTGRES_DB: war_news_dev_test
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/db/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:5434:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - appnet
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - appnet
 
   backend:
-    env_file:
-      - .env.dev
-    volumes:
-      - .:/app
+    <<: *app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *dev-env
+      PG_APPLICATION_NAME: war-news-dev-backend
+      PIPELINE_ROLE: api
+      WATCHFILES_FORCE_POLLING: "true"
+    ports:
+      - "127.0.0.1:8001:8000"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-exclude scripts/* --timeout-graceful-shutdown 3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
 
   pipeline-worker:
-    env_file:
-      - .env.dev
-    volumes:
-      - .:/app
+    <<: *app
+    environment:
+      <<: *dev-env
+      PG_APPLICATION_NAME: war-news-dev-pipeline
+      PIPELINE_ROLE: worker
+    command: python -m app.core.scripts.run_pipeline_worker
+    restart: unless-stopped
 
   live-sweep-worker:
-    env_file:
-      - .env.dev
-    volumes:
-      - .:/app
+    <<: *app
+    environment:
+      <<: *dev-env
+      PG_APPLICATION_NAME: war-news-dev-live-sweep-worker
+      PIPELINE_ROLE: live-sweep-worker
+      PYTHONUNBUFFERED: "1"
+    command: sh -c "while true; do python -m scripts.live_sweep_new_only; sleep 300; done"
+    restart: unless-stopped
 
   backlog-relevance-worker:
-    env_file:
-      - .env.dev
-    volumes:
-      - .:/app
+    <<: *app
+    environment:
+      <<: *dev-env
+      PG_APPLICATION_NAME: war-news-dev-backlog-relevance
+      PIPELINE_ROLE: backlog-relevance-worker
+      PYTHONUNBUFFERED: "1"
+    command: sh -c "while true; do python -m scripts.backlog_relevance_sweep; sleep 1800; done"
+    restart: unless-stopped
 
   bulletin-reconciliation-worker:
-    env_file:
-      - .env.dev
-    volumes:
-      - .:/app
+    <<: *app
+    environment:
+      <<: *dev-env
+      PG_APPLICATION_NAME: war-news-dev-bulletin-reconciliation
+      PIPELINE_ROLE: bulletin-reconciliation-worker
+      PYTHONUNBUFFERED: "1"
+    command: sh -c "while true; do python -m scripts.bulletin_reconciliation_sweep; sleep $${BULLETIN_RECONCILIATION_SWEEP_INTERVAL_SECONDS:-1800}; done"
+    restart: unless-stopped
 
   summary-reconcile-worker:
-    env_file:
-      - .env.dev
-    volumes:
-      - .:/app
+    <<: *app
+    environment:
+      <<: *dev-env
+      PG_APPLICATION_NAME: war-news-dev-summary-reconcile
+      PIPELINE_ROLE: summary-reconcile-worker
+      PYTHONUNBUFFERED: "1"
+    command: sh -c "while true; do python -m scripts.summary_reconcile_sweep; sleep $${SUMMARY_RECONCILE_INTERVAL_SECONDS:-300}; done"
+    restart: unless-stopped
 
+  # External collectors only start with: --profile collectors
   cnrs-poll-worker:
-    env_file:
-      - .env.dev
-    volumes:
-      - .:/app
+    <<: *app
+    profiles: ["collectors"]
+    environment:
+      <<: *dev-env
+      PG_APPLICATION_NAME: war-news-dev-cnrs-poll
+      PIPELINE_ROLE: cnrs-poll-worker
+    command: sh -c "while true; do python -m scripts.cnrs_poll_worker --hours 24; sleep 300; done"
+    restart: unless-stopped
 
   red-alert-collector:
-    env_file:
-      - .env.dev
-    volumes:
-      - .:/app
+    <<: *app
+    profiles: ["collectors"]
+    environment:
+      <<: *dev-env
+      PG_APPLICATION_NAME: war-news-dev-red-alert
+      PIPELINE_ROLE: red-alert-collector
+    command: python -m app.core.scripts.run_module_with_reload app.core.scripts.run_red_alert_collector
+    restart: unless-stopped
 
   frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
     env_file:
       - .env.dev
+    environment:
+      VITE_API_BASE_URL: /api
+      VITE_API_PROXY_TARGET: http://backend:8000
+      VITE_USE_POLLING: "true"
+    ports:
+      - "127.0.0.1:5174:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0
+    networks:
+      - appnet
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  appnet:
+    driver: bridge

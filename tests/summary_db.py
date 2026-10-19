@@ -1,7 +1,7 @@
 """Scratch-database helpers for summary-flow integration tests.
 
 These tests need a real PostgreSQL (row locks, JSONB, enums). They run only when
-SUMMARY_TEST_DATABASE_URL points at a database whose name ends with "scratch";
+SUMMARY_TEST_DATABASE_URL points at a database whose name ends with "_test";
 the fixture TRUNCATEs tables, so it refuses anything else.
 """
 from __future__ import annotations
@@ -28,6 +28,7 @@ from app.news.models.summary_bulletin import (
     SummaryStatus,
 )
 from app.sources.models import Source, SourceType
+from tests.db_guard import assert_scratch_truncation_allowed
 
 BEIRUT = ZoneInfo("Asia/Beirut")
 TABLES = (
@@ -44,10 +45,10 @@ CONDITIONS = (
 def scratch_engine():
     url = os.environ.get("SUMMARY_TEST_DATABASE_URL")
     if not url:
-        pytest.skip("SUMMARY_TEST_DATABASE_URL (a *scratch database) is required")
+        pytest.skip("SUMMARY_TEST_DATABASE_URL (a *_test database) is required")
     engine = create_engine(url)
-    if not (engine.url.database or "").endswith("scratch"):
-        pytest.skip("refusing to truncate a database whose name does not end with 'scratch'")
+    # Hard guard: TRUNCATE ... CASCADE must never reach a non-test database.
+    assert_scratch_truncation_allowed(url)
     return engine
 
 

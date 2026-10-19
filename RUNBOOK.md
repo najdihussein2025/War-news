@@ -11,10 +11,10 @@ Both stacks run concurrently on the same machine under separate Docker Compose p
 | Component | Deployment Stack (`main`) | Dev / Test Stack (`dev`) | Notes |
 | :--- | :--- | :--- | :--- |
 | **Git Branch** | `main` | `dev` (or feature branch off `dev`) | Developers branch off `dev`; merge `dev` -> `main` when verified |
-| **Compose Project Name** | `war-news` (or `war_news_main`) | `war_news_dev` | Set via `COMPOSE_PROJECT_NAME` / `docker-compose.dev.yml` |
-| **Compose Files Used** | `docker-compose.yml` | `docker-compose.yml`<br>`docker-compose.dev.yml` | Dev file re-enables live bind mounts (`.:/app`) for hot-reload |
+| **Compose Project Name** | `war-news` (or `war_news_main`) | `war-news-dev` | Set by `name:` in `docker-compose.dev.yml` (standalone file); see `Docs/dev_stack.md` |
+| **Compose Files Used** | `docker-compose.yml` | `docker-compose.dev.yml` (alone) | Standalone dev file with live bind mounts (`.:/app`); use `scripts/dev.ps1` |
 | **Environment File** | `.env.main` (or `.env`) | `.env.dev` | Ignored by git; distinct ports & DB |
-| **Postgres Database** | `war_news_dev` | `war_news_devtest` | **CRITICAL:** `war_news_dev` is live production data; never overwrite or drop |
+| **Postgres Database** | `war_news_dev` | `war_news_dev_test` | **CRITICAL:** `war_news_dev` is live production data; never overwrite or drop |
 | **Postgres Host Port** | **`5433`** | **`5434`** | Set by `POSTGRES_HOST_PORT`. `5432` is reserved for the native Windows PostgreSQL 18 service. Connect via host psql/pgAdmin/DBeaver on `127.0.0.1` (not `localhost`: WSL relays `::1` on these ports) |
 | **Backend API Port** | **`8000`** (`http://localhost:8000`) | **`8001`** (`http://localhost:8001`) | FastAPI / Uvicorn API endpoints & Swagger docs (`/docs`) |
 | **Frontend UI Port** | **`5173`** (`http://localhost:5173`) | **`5174`** (`http://localhost:5174`) | Vite React Dashboard |
@@ -74,26 +74,26 @@ The dev stack runs side-by-side with deployment for day-to-day development and i
 
 ### A. First-Time Setup: Database Creation & Migration
 
-The dev stack points to `war_news_devtest`. The database must be initialized fresh without copying or altering production data.
+The dev stack points to `war_news_dev_test` (see `Docs/dev_stack.md` for the current, simpler first-time setup). The database must be initialized fresh without copying or altering production data.
 
 1. **Start the database and redis containers first**:
    ```powershell
-   docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev up -d db redis
+   .\scripts\dev.ps1 up -d db redis
    ```
 
-2. **Create the `war_news_devtest` database**:
+2. **Create the `war_news_dev_test` database**:
    Connect via `docker compose exec` to create the database if it doesn't already exist:
    ```powershell
-   docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev exec db psql -U postgres -c "CREATE DATABASE war_news_devtest;"
+   .\scripts\dev.ps1 exec db psql -U postgres -c "CREATE DATABASE war_news_dev_test;"
    ```
 
 3. **Enable pgvector and run Alembic migrations**:
    ```powershell
    # Enable vector extension
-   docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev exec db psql -U postgres -d war_news_devtest -c "CREATE EXTENSION IF NOT EXISTS vector;"
+   .\scripts\dev.ps1 exec db psql -U postgres -d war_news_dev_test -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
    # Run migrations from within the backend container (or a disposable container)
-   docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev run --rm backend alembic upgrade head
+   .\scripts\dev.ps1 run --rm backend alembic upgrade head
    ```
 
 ### B. Starting the Dev Stack
@@ -106,16 +106,16 @@ git checkout dev
 git pull origin dev
 
 # 2. Start dev stack with live hot-reload bind mounts
-docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev up -d --build
+.\scripts\dev.ps1 up -d --build
 
 # 3. Verify status
-docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev ps
+.\scripts\dev.ps1 ps
 ```
 
 ### C. Stopping the Dev Stack
 
 ```powershell
-docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev down
+.\scripts\dev.ps1 down
 ```
 
 ---
@@ -199,7 +199,7 @@ docker compose --env-file .env.dev -f docker-compose.yml -f docker-compose.dev.y
 ```
 
 The alias SQL (`scripts/sql/summary_aliases_2026-10-08.sql`) is run manually against
-`war_news_test` / `war_news_devtest` after the admin confirms the four NEEDS CONFIRMATION
+`war_news_test` / `war_news_dev_test` after the admin confirms the four NEEDS CONFIRMATION
 rows; it is never run automatically.
 
 ## Summary bulletin go-live checklist
