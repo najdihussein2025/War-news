@@ -29,7 +29,7 @@ export const incidentFieldGroups: FieldGroup[] = [
     fields: [
       deaths("male_d"), injuries("male_i"),
       deaths("female_d"), injuries("female_i"),
-      deaths("child_d"), injuries("child_i"),
+      deaths("children_d"), injuries("children_i"),
       flag("obs_duties"), flag("isf_gs"), flag("fire"),
       count("arrested"), flag("lib_y_n"),
       deaths("total_deaths"), injuries("total_injuries"),
