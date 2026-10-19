@@ -51,6 +51,11 @@ def _view_sql() -> str:
             for header, field in INCIDENT_DETAIL_FIELD_MAP.items()
         },
     }
+    # These columns are introduced by 20260923_0063. Keep the historical
+    # view shape stable on a clean install without referencing columns that
+    # do not exist yet; 0063 replaces the placeholders with real values.
+    expressions["Anonymous_CD"] = "NULL::integer"
+    expressions["Anonymous_CI"] = "NULL::integer"
     # Preserve the physical order of Fields sample.xlsx as well as its names.
     headers = (
         ["Column_1", "Column_2"]

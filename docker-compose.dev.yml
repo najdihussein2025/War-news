@@ -23,8 +23,8 @@ x-app: &app
     dockerfile: app/Dockerfile
   env_file:
     - .env.dev
-  volumes:
-    - .:/app
+  # Use the source copied into the image. Docker Desktop exposes incomplete
+  # bind mounts for this checkout when it lives on a mapped network drive.
   networks:
     - appnet
   depends_on:
