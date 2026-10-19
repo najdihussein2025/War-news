@@ -22,6 +22,10 @@ from app.llm.services.ollama_relevance_classifier_service import is_valid_reason
 from app.news.services.incident_details.casualty_count_backstop import (
     apply_casualty_count_backstop,
 )
+from app.news.services.incident_details.casualty_extraction_validation import (
+    enforce_casualty_invariants,
+    validate_casualty_evidence,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -303,12 +307,17 @@ class OllamaCategoryDetailService:
             category_key = ExtractionCategoryKey(item.category_key)
             casualties = None
             if item.casualties is not None:
-                casualties, _ = apply_casualty_count_backstop(
+                casualties, evidence = apply_casualty_count_backstop(
                     post_text,
                     item.casualties,
                     list(item.casualty_evidence),
                     raw_message_id=raw_message_id,
                 )
+                casualties, evidence, dropped = validate_casualty_evidence(post_text, casualties, evidence)
+                casualties, adjustments = enforce_casualty_invariants(casualties, evidence_fields={entry.field for entry in evidence})
+                dropped.extend({"field": str(entry.get("field", "")), "reason": str(entry["reason"]), "evidence_span": ""} for entry in adjustments)
+            else:
+                dropped = []
             vehicles = item.vehicles
             if category_key == ExtractionCategoryKey.vehicles:
                 vehicles = _ground_motorcycle_flag(post_text, vehicles)
@@ -348,12 +357,17 @@ class OllamaCategoryDetailService:
 
         casualties = None
         if response.casualties is not None:
-            casualties, _ = apply_casualty_count_backstop(
+            casualties, evidence = apply_casualty_count_backstop(
                 post_text,
                 response.casualties,
                 list(response.casualty_evidence),
                 raw_message_id=raw_message_id,
             )
+            casualties, evidence, dropped = validate_casualty_evidence(post_text, casualties, evidence)
+            casualties, adjustments = enforce_casualty_invariants(casualties, evidence_fields={entry.field for entry in evidence})
+            dropped.extend({"field": str(entry.get("field", "")), "reason": str(entry["reason"]), "evidence_span": ""} for entry in adjustments)
+        else:
+            dropped = []
         vehicles = response.vehicles
         if category_key == ExtractionCategoryKey.vehicles:
             vehicles = _ground_motorcycle_flag(post_text, vehicles)

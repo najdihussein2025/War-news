@@ -8,7 +8,11 @@
   and past-event martyrs are not casualty evidence. A non-null count requires
   literal body evidence for this event.
 - **Implementation:** merge-detail Tier 2 now receives the shared cleaned
-  body-only prompt copy.
+  body-only prompt copy. The deterministic extraction validator removes values
+  with absent/out-of-body/header-or-memorial evidence and persists each removal
+  in `casualty_dropped_counts`. The shared invariant enforcer removes negative
+  values and ungrounded demographic guesses, preserves child precedence, and
+  raises a total to the stated demographic sum when required.
 - **Regression:** `tests/test_casualty_source_grounding.py::test_clean_message_text_keeps_only_the_body_for_a_known_header`.
 
 ## 2026-10-08 - Summary review API and UI (Phase 4)

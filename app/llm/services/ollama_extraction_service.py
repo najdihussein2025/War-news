@@ -60,6 +60,10 @@ from app.news.services.incident_details.casualty_count_backstop import (
 from app.news.services.incident_details.casualty_count_fill import (
     fill_counts_from_count_words,
 )
+from app.news.services.incident_details.casualty_extraction_validation import (
+    enforce_casualty_invariants,
+    validate_casualty_evidence,
+)
 from app.news.services.incident_details.casualty_status import (
     derive_casualty_status,
     status_fields,
@@ -657,6 +661,17 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             target_villages=self._count_fill_targets(villages, village_roles, sub_events),
             raw_message_id=raw_message_id,
         )
+        casualties, casualty_evidence, dropped_counts = validate_casualty_evidence(
+            post_text, casualties, casualty_evidence
+        )
+        casualties, invariant_adjustments = enforce_casualty_invariants(
+            casualties,
+            evidence_fields={item.field for item in casualty_evidence},
+        )
+        dropped_counts.extend(
+            {"field": str(item.get("field", "")), "reason": str(item["reason"]), "evidence_span": ""}
+            for item in invariant_adjustments
+        )
         categories: dict[ExtractionCategoryKey, ExtractionCategory] = {}
         self._inject_casualty_demographics_from_root(
             categories,
@@ -692,6 +707,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             categories=categories,
             casualties=casualties,
             casualty_evidence=casualty_evidence,
+            casualty_dropped_counts=dropped_counts,
             casualty_transitions=list(general_response.casualty_transitions),
             casualty_scope=scope,
             casualty_scope_evidence=scope_evidence,

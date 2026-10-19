@@ -186,6 +186,8 @@ class ExtractionSubEvent(BaseModel):
     casualties: ExtractionCasualties = Field(default_factory=ExtractionCasualties)
     evidence_span: str | None = None
     casualty_evidence: list[CasualtyCountEvidence] = Field(default_factory=list)
+    # Deterministic post-extraction audit trail for rejected LLM casualty claims.
+    casualty_dropped_counts: list[dict[str, str]] = Field(default_factory=list)
     # Split-phase flow only (TIER1_SPLIT_PHASES_ENABLED); absent otherwise.
     # The news item this sub-event came from: index and [start, end) span of
     # the raw text, so Tier 2 can run on exactly that item.
@@ -237,6 +239,7 @@ class ExtractionResult(BaseModel):
     )
     casualties: ExtractionCasualties = Field(default_factory=ExtractionCasualties)
     casualty_evidence: list[CasualtyCountEvidence] = Field(default_factory=list)
+    casualty_dropped_counts: list[dict[str, str]] = Field(default_factory=list)
     # Deterministically derived after count fill/backstop; absent on older rows.
     casualty_status: Literal[
         "none_mentioned", "explicit_none", "exact", "count_missing", "aggregate_only"
