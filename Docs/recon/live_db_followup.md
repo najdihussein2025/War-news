@@ -4,7 +4,7 @@ Source: `Docs/recon/live_db_damage_audit.sql`. Nothing here was executed by
 Claude. The window is approximate (backend recreated 07:23:48 UTC; the full test
 run ended before ~07:36 UTC), so it is widened to 07:20–07:45 UTC.
 
-Note: `live_db_damage_audit.sql`, `pipeline_sweep_jobs_recovery.md` and the other
+Note: `Docs/recon/` is matched by `.gitignore` (`recon/`), so untracked recon files never reach the repo; `live_db_damage_audit.sql`, `pipeline_sweep_jobs_recovery.md` and the other
 earlier recon files you listed were not present in the repository checkout this
 session worked from (they were probably never committed). The audit file was
 therefore written from scratch with the same name and window. If you have a local
