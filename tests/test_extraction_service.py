@@ -479,7 +479,8 @@ def test_orchestration_skips_category_detail_when_presence_gate_is_empty() -> No
         ExtractionCategoryKey.casualty_demographics: ExtractionCategory(
             did=None,
             name=None,
-            casualties=ExtractionCasualties(injuries=1),
+            # Target rule B: an untyped count fills the total, never a breakdown.
+            casualties=ExtractionCasualties(injuries=1, total_injuries=1),
         )
     }
     assert result.casualty_evidence[0].field == "injuries"
