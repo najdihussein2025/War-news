@@ -74,6 +74,40 @@ class CasualtyValidationResult:
 
 
 _SUBSET_MARKER_RE = re.compile(r"(?:من\s+بينهم|من\s+بينهما|بينهم|بينهما|منهم)")
+_MINISTRY_INTRO_RE = re.compile(
+    r"(?:صدر\s+عن\s+.*?وزار[ةه]\s+الصحة|"
+    r"مركز\s+عمليات\s+طوارئ\s+الصحة|"
+    r"وزار[ةه]\s+الصحة\s*:|"
+    r"أعلنت?\s+وزار[ةه]\s+الصحة)",
+    re.IGNORECASE
+)
+
+
+def _is_within_ministry_span(text: str, claim_text: str) -> bool:
+    """Check if claim_text is within a Ministry introduction span in text."""
+    # Find the Ministry introduction match
+    match = _MINISTRY_INTRO_RE.search(text)
+    if not match:
+        return False
+
+    # Find the claim in the text
+    claim_pos = text.find(claim_text)
+    if claim_pos < 0:
+        return False
+
+    # Ministry span ends at the end of the next sentence/clause or at the next main casualty count
+    # For simplicity, we check if the claim starts within or immediately after the ministry intro
+    ministry_start = match.start()
+    # Look for the end of the ministry statement (next newline or semicolon, or next casualty count not in this span)
+    ministry_end = match.end()
+    # Extend the ministry span to the next sentence boundary
+    next_boundary = min(
+        [pos for pos in (text.find("\n", ministry_end), text.find("؛", ministry_end), text.find(".", ministry_end)) if pos > ministry_end],
+        default=len(text)
+    )
+
+    # Claim is within ministry span if it starts before the boundary and after or at the start
+    return ministry_start <= claim_pos < next_boundary
 
 
 def _claim_units(text: str) -> list[tuple[str, str, dict[str, int | None], bool]]:
@@ -538,7 +572,7 @@ def validate_incident_casualty_sources(db: Session, incident: Incident) -> Casua
                     source.raw_message_id == incident.raw_message_id,
                     claim_id=f"{source.raw_message_id}:{unit_id}",
                     is_final_toll="حصيله نهائيه" in normalized_claim,
-                    is_health_ministry=("وزاره الصحه" in normalized_claim or "مركز عمليات طوارئ الصحه" in normalized_claim),
+                    is_health_ministry=_is_within_ministry_span(cleaned, claim_text),
                 ))
             continue
         if casualties is None:
@@ -724,7 +758,7 @@ def resolve_casualty_selection(
     chosen_unified_source = None
     if sources_with_both and has_deaths and has_injuries:
         # Pick the best source (highest priority among sources with both)
-        best_source_claims = max(sources_with_both.values(), key=lambda claims: max(claims, key=_claim_priority))
+        best_source_claims = max(sources_with_both.values(), key=lambda claims: _claim_priority(max(claims, key=_claim_priority)))
         chosen_unified_source = best_source_claims[0].raw_message_id
 
     for base, total, detail_fields in (
