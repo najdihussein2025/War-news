@@ -847,6 +847,8 @@ export const IncidentsPage = () => {
                     description="The incidents list could not be loaded. Please try again."
                   />
                 }
+                stickyActions
+                actionsClassName="w-[15rem] min-w-[15rem]"
                 actions={(row) => (
                 <div className="flex flex-nowrap justify-end gap-2">
                 {row.id && row.verification_status === "needs_verification" ? (

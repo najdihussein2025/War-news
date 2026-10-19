@@ -30,6 +30,7 @@ type DataTableProps<T> = {
   clientSort?: boolean;
   density?: "default" | "compact";
   actionsClassName?: string;
+  stickyActions?: boolean;
 };
 
 const SortIcon = ({ active, direction }: { active: boolean; direction: SortDirection }) => (
@@ -92,6 +93,7 @@ export const DataTable = <T,>({
   clientSort = true,
   density = "default",
   actionsClassName,
+  stickyActions = false,
 }: DataTableProps<T>) => {
   const firstSortable = columns.find((column) => column.sortValue);
   const [sort, setSort] = useState<{ key: string; direction: SortDirection } | null>(
@@ -162,7 +164,11 @@ export const DataTable = <T,>({
                 </th>
               ))}
               {actions ? (
-                <th className="px-4 py-3 text-right text-caption font-semibold uppercase text-text-muted">
+                <th className={cn(
+                  "px-4 py-3 text-right text-caption font-semibold uppercase text-text-muted",
+                  stickyActions && "sticky right-0 z-20 bg-surface-raised shadow-[-8px_0_12px_-12px_rgba(11,34,54,0.45)]",
+                  actionsClassName,
+                )}>
                   Actions
                 </th>
               ) : null}
@@ -176,7 +182,7 @@ export const DataTable = <T,>({
                 <tr
                   key={getRowKey(row)}
                   className={cn(
-                    "transition-colors duration-150 ease-out hover:bg-surface-muted",
+                    "group transition-colors duration-150 ease-out hover:bg-surface-muted",
                     onRowClick && "cursor-pointer",
                   )}
                   onClick={() => onRowClick?.(row)}
@@ -197,7 +203,15 @@ export const DataTable = <T,>({
                     </td>
                   ))}
                   {actions ? (
-                    <td className={cn("relative px-4 text-right align-top", density === "compact" ? "py-3" : "py-4", actionsClassName)} onClick={(event) => event.stopPropagation()}>
+                    <td
+                      className={cn(
+                        "relative px-4 text-right align-top",
+                        density === "compact" ? "py-3" : "py-4",
+                        stickyActions && "sticky right-0 z-10 bg-surface-raised shadow-[-8px_0_12px_-12px_rgba(11,34,54,0.45)] group-hover:bg-surface-muted",
+                        actionsClassName,
+                      )}
+                      onClick={(event) => event.stopPropagation()}
+                    >
                       {actions(row)}
                     </td>
                   ) : null}
