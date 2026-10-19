@@ -52,7 +52,6 @@ from app.news.services.air_violations.air_violation_routing import (
 )
 from app.news.services.air_violations.war_month import war_month
 from app.sources.models import Source, SourceType
-from app.sources.services.red_alert_collector import classify_condition
 
 
 BEIRUT_TIMEZONE = ZoneInfo("Asia/Beirut")
@@ -768,6 +767,10 @@ class AirViolationRepository(AirViolationRepositoryInterface):
     def route_from_match(self, message: RawMessage, result: MatchResultDTO) -> bool:
         if result.matched_condition_id not in AIR_VIOLATION_CONDITION_IDS:
             return False
+        # Import lazily: the collector depends on this repository when it
+        # persists routed messages.
+        from app.sources.services.red_alert_collector import classify_condition
+
         # The deterministic aircraft vocabulary is authoritative over an LLM
         # label. In Lebanese Arabic, مسيّرة/مسير and محلقة mean drone/UAV and
         # therefore map to Surveillance Aircraft (36), never Helicopter (38).
