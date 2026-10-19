@@ -246,6 +246,7 @@ export type IncidentUpdatePayload = {
   event_time: string | null;
   khabar: string;
   note: string | null;
+  condition?: string | null;
   worker_name: string | null;
   source_link: string | null;
   total_deaths: number | null;

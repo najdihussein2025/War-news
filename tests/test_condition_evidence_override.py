@@ -1,6 +1,7 @@
 from app.news.services.matching.condition_evidence_override import (
     apply_condition_evidence_override,
     condition_fallback_from_text,
+    explicit_condition_labels_from_text,
 )
 
 
@@ -12,6 +13,14 @@ def test_tank_firing_at_village_overrides_artillery() -> None:
 def test_tank_that_targets_village_overrides_artillery() -> None:
     text = "دبابة ميركافا معادية متمركزة في البياضة تستهدف بلدة المنصوري بالقذائف"
     assert apply_condition_evidence_override(text, "Artillery Shelling") == "Tank Fire"
+
+
+def test_person_targeted_by_tank_is_tank_fire() -> None:
+    text = (
+        "الجيش: واكبنا عملية سحب جثمان المؤهل الأول المتقاعد علي عبد الحسن سويدان "
+        "بعد استهدافه بشكل مباشر بدبابة إسرائيلية معادية أثناء تفقّده ممتلكاته في بلدة ياطر"
+    )
+    assert apply_condition_evidence_override(text, None) == "Tank Fire"
 
 
 def test_tank_mentioned_as_target_does_not_override() -> None:
@@ -37,6 +46,20 @@ def test_warplane_overflight_remains_air_activity() -> None:
 def test_warning_and_feigned_raids_keep_specific_conditions() -> None:
     assert apply_condition_evidence_override("غارة تحذيرية", "Bombs") == "Warning Raid"
     assert apply_condition_evidence_override("غارات وهمية", "Bombs") == "Feigned Attacks"
+
+
+def test_explicit_detonation_is_mining_and_detonation_not_bombs() -> None:
+    text = "نفذ العدو تفجيرا في منطقة قرب البلدة"
+    assert apply_condition_evidence_override(text, "Bombs") == "Mining & Detonation"
+    assert condition_fallback_from_text(text) == "Mining & Detonation"
+
+
+def test_artillery_and_sweeping_are_separate_source_actions() -> None:
+    text = "استهدفت بقذيفة مدفعية أطراف البلدة بالتزامن مع تمشيط بالأسلحة الرشاشة"
+    assert explicit_condition_labels_from_text(text) == [
+        "Artillery Shelling",
+        "Sweeping Operations",
+    ]
 
 
 def test_drone_strike_maps_to_bombs() -> None:

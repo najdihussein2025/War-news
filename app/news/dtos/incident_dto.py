@@ -343,6 +343,7 @@ class IncidentUpdateDTO(BaseModel):
     event_time: time | None = None
     khabar: str = Field(min_length=1)
     note: str | None = None
+    condition: str | None = Field(default=None, min_length=1)
     worker_name: str | None = None
     source_link: str | None = None
     source_link_2: str | None = None

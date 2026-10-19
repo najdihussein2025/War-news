@@ -455,6 +455,7 @@ export const AirViolationsPage = () => {
             <Select
               id="air-sort-order"
               value={sortOrder}
+              placeholder="Latest news first"
               options={[
                 { value: "newest", label: "Latest news first" },
                 { value: "oldest", label: "First news first" },
@@ -682,7 +683,7 @@ export const AirViolationsPage = () => {
               type="button"
               variant="destructive"
               isLoading={isDeleting}
-              loadingText="Deleting"
+              loadingText="Rejecting"
               disabled={isLockedByAnother}
               onClick={async () => {
                 setActionError("");
@@ -696,12 +697,12 @@ export const AirViolationsPage = () => {
                     setActionError("This record is currently being edited by another administrator.");
                     await refetch();
                   } else {
-                    setActionError("Could not lock this record for deletion. Please try again.");
+                    setActionError("Could not lock this report for rejection. Please try again.");
                   }
                 }
               }}
             >
-              Delete
+              Reject news
             </Button>
           </div> : (
             <p className="mt-6 border-t border-border pt-4 text-small text-text-muted">
@@ -737,9 +738,9 @@ export const AirViolationsPage = () => {
 
       {confirmDelete && selectedViolation ? (
         <ConfirmDialog
-          title="Delete air violation?"
-          description="This record will be permanently deleted. This action cannot be undone."
-          confirmLabel="Delete record"
+          title="Reject this news report?"
+          description="The air violation will be removed and its source report will move to Rejected News."
+          confirmLabel="Reject news"
           destructive
           isLoading={isDeleting}
           onCancel={async () => {
@@ -758,10 +759,10 @@ export const AirViolationsPage = () => {
             } catch (error) {
               setConfirmDelete(false);
               if (axios.isAxiosError(error) && error.response?.status === 409) {
-                setActionError("This record was updated by another administrator. Refresh the page before deleting it.");
+                setActionError("This record was updated by another administrator. Refresh the page before rejecting it.");
                 await refetch();
               } else {
-                setActionError("Could not delete the air violation. Please try again.");
+                setActionError("Could not reject the news report. Please try again.");
               }
             } finally {
               setIsDeleting(false);

@@ -1,7 +1,7 @@
 from pydantic import ValidationError
 
 from app.llm.services.lebanon_scope_filter import is_non_lebanon_location
-from app.llm.dtos import ExtractionResult
+from app.llm.dtos import ExtractionResult, ExtractionSubEvent
 from app.news.dtos import MatchResultDTO, MatchResultStatus
 from app.news.interfaces import MatchingServiceInterface
 from app.news.interfaces import RawMessageRepositoryInterface
@@ -15,6 +15,7 @@ from app.news.services.air_violations.air_violation_eligibility import (
 )
 from app.news.services.matching.condition_evidence_override import (
     condition_fallback_from_text,
+    explicit_condition_labels_from_text,
 )
 from app.news.services.matching.location_ownership_rules import (
     apply_location_ownership_rules,
@@ -57,6 +58,44 @@ class MatchIncidentAction:
             extraction_result,
             getattr(message, "raw_text", None),
         )
+
+        raw_text = getattr(message, "raw_text", None)
+        source_conditions = explicit_condition_labels_from_text(raw_text)
+        target_locations = (
+            extraction_result.sub_events[0].locations
+            if len(extraction_result.sub_events) == 1
+            else extraction_result.village_roles
+        )
+        if len(source_conditions) > 1 and len(target_locations) == 1:
+            # One source can state multiple distinct actions at the same
+            # village. Preserve each action as a separate event instead of
+            # collapsing them into one generic condition.
+            extraction_result = extraction_result.model_copy(
+                update={
+                    "sub_events": [
+                        ExtractionSubEvent(
+                            locations=list(target_locations),
+                            action_text=condition,
+                            evidence_span=raw_text,
+                        )
+                        for condition in source_conditions
+                    ],
+                    "action_description": source_conditions[0],
+                    "action_source": "keyword_fallback",
+                }
+            )
+        else:
+            # Prefer explicit source evidence over a broad model-generated
+            # action label; e.g. Arabic "تفجير" is Mining & Detonation, not
+            # the generic Bombs category.
+            source_condition = condition_fallback_from_text(raw_text)
+            if source_condition is not None:
+                extraction_result = extraction_result.model_copy(
+                    update={
+                        "action_description": source_condition,
+                        "action_source": "keyword_fallback",
+                    }
+                )
 
         if (
             extraction_result.is_relevant is False

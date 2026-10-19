@@ -32,6 +32,7 @@ from app.news.models import (
     AirViolation,
     AirViolationLocation,
     Condition,
+    MessageStatus,
     RawMessage,
     Village,
 )
@@ -542,6 +543,56 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         return self.get_detail(air_violation_id)
 
     def delete(self, air_violation_id: int, version: int, user_id: UUID) -> bool:
+        violation = self.db.scalar(
+            select(AirViolation).where(
+                AirViolation.id == air_violation_id,
+                AirViolation.version == version,
+                AirViolation.locked_by_user_id == user_id,
+            )
+        )
+        if violation is None:
+            self.db.rollback()
+            if self.db.get(AirViolation, air_violation_id) is None:
+                return False
+            raise StaleDataError("Air violation version is stale.")
+
+        rejection = {
+            "reason": "Rejected from the Air Violations review by an administrator.",
+            "rejected_by": str(user_id),
+            "rejected_at": datetime.now(BEIRUT_TIMEZONE).isoformat(),
+            "air_violation_id": air_violation_id,
+        }
+        message = (
+            self.db.get(RawMessage, violation.raw_message_id)
+            if violation.raw_message_id is not None
+            else None
+        )
+        if message is None:
+            source = self.db.get(Source, violation.source_id)
+            message = RawMessage(
+                source_id=violation.source_id,
+                source_platform=source.type.value if source is not None else "manual",
+                source_name=source.name if source is not None else "Manual",
+                raw_text=violation.khabar,
+                raw_payload={"admin_air_violation_rejection": rejection},
+                message_datetime=datetime.combine(
+                    violation.event_date,
+                    violation.event_time or time.min,
+                    tzinfo=BEIRUT_TIMEZONE,
+                ),
+                status=MessageStatus.rejected,
+                error_message=rejection["reason"],
+            )
+            self.db.add(message)
+        else:
+            payload = dict(message.raw_payload or {})
+            payload["admin_air_violation_rejection"] = rejection
+            message.raw_payload = payload
+            message.status = MessageStatus.rejected
+            message.duplicate_of_id = None
+            message.error_message = rejection["reason"]
+            self.db.add(message)
+
         result = self.db.execute(
             sa_delete(AirViolation).where(
                 AirViolation.id == air_violation_id,
@@ -551,8 +602,6 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         )
         if result.rowcount == 0:
             self.db.rollback()
-            if self.db.get(AirViolation, air_violation_id) is None:
-                return False
             raise StaleDataError("Air violation version is stale.")
         self.db.commit()
         increment(AIR_VIOLATION_CACHE_VERSION_KEY)

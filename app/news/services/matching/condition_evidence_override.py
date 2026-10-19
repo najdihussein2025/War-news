@@ -43,6 +43,8 @@ def _has_drone_term(normalized: str) -> bool:
 _TANK_FIRE_PATTERNS = (
     re.compile(r"قصف.{0,40}(?:دباب[ةه]|ميركافا)"),
     re.compile(r"(?:دباب[ةه]|ميركافا).{0,100}(?:تستهدف|تقصف|تطلق)"),
+    # «استهدافه بشكل مباشر بدبابة إسرائيلية»: the tank is the instrument.
+    re.compile(r"استهداف\w{0,3}.{0,40}ب(?:دباب[ةه]|ميركافا)"),
 )
 _WARNING_RAID = re.compile(r"غار[ةه].{0,15}تحذيري|تحذيري.{0,15}غار[ةه]")
 _FEIGNED_RAID = re.compile(r"غارات?.{0,15}وهمي|وهمي.{0,15}غارات?")
@@ -63,6 +65,9 @@ _AERIAL_SWEEP = re.compile(
     r"(?:اباتشي|أباتشي|مروحي|هليكوبتر).{0,40}(?:تمشيط|مشط)"
     r"|(?:تمشيط|مشط).{0,40}(?:اباتشي|أباتشي|مروحي|هليكوبتر)"
 )
+_MINING_AND_DETONATION = re.compile(
+    r"(?:تلغيم|تفجير|فجّر|فجر|يفجر|فجرت|لغم|الغام|ألغام|عبوة ناسفة)"
+)
 
 
 def condition_from_explicit_evidence(text: str) -> str | None:
@@ -77,6 +82,11 @@ def condition_from_explicit_evidence(text: str) -> str | None:
             return "Bombs"
         if any(term in normalized for term in _DRONE_PRESENCE_TERMS):
             return "Surveillance Aircraft"
+    # A deliberate detonation, mine, or explosive device is distinct from an
+    # aerial strike. This source wording must win over a generic LLM "Bombs"
+    # label so that detonations are consistently routed to condition 21.
+    if _MINING_AND_DETONATION.search(normalized):
+        return "Mining & Detonation"
     if any(pattern.search(normalized) for pattern in _TANK_FIRE_PATTERNS):
         return "Tank Fire"
     if _WARNING_RAID.search(normalized):
@@ -101,7 +111,7 @@ def condition_from_explicit_evidence(text: str) -> str | None:
 
 
 _DUAL_AIRSTRIKE = re.compile(r"غارت(?:ين|ان)")
-_ARTILLERY = re.compile(r"قصف.{0,15}مدفعي|قذائف.{0,15}مدفعي")
+_ARTILLERY = re.compile(r"قصف.{0,15}مدفعي|قذيف(?:ة|ه|ات)?.{0,15}مدفعي")
 _ENGLISH_AIRSTRIKE = re.compile(r"\b(?:air\s*strikes?|air\s*raids?|raid(?:ed|s)?|bomb(?:ed|ing|s)?)\b", re.IGNORECASE)
 _ENGLISH_ARTILLERY = re.compile(r"\b(?:artillery|shell(?:ed|ing|s)?)\b", re.IGNORECASE)
 
@@ -123,6 +133,27 @@ def condition_fallback_from_text(text: str | None) -> str | None:
     if _ARTILLERY.search(normalized) or _ENGLISH_ARTILLERY.search(text):
         return "Artillery Shelling"
     return None
+
+
+def explicit_condition_labels_from_text(text: str | None) -> list[str]:
+    """Return distinct, ordered source actions that can each be materialized."""
+    if not text:
+        return []
+    normalized = " ".join(normalize_arabic_text(text).split())
+    matches: list[tuple[int, str]] = []
+    for pattern, label in (
+        (_ARTILLERY, "Artillery Shelling"),
+        (_AERIAL_SWEEP, "Aerial Sweep"),
+        (_SWEEP, "Sweeping Operations"),
+    ):
+        match = pattern.search(normalized)
+        if match is not None:
+            matches.append((match.start(), label))
+    labels: list[str] = []
+    for _position, label in sorted(matches):
+        if label not in labels:
+            labels.append(label)
+    return labels
 
 
 def apply_condition_evidence_override(text: str, action: str | None) -> str | None:

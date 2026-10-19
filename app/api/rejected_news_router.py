@@ -175,6 +175,14 @@ def _item(
     message: RawMessage,
     manual_rejection_reason: str | None = None,
 ) -> RejectedNewsItem:
+    air_violation_rejection = (message.raw_payload or {}).get(
+        "admin_air_violation_rejection"
+    )
+    if not manual_rejection_reason and isinstance(air_violation_rejection, dict):
+        manual_rejection_reason = str(
+            air_violation_rejection.get("reason")
+            or "Rejected from the Air Violations review by an administrator."
+        )
     if manual_rejection_reason:
         rejection_type = "rejected"
         rejection_reason_en = manual_rejection_reason
@@ -231,6 +239,11 @@ def list_rejected_news(
         or_(
             RawMessage.source_name.is_(None),
             RawMessage.source_name != RED_ALERT_SOURCE_NAME,
+            RawMessage.raw_payload["admin_air_violation_rejection"].astext.is_not(None),
+            # An administrator can reject a materialized incident from its
+            # detail page regardless of source.  Keep those decisions visible
+            # here even when the source is otherwise excluded from this view.
+            manually_rejected,
         ),
     ]
     if search and search.strip():

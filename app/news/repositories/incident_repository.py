@@ -1077,6 +1077,21 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
         demographic_values = {
             field: submitted.pop(field) for field in DEMOGRAPHIC_FIELDS if field in submitted
         }
+        condition_name = submitted.pop("condition", None)
+        if condition_name is not None:
+            condition = self.db.scalar(
+                select(Condition).where(
+                    Condition.is_active.is_(True),
+                    or_(
+                        func.lower(Condition.action_en) == condition_name.strip().lower(),
+                        func.lower(Condition.action_ar) == condition_name.strip().lower(),
+                    ),
+                )
+            )
+            if condition is None:
+                self.db.rollback()
+                raise ValueError("Condition was not found. Choose an existing action.")
+            submitted["condition_id"] = condition.id
         detail = None
         if demographic_values or any(field in submitted for field in ("total_deaths", "total_injuries")):
             detail = self.db.scalar(
@@ -1198,6 +1213,13 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
         return self.get_by_id(incident_id)
 
     def delete(self, incident_id: UUID, version: int, user_id: UUID) -> bool:
+        """Reject an incident from the detail page instead of discarding it.
+
+        A detail-page "delete" is an editorial decision: the report must remain
+        available in Rejected News and be restorable.  Keeping the incident row
+        with a rejected verification status provides that audit trail and keeps
+        it out of the default active-incidents list.
+        """
         incident = self.db.scalar(
             select(Incident)
             .where(
@@ -1220,7 +1242,63 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
             ):
                 return False
             raise StaleDataError("Incident version or edit lock is stale.")
-        soft_delete_incident(self.db, incident, reason=DeletedReason.admin.value, performed_by=user_id)
+
+        rejection_reason = "Rejected from the incident details page."
+        old_values = {
+            "verification_status": incident.verification_status,
+            "verification_reason": incident.verification_reason,
+            "verified_by_user_id": str(incident.verified_by_user_id)
+            if incident.verified_by_user_id
+            else None,
+        }
+        incident.verification_status = "rejected"
+        incident.verification_reason = rejection_reason
+        incident.verified_by_user_id = user_id
+        incident.verified_at = datetime.now(timezone.utc)
+        incident.locked_by_user_id = None
+        incident.edit_lock_expires_at = None
+
+        if incident.raw_message_id is not None:
+            raw_message = self.db.scalar(
+                select(RawMessage)
+                .where(RawMessage.id == incident.raw_message_id)
+                .with_for_update()
+            )
+            # A single source may create more than one incident (for example,
+            # shelling and sweeping in the same bulletin).  Mark the source as
+            # rejected only after its last active incident is rejected.
+            if raw_message is not None and not self._has_other_live_incident(
+                incident.raw_message_id,
+                exclude_incident_id=incident.id,
+            ):
+                filter_result = dict(raw_message.filter_result or {})
+                filter_result.update(
+                    {
+                        "verdict": "reject",
+                        "reasoning": rejection_reason,
+                        "review_source": "human",
+                        "reviewed_by_user_id": str(user_id),
+                    }
+                )
+                raw_message.filter_result = filter_result
+                raw_message.status = MessageStatus.rejected
+                raw_message.error_message = rejection_reason
+                self.db.add(raw_message)
+
+        self.db.add(
+            IncidentUpdate(
+                incident_id=incident.id,
+                action=UpdateAction.status_change,
+                old_values=old_values,
+                new_values={
+                    "verification_status": "rejected",
+                    "verification_reason": rejection_reason,
+                    "rejected_from_incident_details": True,
+                },
+                performed_by=user_id,
+            )
+        )
+        self.db.add(incident)
         evaluate_casualty_flags_safely(self.db, incident.id)
         self.db.commit()
         return True

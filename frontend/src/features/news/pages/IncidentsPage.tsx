@@ -314,8 +314,8 @@ export const IncidentsPage = () => {
     {
       key: "village",
       header: "Village",
-      headerClassName: "w-[34%] min-w-[18rem]",
-      cellClassName: "w-[34%] min-w-[18rem]",
+      headerClassName: "w-[30%] min-w-[16rem]",
+      cellClassName: "w-[30%] min-w-[16rem]",
       render: (row) => (
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -360,10 +360,28 @@ export const IncidentsPage = () => {
       ),
     },
     {
+      key: "dateTime",
+      header: "Date & time",
+      headerClassName: "w-[9.5rem] whitespace-nowrap",
+      cellClassName: "w-[9.5rem]",
+      mobileLabel: "Event date and time",
+      render: (row) => (
+        <div className="space-y-1 whitespace-nowrap">
+          <p>{formatDate(row.event_date)}</p>
+          <p
+            className="text-caption text-text-muted"
+            title={!row.event_time && row.summary_window_start && row.summary_window_end ? "Reported time range; exact attack time is not stated." : undefined}
+          >
+            {incidentEventTime(row)}
+          </p>
+        </div>
+      ),
+    },
+    {
       key: "caza",
       header: "Caza",
-      headerClassName: "w-[11rem]",
-      cellClassName: "w-[11rem]",
+      headerClassName: "w-[8.5rem]",
+      cellClassName: "w-[8.5rem]",
       render: (row) => (
         <div className="space-y-1">
           <p className="text-small text-text-primary">{row.caza_en || row.caza_ar || "Unknown caza"}</p>
@@ -376,8 +394,8 @@ export const IncidentsPage = () => {
     {
       key: "condition",
       header: "Condition",
-      headerClassName: "w-[12rem]",
-      cellClassName: "w-[12rem]",
+      headerClassName: "w-[10rem]",
+      cellClassName: "w-[10rem]",
       render: (row) => (
         <div className="space-y-1">
           <p className={`${twoLineClampClass} text-small leading-6 text-text-primary`}>
@@ -394,8 +412,8 @@ export const IncidentsPage = () => {
     {
       key: "verification",
       header: "Verification",
-      headerClassName: "w-[9.5rem] whitespace-nowrap",
-      cellClassName: "w-[9.5rem]",
+      headerClassName: "w-[10rem] min-w-[10rem] whitespace-nowrap",
+      cellClassName: "w-[10rem] min-w-[10rem]",
       render: (row) => (
         <div className="space-y-1">
           {reviewRuleBadge(row) ? <StatusBadge {...reviewRuleBadge(row)!} /> : verificationBadge(row) ? <StatusBadge {...verificationBadge(row)!} /> : null}
@@ -418,21 +436,6 @@ export const IncidentsPage = () => {
             title={row.verification_status === "needs_verification" ? "Needs verification" : "No verification needed"}
             aria-label={row.verification_status === "needs_verification" ? "Needs verification" : "No verification needed"}
           />
-        </div>
-      ),
-    },
-    {
-      key: "date",
-      header: "Event",
-      headerClassName: "w-[10rem] whitespace-nowrap",
-      cellClassName: "w-[10rem]",
-      mobileLabel: "Event date / time",
-      render: (row) => (
-        <div className="space-y-1 whitespace-nowrap">
-          <p>{formatDate(row.event_date)}</p>
-          <p className="text-caption text-text-muted whitespace-nowrap" title={!row.event_time && row.summary_window_start && row.summary_window_end ? "Reported time range; exact attack time is not stated." : undefined}>
-            {incidentEventTime(row)}
-          </p>
         </div>
       ),
     },
@@ -479,7 +482,7 @@ export const IncidentsPage = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 xl:-mx-8">
       <section className="space-y-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-1">
@@ -848,7 +851,7 @@ export const IncidentsPage = () => {
                   />
                 }
                 stickyActions
-                actionsClassName="w-[15rem] min-w-[15rem]"
+                actionsClassName="w-[13rem] min-w-[13rem]"
                 actions={(row) => (
                 <div className="flex flex-nowrap justify-end gap-2">
                 {row.id && row.verification_status === "needs_verification" ? (

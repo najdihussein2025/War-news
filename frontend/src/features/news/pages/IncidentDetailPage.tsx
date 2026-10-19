@@ -6,7 +6,9 @@ import { Button, ConfirmDialog, Dialog, EmptyState, Input, Label } from "../../.
 import { formatDate, formatDateTime, formatRelativeTime, formatTimeGap } from "../../../lib/formatters";
 import { roleBaseFromPath } from "../../../lib/rolePath";
 import { useAuthStore } from "../../../stores/authStore";
-import { useIncidentDuplicateCandidateQuery, useIncidentQuery, useOpenedVersion } from "../hooks";
+import { useQueryClient } from "@tanstack/react-query";
+import { ConditionSelect } from "../components/ConditionSelect";
+import { useConditionsQuery, useIncidentDuplicateCandidateQuery, useIncidentQuery, useOpenedVersion } from "../hooks";
 import { acquireIncidentEditLock, deleteIncident, releaseIncidentEditLock, resolveIncidentDuplicate, updateIncident, updateIncidentDetails } from "../api";
 import { IncidentCategorySectionFields } from "../components/IncidentCategorySectionFields";
 import { IncidentCategorySectionEditForm } from "../components/IncidentCategorySectionEditForm";
@@ -77,6 +79,9 @@ export const IncidentDetailPage = () => {
   const [editingSection, setEditingSection] = useState<IncidentCategorySectionKey | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [editCondition, setEditCondition] = useState("");
+  const queryClient = useQueryClient();
+  const { data: conditions = [], isLoading: conditionsLoading } = useConditionsQuery();
   const [actionError, setActionError] = useState("");
   const [isVillageDetailsOpen, setIsVillageDetailsOpen] = useState(false);
   const [duplicateDecision, setDuplicateDecision] = useState<IncidentDuplicateDecision | null>(null);
@@ -170,7 +175,8 @@ export const IncidentDetailPage = () => {
             setActionError("");
             try {
               await acquireIncidentEditLock(incidentId);
-              await refetch();
+              const fresh = await refetch();
+              setEditCondition(fresh.data?.condition ?? incident?.condition ?? "");
               setIsEditing(true);
             } catch (error) {
               setActionError(isAxiosError(error) && error.response?.status === 409
@@ -811,6 +817,7 @@ export const IncidentDetailPage = () => {
                   event_time: nullable("event_time"),
                   khabar: String(form.get("khabar") ?? "").trim(),
                   note: nullable("note"),
+                  condition: editCondition && editCondition !== incident.condition ? editCondition : undefined,
                   worker_name: nullable("worker_name"),
                   source_link: nullable("source_link"),
                   total_deaths: numberOrNull("total_deaths"),
@@ -823,6 +830,7 @@ export const IncidentDetailPage = () => {
                   children_i: numberOrNull("children_i"),
                 });
                 await refetch();
+                await queryClient.invalidateQueries({ queryKey: ["incidents"] });
                 setIsEditing(false);
               } catch (error) {
                 setActionError(isAxiosError(error) && error.response?.status === 409
@@ -838,6 +846,17 @@ export const IncidentDetailPage = () => {
               <div><Label htmlFor="incident-time">Event time</Label><Input id="incident-time" name="event_time" type="time" defaultValue={incident.event_time?.slice(0, 5) ?? ""} /></div>
             </div>
             <div><Label htmlFor="incident-report">Report *</Label><textarea id="incident-report" name="khabar" required defaultValue={incident.khabar} className="mt-1 min-h-36 w-full rounded-md border border-border bg-surface px-3 py-2 text-body" /></div>
+            <div>
+              <Label htmlFor="incident-condition">Action</Label>
+              <ConditionSelect
+                id="incident-condition"
+                value={editCondition}
+                placeholder="Select action"
+                conditions={conditions}
+                isLoading={conditionsLoading}
+                onChange={setEditCondition}
+              />
+            </div>
             <div><Label htmlFor="incident-note">Note</Label><textarea id="incident-note" name="note" defaultValue={incident.note ?? ""} className="mt-1 min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-body" /></div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div><Label htmlFor="incident-worker">Data worker</Label><Input id="incident-worker" name="worker_name" defaultValue={incident.worker_name ?? ""} /></div>
