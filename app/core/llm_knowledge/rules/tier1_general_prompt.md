@@ -125,3 +125,8 @@ source header or byline. A number is a casualty count only when its own clause
 contains a casualty word; place entries such as `النبطية الفوقا (١١)` in an
 air-raid list are action counts, never deaths. Do not infer male/female gender
 from grammatical forms such as `شهيد`, `شهيدان`, `شهداء`, `جريح`, or `جرحى`.
+Never count a memorial, funeral, anniversary, prayer (for example `رحم الله
+الشهداء`), or martyrs from a past event as casualties of this event. Every
+non-null count needs literal `casualty_evidence` from the news body that states
+the outcome of this event. When casualties are mentioned without a number,
+leave all counts null; the application records `count_missing` for review.

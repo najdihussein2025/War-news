@@ -1,5 +1,16 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-19 - Body-only casualty evidence in merge-detail Tier 2
+
+- **Real example:** `صفحة الإعلامي الشهيد علي شعيب` preceded an artillery
+  report and was incorrectly treated as one death.
+- **Rule:** headers, signatures, memorials, funerals, anniversaries, prayers,
+  and past-event martyrs are not casualty evidence. A non-null count requires
+  literal body evidence for this event.
+- **Implementation:** merge-detail Tier 2 now receives the shared cleaned
+  body-only prompt copy.
+- **Regression:** `tests/test_casualty_source_grounding.py::test_clean_message_text_keeps_only_the_body_for_a_known_header`.
+
 ## 2026-10-08 - Summary review API and UI (Phase 4)
 
 Admins can resolve a summary's single review task: pick the village for a place the strict

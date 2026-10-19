@@ -47,6 +47,7 @@ Number rules:
 - The following vague/approximate Arabic quantifiers must never be converted into a number: عشرات، عشرات الجرحى، عشرات الشهداء، مئات، المئات، عدد من، عدد كبير من، كثير من، العديد من، بضعة، بعض. When any of these appears without an accompanying explicit digit, leave the count null — do not invent an approximate number.
 - Do not invent children/women/men sub-counts from phrases like "بينهم أطفال" or "بينهم نساء" unless an explicit digit is written for that specific demographic group. Mentioning a group without a number does not authorize estimating one.
 - For every non-null casualty count field, also return casualty_evidence entries shaped like {"field":"injuries","evidence_span":"literal source span containing the explicit digit"}. If no explicit digit span exists, leave the count null.
+- Do not use channel/page headers, signatures, memorials, funerals, anniversaries, prayers, or past-event martyrs as evidence. A non-null count must be supported by a literal span in the message body describing this event.
 
 Allowed output shape:
 {

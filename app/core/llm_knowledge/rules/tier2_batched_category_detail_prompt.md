@@ -18,6 +18,7 @@ Output rules:
 - Text values must be Arabic as written in the message.
 - Vague/approximate Arabic quantifiers (عشرات، مئات، المئات، عدد من، عدد كبير من، كثير من، العديد من، بضعة، بعض, and phrases like عشرات الجرحى / عشرات الشهداء) must leave casualty counts null when no explicit digit accompanies them. Do not invent demographic sub-counts from "بينهم أطفال" / "بينهم نساء" without an explicit digit for that group.
 - For every non-null casualty count, include a matching casualty_evidence item {"field":"...","evidence_span":"literal digit span from the source"}.
+- Channel/page headers, signatures, memorials, funerals, anniversaries, prayers, and past-event martyrs are not evidence for this event. Every non-null count needs a literal evidence span from the body that describes this event.
 
 Per-entry fields (same schema as single-category extraction):
 - category_key: one of the requested keys

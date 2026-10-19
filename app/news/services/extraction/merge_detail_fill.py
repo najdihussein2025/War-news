@@ -17,6 +17,7 @@ from uuid import UUID
 from sqlalchemy import select
 
 from app.core.database import SessionLocal
+from app.core.llm_knowledge.message_text import clean_message_text
 from app.llm.dtos import ExtractionCategory, ExtractionCategoryKey, ExtractionResult
 from app.news.models import (
     Incident,
@@ -83,7 +84,9 @@ def pending_merge_sources(db, incident: Incident) -> list[MergeSource]:
         sources.append(
             MergeSource(
                 raw_message_id=raw_message_id,
-                post_text=message.raw_text or "",
+                # Tier 2 must see the same body-only prompt copy as Tier 1.
+                # Raw text remains retained on RawMessage for evidence/audit.
+                post_text=clean_message_text(message.raw_text),
                 extraction=extraction,
             )
         )

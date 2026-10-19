@@ -16,6 +16,8 @@ casualties of that type occurred.
   casualty forms, occupations (`مسعف`), generic people (`مواطن`, `شخص`), verbs,
   adjectives, and names are never demographic evidence. `طفلة` and `فتى` are
   children only and never double-count as female/male.
+- An untyped count populates only `deaths`/`injuries` and its corresponding
+  total; all demographic fields remain `null`, never `0` or guessed.
 - In `بينهم/بينهما/من بينهم/منهم` phrases, the preceding casualty count remains
   the main count and following explicit people only populate demographic
   subsets. An unnumbered plural demographic remains `null`.

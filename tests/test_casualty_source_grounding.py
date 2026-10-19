@@ -15,6 +15,11 @@ def test_clean_message_text_does_not_strip_real_event_prefix():
     assert clean_message_text("قصف مدفعي يستهدف بلدة المنصوري") == "قصف مدفعي يستهدف بلدة المنصوري"
 
 
+def test_clean_message_text_keeps_only_the_body_for_a_known_header():
+    raw = "صفحة الإعلامي الشهيد علي شعيب:\nقصف مدفعي يستهدف المنصوري دون إصابات"
+    assert clean_message_text(raw) == "قصف مدفعي يستهدف المنصوري دون إصابات"
+
+
 def test_grammatical_dual_does_not_prove_male_demographic():
     value = ExtractionCasualties(deaths=2, total_deaths=2, male_deaths=2)
     assert reject_unproven_demographics("استشهد شهيدان في عربصاليم", value).male_deaths is None

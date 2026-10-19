@@ -119,3 +119,7 @@ the same clause contains a casualty word. Parenthesized numbers after villages
 in raid/action lists are action counts, not people. `شهيد` and `شهيدان` do not
 establish male gender; record demographics only when an explicit demographic
 word is present.
+Memorials, funerals, anniversaries, prayers such as `رحم الله الشهداء`, and
+martyrs from a past event are not casualties of this event. A non-null field
+requires literal body text in `casualty_evidence`; mention without an exact
+number leaves the count null and is recorded as `count_missing` for review.
