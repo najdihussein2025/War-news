@@ -30,6 +30,8 @@ class IncidentListItemDTO(BaseModel):
     raw_message_id: int | None
     raw_status: str | None
     village: str | None
+    caza_en: str | None = None
+    caza_ar: str | None = None
     condition: str | None
     condition_ar: str | None = None
     event_date: date
@@ -87,6 +89,7 @@ class IncidentListParams(BaseModel):
     limit: int = Field(default=150, ge=1, le=150)
     cursor: str | None = None
     village: str | None = None
+    caza: str | None = None
     condition: str | None = None
     source_type: str | None = None
     source_name: str | None = None

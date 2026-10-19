@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import StreamingResponse
@@ -120,7 +121,9 @@ def list_air_violations(
     event_date_from: date | None = Query(default=None),
     event_date_to: date | None = Query(default=None),
     caza_en: str | None = Query(default=None),
+    village: str | None = Query(default=None),
     last_hours: int | None = Query(default=None, ge=1, le=8760),
+    sort_order: Literal["newest", "oldest"] = Query(default="newest"),
     db: Session = Depends(get_db),
     _current_user: User = Depends(require_admin),
 ) -> AirViolationListResponse:
@@ -132,7 +135,9 @@ def list_air_violations(
         event_date_from=event_date_from,
         event_date_to=event_date_to,
         caza_en=caza_en,
+        village=village,
         last_hours=last_hours,
+        sort_order=sort_order,
     )
     return AirViolationService(AirViolationRepository(db)).list_all(params)
 
@@ -143,14 +148,16 @@ def summarize_air_violations(
     event_date_from: date | None = Query(default=None),
     event_date_to: date | None = Query(default=None),
     caza_en: str | None = Query(default=None),
+    village: str | None = Query(default=None),
     last_hours: int | None = Query(default=None, ge=1, le=8760),
     db: Session = Depends(get_db),
     _current_user: User = Depends(require_admin),
 ) -> AirViolationSummaryDTO:
     version = get_cache_version(AIR_VIOLATION_CACHE_VERSION_KEY)
     normalized_caza = caza_en.strip().casefold() if caza_en else "all"
+    normalized_village = village.strip().casefold() if village else "all"
     key = (
-        f"air-violations:summary:v{version}:caza={normalized_caza}:"
+        f"air-violations:summary:v{version}:caza={normalized_caza}:village={normalized_village}:"
         f"from={event_date_from or 'none'}:to={event_date_to or 'none'}:"
         f"hours={last_hours or 'none'}:imported={imported_only}"
     )
@@ -168,6 +175,7 @@ def summarize_air_violations(
         event_date_from=event_date_from,
         event_date_to=event_date_to,
         caza_en=caza_en,
+        village=village,
         last_hours=last_hours,
     )
     result = AirViolationService(AirViolationRepository(db)).get_summary(params)
@@ -184,6 +192,7 @@ def list_air_violation_windows(
     event_date_from: date | None = Query(default=None),
     event_date_to: date | None = Query(default=None),
     caza_en: str | None = Query(default=None),
+    village: str | None = Query(default=None),
     last_hours: int | None = Query(default=None, ge=1, le=8760),
     db: Session = Depends(get_db),
     _current_user: User = Depends(require_admin),
@@ -196,6 +205,7 @@ def list_air_violation_windows(
         event_date_from=event_date_from,
         event_date_to=event_date_to,
         caza_en=caza_en,
+        village=village,
         last_hours=last_hours,
     )
     return AirViolationService(AirViolationRepository(db)).list_windows(params)

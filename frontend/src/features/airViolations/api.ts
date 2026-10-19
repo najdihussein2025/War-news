@@ -45,9 +45,11 @@ export const getAirViolations = async (
   if (filters.cazaEn) {
     params.set("caza_en", filters.cazaEn);
   }
+  if (filters.village) params.set("village", filters.village);
   if (filters.lastHours) {
     params.set("last_hours", filters.lastHours);
   }
+  if (filters.sortOrder) params.set("sort_order", filters.sortOrder);
 
   const response = await apiClient.get<AirViolationListResponse>(
     `/air-violations?${params.toString()}`,
@@ -66,6 +68,7 @@ export const getAirViolationWindows = async (
   if (filters.eventDateFrom) params.set("event_date_from", filters.eventDateFrom);
   if (filters.eventDateTo) params.set("event_date_to", filters.eventDateTo);
   if (filters.cazaEn) params.set("caza_en", filters.cazaEn);
+  if (filters.village) params.set("village", filters.village);
   if (filters.lastHours) params.set("last_hours", filters.lastHours);
 
   const response = await apiClient.get<AirViolationWindowListResponse>(
@@ -82,6 +85,7 @@ export const getAirViolationSummary = async (
   if (filters.eventDateFrom) params.set("event_date_from", filters.eventDateFrom);
   if (filters.eventDateTo) params.set("event_date_to", filters.eventDateTo);
   if (filters.cazaEn) params.set("caza_en", filters.cazaEn);
+  if (filters.village) params.set("village", filters.village);
   if (filters.lastHours) params.set("last_hours", filters.lastHours);
   const response = await apiClient.get<AirViolationSummary>(
     `/air-violations/summary?${params.toString()}`,

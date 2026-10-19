@@ -108,14 +108,16 @@ export const AirViolationsPage = () => {
   const eventDateFrom = normalizeDateInputValue(params.get("event_date_from"));
   const eventDateTo = normalizeDateInputValue(params.get("event_date_to"));
   const cazaEn = params.get("caza_en") ?? "";
+  const village = params.get("village") ?? "";
   const lastHours = params.get("last_hours") ?? "";
+  const sortOrder = (params.get("sort_order") as "newest" | "oldest" | null) ?? "newest";
   const effectiveEventDateFrom = eventDateFrom;
   const effectiveEventDateTo = eventDateTo;
   const hourPresets = ["1", "6", "12", "24", "48", "72", "168"];
   const [customHoursMode, setCustomHoursMode] = useState(
     lastHours !== "" && !hourPresets.includes(lastHours),
   );
-  const hasFilters = Boolean(conditionId || eventDateFrom || eventDateTo || cazaEn || lastHours);
+  const hasFilters = Boolean(conditionId || eventDateFrom || eventDateTo || cazaEn || village || lastHours || sortOrder !== "newest");
   const closeEditor = async () => {
     if (isFormDirty) {
       setConfirmDiscard(true);
@@ -143,9 +145,11 @@ export const AirViolationsPage = () => {
       eventDateFrom: effectiveEventDateFrom,
       eventDateTo: effectiveEventDateTo,
       cazaEn,
+      village,
       lastHours,
+      sortOrder,
     }),
-    [cazaEn, conditionId, effectiveEventDateFrom, effectiveEventDateTo, lastHours, offset, importedOnly],
+    [cazaEn, conditionId, effectiveEventDateFrom, effectiveEventDateTo, lastHours, offset, importedOnly, sortOrder, village],
   );
 
   const { data, isLoading, isError, refetch, isFetching, dataUpdatedAt } =
@@ -173,6 +177,7 @@ export const AirViolationsPage = () => {
     eventDateFrom: effectiveEventDateFrom,
     eventDateTo: effectiveEventDateTo,
     cazaEn,
+    village,
     lastHours,
   };
   const summary = useAirViolationSummaryQuery(totalFilters);
@@ -187,9 +192,10 @@ export const AirViolationsPage = () => {
     () => [...exactAirRows].sort((left, right) => {
       const leftDate = `${left.event_date}T${left.event_time ?? "00:00:00"}`;
       const rightDate = `${right.event_date}T${right.event_time ?? "00:00:00"}`;
-      return new Date(rightDate).getTime() - new Date(leftDate).getTime();
+      const comparison = new Date(rightDate).getTime() - new Date(leftDate).getTime();
+      return sortOrder === "oldest" ? -comparison : comparison;
     }),
-    [exactAirRows],
+    [exactAirRows, sortOrder],
   );
   const isLockedByAnother = Boolean(
     selectedViolation?.locked_by_user_id
@@ -260,9 +266,6 @@ export const AirViolationsPage = () => {
     const next = new URLSearchParams(params);
     if (value) next.set(key, value);
     else next.delete(key);
-    if (key === "event_date_from" && value) {
-      next.set("event_date_to", value);
-    }
     if (value) {
       next.delete("last_hours");
       setCustomHoursMode(false);
@@ -356,7 +359,7 @@ export const AirViolationsPage = () => {
         <Button type="button" variant={importedOnly ? "primary" : "secondary"} aria-pressed={importedOnly} onClick={() => updateParam("imported_only", "true")}>Imported</Button>
       </div>
       <div className="rounded-lg border border-border bg-surface-raised p-4">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="space-y-2">
             <Label htmlFor="air-caza-filter">Caza</Label>
             <Select
@@ -369,6 +372,19 @@ export const AirViolationsPage = () => {
               searchable
               searchPlaceholder="Search caza in English or Arabic"
               panelClassName="min-w-[22rem]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="air-village-filter">Village</Label>
+            <Select
+              id="air-village-filter"
+              value={village}
+              onChange={(value) => updateParam("village", value)}
+              disabled={areCazasLoading && villages.length === 0}
+              placeholder={areCazasLoading && villages.length === 0 ? "Loading villages..." : "All villages"}
+              options={villages}
+              searchable
+              searchPlaceholder="Search village in English or Arabic"
             />
           </div>
           <div className="space-y-2">
@@ -420,6 +436,7 @@ export const AirViolationsPage = () => {
               id="air-from-filter"
               type="date"
               value={effectiveEventDateFrom}
+              max={effectiveEventDateTo || undefined}
               onChange={(event) => updateDateParam("event_date_from", event.target.value)}
             />
           </div>
@@ -429,7 +446,20 @@ export const AirViolationsPage = () => {
               id="air-to-filter"
               type="date"
               value={effectiveEventDateTo}
+              min={effectiveEventDateFrom || undefined}
               onChange={(event) => updateDateParam("event_date_to", event.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="air-sort-order">News order</Label>
+            <Select
+              id="air-sort-order"
+              value={sortOrder}
+              options={[
+                { value: "newest", label: "Latest news first" },
+                { value: "oldest", label: "First news first" },
+              ]}
+              onChange={(value) => updateParam("sort_order", value === "newest" ? "" : value)}
             />
           </div>
         </div>

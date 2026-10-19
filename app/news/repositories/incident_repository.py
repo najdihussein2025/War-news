@@ -278,6 +278,8 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                 Village.ref_name_en,
                 Village.cad_name,
             ).label("village"),
+            Village.caza_en.label("caza_en"),
+            Village.caza_ar.label("caza_ar"),
             Condition.action_en.label("condition"),
             Condition.action_ar.label("condition_ar"),
             event_date.label("event_date"),

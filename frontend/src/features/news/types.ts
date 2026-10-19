@@ -12,6 +12,8 @@ export type Incident = {
   raw_message_id: number | null;
   raw_status: string | null;
   village: string | null;
+  caza_en?: string | null;
+  caza_ar?: string | null;
   condition: string | null;
   condition_ar: string | null;
   event_date: string;
@@ -94,6 +96,7 @@ export type IncidentFilters = {
   limit: number;
   cursor?: string;
   village?: string;
+  caza?: string;
   condition?: string;
   sourceType?: string;
   sourceName?: string;
