@@ -220,6 +220,8 @@ class BulletinCasualtyGroupDTO(BaseModel):
     ]
     total_deaths: int | None
     total_injuries: int | None
+    owner_village_id: int | None = None
+    owner_incident_id: UUID | None = None
     breakdown_status: Literal["pending", "resolved", "expired", "n_a"]
     window_expires_at: datetime | None
     resolved_at: datetime | None

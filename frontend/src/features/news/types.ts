@@ -159,6 +159,8 @@ export type BulletinCasualtyGroup = {
   casualty_scope: "per_village_exact" | "bulletin_aggregate" | "unspecified";
   total_deaths: number | null;
   total_injuries: number | null;
+  owner_village_id: number | null;
+  owner_incident_id: string | null;
   breakdown_status: "pending" | "resolved" | "expired" | "n_a";
   window_expires_at: string | null;
   resolved_at: string | null;
