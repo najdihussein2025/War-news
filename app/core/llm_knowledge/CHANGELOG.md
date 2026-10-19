@@ -1,5 +1,21 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-19 - Merge provenance guard for casualty values (Step 2)
+
+- **Real examples:** Qantara (raw 45002 own, 45022 linked, story/revision merge),
+  Yater (44767 / 44770, fast-path duplicate merge, update 12576) and Beit Yahoun
+  (44527 / 44529, fast-path duplicate merge, update 12420). The linked message's
+  only casualty "evidence" was `الشهيد` in the channel header, and a death was
+  copied onto an incident whose own report had none.
+- **Rule changed:** `casualty_field_rules.md` (merging). `merge_existing`,
+  `apply_story_revision` and the recompute writer adopt a linked message's
+  casualty values only if the evidence is in that message's cleaned body (not on
+  a header/memorial line), it is the same event and the same village. Rejections
+  are written to the audit row as `casualty_provenance_rejected`.
+- **Regression:** `tests/test_casualty_merge_provenance.py` (synthetic
+  artillery-shelling message plus a linked message whose only evidence is a
+  channel header; story/revision, fast-path duplicate and recompute paths).
+
 ## 2026-10-19 - Body-only casualty evidence in merge-detail Tier 2
 
 - **Real example:** `صفحة الإعلامي الشهيد علي شعيب` preceded an artillery

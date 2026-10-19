@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from app.core.text_normalization import normalize_arabic_text
@@ -33,6 +34,37 @@ def _reason_for_span(body: str, span: str) -> str | None:
         for token in _DISALLOWED_EVIDENCE
     ):
         return "header_or_memorial_evidence"
+    return None
+
+
+_PRAYER_TOKENS = ("رحم الله الشهداء", "رحم الله الشهيد")
+
+
+def line_rejection_reason(body: str, span: str, *, check_span_tokens: bool = True) -> str | None:
+    """Like the span check, but also rejects a span that sits on a header/memorial line.
+
+    «صفحة الإعلامي الشهيد علي شعيب» may be on its own line while the counted word
+    (الشهيد) is all the span contains; the span alone looks innocent. A prayer
+    elsewhere on the line does not disqualify a real report, so line-level
+    matching ignores the prayer tokens. ``check_span_tokens=False`` is for broad
+    clauses (recompute claims) where only presence in the body and the line check matter.
+    """
+    normalized_body = normalize_arabic_text(body or "")
+    normalized_span = normalize_arabic_text(span or "")
+    if not normalized_span or normalized_span not in normalized_body:
+        return "evidence_not_in_cleaned_body"
+    if check_span_tokens:
+        reason = _reason_for_span(body, span)
+        if reason is not None:
+            return reason
+    prayer = {normalize_arabic_text(token) for token in _PRAYER_TOKENS}
+    line_tokens = [
+        normalize_arabic_text(token) for token in _DISALLOWED_EVIDENCE
+        if normalize_arabic_text(token) not in prayer
+    ]
+    for line in re.split(r"[\r\n]+", normalized_body):
+        if normalized_span in line and any(token in line for token in line_tokens):
+            return "header_or_memorial_evidence"
     return None
 
 

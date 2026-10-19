@@ -121,6 +121,8 @@ def _revision_repo(*, latest_source_at: datetime, new_at: datetime):
     db.get.return_value = SimpleNamespace(
         message_datetime=new_at,
         received_at=new_at,
+        # Merge provenance: the linked message's own body must state the casualties.
+        raw_text="إصابة 2 جرحى في الغارة، وسقوط 3 شهداء",
         source_name="CNRS",
         source_platform="api",
         source=None,

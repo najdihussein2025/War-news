@@ -87,6 +87,7 @@ from app.news.services.incident_details.casualty_transition_backstop import (
 )
 from app.news.services.incident_details.casualty_status import merge_casualty_status
 from app.news.services.incident_details.casualty_merge_guard import guard_casualty_merge
+from app.news.services.incident_details.casualty_merge_provenance import vet_incoming_casualties
 from app.news.services.incident_details.incident_casualty_recompute import (
     connected_casualty_sources,
     recompute_incident_casualties,
@@ -1727,6 +1728,13 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
     ) -> None:
         raw_message = self.db.get(RawMessage, raw_message_id)
         guard = self._casualty_merge_guard(existing, raw_message, new_candidate_data)
+        # Only values proven by this message's own body, for this event and village,
+        # may be adopted; the rest keep the incident's values (audit: rejected).
+        provenance = vet_incoming_casualties(
+            raw_message, new_candidate_data, incident_village_id=existing.village_id
+        )
+        if not provenance.clean:
+            new_candidate_data = provenance.apply_to(new_candidate_data)
         source_label = self._merge_source_label(raw_message)
         detail = self.db.scalar(
             select(IncidentDetail).where(IncidentDetail.incident_id == existing.id)
@@ -1827,6 +1835,8 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
         sync_transition_totals(existing, transition_fields)
 
         suppressed: dict[str, Any] = {}
+        if provenance.rejected:
+            suppressed["casualty_provenance_rejected"] = provenance.rejected
         admin_edited_fields = self._admin_edited_casualty_fields(existing.id)
         for field, incoming_key in (
             ("deaths", "deaths"),
@@ -1940,6 +1950,11 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
 
         raw_message = self.db.get(RawMessage, raw_message_id)
         guard = self._casualty_merge_guard(existing, raw_message, new_candidate_data)
+        provenance = vet_incoming_casualties(
+            raw_message, new_candidate_data, incident_village_id=existing.village_id
+        )
+        if not provenance.clean:
+            new_candidate_data = provenance.apply_to(new_candidate_data)
         if not self._revision_is_newer(existing, raw_message):
             logger.info(
                 "story revision skipped raw_message_id=%s incident_id=%s: "
@@ -2041,6 +2056,8 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                 "reason": guard.reason,
                 "raw_message_id": raw_message_id,
             }
+        if provenance.rejected:
+            new_values["casualty_provenance_rejected"] = provenance.rejected
         recompute_incident_casualties(
             self.db,
             existing,

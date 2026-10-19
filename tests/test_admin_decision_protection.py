@@ -76,6 +76,10 @@ def test_story_candidate_search_excludes_rejected() -> None:
 def test_story_revision_demotes_verified_incident() -> None:
     db = MagicMock()
     db.scalar.return_value = None
+    db.get.return_value = SimpleNamespace(
+        raw_text="ارتفاع عدد الشهداء إلى 6 شهداء", match_result=None, extraction_result=None,
+        source_name="NNA", origin_account=None, source_platform=None,
+    )
     existing = SimpleNamespace(
         id=uuid4(),
         deaths=5,

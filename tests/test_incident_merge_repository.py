@@ -53,6 +53,7 @@ def test_merge_keeps_higher_count_and_records_suppressed_incoming() -> None:
         source_name="CNRS Webhook",
         origin_account=None,
         source_platform=None,
+        raw_text="سقوط 3 شهداء و8 جرحى في الغارة",
     )
     db = _MergeSessionStub(raw_message=raw_message)
     repo = IncidentRepository(db)  # type: ignore[arg-type]

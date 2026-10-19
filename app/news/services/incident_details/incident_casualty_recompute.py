@@ -20,6 +20,7 @@ from app.news.models.village import Village
 from app.news.models.village_location_alias import VillageLocationAlias
 from app.news.services.incident_details.casualty_count_backstop import apply_casualty_count_backstop
 from app.news.services.incident_details.casualty_gender_evidence import reject_unproven_demographics
+from app.news.services.incident_details.casualty_merge_provenance import filter_validated_claims
 from app.news.services.incident_details.casualty_text import (
     find_count_mentions,
     find_supporting_mention,
@@ -71,6 +72,7 @@ class CasualtyValidationResult:
     aggregate_quotes: tuple[str, ...] = ()
     conflict_reason: str | None = None
     approximate_quotes: tuple[str, ...] = ()
+    provenance_rejections: tuple[dict[str, Any], ...] = ()
 
 
 _SUBSET_MARKER_RE = re.compile(r"(?:من\s+بينهم|من\s+بينهما|بينهم|بينهما|منهم)")
@@ -529,11 +531,13 @@ def validate_incident_casualty_sources(db: Session, incident: Incident) -> Casua
     aggregate_quotes: list[str] = []
     approximate_quotes: list[str] = []
     stored_sources = disproved = 0
+    cleaned_by_source: dict[int, str] = {}
     for source in sources:
         casualties, evidence, roles = _candidate_values(source)
         if not source.text.strip():
             continue
         cleaned = strip_page_header(clean_message_text(source.text))
+        cleaned_by_source[source.raw_message_id] = cleaned
         approximate_quotes.extend(_approximate_casualty_phrases(cleaned))
         # A shared bulletin toll must remain reviewable even when the retained
         # snapshot/extraction block has no usable structured casualty values.
@@ -699,7 +703,10 @@ def validate_incident_casualty_sources(db: Session, incident: Incident) -> Casua
             values = {key: None for key in INCIDENT_FIELDS + DETAIL_FIELDS}
             values[kind] = mention.value
             claims.append(ValidatedCasualtyClaim(source.raw_message_id, source.origin, attributed[0], attributed[1], values, {kind: claim_span}, source.received_at, source.raw_message_id == incident.raw_message_id))
-    return CasualtyValidationResult(tuple(claims), tuple(source.raw_message_id for source in sources), sum(bool(source.text.strip()) for source in sources), stored_sources, disproved, tuple(sorted({claim.village_name for claim in claims})), tuple(dict.fromkeys(aggregate_quotes)), approximate_quotes=tuple(dict.fromkeys(approximate_quotes)))
+    # Merge provenance guard: a claim is kept only if its quote is in the cleaned
+    # body of its own source and not on a header/memorial line.
+    claims, provenance_rejections = filter_validated_claims(claims, cleaned_by_source)
+    return CasualtyValidationResult(tuple(claims), tuple(source.raw_message_id for source in sources), sum(bool(source.text.strip()) for source in sources), stored_sources, disproved, tuple(sorted({claim.village_name for claim in claims})), tuple(dict.fromkeys(aggregate_quotes)), approximate_quotes=tuple(dict.fromkeys(approximate_quotes)), provenance_rejections=tuple(provenance_rejections))
 
 
 _APPROXIMATE_RE = re.compile(
@@ -873,5 +880,7 @@ def recompute_incident_casualties(db: Session, incident: Incident, *, raw_messag
         payload["conflict_reason"] = conflict
     if validation.approximate_quotes:
         payload["approximate_casualty_evidence"] = list(validation.approximate_quotes)
+    if validation.provenance_rejections:
+        payload["casualty_provenance_rejected"] = list(validation.provenance_rejections)
     db.add(IncidentUpdate(incident_id=incident.id, action=UpdateAction.create if creating else UpdateAction.pipeline_merge, old_values=old, new_values=payload))
     return True

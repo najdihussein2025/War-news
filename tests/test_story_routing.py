@@ -69,7 +69,9 @@ def test_apply_story_revision_updates_supplied_fields_only() -> None:
     existing.details_pending = False
     detail = IncidentDetail(incident_id=existing.id, male_d=None)
     db = MagicMock()
-    db.get.return_value = SimpleNamespace(source_name="NNA", origin_account=None, source_platform=None)
+    db.get.return_value = SimpleNamespace(
+        source_name="NNA", origin_account=None, source_platform=None, raw_text=FULL_HOUSE,
+    )
     db.scalar.side_effect = [None, detail]
     repo = IncidentRepository(db)
 

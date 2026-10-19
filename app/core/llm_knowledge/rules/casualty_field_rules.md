@@ -28,3 +28,8 @@ casualties of that type occurred.
   shared-bulletin ownership rules apply before accepting a count.
 - Enemy/non-Lebanese personnel as victims are excluded from all casualty fields
   and recorded in Arabic in `note_extra` as an uncounted casualty claim.
+- Merging (code-enforced, not a prompt rule): a duplicate, revision or recompute
+  may adopt casualty values from a linked message only when the evidence is in
+  that message's cleaned body, it describes the same event, and it is at the
+  same village; otherwise the incident keeps its own values and the rejection
+  reason is audited (`casualty_provenance_rejected`).
