@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { Button, ConfirmDialog, DataTable, Dialog, EmptyState, Input, type DataTableColumn } from "../../../components/ui";
+import { Button, ConfirmDialog, DataTable, Dialog, EmptyState, Input, Label, Select, type DataTableColumn } from "../../../components/ui";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { formatDateTime } from "../../../lib/formatters";
-import { getRejectedNews, getRejectedNewsById, restoreRejectedNews, getRejectedIncidents, restoreRejectedIncident } from "../api";
-import type { RejectedNewsItem, RejectedIncident } from "../types";
+import { getRejectedNews, getRejectedNewsById, restoreRejectedNews } from "../api";
+import type { RejectedNewsItem } from "../types";
 
 const PAGE_SIZE = 25;
 
@@ -36,15 +36,14 @@ export const RejectedNewsPage = () => {
   );
   const [reasonItem, setReasonItem] = useState<RejectedNewsItem | null>(null);
   const [restoreItem, setRestoreItem] = useState<RejectedNewsItem | null>(null);
-  const [tab, setTab] = useState<"news" | "incidents">("news");
-  const [incidentReason, setIncidentReason] = useState("");
-  const [incidentChannel, setIncidentChannel] = useState("");
-  const [incidentDateFrom, setIncidentDateFrom] = useState("");
-  const [incidentDateTo, setIncidentDateTo] = useState("");
+  const [sourceName, setSourceName] = useState("");
+  const [rejectionType, setRejectionType] = useState<RejectedNewsItem["rejection_type"] | "">("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const offset = (page - 1) * PAGE_SIZE;
   const list = useQuery({
-    queryKey: ["rejected-news", PAGE_SIZE, offset, search],
-    queryFn: () => getRejectedNews(PAGE_SIZE, offset, search),
+    queryKey: ["rejected-news", PAGE_SIZE, offset, search, sourceName, rejectionType, dateFrom, dateTo],
+    queryFn: () => getRejectedNews({ limit: PAGE_SIZE, offset, search, sourceName, rejectionType, dateFrom, dateTo }),
   });
   const detail = useQuery({
     queryKey: ["rejected-news", "detail", selectedId],
@@ -60,9 +59,6 @@ export const RejectedNewsPage = () => {
       await queryClient.invalidateQueries({ queryKey: ["incidents"] });
     },
   });
-  const rejectedIncidents = useQuery({ queryKey: ["rejected-incidents", incidentReason, incidentChannel, incidentDateFrom, incidentDateTo], queryFn: () => getRejectedIncidents({ reason: incidentReason || undefined, channel: incidentChannel || undefined, dateFrom: incidentDateFrom || undefined, dateTo: incidentDateTo || undefined }), enabled: tab === "incidents" });
-  const restoreIncident = useMutation({ mutationFn: restoreRejectedIncident, onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rejected-incidents"] }) });
-
   const columns: Array<DataTableColumn<RejectedNewsItem>> = [
     {
       key: "id",
@@ -143,48 +139,44 @@ export const RejectedNewsPage = () => {
       </div>
       <div className="rounded-xl border border-border bg-surface-raised p-4 shadow-[0_1px_2px_rgba(11,34,54,0.04)] sm:p-5">
         <p className="text-caption font-semibold uppercase text-text-muted">
-          Rejected in the last 7 days
+          Matching rejected reports (last 7 days)
         </p>
         <p className="mt-2 text-h3 font-semibold text-text-primary">
           {list.data?.total ?? 0}
         </p>
       </div>
     </section>
-    <div className="flex gap-2 border-b border-border pb-3"><Button variant={tab === "news" ? "primary" : "secondary"} onClick={() => setTab("news")}>Rejected news</Button><Button variant={tab === "incidents" ? "primary" : "secondary"} onClick={() => setTab("incidents")}>حوادث مرفوضة / Rejected incidents</Button></div>
-    {tab === "incidents" ? <>
-      <section className="grid gap-3 rounded-xl border border-border bg-surface-raised p-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Input value={incidentReason} onChange={(event) => setIncidentReason(event.target.value)} placeholder="Decision reason" />
-        <Input value={incidentChannel} onChange={(event) => setIncidentChannel(event.target.value)} placeholder="Summary channel" />
-        <Input type="date" value={incidentDateFrom} onChange={(event) => setIncidentDateFrom(event.target.value)} />
-        <Input type="date" value={incidentDateTo} onChange={(event) => setIncidentDateTo(event.target.value)} />
-      </section>
-      <DataTable
-      columns={[
-        { key: "village", header: "Village", render: (row: RejectedIncident) => row.village ?? "—" },
-        { key: "condition", header: "Action", render: (row: RejectedIncident) => row.condition ?? "—" },
-        { key: "event_date", header: "Date", render: (row: RejectedIncident) => row.event_date },
-        { key: "decision_reason", header: "Reason", render: (row: RejectedIncident) => <StatusBadge label={row.decision_reason} variant="danger" /> },
-        { key: "note", header: "Note", render: (row: RejectedIncident) => <span title={row.note ?? ""} className="block max-w-sm truncate" dir="rtl">{row.note ?? "—"}</span> },
-      ]}
-      rows={rejectedIncidents.data?.items ?? []} getRowKey={(row) => row.id} loading={rejectedIncidents.isLoading} error={rejectedIncidents.isError}
-      emptyState={<EmptyState title="No rejected incidents" description="Summary-audit rejections will appear here." />}
-      actions={(row) => <Button onClick={() => restoreIncident.mutate(row.id)} isLoading={restoreIncident.isPending}>Restore</Button>}
-      />
-    </> : <>
-
-    <section className="rounded-xl border border-border bg-surface-raised p-4 shadow-[0_1px_2px_rgba(11,34,54,0.04)] sm:p-5">
-      <label className="mb-2 block text-small font-semibold text-text-primary" htmlFor="rejected-news-search">
-        Search rejected news
-      </label>
-      <Input
-        id="rejected-news-search"
-        value={search}
-        placeholder="Search the report or source"
-        onChange={(event) => {
-          setSearch(event.target.value);
-          setPage(1);
-        }}
-      />
+    <section className="grid gap-4 rounded-xl border border-border bg-surface-raised p-4 shadow-[0_1px_2px_rgba(11,34,54,0.04)] sm:grid-cols-2 sm:p-5 lg:grid-cols-5">
+      <div className="space-y-2">
+        <Label htmlFor="rejected-news-search">Search</Label>
+        <Input id="rejected-news-search" value={search} placeholder="Report or source" onChange={(event) => { setSearch(event.target.value); setPage(1); }} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="rejected-news-source">Source</Label>
+        <Input id="rejected-news-source" value={sourceName} placeholder="All sources" onChange={(event) => { setSourceName(event.target.value); setPage(1); }} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="rejected-news-reason">Rejection reason</Label>
+        <Select id="rejected-news-reason" value={rejectionType} placeholder="All reasons" options={[
+          { value: "not_relevant", label: "Not relevant" },
+          { value: "uncertain", label: "Uncertain" },
+          { value: "duplicate", label: "Duplicate" },
+          { value: "rejected", label: "Rejected" },
+        ]} onChange={(value) => { setRejectionType(value as RejectedNewsItem["rejection_type"] | ""); setPage(1); }} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="rejected-news-from">From date</Label>
+        <Input id="rejected-news-from" type="date" value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); setPage(1); }} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="rejected-news-to">To date</Label>
+        <Input id="rejected-news-to" type="date" value={dateTo} onChange={(event) => { setDateTo(event.target.value); setPage(1); }} />
+      </div>
+      {(search || sourceName || rejectionType || dateFrom || dateTo) ? (
+        <div className="sm:col-span-2 lg:col-span-5">
+          <Button variant="secondary" onClick={() => { setSearch(""); setSourceName(""); setRejectionType(""); setDateFrom(""); setDateTo(""); setPage(1); }}>Clear filters</Button>
+        </div>
+      ) : null}
     </section>
 
     <section className="space-y-3">
@@ -324,6 +316,6 @@ export const RejectedNewsPage = () => {
         )}
       </Dialog>
     ) : null}
-    {restoreItem ? <ConfirmDialog title="Move report to incidents?" description="This overrides the rejection and sends the report back through extraction, village matching, condition matching, and duplicate checking. It will appear in Incidents after processing succeeds." confirmLabel="Move to incidents" isLoading={restore.isPending} onCancel={() => setRestoreItem(null)} onConfirm={() => restore.mutateAsync(restoreItem.id)} /> : null}</>}
+    {restoreItem ? <ConfirmDialog title="Move report to incidents?" description="This overrides the rejection and sends the report back through extraction, village matching, condition matching, and duplicate checking. It will appear in Incidents after processing succeeds." confirmLabel="Move to incidents" isLoading={restore.isPending} onCancel={() => setRestoreItem(null)} onConfirm={() => restore.mutateAsync(restoreItem.id)} /> : null}
   </div>;
 };

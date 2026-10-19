@@ -13,11 +13,30 @@ import type {
   RejectedNewsItem,
   RejectedNewsListResponse,
   FilteredNewsListResponse,
-  RejectedIncidentListResponse,
 } from "./types";
 
-export const getRejectedNews = async (limit: number, offset: number, search: string): Promise<RejectedNewsListResponse> => {
-  const response = await apiClient.get<RejectedNewsListResponse>("/rejected-news", { params: { limit, offset, search: search || undefined } });
+export type RejectedNewsFilters = {
+  limit: number;
+  offset: number;
+  search?: string;
+  sourceName?: string;
+  rejectionType?: RejectedNewsItem["rejection_type"] | "";
+  dateFrom?: string;
+  dateTo?: string;
+};
+
+export const getRejectedNews = async (filters: RejectedNewsFilters): Promise<RejectedNewsListResponse> => {
+  const response = await apiClient.get<RejectedNewsListResponse>("/rejected-news", {
+    params: {
+      limit: filters.limit,
+      offset: filters.offset,
+      search: filters.search || undefined,
+      source_name: filters.sourceName || undefined,
+      rejection_type: filters.rejectionType || undefined,
+      date_from: filters.dateFrom || undefined,
+      date_to: filters.dateTo || undefined,
+    },
+  });
   return response.data;
 };
 
@@ -29,16 +48,6 @@ export const getRejectedNewsById = async (id: number): Promise<RejectedNewsItem>
 export const restoreRejectedNews = async (id: number): Promise<void> => {
   await apiClient.post(`/rejected-news/${id}/restore`);
 };
-
-export const getRejectedIncidents = async (filters: { reason?: string; channel?: string; dateFrom?: string; dateTo?: string } = {}): Promise<RejectedIncidentListResponse> => {
-  const params = new URLSearchParams();
-  if (filters.reason) params.set("reason", filters.reason);
-  if (filters.channel) params.set("channel", filters.channel);
-  if (filters.dateFrom) params.set("date_from", filters.dateFrom);
-  if (filters.dateTo) params.set("date_to", filters.dateTo);
-  return (await apiClient.get(`/rejected-incidents?${params.toString()}`)).data;
-};
-export const restoreRejectedIncident = async (id: string): Promise<void> => { await apiClient.post(`/rejected-incidents/${id}/restore`); };
 
 export type FilteredNewsFilters = {
   limit: number;

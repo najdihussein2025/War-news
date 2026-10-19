@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import re
 from typing import Literal
 
@@ -207,6 +207,10 @@ def list_rejected_news(
     limit: int = Query(100, ge=1, le=150),
     offset: int = Query(0, ge=0),
     search: str | None = Query(None),
+    source_name: str | None = Query(None),
+    rejection_type: Literal["not_relevant", "uncertain", "duplicate", "rejected"] | None = Query(None),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
     _current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ) -> RejectedNewsList:
@@ -232,6 +236,13 @@ def list_rejected_news(
     if search and search.strip():
         pattern = f"%{search.strip()}%"
         filters.append(or_(RawMessage.raw_text.ilike(pattern), RawMessage.source_name.ilike(pattern)))
+    if source_name and source_name.strip():
+        filters.append(RawMessage.source_name == source_name.strip())
+    event_timestamp = func.coalesce(RawMessage.message_datetime, RawMessage.received_at)
+    if date_from:
+        filters.append(func.date(event_timestamp) >= date_from)
+    if date_to:
+        filters.append(func.date(event_timestamp) <= date_to)
     manual_reason = (
         select(Incident.verification_reason)
         .where(
@@ -243,20 +254,30 @@ def list_rejected_news(
         .limit(1)
         .scalar_subquery()
     )
-    statement = (
+    base_statement = (
         select(RawMessage, manual_reason.label("manual_rejection_reason"))
         .where(*filters)
         .order_by(func.coalesce(RawMessage.message_datetime, RawMessage.received_at).desc(), RawMessage.id.desc())
-        .limit(limit)
-        .offset(offset)
     )
-    rows = db.execute(statement).all()
-    total = db.scalar(select(func.count(RawMessage.id)).where(*filters)) or 0
-    return RejectedNewsList(
-        items=[
+    if rejection_type:
+        # Rejection type is derived from pipeline JSON and manual review state,
+        # so apply this filter to the normalized API items before pagination.
+        matching_items = [
+            item
+            for message, manual_rejection_reason in db.execute(base_statement).all()
+            if (item := _item(message, manual_rejection_reason)).rejection_type == rejection_type
+        ]
+        total = len(matching_items)
+        items = matching_items[offset:offset + limit]
+    else:
+        rows = db.execute(base_statement.limit(limit).offset(offset)).all()
+        total = db.scalar(select(func.count(RawMessage.id)).where(*filters)) or 0
+        items = [
             _item(message, manual_rejection_reason)
             for message, manual_rejection_reason in rows
-        ],
+        ]
+    return RejectedNewsList(
+        items=items,
         total=int(total),
         limit=limit,
         offset=offset,
