@@ -68,6 +68,14 @@ class IncidentRepositoryListQueryMixin:
                     Village.ref_name_ar.ilike(village_pattern),
                 )
             )
+        if params.caza:
+            caza_pattern = f"%{params.caza}%"
+            filters.append(
+                or_(
+                    Village.caza_en.ilike(caza_pattern),
+                    Village.caza_ar.ilike(caza_pattern),
+                )
+            )
         if params.condition:
             filters.append(
                 or_(
@@ -284,6 +292,7 @@ class IncidentRepositoryListQueryMixin:
     def _has_incident_scoped_filters(params: IncidentListParams) -> bool:
         return bool(
             params.village
+            or params.caza
             or params.condition
             or params.source_type
             or params.source_name

@@ -2,7 +2,7 @@ import re
 from datetime import datetime, time, timedelta
 from uuid import UUID
 
-from sqlalchemy import case, delete as sa_delete, func, select, update as sa_update
+from sqlalchemy import case, delete as sa_delete, func, or_, select, update as sa_update
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import StaleDataError
 from zoneinfo import ZoneInfo
@@ -52,6 +52,7 @@ from app.news.services.air_violations.air_violation_routing import (
 )
 from app.news.services.air_violations.war_month import war_month
 from app.sources.models import Source, SourceType
+from app.sources.services.red_alert_collector import classify_condition
 
 
 BEIRUT_TIMEZONE = ZoneInfo("Asia/Beirut")
@@ -645,13 +646,19 @@ class AirViolationRepository(AirViolationRepositoryInterface):
                 .where(*query_filters)
             )
 
-        all_rows = self.db.execute(
-            list_query(filters).order_by(
+        if params.sort_order == "oldest":
+            ordering = (
+                AirViolation.event_date.asc(),
+                AirViolation.event_time.asc().nullslast(),
+                AirViolation.id.asc(),
+            )
+        else:
+            ordering = (
                 AirViolation.event_date.desc(),
                 AirViolation.event_time.desc().nullslast(),
                 AirViolation.id.desc(),
             )
-        ).all()
+        all_rows = self.db.execute(list_query(filters).order_by(*ordering)).all()
         all_items = self._with_village_labels(all_rows)
         window_context_items = all_items
         if all_items and (
@@ -761,6 +768,17 @@ class AirViolationRepository(AirViolationRepositoryInterface):
     def route_from_match(self, message: RawMessage, result: MatchResultDTO) -> bool:
         if result.matched_condition_id not in AIR_VIOLATION_CONDITION_IDS:
             return False
+        # The deterministic aircraft vocabulary is authoritative over an LLM
+        # label. In Lebanese Arabic, مسيّرة/مسير and محلقة mean drone/UAV and
+        # therefore map to Surveillance Aircraft (36), never Helicopter (38).
+        classified_condition_id = classify_condition(message.raw_text or "")
+        if (
+            classified_condition_id in AIR_VIOLATION_CONDITION_IDS
+            and classified_condition_id != result.matched_condition_id
+        ):
+            result = result.model_copy(
+                update={"matched_condition_id": classified_condition_id}
+            )
         eligibility = evaluate_air_violation_text(message.raw_text)
         if not eligibility.eligible:
             # The last post-LLM boundary. Whatever the model chose, a rejected
@@ -971,6 +989,36 @@ class AirViolationRepository(AirViolationRepositoryInterface):
         if params.caza_en:
             caza = canonicalize_caza(params.caza_en) or params.caza_en
             filters.append(AirViolation.caza_en.ilike(f"%{caza}%"))
+        if params.village:
+            village_pattern = f"%{params.village}%"
+            matching_locations = (
+                select(AirViolationLocation.air_violation_id)
+                .join(Village, Village.id == AirViolationLocation.village_id)
+                .where(
+                    or_(
+                        Village.ref_name_en.ilike(village_pattern),
+                        Village.ref_name_ar.ilike(village_pattern),
+                        Village.acs_name.ilike(village_pattern),
+                        Village.cad_name.ilike(village_pattern),
+                    )
+                )
+            )
+            matching_primary_villages = (
+                select(Village.id).where(
+                    or_(
+                        Village.ref_name_en.ilike(village_pattern),
+                        Village.ref_name_ar.ilike(village_pattern),
+                        Village.acs_name.ilike(village_pattern),
+                        Village.cad_name.ilike(village_pattern),
+                    )
+                )
+            )
+            filters.append(
+                or_(
+                    AirViolation.id.in_(matching_locations),
+                    AirViolation.village_id.in_(matching_primary_villages),
+                )
+            )
         return filters
 
     def list_windows(self, params: AirViolationListParams) -> AirViolationWindowListResponse:

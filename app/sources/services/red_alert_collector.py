@@ -283,11 +283,14 @@ BARE_DRONE_KEYWORDS = (
     "درون",
     "drone",
     "uav",
+    # Lebanese news shorthand for a drone/UAV (for example,
+    # "محلقة إسرائيلية تحلق..."). It is not a helicopter term.
+    "محلقة",
 )
 # Drone words that never mean anything else, matched on whole tokens so the
 # feminine "مسيرة" (which also means a march/procession) keeps needing context.
 # "مسيّر" folds to "مسير" under Arabic normalization.
-UNAMBIGUOUS_DRONE_TOKENS = ("درون", "drone", "uav", "مسير")
+UNAMBIGUOUS_DRONE_TOKENS = ("درون", "drone", "uav", "مسير", "محلقة")
 DRONE_CONTEXT_KEYWORDS = (
     "redalert.com.lb",
     RED_ZONE_OCR_MARKER,

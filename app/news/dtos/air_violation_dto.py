@@ -1,4 +1,5 @@
 from datetime import date, datetime, time
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -89,7 +90,9 @@ class AirViolationListParams(BaseModel):
     event_date_from: date | None = None
     event_date_to: date | None = None
     caza_en: str | None = None
+    village: str | None = None
     last_hours: int | None = Field(default=None, ge=1, le=8760)
+    sort_order: Literal["newest", "oldest"] = "newest"
 
 
 class AirViolationListResponse(BaseModel):

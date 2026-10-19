@@ -83,7 +83,9 @@ export type AirViolationFilters = {
   eventDateFrom?: string;
   eventDateTo?: string;
   cazaEn?: string;
+  village?: string;
   lastHours?: string;
+  sortOrder?: "newest" | "oldest";
 };
 
 export type AirViolationSummary = {

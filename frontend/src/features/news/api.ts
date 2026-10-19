@@ -108,6 +108,7 @@ export const getIncidents = async (
   if (filters.village) {
     params.set("village", filters.village);
   }
+  if (filters.caza) params.set("caza", filters.caza);
   if (filters.condition) {
     params.set("condition", filters.condition);
   }

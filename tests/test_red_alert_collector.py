@@ -410,6 +410,7 @@ def test_classifies_supported_air_violation_actions() -> None:
         "drone",
         "UAV",
         "طائرة مسيرة",
+        "محلقة",
     ],
 )
 def test_every_drone_variant_is_surveillance(term: str) -> None:

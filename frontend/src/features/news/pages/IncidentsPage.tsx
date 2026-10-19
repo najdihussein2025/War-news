@@ -149,6 +149,7 @@ export const IncidentsPage = () => {
   const cursor = cursorHistory.at(-1);
   const page = cursorHistory.length + 1;
   const village = params.get("village") ?? "";
+  const caza = params.get("caza") ?? "";
   const condition = params.get("condition") ?? "";
   const sourceName = params.get("source_name") ?? "";
   const verificationStatus = params.get("verification_status") as Incident["verification_status"] | "";
@@ -161,12 +162,10 @@ export const IncidentsPage = () => {
   const sortOrder = (params.get("sort_order") as "newest" | "oldest" | null) ?? "newest";
   const duplicateOnly = params.get("duplicate_only") === "true";
   const hasCasualties = params.get("has_casualties") === "true";
-  const summaryAdded = params.get("summary_added") === "true";
-  const decisionReason = params.get("decision_reason") ?? "";
   const groupByBulletin = params.get("group_by") !== "none";
   const pageSize = parsePageSize(params.get("page_size"));
   const hasFilters = hasNonDefaultFilters(
-    { village, condition, sourceName, verificationStatus, verificationType, duplicateOnly, hasCasualties, summaryAdded, decisionReason, summaryReview: summaryReviewView },
+    { village, caza, condition, sourceName, verificationStatus, verificationType, duplicateOnly, hasCasualties, summaryReview: summaryReviewView },
     eventDateFrom,
     eventDateTo,
     { from: DEFAULT_EVENT_DATE_FROM, to: getBeirutDate() },
@@ -178,6 +177,7 @@ export const IncidentsPage = () => {
       limit: pageSize,
       cursor,
       village,
+      caza,
       condition,
       sourceName,
       verificationStatus: verificationStatus || undefined,
@@ -186,8 +186,6 @@ export const IncidentsPage = () => {
       eventDateTo,
       duplicateOnly,
       hasCasualties,
-      summaryAdded,
-      decisionReason: decisionReason || undefined,
       sortOrder,
       groupBy: verificationView && groupByBulletin ? "raw_message" as const : undefined,
     }),
@@ -197,8 +195,7 @@ export const IncidentsPage = () => {
       eventDateTo,
       duplicateOnly,
       hasCasualties,
-      summaryAdded,
-      decisionReason,
+      caza,
       pageSize,
       cursor,
       sortOrder,
@@ -248,11 +245,6 @@ export const IncidentsPage = () => {
     { value: "casualty_aggregate_toll", label: "Aggregate toll" },
     { value: "summary_review", label: "Summary review" },
   ];
-  const summaryDecisionOptions: SelectOption[] = [
-    { value: "ACCEPTED_CONFIRMED_BY_SUMMARY", label: "Confirmed by summary" },
-    { value: "REJECTED_DUPLICATE", label: "Rejected duplicate" },
-    { value: "REJECTED_WRONG_ROW", label: "Rejected wrong row" },
-  ];
   const verificationBadge = (row: Incident) => {
     if (row.verification_status === "verified") return { label: "Verified", variant: "success" as const };
     if (row.verification_status === "rejected") return { label: "Rejected", variant: "danger" as const };
@@ -275,6 +267,20 @@ export const IncidentsPage = () => {
       left.label.localeCompare(right.label),
     );
   }, [contentSources]);
+  const cazaOptions = useMemo<SelectOption[]>(() => {
+    const options = new Map<string, SelectOption>();
+    for (const option of villages) {
+      const value = option.caza_en?.trim() || option.caza_ar?.trim();
+      if (!value || options.has(value)) continue;
+      options.set(value, {
+        value,
+        label: option.caza_en && option.caza_ar
+          ? `${option.caza_en} - ${option.caza_ar}`
+          : value,
+      });
+    }
+    return [...options.values()].sort((left, right) => left.label.localeCompare(right.label));
+  }, [villages]);
   const dateSortOptions: SelectOption[] = [
     { value: "newest", label: "Newest to oldest" },
     { value: "oldest", label: "Oldest to newest" },
@@ -349,6 +355,20 @@ export const IncidentsPage = () => {
             <p className="text-caption text-text-muted">
               {villageResolutionNote(row)}
             </p>
+          ) : null}
+        </div>
+      ),
+    },
+    {
+      key: "caza",
+      header: "Caza",
+      headerClassName: "w-[11rem]",
+      cellClassName: "w-[11rem]",
+      render: (row) => (
+        <div className="space-y-1">
+          <p className="text-small text-text-primary">{row.caza_en || row.caza_ar || "Unknown caza"}</p>
+          {row.caza_ar && row.caza_ar !== row.caza_en ? (
+            <p className="text-caption text-text-muted" dir="rtl" lang="ar">{row.caza_ar}</p>
           ) : null}
         </div>
       ),
@@ -608,19 +628,18 @@ export const IncidentsPage = () => {
                   />
                 </div>
                 <div className="space-y-2 xl:col-span-1">
-                  <Label htmlFor="incident-summary-reason-filter">Summary source</Label>
+                  <Label htmlFor="incident-caza-filter">Caza</Label>
                   <Select
-                    id="incident-summary-reason-filter"
-                    value={decisionReason}
-                    placeholder="All incidents"
-                    options={summaryDecisionOptions}
-                    className="w-full"
-                    onChange={(value) => updateParam("decision_reason", value)}
+                    id="incident-caza-filter"
+                    value={caza}
+                    placeholder={isVillagesLoading && cazaOptions.length === 0 ? "Loading cazas..." : "All cazas"}
+                    options={cazaOptions}
+                    searchable
+                    searchPlaceholder="Search caza in English or Arabic"
+                    className="w-full min-w-0"
+                    disabled={isVillagesLoading && cazaOptions.length === 0}
+                    onChange={(value) => updateParam("caza", value)}
                   />
-                  <label className="flex items-center gap-2 text-small text-text-primary">
-                    <input type="checkbox" checked={summaryAdded} onChange={(event) => updateParam("summary_added", event.target.checked ? "true" : "")} />
-                    Added from summary
-                  </label>
                 </div>
                 <div className="space-y-2 xl:col-span-1">
                   <Label htmlFor="incident-from-filter">From</Label>
@@ -628,6 +647,7 @@ export const IncidentsPage = () => {
                     id="incident-from-filter"
                     type="date"
                     value={eventDateFrom}
+                    max={eventDateTo || undefined}
                     onChange={(event) =>
                       updateParam("event_date_from", event.target.value)
                     }
@@ -639,6 +659,7 @@ export const IncidentsPage = () => {
                     id="incident-to-filter"
                     type="date"
                     value={eventDateTo}
+                    min={eventDateFrom || undefined}
                     onChange={(event) =>
                       updateParam("event_date_to", event.target.value)
                     }
