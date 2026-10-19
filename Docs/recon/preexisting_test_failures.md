@@ -1,13 +1,43 @@
-# Step 1.5 baseline
+# Baseline of failures not caused by Step 1
 
-`pytest tests -q` at Step 1 completed with 29 failures, 1874 passes and 53 skips.
-The backend container cannot execute an arbitrary Git worktree without rebuilding
-an image from it, so the requested before-Step-1 worktree comparison was not run.
-These are the baseline gate for this phase.
+Measured on an isolated `_test` PostgreSQL (see `Docs/dev_stack.md`) with `pytest tests -q`.
+Each test below was re-run in a detached worktree at `82bdaa5^` (before Step 1): all 29 fail there
+with the same assertion, so none is caused by Step 1. The one regression Step 1 did cause
+(`test_orchestration_skips_category_detail_when_presence_gate_is_empty`) was fixed in the
+`fix(casualties): resolve step 1 test regressions` commit and is not listed.
 
-| Group | Cause |
-|---|---|
-| casualty gender tests (10) | Expectations retain superseded grammatical/occupation gender inference, contrary to the no-guess target rule. |
-| extraction/materialization casualty tests | Existing DTO/materialization contract drift around grounded demographics and derived totals. |
-| repository/detail, reconciliation, dedup, pipeline, lease tests | Existing persistence/service contract drift unrelated to body evidence. |
-| summary routing and village aliases | Existing API/fixture contract drift. |
+Gate for every later step: no failures outside this list, all new tests pass, `scripts/check_stale_service_imports.py` passes.
+
+| test | classification | one-line cause |
+|---|---|---|
+| `tests/test_bulletin_reconciliation_service.py::test_applying_same_candidate_twice_does_not_duplicate_update` | unrelated to Step 1 (pre-existing) | ForeignKeyViolation inserting reconciliation rows; fixture/schema drift (also fails at 82bdaa5^). |
+| `tests/test_casualty_gender_evidence.py::test_arabic_indic_counted_feminine_plural_is_filled` | unrelated to Step 1 (pre-existing) | Expects male/female split from singular/plural gender words; code since c191bf7 ("require explicit demographic gender evidence") returns None. Fails identically before Step 1. |
+| `tests/test_casualty_gender_evidence.py::test_counted_masculine_plural_does_not_guess_all_are_male` | unrelated to Step 1 (pre-existing) | Expects male/female split from singular/plural gender words; code since c191bf7 ("require explicit demographic gender evidence") returns None. Fails identically before Step 1. |
+| `tests/test_casualty_gender_evidence.py::test_counted_musabat_plural_fills_female_injuries` | unrelated to Step 1 (pre-existing) | Expects male/female split from singular/plural gender words; code since c191bf7 ("require explicit demographic gender evidence") returns None. Fails identically before Step 1. |
+| `tests/test_casualty_gender_evidence.py::test_definite_article_musaba_fills_female_injury` | unrelated to Step 1 (pre-existing) | Expects male/female split from singular/plural gender words; code since c191bf7 ("require explicit demographic gender evidence") returns None. Fails identically before Step 1. |
+| `tests/test_casualty_gender_evidence.py::test_definite_article_shahida_forms_match_and_fill_female` | unrelated to Step 1 (pre-existing) | Expects male/female split from singular/plural gender words; code since c191bf7 ("require explicit demographic gender evidence") returns None. Fails identically before Step 1. |
+| `tests/test_casualty_gender_evidence.py::test_explicit_feminine_singular_fills_death_and_injury` | unrelated to Step 1 (pre-existing) | Expects male/female split from singular/plural gender words; code since c191bf7 ("require explicit demographic gender evidence") returns None. Fails identically before Step 1. |
+| `tests/test_casualty_gender_evidence.py::test_explicit_masculine_singular_fills_death_and_injury` | unrelated to Step 1 (pre-existing) | Expects male/female split from singular/plural gender words; code since c191bf7 ("require explicit demographic gender evidence") returns None. Fails identically before Step 1. |
+| `tests/test_casualty_gender_evidence.py::test_female_employee_occupation_fills_female_deaths` | unrelated to Step 1 (pre-existing) | Expects male/female split from singular/plural gender words; code since c191bf7 ("require explicit demographic gender evidence") returns None. Fails identically before Step 1. |
+| `tests/test_casualty_gender_evidence.py::test_istishhad_paramedic_fills_male_deaths_without_male_word` | unrelated to Step 1 (pre-existing) | Expects male/female split from singular/plural gender words; code since c191bf7 ("require explicit demographic gender evidence") returns None. Fails identically before Step 1. |
+| `tests/test_casualty_gender_evidence.py::test_musab_singular_fills_male_injury` | unrelated to Step 1 (pre-existing) | Expects male/female split from singular/plural gender words; code since c191bf7 ("require explicit demographic gender evidence") returns None. Fails identically before Step 1. |
+| `tests/test_casualty_text.py::test_verbal_noun_with_singular_person_is_one` | unrelated to Step 1 (pre-existing) | find_supporting_mention no longer returns a span for a verbal-noun male_deaths claim (gender evidence tightened in c191bf7). Fails identically before Step 1. |
+| `tests/test_condition_repository.py::test_generic_strike_does_not_match_warning_or_feigned_with_real_repository` | unrelated to Step 1 (pre-existing) | Needs seeded conditions table (IndexError / None id); seed data absent in a fresh _test DB. |
+| `tests/test_condition_repository.py::test_real_verbose_airstrike_prefers_warplane_over_artillery` | unrelated to Step 1 (pre-existing) | Needs seeded conditions table (IndexError / None id); seed data absent in a fresh _test DB. |
+| `tests/test_extraction_service.py::test_extract_tier1_parses_sub_events` | unrelated to Step 1 (pre-existing) | Sub-event male_deaths expectation (gender not guessed from "شهيد"); fails identically before Step 1. |
+| `tests/test_incident_materialization_service.py::test_eligible_representative_inserts_incident_and_detail` | unrelated to Step 1 (pre-existing) | Materialization contract drift (expected 3 incident rows / 1 detail, got 2 / 0); fails identically before Step 1. |
+| `tests/test_incident_materialization_service.py::test_incident_and_detail_commit_atomically` | unrelated to Step 1 (pre-existing) | Materialization contract drift (expected 3 incident rows / 1 detail, got 2 / 0); fails identically before Step 1. |
+| `tests/test_incident_materialization_service.py::test_zero_casualty_scope_downgrade_does_not_flag_incident` | unrelated to Step 1 (pre-existing) | Materialization contract drift (expected 3 incident rows / 1 detail, got 2 / 0); fails identically before Step 1. |
+| `tests/test_kfar_roummane_story_cluster.py::test_full_house_report_sets_paramedic_male_death` | unrelated to Step 1 (pre-existing) | Gendered-occupation fill returns None for male_deaths; gender evidence tightened (c191bf7). |
+| `tests/test_pipeline_health_route.py::test_pipeline_health_returns_stages_and_cursor_gap` | unrelated to Step 1 (pre-existing) | Health payload gained fields (ollama/webhook health, 8d93bca) not in the expected dict. |
+| `tests/test_pre_extraction_dedup.py::test_distinct_message_left_unchanged` | unrelated to Step 1 (pre-existing) | Test stub SimpleNamespace lacks message_datetime that the stage now reads (AttributeError). |
+| `tests/test_pre_extraction_dedup.py::test_near_duplicate_within_window_marked_as_duplicate` | unrelated to Step 1 (pre-existing) | Test stub SimpleNamespace lacks message_datetime that the stage now reads (AttributeError). |
+| `tests/test_pre_extraction_dedup.py::test_out_of_window_near_duplicate_not_flagged` | unrelated to Step 1 (pre-existing) | Test stub SimpleNamespace lacks message_datetime that the stage now reads (AttributeError). |
+| `tests/test_pre_extraction_dedup.py::test_same_batch_pair_only_higher_id_marked_duplicate` | unrelated to Step 1 (pre-existing) | Test stub SimpleNamespace lacks message_datetime that the stage now reads (AttributeError). |
+| `tests/test_presence_gate_accuracy.py::test_civil_defense_recovery_populates_casualty_demographics_from_root` | unrelated to Step 1 (pre-existing) | Demographics-from-root contract drift (ExtractionCasualties totals); fails identically before Step 1. |
+| `tests/test_red_alert_collector.py::test_process_persists_air_violation_row_and_routed_status` | unrelated to Step 1 (pre-existing) | Needs seeded air-violation condition / schema state in DB. |
+| `tests/test_relevance_batch_lease.py::test_relevance_batch_is_leased_and_committed_before_the_llm_call` | unrelated to Step 1 (pre-existing) | Stub row shape differs from what the lease code now returns (namespace mismatch). |
+| `tests/test_summary_routing.py::test_intake_signature_and_return_shape_are_stable` | unrelated to Step 1 (pre-existing) | Signature check expects (session, raw_message), code has an extra summary-check-enabled parameter. |
+| `tests/test_village_location_aliases.py::test_proposed_aliases_cover_maslakh_recon_mentions` | unrelated to Step 1 (pre-existing) | Alias fixture list no longer covers the Maslakh recon mentions. |
+
+Environment note: two tests in the previous list (`tests/news/test_incident_detail.py::test_repository_get_by_id_returns_detail_and_hides_soft_deleted`, `tests/test_incident_detail_edit.py::test_repository_update_details_writes_audit_row`) passed in the sandbox DB, and `test_condition_repository.py` (2) and `test_red_alert_collector.py::test_process_persists_air_violation_row_and_routed_status` failed there only because the sandbox DB was built without migration seed data. Re-confirm those five on the dev stack once the schema is migrated.
