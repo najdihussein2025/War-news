@@ -103,7 +103,9 @@ def test_worker_is_wired_in_both_compose_files_like_the_other_workers():
     assert "python -m scripts.summary_reconcile_sweep" in block
     assert "SUMMARY_RECONCILE_INTERVAL_SECONDS" in block and "PYTHONUNBUFFERED" in block
     assert "volumes:" not in block, "deploy workers must not bind-mount the source tree"
-    # The standalone dev file mounts the source tree for every worker via the shared x-app anchor.
+    # Dev workers share the image-based app anchor. This also supports checkouts
+    # on mapped network drives, where Docker Desktop bind mounts are incomplete.
     dev_block = dev.split("summary-reconcile-worker:")[1].split("\n\n")[0]
-    assert "<<: *app" in dev_block and "- .:/app" in dev.split("services:")[0]
+    assert "<<: *app" in dev_block
+    assert "- .:/app" not in dev.split("services:")[0]
     assert "python -m scripts.summary_reconcile_sweep" in dev_block

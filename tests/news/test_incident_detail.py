@@ -237,6 +237,7 @@ def test_repository_get_by_id_returns_detail_and_hides_soft_deleted() -> None:
         assert result.health_center is None
 
         incident.is_deleted = True
+            incident.deleted_reason = "admin"
         db.flush()
         assert IncidentRepository(db).get_by_id(incident.id) is None
     except (OperationalError, ProgrammingError) as exc:

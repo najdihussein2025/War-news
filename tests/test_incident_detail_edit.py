@@ -286,6 +286,7 @@ def test_repository_update_details_writes_audit_row() -> None:
             event_date=date(2026, 8, 17),
             khabar="Deleted",
             is_deleted=True,
+            deleted_reason="admin",
         )
         db.add(deleted)
         db.flush()
