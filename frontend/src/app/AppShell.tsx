@@ -73,6 +73,15 @@ const AirViolationsIcon = ({ className }: { className?: string }) => (
   </IconBase>
 );
 
+const AnalyticsIcon = ({ className }: { className?: string }) => (
+  <IconBase className={className}>
+    <path d="M4 20V10" />
+    <path d="M10 20V4" />
+    <path d="M16 20v-7" />
+    <path d="M22 20H2" />
+  </IconBase>
+);
+
 const SourcesIcon = ({ className }: { className?: string }) => (
   <IconBase className={className}>
     <ellipse cx="12" cy="5" rx="7" ry="3" />
@@ -165,6 +174,12 @@ const navItems: NavItem[] = [
     hiddenFrom: [],
   },
   {
+    label: "Analytics",
+    path: "analytics",
+    icon: AnalyticsIcon,
+    hiddenFrom: [],
+  },
+  {
     label: "Rejected News",
     path: "rejected-news",
     icon: IncidentsIcon,
@@ -205,6 +220,7 @@ const navItems: NavItem[] = [
 const pageMeta = [
   { match: (pathname: string) => pathname.endsWith("/dashboard"), title: "Dashboard" },
   { match: (pathname: string) => pathname.includes("/air-violations"), title: "Air Violations" },
+  { match: (pathname: string) => pathname.includes("/analytics"), title: "Analytics" },
   { match: (pathname: string) => pathname.includes("/filtered-news"), title: "Filtered News" },
   { match: (pathname: string) => pathname.includes("/incidents"), title: "Incidents" },
   { match: (pathname: string) => pathname.includes("/rejected-news"), title: "Rejected News" },

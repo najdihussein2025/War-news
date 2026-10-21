@@ -215,6 +215,10 @@ class Settings(BaseSettings):
     village_geo_context_min_distance_advantage_meters: int = 5000
     redis_url: str = "redis://redis:6379/0"
     cache_enabled: bool = True
+    # Analytics page: fact refresh worker loop, dirty-date batch and API response cache.
+    analytics_refresh_interval_seconds: int = 120
+    analytics_refresh_batch_size: int = 60
+    analytics_cache_ttl_seconds: int = 300
     casualty_flags_enabled: bool = False
     casualty_flag_grace_minutes: int = 120
 

@@ -134,6 +134,24 @@ services:
     networks:
       - appnet
 
+  analytics-refresh-worker:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      PG_APPLICATION_NAME: war-news-analytics-refresh
+      PIPELINE_ROLE: analytics-refresh-worker
+      PYTHONUNBUFFERED: "1"
+    command: sh -c "while true; do python -m scripts.analytics_refresh_sweep; sleep ${ANALYTICS_REFRESH_INTERVAL_SECONDS:-120}; done"
+    restart: unless-stopped
+    networks:
+      - appnet
+
   summary-reconcile-worker:
     build:
       context: .

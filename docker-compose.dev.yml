@@ -129,6 +129,16 @@ services:
     command: sh -c "while true; do python -m scripts.bulletin_reconciliation_sweep; sleep $${BULLETIN_RECONCILIATION_SWEEP_INTERVAL_SECONDS:-1800}; done"
     restart: unless-stopped
 
+  analytics-refresh-worker:
+    <<: *app
+    environment:
+      <<: *dev-env
+      PG_APPLICATION_NAME: war-news-dev-analytics-refresh
+      PIPELINE_ROLE: analytics-refresh-worker
+      PYTHONUNBUFFERED: "1"
+    command: sh -c "while true; do python -m scripts.analytics_refresh_sweep; sleep $${ANALYTICS_REFRESH_INTERVAL_SECONDS:-120}; done"
+    restart: unless-stopped
+
   summary-reconcile-worker:
     <<: *app
     environment:

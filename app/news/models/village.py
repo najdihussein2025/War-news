@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, Integer, String, func, text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -21,6 +21,13 @@ class Village(Base):
     mohafaza_ar: Mapped[str | None] = mapped_column(String, nullable=True)
     coord_x: Mapped[float | None] = mapped_column(Float, nullable=True)
     coord_y: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # HDX/OCHA code of this village's geojson polygon (analytics join key).
+    admin_area_code: Mapped[str | None] = mapped_column(
+        String,
+        ForeignKey("admin_areas.code", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
