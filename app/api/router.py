@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.accounts_router import router as accounts_router
+from app.api.analytics_router import router as analytics_router
 from app.api.auth_router import router as auth_router
 from app.api.conditions_router import router as conditions_router
 from app.api.content_sources_router import router as content_sources_router
@@ -20,6 +21,7 @@ from app.api.summaries_router import router as summaries_router
 
 router = APIRouter()
 router.include_router(accounts_router)
+router.include_router(analytics_router)
 router.include_router(auth_router)
 router.include_router(webhooks_router)
 router.include_router(sources_router)
