@@ -28,9 +28,11 @@ _TARGET_RE = re.compile(r"(?:استهدف|يطال|طال|تجاه)\s+(?P<name>[
 
 def _condition_phrases() -> tuple[tuple[str, str], ...]:
     """Reuse matcher terminology as the conservative recovery vocabulary."""
-    categories = {"condition_alias", "condition_exact_alias", "evidence_override", "condition_id_label"}
+    categories = {"condition_alias", "evidence_override", "condition_id_label"}
     entries = [entry for entry in load_terminology("terminology/condition_labels.yaml") if entry.category in categories]
-    return tuple(sorted(((entry.term, entry.meaning) for entry in entries if entry.term), key=lambda pair: len(pair[0]), reverse=True))
+    pairs = [(entry.term, entry.meaning) for entry in entries if entry.term]
+    pairs.extend((entry.meaning, entry.meaning) for entry in entries if entry.meaning)
+    return tuple(sorted(dict.fromkeys(pairs), key=lambda pair: len(pair[0]), reverse=True))
 
 
 _CONDITION_PHRASES = _condition_phrases()
