@@ -221,3 +221,19 @@ def test_vague_wording_only_is_cleared(db):  # noqa: F811
     plan = _plan_for(db, incident)
 
     assert {c.reason for c in plan.cleared} == {"vague_quantifier"}
+
+
+def test_status_of_a_row_kept_for_review_is_not_downgraded(db):  # noqa: F811
+    """43654 / Haddatha: the only number is the male_i breakdown; status and evidence stay."""
+    body = "أدت غارة إسرائيلية على بلدة حداثا إلى وقع جريحين بينهما طفل عمره 4 سنوات"
+    incident, _o, _l = _world(db, "حداثا", body, body)
+    incident.casualty_status = "exact"
+    incident.casualty_injuries_status = "exact"
+    incident.casualty_status_evidence = body
+    db.add(IncidentDetail(incident_id=incident.id, male_i=2))
+    db.flush()
+
+    plan = _plan_for(db, incident)
+
+    assert not plan.cleared
+    assert not any(c.field.startswith("casualty_") for c in plan.changes)
