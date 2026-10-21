@@ -61,6 +61,7 @@ class ExtractIncidentsAction:
                     result,
                     post_text=prompt_text,
                     cnrs_classification=message.cnrs_classification,
+                    raw_message_id=message.id,
                 )
                 self.raw_messages.save_extraction_result(
                     message=message,
@@ -129,6 +130,7 @@ class ExtractIncidentsAction:
                 result,
                 post_text=prompt_text,
                 cnrs_classification=message.cnrs_classification,
+                raw_message_id=message.id,
             )
             self.raw_messages.save_extraction_result(
                 message=message,
