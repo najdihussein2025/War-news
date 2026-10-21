@@ -275,7 +275,13 @@ def plan_incident(
             if loc == "incident":
                 setattr(shadow, attr, None)
     enforce_status_matches_numbers(shadow)
+    # Real casualties kept for review, or kept only in the gender/children breakdown, are
+    # not "no numbers": never downgrade such a row to none_mentioned or drop its evidence.
+    protected = bool(plan.review) or any(item.startswith("detail.") for item in plan.kept)
     for attr in STATUS_ATTRS:
+        new_value = getattr(shadow, attr)
+        if protected and new_value in (None, "none_mentioned") and getattr(incident, attr, None) not in (None, "none_mentioned"):
+            continue
         if getattr(shadow, attr) != getattr(incident, attr, None):
             plan.changes.append(
                 Change(attr, getattr(incident, attr, None), getattr(shadow, attr), "status_matches_numbers")
