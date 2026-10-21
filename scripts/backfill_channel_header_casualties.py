@@ -45,7 +45,11 @@ from app.news.models.bulletin_casualty_group import (
 )
 from app.news.services.incident_details.casualty_merge_provenance import vet_incoming_casualties
 from app.news.services.incident_details.casualty_status import enforce_status_matches_numbers
-from app.news.services.incident_details.casualty_text import strip_page_header
+from app.core.text_normalization import normalize_arabic_text
+from app.news.services.incident_details.casualty_text import (
+    bare_token_lacks_event_context,
+    strip_page_header,
+)
 from app.news.services.incident_details.incident_casualty_recompute import (
     ConnectedCasualtySource,
     _admin_edited,
@@ -127,14 +131,54 @@ def _body(text: str | None) -> str:
     return strip_page_header(clean_message_text(text or ""))
 
 
+_EVIDENCE_FIELD_TO_KEY = {
+    "deaths": "deaths", "injuries": "injuries",
+    "total_deaths": "total_deaths", "total_injuries": "total_injuries",
+    "male_deaths": "male_d", "male_injuries": "male_i",
+    "female_deaths": "female_d", "female_injuries": "female_i",
+    "children_deaths": "children_d", "children_injuries": "children_i",
+}
+
+
+def _stored_evidence_keys(source: ConnectedCasualtySource) -> set[str]:
+    """Keys whose stored extraction evidence span sits in the header-stripped body.
+
+    Covers real casualties the mention parser cannot count by itself («استشهد الشاب
+    فلان …»). A span inside the header, or a bare «شهيد» without event context, never counts.
+    """
+    extraction = source.extraction_result or {}
+    casualties = extraction.get("casualties") or {}
+    body = _body(source.text)
+    normalized_body = normalize_arabic_text(body)
+    keys: set[str] = set()
+    for item in extraction.get("casualty_evidence") or []:
+        if not isinstance(item, dict):
+            continue
+        field_name, span = item.get("field"), item.get("evidence_span")
+        key = _EVIDENCE_FIELD_TO_KEY.get(field_name)
+        if key is None or not span or not _is_positive(casualties.get(field_name)):
+            continue
+        if normalize_arabic_text(clean_message_text(span)) not in normalized_body:
+            continue
+        if header_spans(span) or bare_token_lacks_event_context(body, span):
+            continue
+        keys.add(key)
+    return keys
+
+
 def grounded_keys(sources: list[ConnectedCasualtySource], values: dict[str, int]) -> set[str]:
     """Vet keys of ``values`` that the header-stripped body of at least one source proves."""
     grounded: set[str] = set()
     for source in sources:
+        grounded |= _stored_evidence_keys(source) & set(values)
         stand_in = SimpleNamespace(id=source.raw_message_id, raw_text=source.text, match_result=None)
         # No village check: the backfill is conservative and must never drop a real casualty.
         decision = vet_incoming_casualties(stand_in, dict(values), incident_village_id=None)
         grounded |= {key for key in values if decision.values.get(key) is not None}
+    # A count and its roll-up are one claim.
+    for base, total in (("deaths", "total_deaths"), ("injuries", "total_injuries")):
+        if base in grounded or total in grounded:
+            grounded |= {base, total} & set(values)
     return grounded
 
 
@@ -183,9 +227,15 @@ def plan_incident(
         reason = "no_body_grounding"
         if not grounded and _header_only(sources):
             reason = "header_only"
+        main_grounded = bool(grounded & {"deaths", "total_deaths", "injuries", "total_injuries"})
         for loc, attr, key in fields:
             value = current(loc, attr)
             if not _is_positive(value):
+                continue
+            if loc == "detail" and main_grounded:
+                # Gender/children breakdowns go only together with their main count: the
+                # backfill removes header contamination, it does not re-judge demographics.
+                plan.kept.append(f"detail.{attr}={value}")
                 continue
             if key in grounded:
                 plan.kept.append(f"{attr}={value}")
