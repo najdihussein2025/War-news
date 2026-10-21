@@ -8,8 +8,10 @@ the header-stripped BODY of the canonical message and of every linked/merged mes
 ``--reextract`` is passed.
 
 * A death/injury grounded in the body of at least one linked message is KEPT.
-* Values whose only source is a header token (or that no body supports) are set to
-  NULL, together with the matching ``incident_details`` gender/children fields.
+* Values whose only source is a header token, or that no body supports and whose body has
+  no casualty wording (or only a vague one), are set to NULL,
+  while an unproven value whose body still has casualty wording is KEPT and listed as
+  ``needs_review`` for a human, together with the matching ``incident_details`` gender/children fields.
 * ``casualty_status`` is re-aligned with the numbers, rows of a shared-toll group are
   all flagged Needs verification, and an Unclassified action is flagged too.
 * Rows an admin edited or verified are NEVER touched; they are listed in the report.
@@ -48,6 +50,8 @@ from app.news.services.incident_details.casualty_status import enforce_status_ma
 from app.core.text_normalization import normalize_arabic_text
 from app.news.services.incident_details.casualty_text import (
     bare_token_lacks_event_context,
+    has_casualty_wording,
+    has_vague_quantifier,
     strip_page_header,
 )
 from app.news.services.incident_details.incident_casualty_recompute import (
@@ -109,10 +113,12 @@ class IncidentPlan:
     skipped: str | None = None
     kept: list[str] = field(default_factory=list)
     changes: list[Change] = field(default_factory=list)
+    # Ungrounded values whose body still has casualty wording: kept, listed for a human.
+    review: list[Change] = field(default_factory=list)
 
     @property
     def cleared(self) -> list[Change]:
-        return [c for c in self.changes if c.reason in ("header_only", "no_body_grounding")]
+        return [c for c in self.changes if c.reason in ("header_only", "no_body_grounding", "vague_quantifier")]
 
     @property
     def status_fixed(self) -> list[Change]:
@@ -182,6 +188,18 @@ def grounded_keys(sources: list[ConnectedCasualtySource], values: dict[str, int]
     return grounded
 
 
+def _body_wording(sources: list[ConnectedCasualtySource], kind: str) -> str:
+    """"wording" (real casualty words), "vague" (only «عشرات»/«وقوع إصابات») or "none"."""
+    wording = vague = False
+    for source in sources:
+        body = _body(source.text)
+        if has_vague_quantifier(body, kind):
+            vague = True
+        elif has_casualty_wording(body, kind):
+            wording = True
+    return "wording" if wording else "vague" if vague else "none"
+
+
 def _header_only(sources: list[ConnectedCasualtySource]) -> bool:
     """True when a linked message carries a registered channel/page header."""
     return any(header_spans(source.text) for source in sources)
@@ -225,8 +243,20 @@ def plan_incident(
         if not grounded and reextract_supports is not None and reextract_supports(sources, kind):
             grounded = set(positives)
         reason = "no_body_grounding"
-        if not grounded and _header_only(sources):
-            reason = "header_only"
+        if not grounded:
+            body_state = _body_wording(sources, kind)
+            if body_state == "wording":
+                # Never remove what may be a real casualty: report it for a human instead.
+                for loc, attr, key in fields:
+                    value = current(loc, attr)
+                    if _is_positive(value):
+                        label = attr if loc == "incident" else f"detail.{attr}"
+                        plan.review.append(Change(label, value, value, "needs_review"))
+                continue
+            if _header_only(sources):
+                reason = "header_only"
+            elif body_state == "vague":
+                reason = "vague_quantifier"
         main_grounded = bool(grounded & {"deaths", "total_deaths", "injuries", "total_injuries"})
         for loc, attr, key in fields:
             value = current(loc, attr)
@@ -308,7 +338,7 @@ def write_csv(plans: list[IncidentPlan], path: Path = OUT_CSV) -> Path:
             if plan.skipped:
                 writer.writerow([plan.incident_id, plan.village, plan.event_date, "(row skipped)", "", plan.skipped, linked])
                 continue
-            for change in plan.changes:
+            for change in [*plan.changes, *plan.review]:
                 writer.writerow([
                     plan.incident_id, plan.village, plan.event_date, change.field,
                     f"{change.old} -> {change.new}", change.reason, linked,
@@ -326,6 +356,7 @@ def summarize(plans: list[IncidentPlan]) -> Counter:
         counts["cleared"] += len(plan.cleared)
         counts["status_fixed"] += 1 if plan.status_fixed else 0
         counts["newly_flagged"] += 1 if plan.flagged else 0
+        counts["needs_review"] += len(plan.review)
     return counts
 
 
@@ -370,7 +401,7 @@ def run(*, apply: bool = False, reextract: bool = False, session_factory=None, c
         summary["processed"] = len(plans)
         path = write_csv(plans, csv_path)
         counts = summarize(plans)
-        summary.update({key: counts.get(key, 0) for key in ("kept", "cleared", "status_fixed", "newly_flagged")})
+        summary.update({key: counts.get(key, 0) for key in ("kept", "cleared", "status_fixed", "newly_flagged", "needs_review")})
         summary["skipped_admin_edited"] = counts.get("skipped_admin_edited", 0)
         summary["skipped_verified"] = counts.get("skipped_verified", 0)
         summary["csv"] = str(path)
