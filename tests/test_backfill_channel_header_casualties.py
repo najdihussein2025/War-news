@@ -148,3 +148,49 @@ def test_apply_writes_nulls_and_an_audit_row(db):  # noqa: F811
     assert incident.casualty_status == "none_mentioned"
     audit = db.scalars(select(IncidentUpdate).where(IncidentUpdate.incident_id == incident.id)).all()[-1]
     assert audit.new_values["channel_header_casualty_cleanup"] is True and audit.performed_by is None
+
+
+def test_real_casualty_with_stored_body_evidence_is_kept_and_breakdown_follows(db):  # noqa: F811
+    """«استشهد الشاب …» has no count word; the stored extraction evidence in the body grounds it."""
+    body = "استشهد الشاب محمد دايخ صباحا بغارة مسيرة على النبطية"
+    incident, own_raw, _l = _world(db, "النبطية", body, body)
+    own_raw.extraction_result = {
+        "casualties": {"deaths": 1},
+        "casualty_evidence": [{"field": "deaths", "evidence_span": "استشهد الشاب محمد دايخ"}],
+    }
+    incident.deaths = incident.total_deaths = 1
+    incident.casualty_status = "exact"
+    db.add(IncidentDetail(incident_id=incident.id, male_d=1))
+    db.flush()
+
+    plan = _plan_for(db, incident)
+
+    assert not plan.cleared
+    assert "deaths=1" in plan.kept
+
+
+def test_gender_breakdown_is_not_cleared_while_the_main_count_is_grounded(db):  # noqa: F811
+    body = "وشهيدان في اعتداء إسرائيلي مزدوج على بلدة عربصاليم"
+    incident, _o, _l = _world(db, "عربصاليم", body, body)
+    incident.deaths = incident.total_deaths = 2
+    incident.casualty_status = "exact"
+    db.add(IncidentDetail(incident_id=incident.id, male_d=2))
+    db.flush()
+
+    plan = _plan_for(db, incident)
+
+    assert not plan.cleared and "detail.male_d=2" in plan.kept
+
+
+def test_header_evidence_span_in_stored_extraction_does_not_ground(db):  # noqa: F811
+    own = OWN_BODY.format(village="ياطر")
+    incident, own_raw, _l = _world(db, "ياطر", own, own)
+    own_raw.raw_text = f"{HEADER}\n{own}"
+    own_raw.extraction_result = {
+        "casualties": {"deaths": 1},
+        "casualty_evidence": [{"field": "deaths", "evidence_span": "شهيد"}],
+    }
+    incident.deaths = incident.total_deaths = 1
+    db.flush()
+
+    assert {c.field for c in _plan_for(db, incident).cleared} == {"deaths", "total_deaths"}

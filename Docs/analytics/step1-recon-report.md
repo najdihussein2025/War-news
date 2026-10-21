@@ -469,7 +469,104 @@ Note: migration `20260903_0050` imports from `incident_workbook_service`, so mig
 
 ### Map files and village join
 
-`frontend/public/geo/` is absent in this checkout. `lb_mohafaza.geojson`, `lb_caza.geojson`, and `lb_village.geojson` were not available locally, so their feature counts and all village-join measurements could not be run. Consequently, matched/unmatched counts, duplicate `acs_code` rows, unmatched-code examples, random name-pair samples, caza-code mapping, and the name-plus-caza fallback measurement remain blocked until the three supplied layers are copied into that directory.
+The three layers were subsequently supplied, verified, committed, and measured; see the completed village-join results below.
+
+### Village join — completed after layers were supplied
+
+The committed files contain 8 mohafaza features, 26 caza features, and 1,610 village features. The live `villages` table has 1,544 rows.
+
+- Exact `villages.acs_code = geojson.properties.code` matches: **1,543** as text and **1,543** as integers.
+- Villages without a geojson-code match: **1**. Geojson codes without a village: **67**.
+- Duplicate `villages.acs_code` groups: **0** (therefore no duplicate rows to list).
+- The Arabic-name-plus-caza fallback, measured only for the unmatched village using the existing Arabic normalisation rules and the code-derived caza mapping, would recover **0** villages.
+- Live (not deleted) incidents pointing at a village without a geojson match: **5**.
+
+Full village-without-geojson list:
+
+| id | acs_code | Arabic name | English name | caza |
+|---:|---:|---|---|---|
+| 419 | 74183 | مزارع شبعا | Chebaa Farms | Hasbaiya |
+
+First 20 geojson codes without a village row:
+
+| code | Arabic name | English name |
+|---:|---|---|
+| 22001 |  | Litige |
+| 22002 |  | Litige |
+| 23001 |  | Litige |
+| 23002 |  | Litige |
+| 23003 |  | Litige |
+| 23004 |  | Litige |
+| 23005 |  | Litige |
+| 23006 |  | Litige |
+| 23007 |  | Litige |
+| 24001 |  | Litige |
+| 24002 |  | Litige |
+| 24003 |  | Litige |
+| 24004 |  | Litige |
+| 24005 |  | Litige |
+| 24006 |  | Litige |
+| 24007 |  | Litige |
+| 24008 |  | Litige |
+| 24009 |  | Litige |
+| 25001 |  | Litige |
+| 25002 |  | Litige |
+
+Twenty random exact-match samples (DB name → GeoJSON name):
+
+| code | DB Arabic / English | GeoJSON Arabic / English |
+|---:|---|---|
+| 63147 | مكنونية / Maknounet Jezzine | مكنونية / Maknounet Jezzine |
+| 36134 | مزرعة بني صعب / Mazraat Bani Saab | مزرعة بني صعب / Mazraat Bani Saab |
+| 55174 | مجدل بلهيص / Majdel Balhis | مجدل بلهيص / Majdel Balhis |
+| 21456 | قرنايل / Qornayel | قرنايل / Qornayel |
+| 37357 | بيت حاويك / Beit Haouik | بيت حاويك / Beit Haouik |
+| 53135 | حوش تل صفية / Haouch Tall Safiye | حوش تل صفية / Haouch Tall Safiyeh |
+| 35261 | المقيطع / Mqaiteaa | المقيطع / Mqaiteaa |
+| 24363 | سلفايا / Selfaya | سلفايا / Selfaya |
+| 63261 | جنسنايا / Jensnaya | جنسنايا / Jensnaya |
+| 61488 | برتي / Berti | برتي / Berti |
+| 62226 | البياض صور / Biyad | البياض صور / Biyad |
+| 72277 | ياطر / Yater | ياطر / Yater |
+| 32171 | قلحات / Qalhat | قلحات / Qalhat |
+| 23544 | عترين / Aathrine | عترين / Aathrine |
+| 52151 | خربة قنافار / Khirbet Qanafar | خربة قنافار / Khirbet Qanafar |
+| 34144 | كفر عبيدا / Kfar Aabida | كفر عبيدا / Kfar Aabida |
+| 52171 | المنصورة / Mansoura BG | المنصورة / Mansoura BG |
+| 52217 | كامد اللوز / Kamed El-Laouz | كامد اللوز / Kamed El-Laouz |
+| 24349 | مجدليا / Mejdlaiya | مجدليا / Mejdlaiya |
+| 22155 | سن الفيل / Sinn El-Fil | سن الفيل / Sinn El-Fil |
+
+Code-derived caza mapping (all 26 live `caza_en` values map to exactly one code; no zero- or multi-code mappings):
+
+| villages.caza_en | villages | geojson caza_code |
+|---|---:|---|
+| Akkar | 165 | LB51 |
+| Aley | 73 | LB31 |
+| Baabda | 57 | LB32 |
+| Baalbek | 85 | LB21 |
+| Batroun | 73 | LB52 |
+| Bcharre | 24 | LB53 |
+| Beirut | 13 | LB11 |
+| Bint Jubail | 38 | LB41 |
+| Chouf | 99 | LB33 |
+| El Metn | 100 | LB36 |
+| Hasbaiya | 23 | LB42 |
+| Hermel | 9 | LB22 |
+| Jezzine | 76 | LB62 |
+| Jubail | 99 | LB34 |
+| Kasrouane | 78 | LB35 |
+| Koura | 43 | LB54 |
+| Marjaayoun | 33 | LB43 |
+| Minieh-Danieh | 55 | LB55 |
+| Nabatiye | 52 | LB44 |
+| Rachiaya | 28 | LB23 |
+| Saida | 76 | LB61 |
+| Sour | 75 | LB63 |
+| Tripoli | 16 | LB56 |
+| West Bekaa | 41 | LB24 |
+| Zahle | 61 | LB25 |
+| Zgharta | 52 | LB57 |
 
 ### Incidents
 
@@ -515,7 +612,7 @@ The live table has 46 condition rows. ID 45 is **Air Activity - Needs Verificati
 ## Agreed decisions (2026-10-21)
 
 1. Access: the Analytics page lives inside the existing admin panel, for super_admin and admin only. Routes are added to both the /admin and /superadmin trees. No public endpoint.
-2. Headline numbers ("counted"): verification_status in (verified, auto_processed). Rows in needs_verification are shown separately as "pending review" and are excluded from headline totals by default (a toggle can include them). Rejected and deleted rows are never counted. Use the real status values found in Step 4; if names differ, list the mapping.
+2. Headline numbers ("counted"): verification_status in (verified, auto_processed) AND not deleted AND not rejected. Rows in needs_verification are shown separately as "pending review" and are excluded from headline totals by default (a toggle can include them). Rejected and deleted rows are never counted. Use the real status values found in Step 4; if names differ, list the mapping. Condition 45 is `Air Activity - Needs Verification` and condition 87 is `Unclassified / Needs Review`; both belong to pending review, not headline totals.
 3. History: before the planned data reset, all incidents are copied into a Postgres incidents_archive table that keeps ids, village_id, condition_id, verification status, the shared-toll marker and all casualty fields. Excel stays a human copy only. Fact rows built from the archive are frozen and the refresh worker never rewrites them.
 4. Village join: by code only (villages.acs_code to geojson code), never by name. Duplicate acs_codes and unmatched villages go into a manual fix list. Caza and mohafaza for analytics come from the geojson codes, not from name strings (CAZA_TO_MOHAFAZA naming drift such as Hasbaya vs Hasbaiya and the stale Zahrani entry confirms names cannot be trusted).
 5. Air violations on the map follow the counting rules:
