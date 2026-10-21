@@ -89,6 +89,12 @@ def test_build_loads_core_rules(builder: PromptBuilder) -> None:
     assert context.stage == "tier1_extraction"
 
 
+def test_multi_village_scanner_detects_inline_dash_clauses() -> None:
+    assert is_multi_village_candidate(
+        "قذائف فوسفورية تجاه أطراف بلدة زوطر الشرقية - قصف مدفعي استهدف الجرمق"
+    ) is True
+
+
 def test_transition_rules_load_only_with_transition_language(
     builder: PromptBuilder,
 ) -> None:

@@ -11,6 +11,7 @@ from typing import Any, Callable
 import yaml
 
 from app.core.text_normalization import normalize_arabic_text
+from app.news.services.matching.village_mentions import find_village_mentions
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,8 @@ def is_multi_village_candidate(text: str) -> bool:
     normalized = normalize_arabic_text(text or "")
     if not normalized:
         return False
+    if len({code for mention in find_village_mentions(text) for code in mention.acs_codes}) >= 2:
+        return True
     # Connector-led second events: «كما غارة أخرى في بلدة Y»
     # After normalize_arabic_text, ة → ه so match بلده as well as بلدة.
     if re.search(
