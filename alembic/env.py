@@ -6,6 +6,7 @@ from sqlalchemy import engine_from_config, pool
 from app.core.config import settings
 from app.core.database import Base
 import app.accounts.models  # noqa: F401
+import app.analytics.models  # noqa: F401
 import app.logs.models  # noqa: F401
 import app.news.models  # noqa: F401
 import app.sources.models  # noqa: F401

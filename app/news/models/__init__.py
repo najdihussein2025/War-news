@@ -66,3 +66,5 @@ __all__ = [
     "Village",
     "VillageLocationAlias",
 ]
+
+import app.analytics.models  # noqa: E402,F401  (villages.admin_area_code references admin_areas)
