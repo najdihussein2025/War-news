@@ -54,6 +54,7 @@ from app.llm.services.sectioned_bulletin import (
     recover_sectioned_sub_events,
     target_pair_count,
 )
+from app.llm.services.clause_recovery import recover_clause_sub_events
 from app.llm.services.tier1_segmenter import TextSegment, split_segments
 from app.news.services.incident_details.casualty_count_backstop import (
     apply_casualty_count_backstop,
@@ -631,18 +632,20 @@ class OllamaExtractionService(ExtractionClassifierInterface):
         )
         recovered_sections = recover_sectioned_sub_events(post_text)
         recovered_connectors = recover_connector_sub_events(post_text)
-        recovered = max((recovered_sections, recovered_connectors), key=target_pair_count)
+        recovered_clauses = recover_clause_sub_events(post_text)
+        # Sectioned recovery wins ties; clause recovery replaces only with more pairs.
+        recovered = max((recovered_sections, recovered_connectors, recovered_clauses), key=target_pair_count)
         sub_events_source = None
         if target_pair_count(recovered) > target_pair_count(sub_events):
             logger.info(
                 "Recovered %s sub-events raw_message_id=%s model_pairs=%s recovered_pairs=%s",
-                "connector" if recovered is recovered_connectors else "sectioned",
+                "connector" if recovered is recovered_connectors else "clause" if recovered is recovered_clauses else "sectioned",
                 raw_message_id,
                 target_pair_count(sub_events),
                 target_pair_count(recovered),
             )
             sub_events = recovered
-            sub_events_source = "connector_recovery" if recovered is recovered_connectors else "sectioned_recovery"
+            sub_events_source = "connector_recovery" if recovered is recovered_connectors else "clause_recovery" if recovered is recovered_clauses else "sectioned_recovery"
         normalized_sub_events: list[ExtractionSubEvent] = []
         for sub_event in sub_events:
             (
