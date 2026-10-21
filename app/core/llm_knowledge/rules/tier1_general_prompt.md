@@ -114,6 +114,13 @@ Schema الإخراج الوحيد المسموح:
 
 لا تضف categories في هذا الإخراج.
 Relevance guard: ordinary civilian fires, car fires, traffic accidents, electrical faults, or property fires are not relevant unless the text explicitly ties the damage to Israeli/military/security action.
+
+## Clause-scoped action and location rules
+
+- Treat ` - ` between action clauses, `تزامناً مع`, `بالتزامن مع`, `ترافق مع`, `مترافقاً مع`, and `و` that begins a new action clause as event separators. Emit one `sub_event` per action clause.
+- A sub-event may use locations only from its own clause. A clause with no location inherits only from the clause it is explicitly joined to; never move a location across independent clauses.
+- `بلدة X - حي Y` is one compound location, while `action X - action Y` is two events.
+- Within one clause, munition precedence is: phosphorus, then flare, then smoke, then generic artillery/tank. Emit artillery separately only when it has its own clause and target.
 ## Casualty source discipline
 
 ### Within-message reconciliation

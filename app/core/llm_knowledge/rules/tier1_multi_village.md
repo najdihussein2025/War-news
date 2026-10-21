@@ -43,6 +43,8 @@ target is effectively per-village and does not require review.
 9. For multi-action bulletins, root `action_description` is a bulletin-level summary for humans only, for example "multiple actions across 2 villages". It must not be treated as the per-village condition source when `sub_events` exist or should exist.
 10. A single target village MAY appear in two or more `sub_events` when the text states independent concurrent actions (for example shelling and sweeping at the same place). Suppress a later sub-event only when revision/follow-up language explicitly shows that it updates or supersedes the same earlier action; never suppress an independently stated action merely because it shares the village.
 
+11. Clause-local examples: `دبابة ميركافا تستهدف وطى الخيام تزامناً مع حملة تمشيط بالأسلحة الرشاشة` produces two sub-events at الخيام (Tank Fire and Sweeping Operations). `قذائف فوسفورية تجاه أطراف بلدة زوطر الشرقية - قصف مدفعي معاد استهدف الجرمق` produces phosphorus at زوطر الشرقية and artillery at الجرمق. `قصف مدفعي فوسفوري استهدف أطراف بلدة زوطر الشرقية و قصف مدفعي معاد استهدف المنصوري` produces phosphorus at زوطر الشرقية and artillery at المنصوري.
+
 ## Examples
 
 **Per-village exact:**
