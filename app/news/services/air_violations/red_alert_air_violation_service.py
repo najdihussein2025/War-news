@@ -119,17 +119,6 @@ class RedAlertAirViolationService:
             message.error_message = "red_alert: routed to air_violations; not an incident"
             return wrote_air_violation
 
-        if condition_id == AIR_VIOLATION_DRONE_CONDITION_ID:
-            matched_cazas = {
-                matched_village.caza_en
-                for matched_village, _raw_location in village_matches
-                if matched_village.caza_en
-            }
-            if len(matched_cazas) > 1:
-                self.air_violations.discard_for_message(message)
-                self._reject(message, "Surveillance locations span multiple cazas")
-                return False
-
         village, raw_location = village_match
         result = self._match_result(
             text=text,

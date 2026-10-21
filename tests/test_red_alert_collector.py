@@ -700,7 +700,7 @@ def test_red_zone_canonical_name_shared_by_two_villages_is_left_unmatched() -> N
     assert message.status == MessageStatus.rejected
 
 
-def test_red_zone_rejects_surveillance_villages_from_different_cazas() -> None:
+def test_red_zone_keeps_surveillance_villages_from_different_cazas() -> None:
     repository = MagicMock()
     repository.route_from_match.return_value = True
     service = RedAlertAirViolationService(repository, lambda text: 36, match_village, match_villages)
@@ -711,9 +711,28 @@ def test_red_zone_rejects_surveillance_villages_from_different_cazas() -> None:
 
     message = _red_zone_message(109, "", "Sohmor Chiyah")
 
-    assert service.process(message, [sohmor, chiyah]) is False
+    assert service.process(message, [sohmor, chiyah]) is True
+    routed_result = repository.route_from_match.call_args.args[1]
+    # One row with both villages; breach counting gives one breach per caza.
+    assert {match.matched_village_id for match in routed_result.village_matches} == {404, 405}
+
+
+def test_surveillance_report_with_only_a_region_is_still_rejected() -> None:
+    repository = MagicMock()
+    service = RedAlertAirViolationService(repository, lambda text: 36, lambda text, villages: None)
+    message = SimpleNamespace(
+        id=110,
+        raw_text="مسيرة معادية تحلق فوق الجنوب",
+        raw_payload={},
+        filter_result=None,
+        match_result=None,
+        status=MessageStatus.pending,
+        error_message=None,
+    )
+
+    assert service.process(message, []) is False
     repository.route_from_match.assert_not_called()
-    assert message.filter_result["reasoning"] == "Surveillance locations span multiple cazas"
+    assert message.filter_result["reasoning"] == "Surveillance location is not confirmed to one caza"
 
 
 def test_red_zone_ocr_ignores_alias_outside_the_red_zone_crop() -> None:

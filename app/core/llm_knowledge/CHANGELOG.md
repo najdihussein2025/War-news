@@ -1,5 +1,11 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-21 - Multi-caza drone reports kept; generic Bekaa no longer West Bekaa
+
+- **Example (synthetic):** a drone alert naming Sohmor (West Bekaa) and Chiyah (Baabda) was rejected with "Surveillance locations span multiple cazas"; CNRS counts it once per caza, so it is now stored as one row with both villages. A bare `Bekaa` was resolved to West Bekaa and so received West Bekaa's 6-hour drone window; it now resolves to nothing.
+- **Rules changed:** no LLM prompt changes (location handling is deterministic). `RedAlertAirViolationService.process` no longer rejects multi-caza drone reports (region-only drone rows are still rejected); `CANONICAL_CAZA_ALIASES` lost `bekaa`.
+- **Tests added:** `test_red_zone_keeps_surveillance_villages_from_different_cazas`, `test_surveillance_report_with_only_a_region_is_still_rejected`, `test_generic_bekaa_is_not_west_bekaa`.
+
 ## 2026-10-21 - Helicopter needs an explicit helicopter keyword (CNRS counting methodology)
 
 - **Example (synthetic — no database was available to pull a raw message):** `مسيرة معادية تحلق فوق بنت جبيل` was at risk of being labelled Helicopter Hovering by the LLM because of the verb تحلق, and `طائرة تحلق فوق صور` (no aircraft type) could be labelled the same way.

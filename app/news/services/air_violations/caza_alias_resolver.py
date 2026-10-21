@@ -19,7 +19,6 @@ CANONICAL_CAZA_ALIASES: dict[str, str] = {
     "baalbek": "Baalbek",
     "jbeil": "Jubail",
     "jubail": "Jubail",
-    "bekaa": "West Bekaa",
     "west bekaa": "West Bekaa",
 }
 
