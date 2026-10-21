@@ -47,7 +47,6 @@ def finalize_extraction_action(
     post_text: str,
     cnrs_classification: dict | None,
     raw_message_id: int | None = None,
-    raw_message_id: int | None = None,
 ) -> ExtractionResult:
     cnrs_action = trusted_cnrs_action(cnrs_classification, post_text)
     final_action = final_action_description(
