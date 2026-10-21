@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(git branch --show-current; git merge-base --is-ancestor d335228 HEAD; \"d335228 ancestor exit: $LASTEXITCODE\"; Test-Path scripts/backfill_channel_header_casualties.py; Test-Path app/core/llm_knowledge/source_headers.py; git log --oneline -12 | Select-String \"d335228\")",
+      "PowerShell(docker compose up -d 2>&1)",
+      "PowerShell(docker compose ps --format \"table {{.Service}}\\\\t{{.Status}}\")",
+      "PowerShell(docker compose logs red-alert-collector --tail 15 2>&1)",
+      "PowerShell(docker compose exec backend ls scripts/backfill_channel_header_casualties.py)",
+      "PowerShell(docker compose exec backend pwd)",
+      "PowerShell(docker compose exec backend python -m scripts.backfill_channel_header_casualties 2>&1)",
+      "PowerShell(New-Item -ItemType Directory -Force \"$env:TEMP\\\\bf\" | Out-Null; docker compose cp backend:/app/scripts/out/backfill_channel_header_casualties.csv \"$env:TEMP\\\\bf\\\\out.csv\"; $c = Import-Csv \"$env:TEMP\\\\bf\\\\out.csv\"; $c.Count; $c[0].PSObject.Properties.Name -join ' | '; $c | Group-Object action,reason | Select Name,Count | ft -auto)",
+      "PowerShell($c = Import-Csv \"$env:TEMP\\\\bf\\\\out.csv\"; $c | ?{$_.reason -in 'header_only','no_body_grounding'} | sort reason | select incident_id,village,date,field,'old -> new',reason,linked_raw_ids | ft -auto | Out-String -Width 250; \"--- skipped\"; $c | ?{$_.reason -in 'admin_edited','verified'} | select incident_id,village,date,field,'old -> new',reason | ft -auto | Out-String -Width 250; docker compose exec db psql -U postgres -d war_news_dev -c \"\\\\d raw_messages\" 2>&1 | Select -First 25)",
+      "Bash(npx tsc *)",
+      "Bash(ls \"z:/Cnrs News/War-news/frontend/node_modules/.bin\" 2>&1 | grep -E \"^tsc\" ; ls \"C:/Program Files/nodejs\" 2>&1 | head -3)",
+      "Read(//c/Program Files/nodejs/**)",
+      "Bash(docker exec *)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec vtest python -c ' *)",
+      "Bash(docker rm *)",
+      "Bash(docker cp *)"
+    ]
+  }
+}

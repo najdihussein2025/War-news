@@ -254,6 +254,15 @@ class RelatedIncidentDTO(BaseModel):
     total_injuries: int | None = None
 
 
+class ManualEditDTO(BaseModel):
+    """Latest administrator edit of one detail-page section."""
+
+    model_config = ConfigDict(frozen=True)
+
+    section: Literal["report", "village", "casualties"]
+    edited_at: datetime
+
+
 class IncidentDetailDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True, frozen=True)
 
@@ -313,6 +322,7 @@ class IncidentDetailDTO(BaseModel):
     stripped_header: StrippedHeaderDTO | None = None
     bulletin_group: BulletinCasualtyGroupDTO | None = None
     toll_revisions: list[TollRevisionDTO] = Field(default_factory=list)
+    manual_edits: list[ManualEditDTO] = Field(default_factory=list)
     related_incidents: list[RelatedIncidentDTO] = Field(default_factory=list)
     open_casualty_flags_count: int = 0
     origin: Literal["live", "summary"] = "live"
@@ -339,9 +349,11 @@ class IncidentDetailDTO(BaseModel):
 
 class IncidentUpdateDTO(BaseModel):
     version: int = Field(ge=1)
-    event_date: date
+    # Partial update: each edit pencil on the detail page sends only its own fields.
+    event_date: date | None = None
     event_time: time | None = None
-    khabar: str = Field(min_length=1)
+    khabar: str | None = Field(default=None, min_length=1)
+    village_id: int | None = Field(default=None, ge=1)
     note: str | None = None
     condition: str | None = Field(default=None, min_length=1)
     worker_name: str | None = None
@@ -357,6 +369,13 @@ class IncidentUpdateDTO(BaseModel):
     male_i: int | None = Field(default=None, ge=0)
     female_i: int | None = Field(default=None, ge=0)
     children_i: int | None = Field(default=None, ge=0)
+
+    @field_validator("event_date", "khabar", "village_id")
+    @classmethod
+    def required_when_sent(cls, value: Any) -> Any:
+        if value is None:
+            raise ValueError("This field cannot be cleared.")
+        return value
 
 
 class IncidentCreateDTO(BaseModel):

@@ -168,6 +168,11 @@ export type BulletinCasualtyGroup = {
   resolved_by_raw_message_id: number | null;
 };
 
+export type ManualEdit = {
+  section: "report" | "village" | "casualties";
+  edited_at: string;
+};
+
 export type TollRevision = {
   updated_at: string;
   old_deaths: number | null;
@@ -223,6 +228,7 @@ export type IncidentDetail = Incident & {
   stripped_header: { text: string; start: number; end: number } | null;
   bulletin_group?: BulletinCasualtyGroup | null;
   toll_revisions?: TollRevision[];
+  manual_edits?: ManualEdit[];
   related_incidents?: RelatedIncident[];
   lebanese_army: IncidentCategorySection | null;
   unifil: IncidentCategorySection | null;
@@ -240,23 +246,25 @@ export type IncidentDetail = Incident & {
   warning_classification: IncidentCategorySection | null;
 };
 
+// Partial update: each edit dialog sends only the fields it owns.
 export type IncidentUpdatePayload = {
   version: number;
-  event_date: string;
-  event_time: string | null;
-  khabar: string;
-  note: string | null;
+  event_date?: string;
+  event_time?: string | null;
+  khabar?: string;
+  village_id?: number;
+  note?: string | null;
   condition?: string | null;
-  worker_name: string | null;
-  source_link: string | null;
-  total_deaths: number | null;
-  total_injuries: number | null;
-  male_d: number | null;
-  female_d: number | null;
-  children_d: number | null;
-  male_i: number | null;
-  female_i: number | null;
-  children_i: number | null;
+  worker_name?: string | null;
+  source_link?: string | null;
+  total_deaths?: number | null;
+  total_injuries?: number | null;
+  male_d?: number | null;
+  female_d?: number | null;
+  children_d?: number | null;
+  male_i?: number | null;
+  female_i?: number | null;
+  children_i?: number | null;
 };
 
 export type IncidentCreatePayload = {

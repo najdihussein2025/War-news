@@ -20,6 +20,7 @@ AIR_VIOLATION_CONDITION_ID_TUPLE = tuple(sorted(AIR_VIOLATION_CONDITION_IDS))
 # windows; every other caza counts once per Beirut calendar day. Names are the
 # canonical spellings produced by ``canonicalize_caza``.
 DRONE_SIX_HOUR_CAZAS = frozenset({
+    "Aley",
     "Baabda",
     "Baalbek",
     "Bint Jubail",

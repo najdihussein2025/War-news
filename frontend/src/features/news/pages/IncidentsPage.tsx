@@ -39,6 +39,7 @@ import {
   outsideRangeNotice,
   verificationTypeFromSearch,
 } from "../verificationLogic";
+import { stripRegisteredSourceHeader } from "../displayReportText";
 
 const DEFAULT_PAGE_SIZE = 150;
 const PAGE_SIZE_OPTIONS = new Set([50, 100, 150]);
@@ -343,7 +344,7 @@ export const IncidentsPage = () => {
             className={`${twoLineClampClass} break-words text-caption leading-6 text-text-muted`}
             dir="auto"
           >
-            {row.khabar}
+            {stripRegisteredSourceHeader(row.khabar)}
           </p>
           {relatedSourceNotes(row, rows).map((note) => (
             <p key={note} className="text-caption text-text-muted">
@@ -1018,7 +1019,7 @@ export const IncidentsPage = () => {
                 catch (error) { setReviewError(isAxiosError(error) && typeof error.response?.data?.detail === "string" ? error.response.data.detail : "Could not save this review."); }
                 finally { setIsReviewing(false); }
               }}>
-                <p className="text-small text-text-muted" dir="auto">{reviewRow.khabar}</p>
+                <p className="text-small text-text-muted" dir="auto">{stripRegisteredSourceHeader(reviewRow.khabar)}</p>
                 <div className="space-y-2"><Label htmlFor="review-decision">Decision</Label><Select id="review-decision" name="decision" defaultValue="verified" placeholder="Select decision" options={[{ value: "verified", label: "Verify" }, { value: "rejected", label: "Reject" }]} /></div>
                 <div className="space-y-2"><Label htmlFor="review-reason">Review note / rejection reason</Label><textarea id="review-reason" name="reason" className="min-h-24 w-full rounded-md border border-input-border bg-input-bg px-3 py-2" placeholder="Explain the decision (required for rejection)" /></div>
                 {reviewError ? <p className="text-small text-danger">{reviewError}</p> : null}
@@ -1044,7 +1045,7 @@ export const IncidentsPage = () => {
                   setIsReviewing(false);
                 }
               }}>
-                <p className="text-small text-text-muted" dir="auto">{reviewGroup.khabar}</p>
+                <p className="text-small text-text-muted" dir="auto">{stripRegisteredSourceHeader(reviewGroup.khabar)}</p>
                 <div className="space-y-2"><Label htmlFor="group-review-reason">Rejection reason</Label><textarea id="group-review-reason" name="reason" required className="min-h-24 w-full rounded-md border border-input-border bg-input-bg px-3 py-2" placeholder="Explain why all rows from this bulletin should be rejected" /></div>
                 {reviewError ? <p className="text-small text-danger">{reviewError}</p> : null}
                 <div className="flex justify-end gap-2"><Button type="button" variant="secondary" disabled={isReviewing} onClick={() => setReviewGroup(null)}>Cancel</Button><Button type="submit" isLoading={isReviewing}>Reject all</Button></div>

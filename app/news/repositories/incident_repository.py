@@ -46,6 +46,7 @@ from app.news.dtos import (
     IncidentListResponse,
     IncidentUpdateDTO,
     RelatedIncidentDTO,
+    ManualEditDTO,
     TollRevisionDTO,
 )
 from app.news.interfaces import IncidentRepositoryInterface
@@ -753,6 +754,7 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
             **self._casualty_detail_payload(incident, detail),
             "bulletin_group": bulletin_group,
             "toll_revisions": self._toll_revisions_for(incident.id),
+            "manual_edits": self._manual_edits_for(incident.id),
             "related_incidents": self._related_incidents_for(incident),
             "open_casualty_flags_count": len(flags_by_incident.get(incident.id, [])),
             **self._summary_origin_payload(incident),
@@ -872,6 +874,32 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
             if isinstance(village_match.get("normalized_from"), str)
             else None,
         }
+
+    _MANUAL_EDIT_SECTIONS = {
+        "report": {"khabar", "note"},
+        "village": {"village_id"},
+        "casualties": {"deaths", "injuries", "total_deaths", "total_injuries", *DEMOGRAPHIC_FIELDS},
+    }
+
+    def _manual_edits_for(self, incident_id: UUID) -> list[ManualEditDTO]:
+        if not hasattr(self.db, "scalars"):
+            return []
+        updates = self.db.scalars(
+            select(IncidentUpdate)
+            .where(
+                IncidentUpdate.incident_id == incident_id,
+                IncidentUpdate.performed_by.is_not(None),
+                IncidentUpdate.action == UpdateAction.edit,
+            )
+            .order_by(IncidentUpdate.created_at.asc())
+        ).all()
+        latest: dict[str, datetime] = {}
+        for update in updates:
+            changed = set(update.new_values or {})
+            for section, fields in self._MANUAL_EDIT_SECTIONS.items():
+                if changed & fields:
+                    latest[section] = update.created_at
+        return [ManualEditDTO(section=section, edited_at=at) for section, at in latest.items()]
 
     def _toll_revisions_for(self, incident_id: UUID) -> list[TollRevisionDTO]:
         updates = self.db.scalars(
@@ -1089,6 +1117,10 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
             field: submitted.pop(field) for field in DEMOGRAPHIC_FIELDS if field in submitted
         }
         condition_name = submitted.pop("condition", None)
+        if "village_id" in submitted:
+            if self.db.get(Village, submitted["village_id"]) is None:
+                self.db.rollback()
+                raise ValueError("Village was not found. Choose an existing village.")
         if condition_name is not None:
             condition = self.db.scalar(
                 select(Condition).where(

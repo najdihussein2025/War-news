@@ -8,7 +8,7 @@ import { roleBaseFromPath } from "../../../lib/rolePath";
 import { useAuthStore } from "../../../stores/authStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConditionSelect } from "../components/ConditionSelect";
-import { useConditionsQuery, useIncidentDuplicateCandidateQuery, useIncidentQuery, useOpenedVersion } from "../hooks";
+import { useConditionsQuery, useIncidentDuplicateCandidateQuery, useIncidentQuery, useOpenedVersion, useVillagesQuery } from "../hooks";
 import { acquireIncidentEditLock, deleteIncident, releaseIncidentEditLock, resolveIncidentDuplicate, updateIncident, updateIncidentDetails } from "../api";
 import { IncidentCategorySectionFields } from "../components/IncidentCategorySectionFields";
 import { IncidentCategorySectionEditForm } from "../components/IncidentCategorySectionEditForm";
@@ -19,9 +19,12 @@ import { WhyNeedsReviewSection } from "../verificationReasons";
 import { fieldGroupForSection, incidentCategorySections } from "../incidentCategorySections";
 import type { IncidentCategorySectionKey } from "../incidentCategorySections";
 import { reportedCount } from "../incidentSchema";
+import { stripRegisteredSourceHeader } from "../displayReportText";
 import type {
   IncidentDuplicateDecision,
   IncidentSource,
+  IncidentUpdatePayload,
+  ManualEdit,
 } from "../types";
 
 const sourceVariant = (source: IncidentSource | null) =>
@@ -30,7 +33,7 @@ const sourceVariant = (source: IncidentSource | null) =>
 const casualtyValue = (value: number | null) => value ?? "—";
 
 const readableReport = (text: string) =>
-  text
+  stripRegisteredSourceHeader(text)
     .replace(
       /\b(?:(?:https?:\/\/|www\.)[^\s]+|(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?)/giu,
       "",
@@ -62,6 +65,81 @@ const villageSpecificReport = (text: string, arabicVillage: string | null | unde
   return matchingLines.length > 0 ? matchingLines.join("\n") : report;
 };
 
+type EditPanel = "report" | "casualties" | "village";
+
+const casualtyFields = ["male_d", "female_d", "children_d", "total_deaths", "male_i", "female_i", "children_i", "total_injuries"] as const;
+
+const textareaClass = "mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 text-body";
+
+const ManualEditBadge = ({ edits, section }: { edits: ManualEdit[] | undefined; section: ManualEdit["section"] }) => {
+  const edit = edits?.find((item) => item.section === section);
+  return edit ? <StatusBadge label={`Edited manually · ${formatRelativeTime(edit.edited_at)}`} variant="accent" /> : null;
+};
+
+const EditPencil = ({ label, disabled, onClick }: { label: string; disabled: boolean; onClick: () => void }) => (
+  <button
+    type="button"
+    aria-label={label}
+    title={disabled ? "Being edited by another administrator" : label}
+    disabled={disabled}
+    onClick={onClick}
+    className="shrink-0 rounded-md border border-border bg-surface p-2 text-text-muted hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50"
+  >
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  </button>
+);
+
+const VillageEditForm = ({
+  currentLabel,
+  isSaving,
+  error,
+  onCancel,
+  onSave,
+}: {
+  currentLabel: string;
+  isSaving: boolean;
+  error: string;
+  onCancel: () => void;
+  onSave: (villageId: number) => void;
+}) => {
+  const { data: villages = [], isLoading } = useVillagesQuery();
+  const [query, setQuery] = useState(currentLabel);
+  const match = villages.find((village) => village.label === query || village.value === query);
+  return (
+    <form
+      className="space-y-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (match) onSave(match.id);
+      }}
+    >
+      <div>
+        <Label htmlFor="incident-village">Village</Label>
+        <Input
+          id="incident-village"
+          list="incident-village-options"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={isLoading ? "Loading villages..." : "Type to search, then pick a village"}
+          autoComplete="off"
+        />
+        <datalist id="incident-village-options">
+          {villages.map((village) => <option key={village.id} value={village.label} />)}
+        </datalist>
+        {query && !match && !isLoading ? <p className="mt-1 text-caption text-warning">Pick a village from the list.</p> : null}
+      </div>
+      {error ? <p className="text-small text-danger">{error}</p> : null}
+      <div className="flex justify-end gap-2 border-t border-border pt-4">
+        <Button type="button" variant="secondary" disabled={isSaving} onClick={onCancel}>Cancel</Button>
+        <Button type="submit" disabled={!match} isLoading={isSaving} loadingText="Updating">Update</Button>
+      </div>
+    </form>
+  );
+};
+
 const BackLink = ({ to }: { to: string }) => (
   <Link className="font-semibold text-accent hover:text-accent-hover" to={to}>
     Back to incidents
@@ -85,7 +163,8 @@ export const IncidentDetailPage = () => {
   const [actionError, setActionError] = useState("");
   const [isVillageDetailsOpen, setIsVillageDetailsOpen] = useState(false);
   const [duplicateDecision, setDuplicateDecision] = useState<IncidentDuplicateDecision | null>(null);
-  const isEditorOpen = isEditing || isDeleting || editingSection !== null || duplicateDecision !== null;
+  const [editPanel, setEditPanel] = useState<EditPanel | null>(null);
+  const isEditorOpen = isEditing || editPanel !== null || isDeleting || editingSection !== null || duplicateDecision !== null;
   const { data: incident, isLoading, error, refetch } = useIncidentQuery(incidentId, {
     pausePolling: isEditorOpen,
   });
@@ -165,6 +244,49 @@ export const IncidentDetailPage = () => {
         ? "Medium confidence"
         : "Possible match";
 
+  const openPanel = async (panel: EditPanel) => {
+    if (!incidentId) return;
+    setActionError("");
+    try {
+      await acquireIncidentEditLock(incidentId);
+      await refetch();
+      setEditPanel(panel);
+    } catch (error) {
+      setActionError(isAxiosError(error) && error.response?.status === 409
+        ? "This incident is currently being edited by another administrator."
+        : "Could not open this incident for editing.");
+      await refetch();
+    }
+  };
+
+  const closeEditor = async () => {
+    if (isSaving || !incidentId) return;
+    await releaseIncidentEditLock(incidentId);
+    setIsEditing(false);
+    setEditPanel(null);
+    setActionError("");
+    await refetch();
+  };
+
+  const saveUpdate = async (fields: Omit<IncidentUpdatePayload, "version">) => {
+    if (!incidentId) return;
+    setIsSaving(true);
+    setActionError("");
+    try {
+      await updateIncident(incidentId, { version: openedVersion ?? incident.version, ...fields });
+      await refetch();
+      await queryClient.invalidateQueries({ queryKey: ["incidents"] });
+      setIsEditing(false);
+      setEditPanel(null);
+    } catch (error) {
+      setActionError(isAxiosError(error) && error.response?.status === 409
+        ? "This incident was changed or locked by another administrator. Close and reopen the editor."
+        : "Could not update the incident. Please check the values and try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -205,7 +327,7 @@ export const IncidentDetailPage = () => {
           </Button>
         </div>
       </div>
-      {actionError && !isEditing ? <p className="text-small font-medium text-danger" role="alert">{actionError}</p> : null}
+      {actionError && !isEditing && !editPanel ?<p className="text-small font-medium text-danger" role="alert">{actionError}</p> : null}
 
       <section className="rounded-lg border border-border bg-surface-raised p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -399,14 +521,18 @@ export const IncidentDetailPage = () => {
           <h2 className="text-h4 font-semibold text-text-primary">
             Village details
           </h2>
-          <Button
-            type="button"
-            variant="secondary"
-            className="sm:w-auto"
-            onClick={() => setIsVillageDetailsOpen((current) => !current)}
-          >
-            {isVillageDetailsOpen ? "Hide box" : "Open box"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <ManualEditBadge edits={incident.manual_edits} section="village" />
+            <EditPencil label="Edit village" disabled={isLockedByAnother} onClick={() => void openPanel("village")} />
+            <Button
+              type="button"
+              variant="secondary"
+              className="sm:w-auto"
+              onClick={() => setIsVillageDetailsOpen((current) => !current)}
+            >
+              {isVillageDetailsOpen ? "Hide box" : "Open box"}
+            </Button>
+          </div>
         </div>
         {isVillageDetailsOpen ? (
         <>
@@ -497,7 +623,13 @@ export const IncidentDetailPage = () => {
       </section>
 
       <section className="rounded-lg border border-border bg-surface-raised p-5">
-        <h2 className="text-h4 font-semibold text-text-primary">Report</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-h4 font-semibold text-text-primary">Report</h2>
+          <div className="flex items-center gap-2">
+            <ManualEditBadge edits={incident.manual_edits} section="report" />
+            <EditPencil label="Edit report" disabled={isLockedByAnother} onClick={() => void openPanel("report")} />
+          </div>
+        </div>
         <p
           className="mt-3 whitespace-pre-wrap text-right text-body leading-8 text-text-primary"
           dir="rtl"
@@ -519,9 +651,13 @@ export const IncidentDetailPage = () => {
       <section className="rounded-lg border border-border bg-surface-raised p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h2 className="text-h4 font-semibold text-text-primary">Casualties</h2>
-          {incident.casualties.status !== "none" && incident.casualties.status !== "reported" ? (
-            <StatusBadge label={incident.casualties.status.replaceAll("_", " ")} variant={incident.casualties.status === "conflicting" || incident.casualties.status === "needs_verification" ? "warning" : "neutral"} />
-          ) : null}
+          <div className="flex items-center gap-2">
+            {incident.casualties.status !== "none" && incident.casualties.status !== "reported" ? (
+              <StatusBadge label={incident.casualties.status.replaceAll("_", " ")} variant={incident.casualties.status === "conflicting" || incident.casualties.status === "needs_verification" ? "warning" : "neutral"} />
+            ) : null}
+            <ManualEditBadge edits={incident.manual_edits} section="casualties" />
+            <EditPencil label="Edit casualties" disabled={isLockedByAnother} onClick={() => void openPanel("casualties")} />
+          </div>
         </div>
         {incident.casualties.verification_reason ? <p className="mt-2 text-small text-text-muted">{incident.casualties.verification_reason}</p> : null}
         {incident.bulletin_group?.casualty_scope === "bulletin_aggregate" ? (() => {
@@ -790,62 +926,26 @@ export const IncidentDetailPage = () => {
 
 
       {isEditing ? (
-        <Dialog title="Update incident" eyebrow="Edit record" size="lg" onClose={async () => {
-          if (!isSaving && incidentId) {
-            await releaseIncidentEditLock(incidentId);
-            setIsEditing(false);
-            await refetch();
-          }
-        }}>
+        <Dialog title="Update incident" eyebrow="General information" size="lg" onClose={closeEditor}>
           <form
             className="space-y-4"
             onSubmit={async (event) => {
               event.preventDefault();
-              if (!incidentId) return;
               const form = new FormData(event.currentTarget);
               const nullable = (name: string) => String(form.get(name) ?? "").trim() || null;
-              const numberOrNull = (name: string) => {
-                const value = String(form.get(name) ?? "").trim();
-                return value === "" ? null : Number(value);
-              };
-              setIsSaving(true);
-              setActionError("");
-              try {
-                await updateIncident(incidentId, {
-                  version: openedVersion ?? incident.version,
-                  event_date: String(form.get("event_date")),
-                  event_time: nullable("event_time"),
-                  khabar: String(form.get("khabar") ?? "").trim(),
-                  note: nullable("note"),
-                  condition: editCondition && editCondition !== incident.condition ? editCondition : undefined,
-                  worker_name: nullable("worker_name"),
-                  source_link: nullable("source_link"),
-                  total_deaths: numberOrNull("total_deaths"),
-                  total_injuries: numberOrNull("total_injuries"),
-                  male_d: numberOrNull("male_d"),
-                  female_d: numberOrNull("female_d"),
-                  children_d: numberOrNull("children_d"),
-                  male_i: numberOrNull("male_i"),
-                  female_i: numberOrNull("female_i"),
-                  children_i: numberOrNull("children_i"),
-                });
-                await refetch();
-                await queryClient.invalidateQueries({ queryKey: ["incidents"] });
-                setIsEditing(false);
-              } catch (error) {
-                setActionError(isAxiosError(error) && error.response?.status === 409
-                  ? "This incident was changed or locked by another administrator. Close and reopen the editor."
-                  : "Could not update the incident. Please check the values and try again.");
-              } finally {
-                setIsSaving(false);
-              }
+              await saveUpdate({
+                event_date: String(form.get("event_date")),
+                event_time: nullable("event_time"),
+                condition: editCondition && editCondition !== incident.condition ? editCondition : undefined,
+                worker_name: nullable("worker_name"),
+                source_link: nullable("source_link"),
+              });
             }}
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <div><Label htmlFor="incident-date">Event date *</Label><Input id="incident-date" name="event_date" type="date" defaultValue={incident.event_date} required /></div>
               <div><Label htmlFor="incident-time">Event time</Label><Input id="incident-time" name="event_time" type="time" defaultValue={incident.event_time?.slice(0, 5) ?? ""} /></div>
             </div>
-            <div><Label htmlFor="incident-report">Report *</Label><textarea id="incident-report" name="khabar" required defaultValue={incident.khabar} className="mt-1 min-h-36 w-full rounded-md border border-border bg-surface px-3 py-2 text-body" /></div>
             <div>
               <Label htmlFor="incident-condition">Action</Label>
               <ConditionSelect
@@ -857,24 +957,98 @@ export const IncidentDetailPage = () => {
                 onChange={setEditCondition}
               />
             </div>
-            <div><Label htmlFor="incident-note">Note</Label><textarea id="incident-note" name="note" defaultValue={incident.note ?? ""} className="mt-1 min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-body" /></div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div><Label htmlFor="incident-worker">Data worker</Label><Input id="incident-worker" name="worker_name" defaultValue={incident.worker_name ?? ""} /></div>
               <div><Label htmlFor="incident-source-1">Source link 1</Label><Input id="incident-source-1" name="source_link" type="url" defaultValue={incident.source_link ?? ""} /></div>
-              {(["male_d", "female_d", "children_d", "total_deaths", "male_i", "female_i", "children_i", "total_injuries"] as const).map((field) => (
-                <div key={field}><Label htmlFor={`incident-${field}`}>{field.split("_").map((word) => word[0].toUpperCase() + word.slice(1)).join(" ")}</Label><Input id={`incident-${field}`} name={field} type="number" min="0" defaultValue={field in incident.casualty_demographics ? incident.casualty_demographics[field as keyof typeof incident.casualty_demographics] ?? "" : incident[field as "total_deaths" | "total_injuries"] ?? ""} /></div>
+            </div>
+            {actionError ? <p className="text-small text-danger">{actionError}</p> : null}
+            <div className="flex justify-end gap-2 border-t border-border pt-4">
+              <Button type="button" variant="secondary" disabled={isSaving} onClick={closeEditor}>Cancel</Button>
+              <Button type="submit" isLoading={isSaving} loadingText="Updating">Update</Button>
+            </div>
+          </form>
+        </Dialog>
+      ) : null}
+
+      {editPanel === "report" ? (
+        <Dialog title="Edit report" eyebrow="Report and note" size="lg" onClose={closeEditor}>
+          <form
+            className="space-y-4"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              const form = new FormData(event.currentTarget);
+              await saveUpdate({
+                khabar: String(form.get("khabar") ?? "").trim(),
+                note: String(form.get("note") ?? "").trim() || null,
+              });
+            }}
+          >
+            <div>
+              <Label htmlFor="incident-report">Report *</Label>
+              <textarea id="incident-report" name="khabar" required dir="rtl" lang="ar" defaultValue={incident.khabar} className={`${textareaClass} min-h-48`} />
+            </div>
+            <div>
+              <Label htmlFor="incident-note">Note</Label>
+              <textarea id="incident-note" name="note" defaultValue={incident.note ?? ""} className={`${textareaClass} min-h-24`} />
+            </div>
+            {actionError ? <p className="text-small text-danger">{actionError}</p> : null}
+            <div className="flex justify-end gap-2 border-t border-border pt-4">
+              <Button type="button" variant="secondary" disabled={isSaving} onClick={closeEditor}>Cancel</Button>
+              <Button type="submit" isLoading={isSaving} loadingText="Updating">Update</Button>
+            </div>
+          </form>
+        </Dialog>
+      ) : null}
+
+      {editPanel === "casualties" ? (
+        <Dialog title="Edit casualties" eyebrow="Deaths and injuries" size="lg" onClose={closeEditor}>
+          <form
+            className="space-y-4"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              const form = new FormData(event.currentTarget);
+              const fields: Record<string, number | null> = {};
+              for (const field of casualtyFields) {
+                const value = String(form.get(field) ?? "").trim();
+                fields[field] = value === "" ? null : Number(value);
+              }
+              await saveUpdate(fields);
+            }}
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              {casualtyFields.map((field) => (
+                <div key={field}>
+                  <Label htmlFor={`incident-${field}`}>{field.split("_").map((word) => word[0].toUpperCase() + word.slice(1)).join(" ")}</Label>
+                  <Input
+                    id={`incident-${field}`}
+                    name={field}
+                    type="number"
+                    min="0"
+                    defaultValue={field in incident.casualty_demographics
+                      ? incident.casualty_demographics[field as keyof typeof incident.casualty_demographics] ?? ""
+                      : incident[field as "total_deaths" | "total_injuries"] ?? ""}
+                  />
+                </div>
               ))}
             </div>
             {actionError ? <p className="text-small text-danger">{actionError}</p> : null}
             <div className="flex justify-end gap-2 border-t border-border pt-4">
-              <Button type="button" variant="secondary" disabled={isSaving} onClick={async () => {
-                if (incidentId) await releaseIncidentEditLock(incidentId);
-                setIsEditing(false);
-                await refetch();
-              }}>Cancel</Button>
+              <Button type="button" variant="secondary" disabled={isSaving} onClick={closeEditor}>Cancel</Button>
               <Button type="submit" isLoading={isSaving} loadingText="Updating">Update</Button>
             </div>
           </form>
+        </Dialog>
+      ) : null}
+
+      {editPanel === "village" ? (
+        <Dialog title="Edit village" eyebrow="Village details" size="lg" onClose={closeEditor}>
+          <VillageEditForm
+            currentLabel={incident.village ?? ""}
+            isSaving={isSaving}
+            error={actionError}
+            onCancel={closeEditor}
+            onSave={(villageId) => void saveUpdate({ village_id: villageId })}
+          />
         </Dialog>
       ) : null}
 

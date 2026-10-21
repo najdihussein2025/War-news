@@ -33,6 +33,7 @@ from app.news.dtos.incident_dto import (
     IncidentUpdateDTO,
     IncidentVerificationDTO,
     RelatedIncidentDTO,
+    ManualEditDTO,
     TollRevisionDTO,
 )
 from app.news.dtos.import_dto import WorkbookImportRowErrorDTO, WorkbookImportSummaryDTO
@@ -77,6 +78,7 @@ __all__ = [
     "IncidentUpdateDTO",
     "IncidentVerificationDTO",
     "RelatedIncidentDTO",
+    "ManualEditDTO",
     "TollRevisionDTO",
     "WorkbookImportRowErrorDTO",
     "WorkbookImportSummaryDTO",

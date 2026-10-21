@@ -1,0 +1,4 @@
+ id | message_datetime | raw_text | extraction_result 
+----+------------------+----------+-------------------
+(0 rows)
+

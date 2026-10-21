@@ -1,0 +1,279 @@
+﻿incident_id,village,date,field,old -> new,reason,linked_raw_ids
+aea05858-e6c5-46bd-9d63-51fda92a661e,851,2026-08-17,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,29485
+2afe0f52-3c0c-4a45-9b98-bb2f051e25b5,418,2026-08-21,casualty_status,None -> exact,status_matches_numbers,28394
+2afe0f52-3c0c-4a45-9b98-bb2f051e25b5,418,2026-08-21,casualty_injuries_status,None -> exact,status_matches_numbers,28394
+972adbb9-d26c-425f-bcdd-8a9a62eeb1e4,851,2026-08-24,casualty_status,None -> exact,status_matches_numbers,31452 28576 1291 1295
+972adbb9-d26c-425f-bcdd-8a9a62eeb1e4,851,2026-08-24,casualty_deaths_status,None -> exact,status_matches_numbers,31452 28576 1291 1295
+97c1a63c-6c6b-47b7-b8e2-fdb399bf4b22,851,2026-08-24,casualty_status,None -> exact,status_matches_numbers,31018
+97c1a63c-6c6b-47b7-b8e2-fdb399bf4b22,851,2026-08-24,casualty_deaths_status,None -> exact,status_matches_numbers,31018
+ac428570-9414-4359-9dc6-6f98db7d88a5,543,2026-09-02,casualty_status,None -> exact,status_matches_numbers,31920
+ac428570-9414-4359-9dc6-6f98db7d88a5,543,2026-09-02,casualty_deaths_status,None -> exact,status_matches_numbers,31920
+ac428570-9414-4359-9dc6-6f98db7d88a5,543,2026-09-02,casualty_injuries_status,None -> exact,status_matches_numbers,31920
+e1322e97-ac0b-4a4d-b7c6-2eec0cf4e66c,768,2026-09-02,casualty_status,None -> exact,status_matches_numbers,31955
+e1322e97-ac0b-4a4d-b7c6-2eec0cf4e66c,768,2026-09-02,casualty_deaths_status,None -> exact,status_matches_numbers,31955
+e1322e97-ac0b-4a4d-b7c6-2eec0cf4e66c,768,2026-09-02,deaths,1 -> 1,needs_review,31955
+e1322e97-ac0b-4a4d-b7c6-2eec0cf4e66c,768,2026-09-02,total_deaths,1 -> 1,needs_review,31955
+e1322e97-ac0b-4a4d-b7c6-2eec0cf4e66c,768,2026-09-02,detail.male_d,1 -> 1,needs_review,31955
+8ee662bf-d73a-4751-88d7-6e4816136336,851,2026-09-07,injuries,15 -> None,no_body_grounding,32504 4336 4351 9513
+8ee662bf-d73a-4751-88d7-6e4816136336,851,2026-09-07,total_injuries,15 -> None,no_body_grounding,32504 4336 4351 9513
+a7d8a296-3be8-46f8-9328-f5bca76f8917,851,2026-09-07,injuries,1 -> None,vague_quantifier,30496 9475
+a7d8a296-3be8-46f8-9328-f5bca76f8917,851,2026-09-07,total_injuries,1 -> None,vague_quantifier,30496 9475
+4b0a525e-070e-44c1-8fc9-dc64a5b3a3e3,851,2026-09-07,casualty_status,None -> exact,status_matches_numbers,31946
+4b0a525e-070e-44c1-8fc9-dc64a5b3a3e3,851,2026-09-07,casualty_injuries_status,None -> exact,status_matches_numbers,31946
+e6cf9e6e-d258-435d-8c8e-adf046156575,118,2026-09-07,casualty_status,None -> exact,status_matches_numbers,31959 4418 4374 4380 4386 4397 4249
+e6cf9e6e-d258-435d-8c8e-adf046156575,118,2026-09-07,casualty_deaths_status,None -> exact,status_matches_numbers,31959 4418 4374 4380 4386 4397 4249
+711adf5b-5d46-4a5c-8e21-1554c7d975b1,851,2026-09-07,casualty_status,None -> exact,status_matches_numbers,30033 4369 4309 4310 4311 4313 28801 29620 29631 5050 5052 5046 4020 5310
+711adf5b-5d46-4a5c-8e21-1554c7d975b1,851,2026-09-07,casualty_deaths_status,None -> exact,status_matches_numbers,30033 4369 4309 4310 4311 4313 28801 29620 29631 5050 5052 5046 4020 5310
+711adf5b-5d46-4a5c-8e21-1554c7d975b1,851,2026-09-07,casualty_injuries_status,None -> exact,status_matches_numbers,30033 4369 4309 4310 4311 4313 28801 29620 29631 5050 5052 5046 4020 5310
+3c1db7e5-b8c7-4f61-95b2-43e2af75efe1,506,2026-09-07,casualty_status,None -> exact,status_matches_numbers,31925 4383 4384 4386 4397 29399 9252 8895 8830
+3c1db7e5-b8c7-4f61-95b2-43e2af75efe1,506,2026-09-07,casualty_deaths_status,None -> exact,status_matches_numbers,31925 4383 4384 4386 4397 29399 9252 8895 8830
+4b4163ef-0968-4f30-b680-4ef5959e53dd,1519,2026-09-07,deaths,2 -> None,header_only,31222 32708 9204 8986 3507 2039
+4b4163ef-0968-4f30-b680-4ef5959e53dd,1519,2026-09-07,total_deaths,2 -> None,header_only,31222 32708 9204 8986 3507 2039
+9f5855d0-e7ff-4a68-b706-4d6b79a137b4,851,2026-09-07,casualty_status,None -> exact,status_matches_numbers,30140
+9f5855d0-e7ff-4a68-b706-4d6b79a137b4,851,2026-09-07,casualty_deaths_status,None -> exact,status_matches_numbers,30140
+9f5855d0-e7ff-4a68-b706-4d6b79a137b4,851,2026-09-07,casualty_injuries_status,None -> exact,status_matches_numbers,30140
+0b0e4a71-4e1d-45ff-9b02-016bde47b663,1152,2026-09-06,deaths,1 -> None,header_only,31240 3948 4223 2042 2044 2070
+0b0e4a71-4e1d-45ff-9b02-016bde47b663,1152,2026-09-06,total_deaths,1 -> None,header_only,31240 3948 4223 2042 2044 2070
+0b0e4a71-4e1d-45ff-9b02-016bde47b663,1152,2026-09-06,detail.male_d,1 -> None,header_only,31240 3948 4223 2042 2044 2070
+0b0e4a71-4e1d-45ff-9b02-016bde47b663,1152,2026-09-06,casualty_status,None -> exact,status_matches_numbers,31240 3948 4223 2042 2044 2070
+0b0e4a71-4e1d-45ff-9b02-016bde47b663,1152,2026-09-06,casualty_injuries_status,None -> exact,status_matches_numbers,31240 3948 4223 2042 2044 2070
+1be76437-328b-46e7-8891-2d77cdb2b8e8,851,2026-09-06,casualty_status,None -> exact,status_matches_numbers,28773 31295 31301 31267 30236 4056 4051 4050 4047 4041 4039 9172 9174 9149 9109 9095 9098 9074 8951 9497 9489 9416 9411 9413
+1be76437-328b-46e7-8891-2d77cdb2b8e8,851,2026-09-06,casualty_injuries_status,None -> exact,status_matches_numbers,28773 31295 31301 31267 30236 4056 4051 4050 4047 4041 4039 9172 9174 9149 9109 9095 9098 9074 8951 9497 9489 9416 9411 9413
+3bf1c064-90cc-4f01-a7d2-72e8cff4a21e,976,2026-09-06,deaths,4 -> None,header_only,30313 4226 4224 32708 32548 28588 9337 9317 9209 9182 9123 8986
+3bf1c064-90cc-4f01-a7d2-72e8cff4a21e,976,2026-09-06,total_deaths,4 -> None,header_only,30313 4226 4224 32708 32548 28588 9337 9317 9209 9182 9123 8986
+9fbfff02-59ae-4206-8ab7-92f502772ece,851,2026-09-06,casualty_status,None -> exact,status_matches_numbers,29118 30313 4096 32708 32548 9182 8986
+9fbfff02-59ae-4206-8ab7-92f502772ece,851,2026-09-06,casualty_deaths_status,None -> exact,status_matches_numbers,29118 30313 4096 32708 32548 9182 8986
+11624631-30b1-48a4-9c4a-6da2d0082fa4,1153,2026-09-06,casualty_status,None -> exact,status_matches_numbers,30234 30484 28693 30020 29627 29118 28885 28949 28897 32003 4198 4196 4191 4096 4088 4078 4067 4026 4013 4223 4007 3995 3994 3958 3946 3945 9149 9136
+11624631-30b1-48a4-9c4a-6da2d0082fa4,1153,2026-09-06,casualty_deaths_status,None -> exact,status_matches_numbers,30234 30484 28693 30020 29627 29118 28885 28949 28897 32003 4198 4196 4191 4096 4088 4078 4067 4026 4013 4223 4007 3995 3994 3958 3946 3945 9149 9136
+11624631-30b1-48a4-9c4a-6da2d0082fa4,1153,2026-09-06,casualty_injuries_status,None -> exact,status_matches_numbers,30234 30484 28693 30020 29627 29118 28885 28949 28897 32003 4198 4196 4191 4096 4088 4078 4067 4026 4013 4223 4007 3995 3994 3958 3946 3945 9149 9136
+2d19c8a1-957f-4a61-b0fe-ed37fbbf740f,118,2026-09-06,casualty_status,None -> exact,status_matches_numbers,30234 28811 29113 29191 29245 29720 30057 4309 4311 4313 4096 4075 4076 4071 4072 4070 4038 4026 3998 4020 3965
+2d19c8a1-957f-4a61-b0fe-ed37fbbf740f,118,2026-09-06,casualty_deaths_status,None -> exact,status_matches_numbers,30234 28811 29113 29191 29245 29720 30057 4309 4311 4313 4096 4075 4076 4071 4072 4070 4038 4026 3998 4020 3965
+2d19c8a1-957f-4a61-b0fe-ed37fbbf740f,118,2026-09-06,casualty_injuries_status,None -> exact,status_matches_numbers,30234 28811 29113 29191 29245 29720 30057 4309 4311 4313 4096 4075 4076 4071 4072 4070 4038 4026 3998 4020 3965
+43bff8c4-5bed-4445-920f-347774816140,543,2026-09-06,casualty_status,None -> exact,status_matches_numbers,29572 28811 29245 29321 29720 31968 31294 28762 31401 4309 4310 4311 4313 4206 4180 4086 4075 4071 4074 4070 4038 3999
+43bff8c4-5bed-4445-920f-347774816140,543,2026-09-06,casualty_deaths_status,None -> exact,status_matches_numbers,29572 28811 29245 29321 29720 31968 31294 28762 31401 4309 4310 4311 4313 4206 4180 4086 4075 4071 4074 4070 4038 3999
+43bff8c4-5bed-4445-920f-347774816140,543,2026-09-06,casualty_injuries_status,None -> exact,status_matches_numbers,29572 28811 29245 29321 29720 31968 31294 28762 31401 4309 4310 4311 4313 4206 4180 4086 4075 4071 4074 4070 4038 3999
+03f8432a-9620-42f3-9f36-82ae2667c645,1324,2026-09-06,injuries,10 -> None,vague_quantifier,30487
+03f8432a-9620-42f3-9f36-82ae2667c645,1324,2026-09-06,total_injuries,10 -> None,vague_quantifier,30487
+10fbab84-11a3-4990-8608-7e8e7cc73725,1152,2026-09-06,casualty_status,None -> exact,status_matches_numbers,32058 4137 4140 4200 9168 8805
+10fbab84-11a3-4990-8608-7e8e7cc73725,1152,2026-09-06,casualty_injuries_status,None -> exact,status_matches_numbers,32058 4137 4140 4200 9168 8805
+06d07ee4-86b2-4ff4-8db9-2b1710feab10,1153,2026-09-06,casualty_status,None -> exact,status_matches_numbers,30471 32092 29113 29191 29720 31831 4076 4072 4070 4021 4014 4009
+06d07ee4-86b2-4ff4-8db9-2b1710feab10,1153,2026-09-06,casualty_deaths_status,None -> exact,status_matches_numbers,30471 32092 29113 29191 29720 31831 4076 4072 4070 4021 4014 4009
+06d07ee4-86b2-4ff4-8db9-2b1710feab10,1153,2026-09-06,casualty_injuries_status,None -> exact,status_matches_numbers,30471 32092 29113 29191 29720 31831 4076 4072 4070 4021 4014 4009
+86bc5b05-2189-47a3-bebe-f276adc8f980,1324,2026-09-06,injuries,10 -> None,vague_quantifier,31816 4121
+86bc5b05-2189-47a3-bebe-f276adc8f980,1324,2026-09-06,total_injuries,10 -> None,vague_quantifier,31816 4121
+86bc5b05-2189-47a3-bebe-f276adc8f980,1324,2026-09-06,detail.children_i,6 -> None,vague_quantifier,31816 4121
+c038337e-f38b-430b-9285-71262df3298d,506,2026-09-07,casualty_status,None -> exact,status_matches_numbers,28917
+c038337e-f38b-430b-9285-71262df3298d,506,2026-09-07,casualty_deaths_status,None -> exact,status_matches_numbers,28917
+c038337e-f38b-430b-9285-71262df3298d,506,2026-09-07,casualty_injuries_status,None -> exact,status_matches_numbers,28917
+3b319f82-f12c-4913-889c-12ba0865c2fc,851,2026-09-07,casualty_status,None -> exact,status_matches_numbers,28917 9523
+3b319f82-f12c-4913-889c-12ba0865c2fc,851,2026-09-07,casualty_deaths_status,None -> exact,status_matches_numbers,28917 9523
+3b319f82-f12c-4913-889c-12ba0865c2fc,851,2026-09-07,casualty_injuries_status,None -> exact,status_matches_numbers,28917 9523
+447a66ac-8376-4630-8c1d-ada66f2aae79,1153,2026-09-06,casualty_status,None -> exact,status_matches_numbers,28567
+447a66ac-8376-4630-8c1d-ada66f2aae79,1153,2026-09-06,casualty_deaths_status,None -> exact,status_matches_numbers,28567
+447a66ac-8376-4630-8c1d-ada66f2aae79,1153,2026-09-06,casualty_injuries_status,None -> exact,status_matches_numbers,28567
+b9c2759b-6744-41bc-aba6-6d029ea45ec5,118,2026-09-06,casualty_status,None -> exact,status_matches_numbers,29321
+b9c2759b-6744-41bc-aba6-6d029ea45ec5,118,2026-09-06,casualty_deaths_status,None -> exact,status_matches_numbers,29321
+b9c2759b-6744-41bc-aba6-6d029ea45ec5,118,2026-09-06,casualty_injuries_status,None -> exact,status_matches_numbers,29321
+ae6e8ddb-4fbe-4b4f-901d-95322cb7cc4d,760,2026-09-06,casualty_status,None -> exact,status_matches_numbers,30218
+ae6e8ddb-4fbe-4b4f-901d-95322cb7cc4d,760,2026-09-06,casualty_deaths_status,None -> exact,status_matches_numbers,30218
+f88a14c9-3d3e-4a40-ad4e-64705cd0eb6e,851,2026-09-06,casualty_status,None -> exact,status_matches_numbers,31308 31922 4040
+f88a14c9-3d3e-4a40-ad4e-64705cd0eb6e,851,2026-09-06,casualty_injuries_status,None -> exact,status_matches_numbers,31308 31922 4040
+f88a14c9-3d3e-4a40-ad4e-64705cd0eb6e,851,2026-09-06,detail.male_d,2 -> 2,needs_review,31308 31922 4040
+cbb16d56-f0f9-456c-9547-39945de9ff96,118,2026-09-06,detail.male_d,2 -> 2,needs_review,31308
+28ccc77a-c067-4ed1-9e17-99dda82b73ef,118,2026-09-06,injuries,20 -> None,no_body_grounding,32092 29572 4250 4014
+28ccc77a-c067-4ed1-9e17-99dda82b73ef,118,2026-09-06,total_injuries,20 -> None,no_body_grounding,32092 29572 4250 4014
+28ccc77a-c067-4ed1-9e17-99dda82b73ef,118,2026-09-06,casualty_status,None -> exact,status_matches_numbers,32092 29572 4250 4014
+28ccc77a-c067-4ed1-9e17-99dda82b73ef,118,2026-09-06,casualty_deaths_status,None -> exact,status_matches_numbers,32092 29572 4250 4014
+0a10e831-a3f3-40d4-9f17-614408378e95,543,2026-09-06,injuries,20 -> None,no_body_grounding,31336 4257
+0a10e831-a3f3-40d4-9f17-614408378e95,543,2026-09-06,total_injuries,20 -> None,no_body_grounding,31336 4257
+0a10e831-a3f3-40d4-9f17-614408378e95,543,2026-09-06,casualty_status,None -> exact,status_matches_numbers,31336 4257
+0a10e831-a3f3-40d4-9f17-614408378e95,543,2026-09-06,casualty_deaths_status,None -> exact,status_matches_numbers,31336 4257
+636e9cec-4223-467a-a7bd-d3c52721a299,1153,2026-09-06,casualty_status,none_mentioned -> exact,status_matches_numbers,30066 31415 31443 3992 3993 3956 3975 31814 3995 32774 8995 8956
+636e9cec-4223-467a-a7bd-d3c52721a299,1153,2026-09-06,casualty_deaths_status,none_mentioned -> exact,status_matches_numbers,30066 31415 31443 3992 3993 3956 3975 31814 3995 32774 8995 8956
+5105bf71-96b0-4853-b3b5-f494017e60d9,760,2026-09-06,casualty_status,None -> exact,status_matches_numbers,31703
+5105bf71-96b0-4853-b3b5-f494017e60d9,760,2026-09-06,casualty_deaths_status,None -> exact,status_matches_numbers,31703
+fbec6690-4569-4913-bfbb-797de5cae9fd,118,2026-09-06,casualty_status,None -> exact,status_matches_numbers,31537 3979
+fbec6690-4569-4913-bfbb-797de5cae9fd,118,2026-09-06,casualty_deaths_status,None -> exact,status_matches_numbers,31537 3979
+fdd35f95-9a80-4596-bb89-3eef0ab4c6d7,118,2026-09-06,deaths,2 -> None,no_body_grounding,31007 3979
+fdd35f95-9a80-4596-bb89-3eef0ab4c6d7,118,2026-09-06,total_deaths,2 -> None,no_body_grounding,31007 3979
+cfa6c953-4601-4575-991c-b9f8132acdb3,543,2026-09-06,casualty_status,None -> exact,status_matches_numbers,31203
+cfa6c953-4601-4575-991c-b9f8132acdb3,543,2026-09-06,casualty_injuries_status,None -> exact,status_matches_numbers,31203
+1a5b73de-fb96-4c4a-ae64-7f71b73c9a12,851,2026-09-07,casualty_status,None -> exact,status_matches_numbers,28698 3528
+1a5b73de-fb96-4c4a-ae64-7f71b73c9a12,851,2026-09-07,casualty_deaths_status,None -> exact,status_matches_numbers,28698 3528
+1a5b73de-fb96-4c4a-ae64-7f71b73c9a12,851,2026-09-07,casualty_injuries_status,None -> exact,status_matches_numbers,28698 3528
+e6ee7bfa-3f45-4457-82cf-54d6cdda95a0,851,2026-09-07,casualty_status,None -> exact,status_matches_numbers,31824 4423
+e6ee7bfa-3f45-4457-82cf-54d6cdda95a0,851,2026-09-07,casualty_deaths_status,None -> exact,status_matches_numbers,31824 4423
+e6ee7bfa-3f45-4457-82cf-54d6cdda95a0,851,2026-09-07,casualty_injuries_status,None -> exact,status_matches_numbers,31824 4423
+2c255b6b-875c-4f3e-bb2f-43c12918521e,851,2026-09-07,casualty_status,None -> exact,status_matches_numbers,31492
+2c255b6b-875c-4f3e-bb2f-43c12918521e,851,2026-09-07,casualty_deaths_status,None -> exact,status_matches_numbers,31492
+2c255b6b-875c-4f3e-bb2f-43c12918521e,851,2026-09-07,casualty_injuries_status,None -> exact,status_matches_numbers,31492
+219cd4f5-4f0e-4cce-a0c6-777afd23e1a3,1152,2026-09-05,casualty_status,None -> exact,status_matches_numbers,31863 3782 8996
+219cd4f5-4f0e-4cce-a0c6-777afd23e1a3,1152,2026-09-05,casualty_deaths_status,None -> exact,status_matches_numbers,31863 3782 8996
+219cd4f5-4f0e-4cce-a0c6-777afd23e1a3,1152,2026-09-05,casualty_injuries_status,None -> exact,status_matches_numbers,31863 3782 8996
+6d99dbf7-b561-43b8-aae6-13a2dbbf4f58,1276,2026-09-05,casualty_status,None -> exact,status_matches_numbers,31863
+6d99dbf7-b561-43b8-aae6-13a2dbbf4f58,1276,2026-09-05,casualty_deaths_status,None -> exact,status_matches_numbers,31863
+6d99dbf7-b561-43b8-aae6-13a2dbbf4f58,1276,2026-09-05,casualty_injuries_status,None -> exact,status_matches_numbers,31863
+6ff50399-8fa9-4ff4-8d2d-a6499ef02f1b,1153,2026-09-05,casualty_status,None -> exact,status_matches_numbers,31863
+6ff50399-8fa9-4ff4-8d2d-a6499ef02f1b,1153,2026-09-05,casualty_deaths_status,None -> exact,status_matches_numbers,31863
+6ff50399-8fa9-4ff4-8d2d-a6499ef02f1b,1153,2026-09-05,casualty_injuries_status,None -> exact,status_matches_numbers,31863
+967e2eec-4855-44f6-b9b9-12f752edd19e,874,2026-09-05,casualty_status,None -> exact,status_matches_numbers,31863
+967e2eec-4855-44f6-b9b9-12f752edd19e,874,2026-09-05,casualty_deaths_status,None -> exact,status_matches_numbers,31863
+967e2eec-4855-44f6-b9b9-12f752edd19e,874,2026-09-05,casualty_injuries_status,None -> exact,status_matches_numbers,31863
+96e09f61-3155-41d9-81a2-9373bc74f4a1,55,2026-09-05,casualty_status,None -> exact,status_matches_numbers,31863
+96e09f61-3155-41d9-81a2-9373bc74f4a1,55,2026-09-05,casualty_deaths_status,None -> exact,status_matches_numbers,31863
+96e09f61-3155-41d9-81a2-9373bc74f4a1,55,2026-09-05,casualty_injuries_status,None -> exact,status_matches_numbers,31863
+8bf5fa89-00a6-4e87-923c-388c4b707443,851,2026-09-05,casualty_status,None -> exact,status_matches_numbers,28686 9009
+8bf5fa89-00a6-4e87-923c-388c4b707443,851,2026-09-05,casualty_injuries_status,None -> exact,status_matches_numbers,28686 9009
+3b290960-03a3-482e-97b6-cd8fc3e5d9cf,851,2026-09-07,(row skipped),,admin_edited,31569
+e15b8ee6-5705-4a77-89c4-7808f778b8b4,1003,2026-09-04,casualty_status,None -> exact,status_matches_numbers,32104 32036 3626 3623
+e15b8ee6-5705-4a77-89c4-7808f778b8b4,1003,2026-09-04,casualty_injuries_status,None -> exact,status_matches_numbers,32104 32036 3626 3623
+b1097a42-47f4-43e1-9ff5-1cf89cd01cf9,1324,2026-09-04,casualty_status,None -> exact,status_matches_numbers,32095 3651
+b1097a42-47f4-43e1-9ff5-1cf89cd01cf9,1324,2026-09-04,casualty_deaths_status,None -> exact,status_matches_numbers,32095 3651
+b1097a42-47f4-43e1-9ff5-1cf89cd01cf9,1324,2026-09-04,casualty_injuries_status,None -> exact,status_matches_numbers,32095 3651
+baf456b2-2089-4ec1-8e36-5efa17e3d5c2,851,2026-09-04,casualty_status,None -> exact,status_matches_numbers,31425 32095 3651
+baf456b2-2089-4ec1-8e36-5efa17e3d5c2,851,2026-09-04,casualty_deaths_status,None -> exact,status_matches_numbers,31425 32095 3651
+baf456b2-2089-4ec1-8e36-5efa17e3d5c2,851,2026-09-04,casualty_injuries_status,None -> exact,status_matches_numbers,31425 32095 3651
+58da2787-a614-4410-b79d-15a0d0697621,703,2026-09-04,casualty_status,None -> exact,status_matches_numbers,32095 2074
+58da2787-a614-4410-b79d-15a0d0697621,703,2026-09-04,casualty_deaths_status,None -> exact,status_matches_numbers,32095 2074
+58da2787-a614-4410-b79d-15a0d0697621,703,2026-09-04,casualty_injuries_status,None -> exact,status_matches_numbers,32095 2074
+14e7607c-0683-4ce6-a61e-f14a518d5734,1003,2026-09-04,casualty_status,None -> exact,status_matches_numbers,31425 32095 3651
+14e7607c-0683-4ce6-a61e-f14a518d5734,1003,2026-09-04,casualty_deaths_status,None -> exact,status_matches_numbers,31425 32095 3651
+14e7607c-0683-4ce6-a61e-f14a518d5734,1003,2026-09-04,casualty_injuries_status,None -> exact,status_matches_numbers,31425 32095 3651
+3a24451b-74cf-466f-b3ce-9aeb11a696fd,54,2026-09-04,casualty_status,None -> exact,status_matches_numbers,32095
+3a24451b-74cf-466f-b3ce-9aeb11a696fd,54,2026-09-04,casualty_deaths_status,None -> exact,status_matches_numbers,32095
+3a24451b-74cf-466f-b3ce-9aeb11a696fd,54,2026-09-04,casualty_injuries_status,None -> exact,status_matches_numbers,32095
+a1ec7059-beeb-4c8a-8c8a-ba2045082e2f,1153,2026-09-04,casualty_status,None -> exact,status_matches_numbers,31425 32752 32756 32767 8960 8964 8957
+a1ec7059-beeb-4c8a-8c8a-ba2045082e2f,1153,2026-09-04,casualty_injuries_status,None -> exact,status_matches_numbers,31425 32752 32756 32767 8960 8964 8957
+970268f1-baa7-46e4-85d1-ee6c357588ab,55,2026-09-04,casualty_status,None -> exact,status_matches_numbers,31425
+970268f1-baa7-46e4-85d1-ee6c357588ab,55,2026-09-04,casualty_injuries_status,None -> exact,status_matches_numbers,31425
+8baa3e5c-3ed4-4748-8a8b-9137f2b9c4eb,1392,2026-09-09,(row skipped),,verified,29728 32196 32216 8775 8777
+845249e2-7716-4244-960c-debdbef833d1,1392,2026-09-09,(row skipped),,verified,32175 32221 8776
+0fcbeb85-e225-42da-952d-ec30ab45a200,1530,2026-09-09,(row skipped),,verified,28613 8791 32579 32586 9309 9293 9294 9291 9445 9447
+af927dd4-7328-4e90-b941-4e395d5287f3,1153,2026-09-09,deaths,11 -> None,no_body_grounding,32708 32548 28588 9182 8986
+af927dd4-7328-4e90-b941-4e395d5287f3,1153,2026-09-09,total_deaths,11 -> None,no_body_grounding,32708 32548 28588 9182 8986
+ae3efd5c-38a9-457f-b812-5b085f8b7d1c,652,2026-09-09,casualty_status,None -> exact,status_matches_numbers,32412 32511 9299 9300 9506 9496 9486 9476 9452
+ae3efd5c-38a9-457f-b812-5b085f8b7d1c,652,2026-09-09,casualty_deaths_status,None -> exact,status_matches_numbers,32412 32511 9299 9300 9506 9496 9486 9476 9452
+8fc74304-a55d-4e3d-9d24-e1cf4b9c1730,701,2026-09-08,deaths,2 -> None,no_body_grounding,32708
+8fc74304-a55d-4e3d-9d24-e1cf4b9c1730,701,2026-09-08,total_deaths,2 -> None,no_body_grounding,32708
+b5a71798-d190-427a-82c9-85a950eeb0e2,48,2026-09-07,casualty_status,None -> exact,status_matches_numbers,32774 32735 32752 32756 8960 8964 8956 8860
+b5a71798-d190-427a-82c9-85a950eeb0e2,48,2026-09-07,casualty_deaths_status,None -> exact,status_matches_numbers,32774 32735 32752 32756 8960 8964 8956 8860
+b5a71798-d190-427a-82c9-85a950eeb0e2,48,2026-09-07,casualty_injuries_status,None -> exact,status_matches_numbers,32774 32735 32752 32756 8960 8964 8956 8860
+a876b81c-b70e-4b20-a14a-84c7557d3c78,543,2026-09-07,casualty_status,None -> exact,status_matches_numbers,32756 32767 8957
+a876b81c-b70e-4b20-a14a-84c7557d3c78,543,2026-09-07,casualty_deaths_status,None -> exact,status_matches_numbers,32756 32767 8957
+a876b81c-b70e-4b20-a14a-84c7557d3c78,543,2026-09-07,casualty_injuries_status,None -> exact,status_matches_numbers,32756 32767 8957
+5cc96ca9-845b-43e8-a1e4-563d6fbd1c32,1316,2026-09-07,casualty_status,None -> exact,status_matches_numbers,32767
+5cc96ca9-845b-43e8-a1e4-563d6fbd1c32,1316,2026-09-07,casualty_deaths_status,None -> exact,status_matches_numbers,32767
+fea13ff7-b170-4813-bffd-d39b53e04ea7,207,2026-09-15,casualty_status,None -> exact,status_matches_numbers,32399 32375 10342 10324 10128 10127 10125 10113 10114 10118 10111 10105 10101 9871 27937 10564 10550 10529 10509 10452 10440 10436 11737 11733 11726
+fea13ff7-b170-4813-bffd-d39b53e04ea7,207,2026-09-15,casualty_deaths_status,None -> exact,status_matches_numbers,32399 32375 10342 10324 10128 10127 10125 10113 10114 10118 10111 10105 10101 9871 27937 10564 10550 10529 10509 10452 10440 10436 11737 11733 11726
+1adaa576-8734-46e8-a74a-e0cb186d63a1,650,2026-09-14,deaths,1 -> None,header_only,31497 33186 10091 10089 9960 9944 9945 9946 9937 9935 9931 9932 9928 9930 10498 11755
+1adaa576-8734-46e8-a74a-e0cb186d63a1,650,2026-09-14,total_deaths,1 -> None,header_only,31497 33186 10091 10089 9960 9944 9945 9946 9937 9935 9931 9932 9928 9930 10498 11755
+1adaa576-8734-46e8-a74a-e0cb186d63a1,650,2026-09-14,detail.male_d,1 -> None,header_only,31497 33186 10091 10089 9960 9944 9945 9946 9937 9935 9931 9932 9928 9930 10498 11755
+f154feff-9418-44b7-91a2-d23a917d4d75,650,2026-09-25,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,36578 36579
+0b2fcea3-c079-4247-972b-5e7dfcc0012e,601,2026-09-25,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,36580
+6246ed3a-f9ed-4204-9409-fc801416d1b8,1003,2026-09-27,deaths,1 -> None,header_only,37881 37888 37903
+6246ed3a-f9ed-4204-9409-fc801416d1b8,1003,2026-09-27,total_deaths,1 -> None,header_only,37881 37888 37903
+6246ed3a-f9ed-4204-9409-fc801416d1b8,1003,2026-09-27,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,37881 37888 37903
+63d2f05a-0544-4418-b1b9-4326b1d50997,1219,2026-09-28,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,38096 38102 38113
+1aa27c22-3018-4fa0-9698-863b921be030,207,2026-09-28,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,38342 38343 38346 38347 38359 38360 38535
+807565f5-d44b-424a-b03d-c4490d3d464c,273,2026-09-28,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,38346 38349 38359 38360
+4758bac0-2adf-4b82-be0d-010f5e8a1fe7,1153,2026-09-28,casualty_status,none_mentioned -> exact,status_matches_numbers,38286 38515 38516
+4758bac0-2adf-4b82-be0d-010f5e8a1fe7,1153,2026-09-28,casualty_injuries_status,none_mentioned -> exact,status_matches_numbers,38286 38515 38516
+2ab62622-2176-4be3-aff2-84172c188304,914,2026-09-28,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,38249
+a395fa0b-2099-4cf5-a4c0-b1fe6d7f9c98,969,2026-09-27,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,38081
+039edc33-72ea-4bf3-8af4-65cc5abcc0b6,205,2026-09-27,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,38011 38027
+49182d64-d093-487f-b76a-8a885414e450,207,2026-09-27,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,37336 37823 38486
+5265c6d9-5ee2-4fb0-b586-e9ffb19a6ce9,1412,2026-09-27,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,37767
+a3808066-82d6-44ee-a0ac-714f59d3596e,452,2026-09-27,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,37625
+174fb48b-4c27-4bde-988c-77928df25fe9,601,2026-09-27,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,36363 37469
+8ad2c8df-50f1-4f18-9a64-43dd80c423ba,903,2026-09-26,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,37022
+65ad467e-e450-498a-8807-a41e1c8a59fb,409,2026-09-26,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,36875 36882 36894
+5c90cd23-d6ad-4dc5-abd4-22954d8dcf0e,409,2026-09-26,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,36892
+cb8e357b-938b-4b4f-9100-c16107ebde4d,1365,2026-09-26,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,36393 36825
+4c940669-9a03-4dd6-84fe-caddcbf7fee6,518,2026-09-26,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,36826
+396b9862-c1e4-4b1d-8f2a-86ca6a332c3d,1491,2026-09-24,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,36360
+66260897-6457-477e-bed3-40cb47ef36b4,41,2026-09-23,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,35912
+b31851db-5305-4408-a8d0-8f7dbc2c8d97,919,2026-09-22,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,35718
+000a6c2e-8768-47b1-ad50-00a2847f4506,17,2026-09-22,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,35669 35673
+871c83dc-59e3-4338-a2ae-5657fe361f16,857,2026-09-21,verification_reason,"Possible duplicate of an existing incident (similarity segment, score 1.00).; Possible cross-source duplicate segment; human confirmation required (best similarity 1.00).; No usable text-grounded or source-metadata condition candidate.; 100% similar to an existing incident from another source — confirm whether this is a duplicate. -> Possible duplicate of an existing incident (similarity segment, score 1.00).; Possible cross-source duplicate segment; human confirmation required (best similarity 1.00).; No usable text-grounded or source-metadata condition candidate.; 100% similar to an existing incident from another source — confirm whether this is a duplicate.; Action could not be classified from the report — confirm the incident type.",unclassified_action,35629 35631
+0b1d0330-f257-431d-b9eb-f491845e12e8,601,2026-09-21,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,35070 35524 35525 35531
+0f2314f0-984f-45d3-8cb9-0e3f58b262c8,1066,2026-09-21,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,35495 35499 35512
+5c92e5f5-7a8b-4d4a-822f-62f28d8cd9b0,186,2026-09-21,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,35463
+8820c3c9-951a-4227-a569-d6a7a5eaa99d,186,2026-09-21,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,35463
+8321f129-8bb2-4e6c-95a3-c07af20e1405,7,2026-09-21,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,35426
+f8b42981-9abd-47a1-bd14-e4d2311c712f,978,2026-09-21,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,35315
+40b041cb-18fd-4794-a05e-e75f24aef246,1199,2026-09-20,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,35126
+f6d6d8b9-7996-4d20-9e87-0b4fda3406b0,وادي السلوقي,2026-09-20,casualty_status,none_mentioned -> exact,status_matches_numbers,34437 35070
+f6d6d8b9-7996-4d20-9e87-0b4fda3406b0,وادي السلوقي,2026-09-20,casualty_deaths_status,none_mentioned -> exact,status_matches_numbers,34437 35070
+9b4668e2-4c84-4fa8-8306-e0c9da2cea18,1530,2026-09-20,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,35022
+034aaaa9-ea66-48bc-b813-7dd8361b5b3d,1411,2026-09-19,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,34918
+3a0a6a17-9303-4e0e-9d25-718340441768,310,2026-09-18,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,34668
+1e870674-d5e0-4465-a26f-a893d39ab75d,1162,2026-09-18,detail.male_i,2 -> 2,needs_review,34626
+4001e8a2-f522-48ae-a259-288abcc43ac7,976,2026-09-18,casualty_status,none_mentioned -> exact,status_matches_numbers,34395 34396 34437 34601
+4001e8a2-f522-48ae-a259-288abcc43ac7,976,2026-09-18,casualty_deaths_status,none_mentioned -> exact,status_matches_numbers,34395 34396 34437 34601
+11b5cb0e-0271-4a04-8954-3aee0a97f35a,1003,2026-10-02,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,38801 38803 38849
+6741a7a7-0a6c-4f75-94c0-9576d4e4bb5a,1519,2026-10-02,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,38801 38803 38960
+dc7d6a5d-17de-46ed-886b-b22ecdc2a63f,851,2026-10-04,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,39099 39104 39148
+72fc148d-dee4-47bf-b9de-a3f065446e5e,1519,2026-10-04,deaths,1 -> None,header_only,39182 39186 39190 39248 39316
+72fc148d-dee4-47bf-b9de-a3f065446e5e,1519,2026-10-04,total_deaths,1 -> None,header_only,39182 39186 39190 39248 39316
+72fc148d-dee4-47bf-b9de-a3f065446e5e,1519,2026-10-04,casualty_status,exact -> none_mentioned,status_matches_numbers,39182 39186 39190 39248 39316
+72fc148d-dee4-47bf-b9de-a3f065446e5e,1519,2026-10-04,casualty_deaths_status,exact -> none_mentioned,status_matches_numbers,39182 39186 39190 39248 39316
+96804d7b-be1f-4978-aafa-edc9955ff197,1229,2026-10-03,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,39078 39079 39082
+96ce804f-d2d9-4660-aa25-62d2c19b5c22,919,2026-10-04,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,39219 39230
+7cdc9c32-c615-41d2-9755-bcb3d11747e0,418,2026-10-06,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,40451
+922bf5ef-2e5d-4f5b-ad5e-aa6640adcac1,269,2026-10-07,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,40908
+4dab80b0-55d2-4f22-a7e1-04df1c4a15da,409,2026-10-13,deaths,1 -> None,header_only,42520
+4dab80b0-55d2-4f22-a7e1-04df1c4a15da,409,2026-10-13,total_deaths,1 -> None,header_only,42520
+4dab80b0-55d2-4f22-a7e1-04df1c4a15da,409,2026-10-13,detail.male_d,1 -> None,header_only,42520
+4dab80b0-55d2-4f22-a7e1-04df1c4a15da,409,2026-10-13,casualty_status,exact -> none_mentioned,status_matches_numbers,42520
+4dab80b0-55d2-4f22-a7e1-04df1c4a15da,409,2026-10-13,casualty_deaths_status,exact -> none_mentioned,status_matches_numbers,42520
+4904dfce-8951-43c5-b2c0-59754866fb58,813,2026-10-12,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,42321
+c3557515-cc49-4159-8cee-00b045983017,1490,2026-10-11,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,42219 42226
+73ff98a1-1e93-4863-9a17-1af6a993a5d9,743,2026-10-11,casualty_status,exact -> none_mentioned,status_matches_numbers,42217
+73ff98a1-1e93-4863-9a17-1af6a993a5d9,743,2026-10-11,casualty_deaths_status,exact -> none_mentioned,status_matches_numbers,42217
+73ff98a1-1e93-4863-9a17-1af6a993a5d9,743,2026-10-11,casualty_status_evidence,"قيادة ""الجيش"": سحب جثمان المؤهل الأول المتقاعد علي عبد الحسن سويدان بعد استهدافه مباشرة بدبابة إسرائيلية أثناء تفقّد ممتلكاته في ياطر – بنت جبيل -> None",status_matches_numbers,42217
+bc218ea4-e922-48cb-926d-f3a4fe760092,بيوت السيّاد,2026-10-11,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,42076
+161b80f4-655d-48f4-abe1-30f29961f13d,813,2026-10-11,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,42076
+81ab2b99-9dd2-4d72-86f1-4e0469986c95,1153,2026-10-11,deaths,1 -> None,header_only,42004 42005
+81ab2b99-9dd2-4d72-86f1-4e0469986c95,1153,2026-10-11,total_deaths,1 -> None,header_only,42004 42005
+81ab2b99-9dd2-4d72-86f1-4e0469986c95,1153,2026-10-11,detail.male_d,1 -> None,header_only,42004 42005
+564bfa01-f39a-4e0f-b6f8-998e618a2eab,1519,2026-10-10,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,41989
+6708e764-ad06-4c4c-a0b3-d0df6c6cd6cd,1153,2026-10-10,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,41784 41801
+6182ee67-5566-494b-b471-c501d49e9cbd,263,2026-10-09,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,41667
+91afe063-8972-4f48-98b0-c97e66c1ad1d,1519,2026-10-09,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,41651
+13f0b5c6-479e-447b-bbba-7c9bb9e242aa,6,2026-10-09,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,41634
+142b8072-8746-477a-a292-9e825cd013a6,601,2026-10-08,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,41543 41622
+e1c38a15-7e2f-498f-b092-48ef2da29707,650,2026-10-08,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,41601
+6d9d9a11-dbf4-4b08-9144-747978ab3e99,594,2026-10-09,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,41612
+9fb9f022-d227-4632-87d6-64b62a507c53,601,2026-10-15,detail.male_i,2 -> 2,needs_review,43654
+3b12fe75-4653-497c-941f-b73a2ffd3337,1003,2026-10-15,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,44504
+25453990-9a8f-4911-8567-54b5843f58ab,273,2026-10-15,deaths,1 -> None,header_only,44527 44529
+25453990-9a8f-4911-8567-54b5843f58ab,273,2026-10-15,total_deaths,1 -> None,header_only,44527 44529
+d3e20ff1-3bc4-4dc1-bfe8-cca106d7277b,601,2026-10-16,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,44580
+24cc355a-6d02-4d1f-abb8-8676346cee5d,813,2026-10-16,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,44591
+01bac420-f7b6-4302-a126-8d08f985ffc0,1450,2026-10-16,(row skipped),,verified,44653
+5771eda0-6f5d-4977-a608-b9fce925566b,1490,2026-10-16,deaths,1 -> None,header_only,44767 44768 44770
+5771eda0-6f5d-4977-a608-b9fce925566b,1490,2026-10-16,total_deaths,1 -> None,header_only,44767 44768 44770
+5ae7c5b2-ff6e-454b-8a3f-e811eebef905,857,2026-10-17,(row skipped),,verified,44818 44819
+7f40f17d-cfa4-4144-8e64-76b3550f7065,273,2026-10-17,(row skipped),,verified,44818 44819
+9dd9a960-eb91-4286-84f7-5db1aaaef4a3,701,2026-10-17,(row skipped),,verified,44818 44819
+18b99851-47de-426d-95dd-a5ed8fcc1bcd,1412,2026-10-17,(row skipped),,verified,44818 44819
+61777e1f-0b2d-48bb-8a37-42f7e899e838,409,2026-10-17,(row skipped),,verified,44819
+b860ac75-0311-4762-a8fa-660229700e96,813,2026-10-17,(row skipped),,verified,44819
+0b82dbf2-b793-45e4-a3e2-0d58af70bfbb,78,2026-10-17,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,44871 44884 44885 44889
+57d93d00-2087-4966-88e1-576599796e62,273,2026-10-17,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,44871 44888 44905
+4c698507-1b34-4f99-a645-7f5d83b0b9b1,991,2026-10-17,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,44871
+3b49cbb0-bc2e-4449-94f7-2dc3ff3e34c1,699,2026-10-17,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,44884 44889
+cda80b5a-cb2b-4a64-91bc-7dbafc56a5f9,القنطرة,2026-10-18,deaths,1 -> None,header_only,45002 45022
+cda80b5a-cb2b-4a64-91bc-7dbafc56a5f9,القنطرة,2026-10-18,total_deaths,1 -> None,header_only,45002 45022
+cda80b5a-cb2b-4a64-91bc-7dbafc56a5f9,القنطرة,2026-10-18,detail.male_d,1 -> None,header_only,45002 45022
+cda80b5a-cb2b-4a64-91bc-7dbafc56a5f9,القنطرة,2026-10-18,casualty_status,exact -> none_mentioned,status_matches_numbers,45002 45022
+cda80b5a-cb2b-4a64-91bc-7dbafc56a5f9,القنطرة,2026-10-18,casualty_deaths_status,exact -> none_mentioned,status_matches_numbers,45002 45022
+97f6139a-f6e8-4730-879c-5bba15b88515,القنطرة,2026-10-18,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,45026 45029
+78e97a69-6d28-41ad-9d04-58234d7f969c,813,2026-10-19,(row skipped),,verified,45233 45234 45249
+3c605546-94d4-48cf-b31a-5a05827624c2,176,2026-10-19,deaths,1 -> None,header_only,45775
+3c605546-94d4-48cf-b31a-5a05827624c2,176,2026-10-19,total_deaths,1 -> None,header_only,45775
+3c605546-94d4-48cf-b31a-5a05827624c2,176,2026-10-19,detail.male_d,1 -> None,header_only,45775
+3c605546-94d4-48cf-b31a-5a05827624c2,176,2026-10-19,casualty_status,exact -> none_mentioned,status_matches_numbers,45775
+3c605546-94d4-48cf-b31a-5a05827624c2,176,2026-10-19,casualty_deaths_status,exact -> none_mentioned,status_matches_numbers,45775
+8482f113-fed8-480a-acaa-68be1a957d37,813,2026-10-20,verification_reason,None -> Action could not be classified from the report — confirm the incident type.,unclassified_action,46282
+f6d99bbb-9c7d-42a1-8ce2-85f07c1191b8,1009,2026-10-21,(row skipped),,verified,46343 46344
