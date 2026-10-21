@@ -56,6 +56,7 @@ from app.llm.services.sectioned_bulletin import (
 )
 from app.llm.services.clause_recovery import recover_clause_sub_events
 from app.llm.services.tier1_segmenter import TextSegment, split_segments
+from app.core.llm_knowledge.source_headers import strip_source_headers
 from app.news.services.incident_details.casualty_count_backstop import (
     apply_casualty_count_backstop,
 )
@@ -489,6 +490,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
         post_text: str,
         raw_message_id: int | None = None,
     ) -> ExtractionResult:
+        post_text = strip_source_headers(post_text)
         if settings.tier1_split_phases_enabled:
             return self._extract_tier1_split(post_text, raw_message_id=raw_message_id)
         return self._extract_tier1_current(post_text, raw_message_id=raw_message_id)
@@ -844,6 +846,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
         casualty_scope: str | None = None,
     ) -> dict[ExtractionCategoryKey, ExtractionCategory]:
         """Run Tier-2 category detail extraction for keys detected in Tier 1."""
+        post_text = strip_source_headers(post_text)
         if not presence_category_keys:
             return {}
 
@@ -1000,6 +1003,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
         post_text: str,
         raw_message_id: int | None = None,
     ) -> ExtractionResult:
+        post_text = strip_source_headers(post_text)
         categories_present = self.presence_gate.categories_present(
             post_text,
             raw_message_id=raw_message_id,

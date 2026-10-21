@@ -3,7 +3,7 @@
 knowledge: every word list comes from terminology YAML —
   casualty_gender.yaml  singular / dual / plural casualty nouns
   casualty_wording.yaml verbs, vague quantifiers, explicit-none phrases,
-                        obituary markers, page headers, strike-list headings,
+                        obituary markers, strike-list headings,
                         demographic nouns, spelled-out numbers
 code-logic: normalization, tokenization, adjacency and matching rules below.
 
@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 
 from app.core.llm_knowledge.loader import load_terminology
+from app.core.llm_knowledge.source_headers import header_regex, strip_source_headers
 
 DEATHS = "deaths"
 INJURIES = "injuries"
@@ -113,6 +114,7 @@ class _Vocabulary:
     demographic_counts: dict[str, int]  # «طفلان» -> 2
     singular_verbal_nouns: dict[str, str]  # «استشهاد» -> deaths
     singular_persons: dict[str, str]  # «مسعف»، «مواطنة» -> male | female | children
+    dual_persons: frozenset[str]  # «شخصين»، «مواطنين» after a verbal noun = 2
     event_leads: frozenset[str]  # «وقوع»، «تسجيل» before a singular verbal noun
     hit_qualifiers: frozenset[str]  # «مباشرة» after «إصابة» = a direct hit
     spelled_numbers: dict[str, int]
@@ -122,7 +124,6 @@ class _Vocabulary:
     none_nouns: dict[str, str]  # term -> deaths | injuries | both
     obituary: frozenset[str]
     strike_headings: frozenset[str]
-    page_headers: tuple[str, ...]
 
 
 def _entries(path: str, *categories: str):
@@ -201,6 +202,7 @@ def _vocab() -> _Vocabulary:
             **{term: "male" for term in _norm_terms(_GENDER_YAML, "male_role_noun")},
             **{term: "female" for term in _norm_terms(_GENDER_YAML, "female_role_noun")},
         },
+        dual_persons=_norm_terms(_WORDING_YAML, "person_dual"),
         event_leads=_norm_terms(_WORDING_YAML, "event_lead"),
         hit_qualifiers=_norm_terms(_WORDING_YAML, "hit_qualifier"),
         demographic_counts={
@@ -224,9 +226,6 @@ def _vocab() -> _Vocabulary:
         },
         obituary=_norm_terms(_WORDING_YAML, "obituary_marker"),
         strike_headings=_norm_terms(_WORDING_YAML, "strike_heading"),
-        page_headers=tuple(
-            normalize_casualty_text(e.term) for e in _entries(_WORDING_YAML, "page_header")
-        ),
     )
 
 
@@ -239,22 +238,9 @@ def _alternation(terms) -> str:
 # ---------------------------------------------------------------------------
 
 
-@lru_cache(maxsize=1)
 def _page_header_re() -> re.Pattern[str] | None:
-    patterns: list[str] = []
-    for header in _vocab().page_headers:
-        tokens = header.split()
-        anchor = next((i for i, token in enumerate(tokens) if "شهيد" in token), 0)
-        parts: list[str] = []
-        for index, token in enumerate(tokens):
-            core = token[2:] if token.startswith("ال") and len(token) > 3 else token
-            # Tolerate «ال/ل/لل/الل» and missing spaces: «اللإعلامي»، «الإعلاميالشهيد».
-            piece = rf"(?:ا?ل{{0,2}})?{re.escape(core)}\s*"
-            parts.append(piece if index >= anchor else f"(?:{piece})?")
-        patterns.append("".join(parts))
-    if not patterns:
-        return None
-    return re.compile("|".join(f"(?:{p})" for p in patterns))
+    """Registered channel/page headers (``terminology/source_headers.yaml``)."""
+    return header_regex()
 
 
 def _mask_page_header(text: str) -> str:
@@ -265,21 +251,55 @@ def _mask_page_header(text: str) -> str:
 
 
 def strip_page_header(text: str | None) -> str:
-    """Remove «صفحة الإعلامي الشهيد علي شعيب» (and spelling variants) from *text*."""
-    normalized = normalize_with_offsets(text)
-    pattern = _page_header_re()
-    if pattern is None:
-        return normalized.source
-    pieces: list[str] = []
-    cursor = 0
-    for match in pattern.finditer(normalized.text):
-        start = normalized.offsets[match.start()]
-        end = normalized.offsets[match.end() - 1] + 1
-        pieces.append(normalized.source[cursor:start])
-        cursor = end
-    pieces.append(normalized.source[cursor:])
-    # Keep the rest verbatim so spans found in the result are source substrings.
-    return "".join(pieces).strip()
+    """Remove registered channel/page headers (and spelling variants) from *text*."""
+    return strip_source_headers(text)
+
+
+_BARE_CASUALTY_TOKENS = frozenset(
+    normalize_with_offsets(word).text
+    for word in (
+        "شهيد", "الشهيد", "شهيدة", "الشهيدة", "شهداء", "الشهداء",
+        "جريح", "الجريح", "جريحة", "الجريحة", "جرحى", "الجرحى",
+        "قتيل", "القتيل", "قتيلة", "القتيلة",
+    )
+)
+_MEMORIAL_WORDS = re.compile(
+    r"(?<![ء-ي])(?:رحم|رحمه|رحمة|ذكري|الذكري|روح|ارواح|تغمد|طيب|ثري|تشييع|جنازه|مضي)(?![ء-ي])"
+)
+_FUNCTION_WORDS = frozenset({"و", "في", "من", "على", "عن", "الى", "ال", "ب", "ل"})
+
+
+def is_bare_casualty_token(span: str | None) -> bool:
+    """True for a span that is only «شهيد» / «الشهيد» / «جريح» … with no number or noun."""
+    folded = normalize_with_offsets(span).text.strip(" \t\n.,،:;؛-–—_*|()[]«»\"'")
+    return folded in _BARE_CASUALTY_TOKENS
+
+
+def bare_token_lacks_event_context(body: str | None, span: str | None) -> bool:
+    """A bare martyr/injured token counts only in a sentence that says something else.
+
+    Rejected: the token alone on its line/sentence («الشهيد»), or inside a memorial
+    or obituary sentence («رحم الله الشهيد»). «الرمادية: شهيد وجريح» is a place
+    label plus the token and stays valid.
+    """
+    if not is_bare_casualty_token(span):
+        return False
+    prepared = _prepared(body)
+    needle = normalize_with_offsets(span).text.strip()
+    if not needle:
+        return True
+    for match in re.finditer(re.escape(needle), prepared.text):
+        start = prepared.text.rfind("\n", 0, match.start())
+        for mark in ".!؟?؛":
+            start = max(start, prepared.text.rfind(mark, 0, match.start()))
+        ends = [i for i in (prepared.text.find(m, match.end()) for m in ".!؟?؛\n") if i != -1]
+        sentence = prepared.text[start + 1 : min(ends) if ends else len(prepared.text)]
+        rest = sentence.replace(needle, " ", 1)
+        words = [w for w in re.findall(rf"[{_AR}]+", rest) if w not in _FUNCTION_WORDS]
+        if not words or _MEMORIAL_WORDS.search(rest) or is_obituary(rest):
+            continue
+        return False
+    return True
 
 
 def _prepared(text: str | None) -> NormalizedText:
@@ -628,12 +648,12 @@ def _find_count_mentions(prepared: NormalizedText) -> list[CountMention]:
             continue
         verbal = _singular_verbal_count(tokens, index)
         if verbal is not None:
-            kind, group, first, last = verbal
+            kind, group, first, last, value = verbal
             mentions.append(
                 CountMention(
                     kind=kind,
-                    value=1,
-                    rule="singular",
+                    value=value,
+                    rule="singular" if value == 1 else "dual",
                     text=prepared.source_slice(tokens[first].start, tokens[last].end).strip(
                         _TOKEN_EDGE
                     ),
@@ -665,8 +685,8 @@ def _find_count_mentions(prepared: NormalizedText) -> list[CountMention]:
 
 def _singular_verbal_count(
     tokens: list[_Token], index: int
-) -> tuple[str, str | None, int, int] | None:
-    """(kind, group, first, last) for a singular verbal-noun count of 1.
+) -> tuple[str, str | None, int, int, int] | None:
+    """(kind, group, first, last, value) for a verbal-noun count of 1 (or 2 for a dual person).
 
     «استشهاد مسعف»، «إصابة مواطن»: verbal noun + indefinite singular person.
     «وقوع إصابة»، «تسجيل إصابة»: event verb + singular verbal noun, unless it is
@@ -690,11 +710,14 @@ def _singular_verbal_count(
     )
     if following is not None and not _has_article(following.core):
         for stem in _stems(following.core, allow_article=False):
+            if stem in vocab.dual_persons:
+                # «إصابة شخصين»: a dual person is an explicit count of 2.
+                return kind, None, index, index + 1, 2
             if stem in vocab.singular_persons:
                 # مواطن/مسعف/عنصر/person names establish a singular casualty,
                 # not adult gender. Explicit demographic nouns are handled by
                 # the demographic vocabulary only.
-                return kind, vocab.demographic.get(stem), index, index + 1
+                return kind, vocab.demographic.get(stem), index, index + 1, 1
     previous = tokens[index - 1] if index > 0 else None
     if (
         previous is not None
@@ -712,7 +735,7 @@ def _singular_verbal_count(
             )
         )
     ):
-        return kind, None, index - 1, index
+        return kind, None, index - 1, index, 1
     return None
 
 

@@ -1557,20 +1557,46 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                 )
 
             old_values = self._snapshot_merge_fields(canonical)
-            for field in ("deaths", "injuries", "total_deaths", "total_injuries"):
+            duplicate_raw_message = (
+                self.db.get(RawMessage, incident.raw_message_id)
+                if incident.raw_message_id is not None
+                else None
+            )
+            incoming_casualties = {
+                field: getattr(incident, field)
+                for field in ("deaths", "injuries", "total_deaths", "total_injuries")
+            }
+            duplicate_detail = self.db.scalar(
+                select(IncidentDetail).where(IncidentDetail.incident_id == incident.id)
+            )
+            demographic_columns = ("male_d", "male_i", "female_d", "female_i", "children_d", "children_i")
+            if duplicate_detail is not None:
+                for column in demographic_columns:
+                    incoming_casualties[column] = getattr(duplicate_detail, column)
+            casualty_status_allowed = True
+            if incident.raw_message_id is not None:
+                # A message-derived number is copied only if its own body proves it
+                # (never a channel header). Manual rows have no message and are trusted.
+                provenance = vet_incoming_casualties(
+                    duplicate_raw_message,
+                    incoming_casualties,
+                    incident_village_id=canonical.village_id,
+                    raw_message_id=incident.raw_message_id,
+                )
+                incoming_casualties = {
+                    field: provenance.values.get(field, value)
+                    for field, value in incoming_casualties.items()
+                }
+                casualty_status_allowed = provenance.status_allowed
+            for field, incoming_value in incoming_casualties.items():
+                if field in demographic_columns:
+                    continue
                 setattr(
                     canonical,
                     field,
-                    self._max_preserving_empty(
-                        getattr(canonical, field), getattr(incident, field)
-                    ),
+                    self._max_preserving_empty(getattr(canonical, field), incoming_value),
                 )
-            if incident.casualty_status is not None:
-                duplicate_raw_message = (
-                    self.db.get(RawMessage, incident.raw_message_id)
-                    if incident.raw_message_id is not None
-                    else None
-                )
+            if incident.casualty_status is not None and casualty_status_allowed:
                 self._merge_casualty_status_fields(
                     canonical,
                     {
@@ -1592,9 +1618,6 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
             if canonical.source_link_2 is None:
                 canonical.source_link_2 = incident.source_link_2 or incident.source_link
 
-            duplicate_detail = self.db.scalar(
-                select(IncidentDetail).where(IncidentDetail.incident_id == incident.id)
-            )
             if duplicate_detail is not None:
                 canonical_detail = self.db.scalar(
                     select(IncidentDetail).where(
@@ -1609,7 +1632,11 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                 merge_incident_detail_fields(
                     canonical_detail,
                     {
-                        column.name: getattr(duplicate_detail, column.name)
+                        column.name: (
+                            incoming_casualties.get(column.name)
+                            if column.name in demographic_columns
+                            else getattr(duplicate_detail, column.name)
+                        )
                         for column in IncidentDetail.__table__.columns
                         if column.name not in excluded
                     },

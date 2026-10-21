@@ -32,6 +32,7 @@ from app.news.services.incident_details.category_mapper import (
     suppress_category_casualties,
 )
 from app.news.services.incident_details.casualty_demographic_consistency import reconcile_root_demographics
+from app.news.services.incident_details.casualty_merge_provenance import vet_root_casualties
 from app.news.services.incident_details.casualty_status import (
     status_for_incident_row,
     target_location_count_from_extraction,
@@ -134,6 +135,19 @@ class Tier2DetailFillService:
             return 0
 
         extraction = ExtractionResult.model_validate(raw_message.extraction_result)
+        # A root number reaches an incident only if the message body proves it.
+        proven_casualties, rejected_casualties = vet_root_casualties(
+            raw_message, extraction.casualties, db=self.db, raw_message_id=raw_message_id
+        )
+        if rejected_casualties:
+            logger.warning(
+                "tier2 root casualties not proven by body raw_message_id=%s rejected=%s",
+                raw_message_id,
+                rejected_casualties,
+            )
+            extraction = extraction.model_copy(update={"casualties": proven_casualties})
+            raw_message.extraction_result = extraction.model_dump(mode="json")
+            self.db.add(raw_message)
         original_root_casualties = extraction.casualties
         if tier2_categories is not None:
             merged_categories = dict(extraction.categories)

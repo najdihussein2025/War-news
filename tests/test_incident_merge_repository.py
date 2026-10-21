@@ -183,6 +183,7 @@ class _ResolveDuplicateSessionStub:
         self.duplicate = duplicate
         self.canonical = canonical
         self.match = match
+        self.raw_messages: dict[int, object] = {}
         self.added: list[object] = []
         self._scalar_calls = 0
 
@@ -197,6 +198,9 @@ class _ResolveDuplicateSessionStub:
         if self._scalar_calls == 3:
             return self.canonical
         return None
+
+    def get(self, model, ident):
+        return self.raw_messages.get(ident)
 
     def add(self, value: object) -> None:
         self.added.append(value)
