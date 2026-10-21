@@ -314,6 +314,8 @@ class BulletinReconciliationService:
                 performed_by=None,
             )
         )
+        # Every row of the group is reviewed, not just the owner.
+        self.groups.flag_for_distribution(group)
         owner.verification_status = "needs_verification"
         owner.verification_reason = (
             "صدر خبر لاحق يحدد الأعداد لكل بلدة. تم الإبقاء على الحصيلة الإجمالية على هذا السجل، "

@@ -554,3 +554,53 @@ def merge_casualty_status(
             else current_remaining_total
         )
     return result
+
+
+_COUNT_FIELDS = {
+    "deaths": ("deaths", "total_deaths"),
+    "injuries": ("injuries", "total_injuries"),
+}
+
+
+def _is_positive(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+
+def enforce_status_matches_numbers(row: Any) -> bool:
+    """Make ``casualty_status`` agree with the row's numbers; True when something changed.
+
+    * a number > 0 never sits next to ``none_mentioned`` (it becomes ``exact``);
+    * every number NULL never sits next to ``exact`` (it becomes ``none_mentioned``,
+      and the evidence that "proved" it is dropped).
+
+    Other statuses (``count_missing``, ``aggregate_only``, ``explicit_none``) describe
+    wording the numbers cannot contradict, so they are left alone.
+    """
+    changed = False
+    kind_status_attr = {
+        "deaths": "casualty_deaths_status",
+        "injuries": "casualty_injuries_status",
+    }
+    any_positive = False
+    all_null = True
+    for kind, fields in _COUNT_FIELDS.items():
+        values = [getattr(row, field, None) for field in fields]
+        positive = any(_is_positive(value) for value in values)
+        any_positive = any_positive or positive
+        all_null = all_null and all(value is None for value in values)
+        current = getattr(row, kind_status_attr[kind], None)
+        if positive and current in (None, "none_mentioned"):
+            setattr(row, kind_status_attr[kind], "exact")
+            changed = True
+        elif all(value is None for value in values) and current == "exact":
+            setattr(row, kind_status_attr[kind], "none_mentioned")
+            changed = True
+    status = getattr(row, "casualty_status", None)
+    if any_positive and status in (None, "none_mentioned"):
+        row.casualty_status = "exact"
+        changed = True
+    elif all_null and status == "exact":
+        row.casualty_status = "none_mentioned"
+        row.casualty_status_evidence = None
+        changed = True
+    return changed

@@ -20,6 +20,7 @@ from app.news.models.village import Village
 from app.news.models.village_location_alias import VillageLocationAlias
 from app.news.services.incident_details.casualty_count_backstop import apply_casualty_count_backstop
 from app.news.services.incident_details.casualty_gender_evidence import reject_unproven_demographics
+from app.news.services.incident_details.casualty_status import enforce_status_matches_numbers
 from app.news.services.incident_details.casualty_merge_provenance import filter_validated_claims
 from app.news.services.incident_details.casualty_text import (
     find_count_mentions,
@@ -894,6 +895,7 @@ def recompute_incident_casualties(db: Session, incident: Incident, *, raw_messag
     if detail is not None:
         for key in DETAIL_FIELDS:
             setattr(detail, key, new[key])
+    enforce_status_matches_numbers(incident)
     own_claim = any(claim.village_id == incident.village_id for claim in validation.claims)
     if validation.claims and not own_claim:
         incident.verification_status = "needs_verification"

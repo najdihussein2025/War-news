@@ -55,6 +55,11 @@ export const matchesFilters = (incident: IncidentStreamEvent, filters: IncidentF
   return true;
 };
 
+// People reported on one incident; the same rule as the backend KPI sum
+// (total_deaths + total_injuries, null as 0).
+export const reportedCasualtyPeople = (incident: Pick<IncidentStreamEvent, "total_deaths" | "total_injuries">) =>
+  (incident.total_deaths ?? 0) + (incident.total_injuries ?? 0);
+
 const sortIncidents = (items: Incident[], sortOrder: IncidentFilters["sortOrder"]) =>
   [...items].sort((left, right) => {
     const leftKey = `${left.event_date}T${left.event_time ?? ""}|${left.created_at}|${left.id ?? ""}`;
@@ -101,8 +106,9 @@ export const useIncidentStream = (filters: IncidentFilters) => {
             incident.verification_status === "needs_verification"
               ? current.needs_verification_count + 1
               : current.needs_verification_count,
+          // The KPI counts people (deaths + injuries), not incidents.
           casualties_count: incident.has_reported_casualties
-            ? current.casualties_count + 1
+            ? current.casualties_count + reportedCasualtyPeople(incident)
             : current.casualties_count,
         };
       });

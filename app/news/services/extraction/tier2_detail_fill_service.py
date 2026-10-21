@@ -34,6 +34,7 @@ from app.news.services.incident_details.category_mapper import (
 from app.news.services.incident_details.casualty_demographic_consistency import reconcile_root_demographics
 from app.news.services.incident_details.casualty_merge_provenance import vet_root_casualties
 from app.news.services.incident_details.casualty_status import (
+    enforce_status_matches_numbers,
     status_for_incident_row,
     target_location_count_from_extraction,
 )
@@ -217,6 +218,7 @@ class Tier2DetailFillService:
             category_casualties_suppressed=category_casualties_suppressed,
         )
         shared_toll_owner: int | None = None
+        shared_toll_group = None
         if is_multi_village_aggregate:
             # Text order (not sorted): the first village mentioned owns the toll.
             ordered_ids = first_mention_village_ids(
@@ -239,6 +241,7 @@ class Tier2DetailFillService:
             owner = getattr(group, "owner_village_id", None)
             shared_toll_owner = owner if isinstance(owner, int) else ordered_ids[0]
             self.bulletin_groups.link_incidents(group, incidents)
+            shared_toll_group = group
 
         embedding = raw_message.content_embedding
 
@@ -357,6 +360,7 @@ class Tier2DetailFillService:
             incident.casualty_status_remaining_total = row_status.remaining_total
             incident.casualty_is_preliminary = row_status.is_preliminary
             incident.casualty_status_evidence = row_status.evidence
+            enforce_status_matches_numbers(incident)
             self._apply_dedup_backstop(
                 incident,
                 embedding,
@@ -376,6 +380,10 @@ class Tier2DetailFillService:
             self.db.add(incident)
             self.db.add(detail)
             updated += 1
+
+        if shared_toll_group is not None:
+            # The whole toll sits on one row: owner and members all go to review.
+            self.bulletin_groups.flag_for_distribution(shared_toll_group)
 
         # Tier 2 detail fill completed for this message: stamp it in the same
         # commit that flips details_pending to false above. Only reached when

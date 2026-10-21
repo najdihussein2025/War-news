@@ -52,7 +52,10 @@ from app.news.interfaces import IncidentRepositoryInterface
 from app.news.repositories.incident_repository_listing import (
     IncidentRepositoryListQueryMixin,
 )
-from app.news.repositories.reported_casualties import has_reported_casualties_expression
+from app.news.repositories.reported_casualties import (
+    has_reported_casualties_expression,
+    reported_casualty_people_expression,
+)
 from app.news.models import (
     BulletinCasualtyGroup,
     Condition,
@@ -90,7 +93,10 @@ from app.news.services.incident_details.casualty_transition_merge import (
 from app.news.services.incident_details.casualty_transition_backstop import (
     detect_casualty_transition_backstop,
 )
-from app.news.services.incident_details.casualty_status import merge_casualty_status
+from app.news.services.incident_details.casualty_status import (
+    enforce_status_matches_numbers,
+    merge_casualty_status,
+)
 from app.news.services.incident_details.casualty_merge_guard import guard_casualty_merge
 from app.news.services.incident_details.casualty_merge_provenance import vet_incoming_casualties
 from app.news.services.incident_details.incident_casualty_recompute import (
@@ -108,6 +114,7 @@ from app.news.services.dedup.text_similarity import (
 )
 from app.news.services.materialization.verification_signals import (
     active_non_duplicate_verification_reasons,
+    apply_unclassified_review,
     extract_quality_flags,
 )
 from app.news.services.incidents.incident_change_log import (
@@ -423,9 +430,13 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                     func.count(Incident.id)
                     .filter(self._needs_verification_column())
                     .label("needs_verification_count"),
-                    func.count(Incident.id)
-                    .filter(has_reported_casualties_expression())
-                    .label("casualties_count"),
+                    # KPI = people (deaths + injuries), not incidents.
+                    func.coalesce(
+                        func.sum(reported_casualty_people_expression()).filter(
+                            has_reported_casualties_expression()
+                        ),
+                        0,
+                    ).label("casualties_count"),
                 )
             )
         ).one()
@@ -1642,6 +1653,7 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                     },
                 )
 
+            enforce_status_matches_numbers(canonical)
             new_values = self._snapshot_merge_fields(canonical)
             new_values["merged_from"] = {
                 "raw_message_id": incident.raw_message_id,
@@ -2060,6 +2072,8 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                     performed_by=None,
                 )
             )
+        enforce_status_matches_numbers(existing)
+        apply_unclassified_review(self.db, existing)
         self.db.add(existing)
         evaluate_casualty_flags_safely(self.db, existing.id)
 
@@ -2173,6 +2187,7 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                 setattr(detail, key, value)
             self.db.add(detail)
 
+        enforce_status_matches_numbers(existing)
         new_values = self._snapshot_merge_audit(existing, detail)
         khabar = new_candidate_data.get("khabar")
         new_values = {

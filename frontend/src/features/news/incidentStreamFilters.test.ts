@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchesFilters } from "./hooks";
+import { matchesFilters, reportedCasualtyPeople } from "./hooks";
 import type { IncidentStreamEvent } from "./types";
 
 const event = {
@@ -41,5 +41,13 @@ describe("live incident stream filter", () => {
     {},
   ])("trusts only the backend flag, never counts or status: %o", (fields) => {
     expect(matchesFilters({ ...event, ...fields } as IncidentStreamEvent, { limit: 150, hasCasualties: true })).toBe(false);
+  });
+});
+
+describe("reported casualties KPI (people)", () => {
+  it("counts deaths plus injuries, treating null as zero", () => {
+    expect(reportedCasualtyPeople({ total_deaths: 2, total_injuries: 3 })).toBe(5);
+    expect(reportedCasualtyPeople({ total_deaths: null, total_injuries: 4 })).toBe(4);
+    expect(reportedCasualtyPeople({ total_deaths: null, total_injuries: null })).toBe(0);
   });
 });
