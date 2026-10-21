@@ -1,0 +1,322 @@
+{
+  "_comment": "Condition -> action family mapping, keyed by conditions.action_ar (action_en is the fallback key). Never keyed by id: live ids differ from the seed order. Recon proposal (Docs/analytics/step1-recon-report.md item 6) with the agreed overrides: Bombs -> airstrikes, Supersonic boom -> other, both unclassified conditions -> unclassified, Vehicle Movement -> incursions.",
+  "families": [
+    {
+      "code": "airstrikes",
+      "name_en": "Airstrikes",
+      "name_ar": "غارات جوية",
+      "sort_order": 10,
+      "is_air_violation": false,
+      "counts_in_headline": true
+    },
+    {
+      "code": "drone_strikes",
+      "name_en": "Drone strikes",
+      "name_ar": "استهداف بمسيرات",
+      "sort_order": 20,
+      "is_air_violation": false,
+      "counts_in_headline": true
+    },
+    {
+      "code": "artillery",
+      "name_en": "Artillery shelling",
+      "name_ar": "قصف مدفعي",
+      "sort_order": 30,
+      "is_air_violation": false,
+      "counts_in_headline": true
+    },
+    {
+      "code": "flares_phosphorus",
+      "name_en": "Flares and phosphorus",
+      "name_ar": "قنابل مضيئة وفوسفورية",
+      "sort_order": 40,
+      "is_air_violation": false,
+      "counts_in_headline": true
+    },
+    {
+      "code": "demolitions",
+      "name_en": "Demolitions and bulldozing",
+      "name_ar": "تفجير وتجريف",
+      "sort_order": 50,
+      "is_air_violation": false,
+      "counts_in_headline": true
+    },
+    {
+      "code": "gunfire",
+      "name_en": "Gunfire and small arms",
+      "name_ar": "إطلاق نار",
+      "sort_order": 60,
+      "is_air_violation": false,
+      "counts_in_headline": true
+    },
+    {
+      "code": "incursions",
+      "name_en": "Ground incursions",
+      "name_ar": "توغلات",
+      "sort_order": 70,
+      "is_air_violation": false,
+      "counts_in_headline": true
+    },
+    {
+      "code": "air_violations",
+      "name_en": "Air violations",
+      "name_ar": "خروقات جوية",
+      "sort_order": 80,
+      "is_air_violation": true,
+      "counts_in_headline": true
+    },
+    {
+      "code": "other",
+      "name_en": "Other",
+      "name_ar": "أخرى",
+      "sort_order": 90,
+      "is_air_violation": false,
+      "counts_in_headline": true
+    },
+    {
+      "code": "unclassified",
+      "name_en": "Unclassified and pending",
+      "name_ar": "غير مصنف",
+      "sort_order": 100,
+      "is_air_violation": false,
+      "counts_in_headline": false
+    }
+  ],
+  "conditions": [
+    {
+      "action_ar": "قصف وغارات",
+      "action_en": "Bombs",
+      "family": "airstrikes"
+    },
+    {
+      "action_ar": "غارة تحذيرية",
+      "action_en": "Warning Raid",
+      "family": "airstrikes"
+    },
+    {
+      "action_ar": "سقوط مسيّرة",
+      "action_en": "Drone Failure",
+      "family": "drone_strikes"
+    },
+    {
+      "action_ar": "مسيرة مفخخة",
+      "action_en": "Suicide Drone",
+      "family": "drone_strikes"
+    },
+    {
+      "action_ar": "قصف مدفعي",
+      "action_en": "Artillery Shelling",
+      "family": "artillery"
+    },
+    {
+      "action_ar": "قذائف الدبابات",
+      "action_en": "Tank Fire",
+      "family": "artillery"
+    },
+    {
+      "action_ar": "قذائف فوسفورية",
+      "action_en": "Phosphorus Bombs",
+      "family": "flares_phosphorus"
+    },
+    {
+      "action_ar": "قنابل دخانية",
+      "action_en": "Smoke Grenades",
+      "family": "flares_phosphorus"
+    },
+    {
+      "action_ar": "قنابل مضيئة وحارقة",
+      "action_en": "Flare Bomb",
+      "family": "flares_phosphorus"
+    },
+    {
+      "action_ar": "قنابل صوتية",
+      "action_en": "Sound Bombs",
+      "family": "flares_phosphorus"
+    },
+    {
+      "action_ar": "قنابل عنقودية",
+      "action_en": "Cluster Bombs",
+      "family": "airstrikes"
+    },
+    {
+      "action_ar": "قنابل مسمارية",
+      "action_en": "Nail bombs",
+      "family": "artillery"
+    },
+    {
+      "action_ar": "قنابل",
+      "action_en": "Grenades",
+      "family": "gunfire"
+    },
+    {
+      "action_ar": "قذائف انشطارية",
+      "action_en": "Fissile Shells",
+      "family": "artillery"
+    },
+    {
+      "action_ar": "القاء بالونات حرارية",
+      "action_en": "Decoy Flares",
+      "family": "flares_phosphorus"
+    },
+    {
+      "action_ar": "قنابل يدوية",
+      "action_en": "Hand Grenades",
+      "family": "gunfire"
+    },
+    {
+      "action_ar": "إطلاق نار",
+      "action_en": "Shooting",
+      "family": "gunfire"
+    },
+    {
+      "action_ar": "عملية تمشيط",
+      "action_en": "Sweeping Operations",
+      "family": "incursions"
+    },
+    {
+      "action_ar": "عملية تمشيط مروحي",
+      "action_en": "Aerial Sweep",
+      "family": "incursions"
+    },
+    {
+      "action_ar": "توغل بري",
+      "action_en": "Ground Incursion",
+      "family": "incursions"
+    },
+    {
+      "action_ar": "تلغيم وتفجير",
+      "action_en": "Mining & Detonation",
+      "family": "demolitions"
+    },
+    {
+      "action_ar": "تمركز",
+      "action_en": "Stationing",
+      "family": "incursions"
+    },
+    {
+      "action_ar": "توغل بحري",
+      "action_en": "Naval Incursion",
+      "family": "incursions"
+    },
+    {
+      "action_ar": "قطع طريق",
+      "action_en": "Road Blockage",
+      "family": "incursions"
+    },
+    {
+      "action_ar": "حفر وجرف",
+      "action_en": "Bulldozing",
+      "family": "demolitions"
+    },
+    {
+      "action_ar": "قطع اشجار",
+      "action_en": "Cutting Trees",
+      "family": "demolitions"
+    },
+    {
+      "action_ar": "احراق ممتلكات",
+      "action_en": "Burning Properties",
+      "family": "demolitions"
+    },
+    {
+      "action_ar": "اقتحام/ سرقة منازل",
+      "action_en": "Raiding & Stealing Homes",
+      "family": "incursions"
+    },
+    {
+      "action_ar": "عملية احتجاز",
+      "action_en": "Arrest Operation",
+      "family": "incursions"
+    },
+    {
+      "action_ar": "خطف",
+      "action_en": "Kidnapping",
+      "family": "incursions"
+    },
+    {
+      "action_ar": "كمائن",
+      "action_en": "Ambushes",
+      "family": "gunfire"
+    },
+    {
+      "action_ar": "تسريح ماشية",
+      "action_en": "Releasing Cattle",
+      "family": "other"
+    },
+    {
+      "action_ar": "اجهزة تجسس",
+      "action_en": "Installing Surveillance Devices",
+      "family": "other"
+    },
+    {
+      "action_ar": "منطاد تجسسي",
+      "action_en": "Spy Balloon",
+      "family": "air_violations"
+    },
+    {
+      "action_ar": "طيران حربي",
+      "action_en": "Warplane",
+      "family": "air_violations"
+    },
+    {
+      "action_ar": "طيران استطلاعي",
+      "action_en": "Surveillance Aircraft",
+      "family": "air_violations"
+    },
+    {
+      "action_ar": "خرق جدار الصوت",
+      "action_en": "Supersonic boom",
+      "family": "other"
+    },
+    {
+      "action_ar": "طيران مروحي",
+      "action_en": "Helicopter Hovering",
+      "family": "air_violations"
+    },
+    {
+      "action_ar": "غارات وهمية",
+      "action_en": "Feigned Attacks",
+      "family": "other"
+    },
+    {
+      "action_ar": "صاروخ اعتراضي",
+      "action_en": "Interceptor Missile",
+      "family": "other"
+    },
+    {
+      "action_ar": "قذائف لم تنفجر",
+      "action_en": "Unexploded Shells",
+      "family": "other"
+    },
+    {
+      "action_ar": "رمي أجسام/ مواد مجهولة",
+      "action_en": "Throwing Foreign Objects / Substances",
+      "family": "other"
+    },
+    {
+      "action_ar": "عبارات / مناشير تحريضية / اتصالات تحذيرية",
+      "action_en": "Broadcast Provocative Statements / Warning Messages",
+      "family": "other"
+    },
+    {
+      "action_ar": "عرقلة مهام",
+      "action_en": "Obstructing Duties",
+      "family": "other"
+    },
+    {
+      "action_ar": "تحرك آليات",
+      "action_en": "Vehicle Movement",
+      "family": "incursions"
+    },
+    {
+      "action_ar": "نشاط جوي بحاجة إلى التحقق",
+      "action_en": "Air Activity - Needs Verification",
+      "family": "unclassified"
+    },
+    {
+      "action_ar": "غير مصنف / بحاجة إلى مراجعة",
+      "action_en": "Unclassified / Needs Review",
+      "family": "unclassified"
+    }
+  ]
+}
