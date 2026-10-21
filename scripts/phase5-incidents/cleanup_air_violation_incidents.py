@@ -37,7 +37,7 @@ def main() -> None:
         )
 
         if not incidents:
-            print("No live incidents found for condition_id IN (35, 36, 38).")
+            print("No live incidents found for condition_id IN (34, 35, 36, 38).")
             return
 
         deleted_ids: list[str] = []

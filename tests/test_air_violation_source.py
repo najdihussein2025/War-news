@@ -14,7 +14,6 @@ from app.news.models import AirViolation, Condition, MessageStatus, RawMessage, 
 from app.news.repositories.air_violation_repository import (
     AirViolationRepository,
     air_violation_caza_labels,
-    air_violation_caza_window_hours,
     air_violation_news_text,
     as_beirut_datetime,
     clean_air_violation_news,
@@ -139,32 +138,6 @@ def test_air_violation_caza_aliases_include_requested_kadaa(text, expected) -> N
     assert labels == expected
 
 
-@pytest.mark.parametrize(
-    ("caza_en", "condition_id", "expected_hours"),
-    [
-        ("Nabatiye", 35, 4),
-        ("Marjaayoun", 35, 4),
-        ("Bint Jbeil", 35, 4),
-        ("Tyre", 35, 4),
-        ("Sour", 35, 4),
-        ("Baabda", 35, 4),
-        ("Hermel", 35, 4),
-        ("Baalbeck", 35, 4),
-        ("Saida", 35, 4),
-        ("West Beqaa", 35, 4),
-        ("Akkar", 35, 4),
-        (None, 35, 4),
-        ("Nabatiye", 36, 1),
-        ("Akkar", 36, 4),
-        ("Koura", 36, 4),
-        ("Nabatiye", 38, 1),
-        ("Akkar", 38, 1),
-    ],
-)
-def test_air_violation_caza_window_hours(caza_en, condition_id, expected_hours) -> None:
-    assert air_violation_caza_window_hours(caza_en, condition_id) == expected_hours
-
-
 def test_telegram_message_identity_bypasses_recent_similarity_suppression() -> None:
     message = type("Message", (), {
         "external_message_id": "telegram:redlinkleb:12345",
@@ -221,7 +194,7 @@ def test_telegram_identity_bypasses_for_location_specific_air_alert() -> None:
     assert AirViolationRepository._should_bypass_recent_duplicate_check(message, result) is True
 
 
-def test_priority_caza_air_violations_are_preserved_and_collapsed_per_hour() -> None:
+def test_six_hour_caza_air_violations_are_preserved_and_collapsed_into_one_window() -> None:
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:
         pytest.skip("DATABASE_URL is required for repository integration coverage.")
@@ -328,9 +301,11 @@ def test_priority_caza_air_violations_are_preserved_and_collapsed_per_hour() -> 
             item for item in displayed.items
             if item.source_id == source.id
         ]
-        assert len(own_windows) == 2
-        assert sorted(item.window_violation_count for item in own_windows) == [1, 2]
-        assert sorted(len(item.window_reports) for item in own_windows) == [1, 2]
+        # Nabatiye is a 6-hour drone caza: all three reports share one window.
+        assert len(own_windows) == 1
+        assert own_windows[0].window_violation_count == 3
+        assert own_windows[0].window_duration_minutes == 360
+        assert len(own_windows[0].window_reports) == 3
     except (OperationalError, ProgrammingError) as exc:
         pytest.skip(f"Air-violation schema is unavailable: {exc}")
     finally:

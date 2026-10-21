@@ -47,6 +47,10 @@ class AirViolationDTO(BaseModel):
     window_violation_count: int | None = None
     window_duration_minutes: int | None = None
     window_reports: list[AirViolationWindowReportDTO] = Field(default_factory=list)
+    # Breaches this row contributes: villages for helicopters, cazas for spy
+    # balloons, 1 for a warplane/drone window.
+    breach_count: int | None = None
+    unit_type: str | None = None
     khabar: str
     note_1: str | None
     note_2: str | None
@@ -108,10 +112,13 @@ class AirViolationWindowDTO(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     id: str
+    condition_id: int | None = None
+    unit_type: str | None = None
     caza_en: str
     caza_ar: str | None = None
     window_start: datetime
     window_end: datetime
+    window_duration_minutes: int | None = None
     violation_count: int
     villages: list[AirViolationVillageDTO] = Field(default_factory=list)
 
@@ -131,3 +138,4 @@ class AirViolationSummaryDTO(BaseModel):
     warplanes: int
     surveillance_aircraft: int
     helicopters: int
+    spy_balloons: int = 0

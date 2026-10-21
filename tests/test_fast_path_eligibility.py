@@ -147,7 +147,7 @@ def test_claim_sql_excludes_air_violations_and_requires_village() -> None:
         .where(fast_path_materializable_clause())
         .compile(dialect=postgresql.dialect())
     )
-    assert "NOT IN (35, 36, 38)" in compiled
+    assert "NOT IN (34, 35, 36, 38)" in compiled
     assert "village_matches" in compiled
     assert "matched_low_confidence" in compiled
     assert FAST_PATH_MATERIALIZABLE_SQL.strip() in compiled or "village_matches" in compiled

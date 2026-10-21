@@ -97,7 +97,7 @@ def _normalized_name(value: object) -> str:
     return " ".join(normalize_arabic_text(str(value or "")).casefold().split())
 
 
-def _village_key(village: BreachVillage) -> str:
+def village_key(village: BreachVillage) -> str:
     if village.village_id is not None:
         return f"id:{village.village_id}"
     return f"name:{_normalized_name(village.name)}"
@@ -158,7 +158,7 @@ def _mohafaza_units(report: BreachReport) -> list[_Unit]:
 def _village_units(report: BreachReport) -> list[_Unit]:
     units: dict[str, _Unit] = {}
     for village in report.villages:
-        key = _village_key(village)
+        key = village_key(village)
         if key == "name:":
             continue
         units.setdefault(
@@ -211,7 +211,7 @@ def _merge_villages(
 ) -> tuple[BreachVillage, ...]:
     merged: dict[str, BreachVillage] = {}
     for village in villages:
-        key = _village_key(village)
+        key = village_key(village)
         if key != "name:":
             merged.setdefault(key, village)
     return tuple(merged.values())

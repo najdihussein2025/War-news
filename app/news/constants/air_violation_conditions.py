@@ -64,5 +64,3 @@ CAZA_TO_MOHAFAZA: dict[str, str] = {
     "Beirut": "Beirut",
 }
 
-# Legacy window list, removed once window_grouping_service is retired.
-AIR_VIOLATION_SOUTH_CAZAS = frozenset(DRONE_SIX_HOUR_CAZAS | {"Hasbaya", "Zahrani"})
