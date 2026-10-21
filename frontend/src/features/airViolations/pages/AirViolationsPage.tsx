@@ -50,10 +50,11 @@ const villageList = (row: AirViolation | null) => {
   if (row.villages?.length) {
     return row.villages.filter((value) => value.name.trim() !== "");
   }
-  const values: AirViolationVillage[] = [
-    ...(row.village_en ? [{ village_id: row.village_id ?? null, name: row.village_en }] : []),
-    ...(row.village_ar && row.village_ar !== row.village_en ? [{ village_id: row.village_id ?? null, name: row.village_ar }] : []),
-  ];
+  // One place, one entry: the English and Arabic names are the same village.
+  const name = row.village_en || row.village_ar;
+  const values: AirViolationVillage[] = name
+    ? [{ village_id: row.village_id ?? null, name }]
+    : [];
   return values;
 };
 
