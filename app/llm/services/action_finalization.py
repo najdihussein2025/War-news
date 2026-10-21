@@ -47,7 +47,6 @@ def finalize_extraction_action(
     post_text: str,
     cnrs_classification: dict | None,
     raw_message_id: int | None = None,
-    raw_message_id: int | None = None,
 ) -> ExtractionResult:
     cnrs_action = trusted_cnrs_action(cnrs_classification, post_text)
     final_action = final_action_description(
@@ -68,8 +67,6 @@ def finalize_extraction_action(
     )
     if action_source == "cnrs_subtype_fallback":
         logger.info("Using cnrs_subtype_fallback raw_message_id=%s", raw_message_id)
-    if action_source == "cnrs_subtype_fallback":
-        logger.info("CNRS subtype fallback used raw_message_id=%s", raw_message_id)
 
     needs_review = result.needs_review
     review_reason = result.review_reason
