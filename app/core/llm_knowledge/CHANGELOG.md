@@ -1,5 +1,13 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-21 - "Hardinga" is Haddatha (Bint Jbeil), not Hardine (Batroun)
+
+- **Real example:** raw 30319 «قصف مدفعي بين بلدتي حاريص وحداثا» was extracted with the village `" Hardinga"` (Latin, despite the verbatim-copy rule); trigram matched it to Hardine (Batroun, North) at 0.545 as `matched_low_confidence`. 25 live incidents (2026-08-27 to 2026-10-19, raw 30319 ... 46028) landed in Hardine this way; every text names حداثا. Found by the new Analytics geo-anomaly check; evidence in `Docs/analytics/geo-anomalies.md`.
+- **Rules changed:** none (the verbatim-copy rule in `combined_tier1_prompt.md` already forbids transliteration; the model still does it for this name). `terminology/village_aliases.yaml` and `Data/VillageLocationAliases.json` gained `Hardinga`, `hardinga`, `Harding`, `harding` -> Haddatha (ACS 72231); the lookup is case-sensitive, so both cases are seeded.
+- **Migration:** `20261021_0084_add_haddatha_latin_aliases.py` inserts them into `village_location_aliases` (generated, not run). Existing incidents are not moved; re-match or fix them in review.
+- **Not covered:** the parenthesised forms (`Hardinga (حادة)`, `Hardinga (حاديص)`, `Hardinga (حدثا)`, 6 of the 25) do not equal an alias key and still need review.
+- **Tests added:** `tests/test_haddatha_alias.py` (the Latin mention resolves to Haddatha through the alias at confidence 1.0 even when trigram prefers Hardine; the catalog maps all four spellings to ACS 72231).
+
 ## 2026-10-21 - Spy balloon (condition 34) becomes an air violation
 
 - **Example (synthetic — no database was available):** `منطاد تجسسي إسرائيلي يحلق فوق بنت جبيل` was extracted as the incident action `Spy Balloon` and materialized as an incident; CNRS counts it as an air violation, one breach per caza.

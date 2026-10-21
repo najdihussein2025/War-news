@@ -8,6 +8,8 @@ Casualties
     other members keep NULL casualties), so summing incidents counts it once;
     ``aggregate_only_incidents`` counts the incidents carrying such a toll so the
     UI can label it "not attributed to a specific village".
+    ``casualty_known`` counts incidents whose ``casualty_status`` is set (the
+    casualty-completeness note next to every casualty number).
 
 Geography
     villages.admin_area_code -> admin_areas gives the village/caza/mohafaza codes.
@@ -61,7 +63,7 @@ INSERT INTO analytics_incident_facts (
     bucket, source, archive_batch, incidents,
     deaths_total, deaths_male, deaths_female, deaths_children, deaths_unspecified,
     injuries_total, injuries_male, injuries_female, injuries_children, injuries_unspecified,
-    aggregate_only_incidents, refreshed_at
+    aggregate_only_incidents, casualty_known, refreshed_at
 )
 WITH src AS ({source}),
 resolved AS (
@@ -92,6 +94,7 @@ SELECT event_date, admin_village_code, caza_code, mohafaza_code, village_id, con
        sum(GREATEST(COALESCE(total_injuries, 0) - COALESCE(male_i, 0) - COALESCE(female_i, 0)
                     - COALESCE(children_i, 0), 0)),
        count(*) FILTER (WHERE casualty_status = 'aggregate_only'),
+       count(*) FILTER (WHERE casualty_status IS NOT NULL),
        now()
 FROM bucketed
 WHERE bucket IS NOT NULL

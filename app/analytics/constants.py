@@ -72,4 +72,10 @@ AIR_CONDITION_LABELS: dict[int, str] = {
 }
 
 MAX_RANGE_DAYS = 400
+
+# Conflict zone for the geo-anomaly check: South, Nabatiye, Bekaa, Baalbek-Hermel
+# mohafazat plus the Baabda caza (southern suburbs). A village outside it with many
+# incidents is most likely a wrong village match.
+CONFLICT_ZONE_MOHAFAZAT: frozenset[str] = frozenset({"LB6", "LB4", "LB2", "LB8"})
+CONFLICT_ZONE_CAZAS: frozenset[str] = frozenset({"LB32"})
 UNKNOWN_AREA = "unknown"

@@ -401,5 +401,33 @@
         "note": "Latin misspelling -> Bent Jbeil.",
         "confidence": "proposed",
         "evidence": "Verification Phase 2 top-40 village backlog: Benton Jbeil Latin misspelling."
+    },
+    {
+        "alias_text": "Hardinga",
+        "parent_acs_code": 72231,
+        "note": "Latin transliteration of حداثا -> Haddatha (Bint Jbeil), not Hardine (Batroun).",
+        "confidence": "proposed",
+        "evidence": "Analytics geo anomaly 2026-10-21: 25 incidents placed in Hardine; every text names حداثا."
+    },
+    {
+        "alias_text": "hardinga",
+        "parent_acs_code": 72231,
+        "note": "Latin transliteration of حداثا -> Haddatha (Bint Jbeil), not Hardine (Batroun).",
+        "confidence": "proposed",
+        "evidence": "Analytics geo anomaly 2026-10-21: 25 incidents placed in Hardine; every text names حداثا."
+    },
+    {
+        "alias_text": "Harding",
+        "parent_acs_code": 72231,
+        "note": "Latin transliteration of حداثا -> Haddatha (Bint Jbeil), not Hardine (Batroun).",
+        "confidence": "proposed",
+        "evidence": "Analytics geo anomaly 2026-10-21: raw 44782 'Harding' scored 0.60 against Hardine."
+    },
+    {
+        "alias_text": "harding",
+        "parent_acs_code": 72231,
+        "note": "Latin transliteration of حداثا -> Haddatha (Bint Jbeil), not Hardine (Batroun).",
+        "confidence": "proposed",
+        "evidence": "Analytics geo anomaly 2026-10-21: raw 44782 'Harding' scored 0.60 against Hardine."
     }
 ]

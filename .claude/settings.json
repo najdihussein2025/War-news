@@ -16,7 +16,27 @@
       "Bash(docker exec *)",
       "Bash(MSYS_NO_PATHCONV=1 docker exec vtest python -c ' *)",
       "Bash(docker rm *)",
-      "Bash(docker cp *)"
+      "Bash(docker cp *)",
+      "Bash(grep -v \"^ *$\")",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec -w /app antest python -m pytest tests/analytics -q -k \"test_meta or 26_to_26\")",
+      "Bash(bash \"C:/Users/HUSSEI~1.NAJ/AppData/Local/Temp/claude/z--Cnrs-News-War-news/da90338c-913b-4b5f-b692-eb914fa11ef4/scratchpad/sync.sh\")",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec -w /app antest python -m pytest tests/test_haddatha_alias.py -q)",
+      "Bash(sed -i 's/from app.news.schemas.match_result import MatchResultStatus/from app.news.dtos import MatchResultStatus/' tests/test_haddatha_alias.py)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec -w /app antest python -m pytest tests/test_haddatha_alias.py tests/test_village_location_aliases.py -q)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec -w /app antest python -m pytest tests/test_village_location_aliases.py -q -k maslakh)",
+      "Bash(git stash *)",
+      "Bash(sed -i 's/\"village\": 1610}/\"village\": 1611}/' tests/analytics/test_api.py tests/analytics/test_reference_loader.py)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec -w /app antest alembic upgrade head)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec -w /app antest python -m pytest tests/analytics -q)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec -w /app antest python -m pytest tests/analytics/test_v2_accuracy.py -q -k geo)",
+      "Bash(sed -i 's/assert rows\\\\[0\\\\]\\\\[\"caza_en\"\\\\] == \"Batroun\" and rows\\\\[0\\\\]\\\\[\"incidents\"\\\\] == 5/assert rows[0][\"caza_en\"] == \"El Batroun\" and rows[0][\"incidents\"] == 5/' tests/analytics/test_v2_accuracy.py)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec -w /app antest alembic downgrade 20261021_0082)",
+      "Bash(cat)",
+      "Bash(sed -i 's#^import \"maplibre-gl/dist/maplibre-gl.css\";#import \"maplibre-gl/dist/maplibre-gl.css\";\\\\nimport \"../analytics.css\";#' components/HeatMap.tsx)",
+      "Bash(perl -0pi -e 's/export type RankingRow = \\\\{\\\\r?\\\\n  code: string;/export type RankingRow = {\\\\n  code: string;\\\\n  \\\\/** Position by the selected metric \\(DESC, ties by name\\), fixed by the API. *\\\\/\\\\n  rank: number;/' types.ts)",
+      "Bash(perl -0pi -e 's/\\\\{ key: \"rank\", header: \"#\", render: \\\\\\(_r, i\\\\\\) => <span className=\"tabular-nums text-text-muted\">\\\\{i \\\\+ 1\\\\}<\\\\/span>, cellClassName: \"w-10\" \\\\}/{ key: \"rank\", header: \"#\", render: \\(r\\) => <span className=\"tabular-nums text-text-muted\">{r.rank}<\\\\/span>, sortValue: \\(r\\) => r.rank, cellClassName: \"w-10\" }/; s/        density=\"compact\"\\\\n        minWidth=\"640px\"/        density=\"compact\"\\\\n        minWidth=\"640px\"\\\\n        initialSort={RANKING_SORT}/; s/\\(type Props = \\\\{\\\\n  filters: AnalyticsFilters;\\\\n  familyNames\\)/\\\\/** Default order: the selected metric, highest first \\(the API already returns that order\\). *\\\\/\\\\nexport const RANKING_SORT = { key: \"value\", direction: \"desc\" as const };\\\\n\\\\n$1/' components/RankingsPanel.tsx)",
+      "Bash(perl -pi -e 's/^  pending_review: number;\\\\r?$/  pending_review: number;\\\\n  casualty_completeness: CasualtyCompleteness;/; s/^  coverage: \\\\{ available: boolean; note: string; gap_dates: string\\\\[\\\\] \\\\};/  coverage: { available: boolean; note: string; gap_dates: string[]; flagged: CoverageFlag[] };/; s/^export type PeakEntry = \\\\{ start: string; value: number; top_areas/export type PeakEntry = { start: string; value: number; low_coverage_days: number; top_areas/' types.ts)",
+      "Bash(perl -pi -e 's/^\\(\\\\s*\\)\"pending_review\": repo\\\\.pending_review_count\\\\\\(db, scoped\\\\\\),/$1\"pending_review\": repo.pending_review_count\\(db, scoped\\),\\\\n$1\"casualty_completeness\": repo.casualty_completeness\\(db, scoped\\),/' app/analytics/services/analytics_service.py)"
     ]
   }
 }

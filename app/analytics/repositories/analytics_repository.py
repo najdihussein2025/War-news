@@ -117,10 +117,10 @@ def meta(db: Session) -> dict[str, Any]:
         FROM analytics_incident_facts""", {})
     air = one(db, "SELECT min(breach_date) AS first_date, max(breach_date) AS last_date, "
                   "max(refreshed_at) AS refreshed FROM analytics_air_breach_facts", {})
-    pending = one(db, """
-        SELECT coalesce(sum(incidents) FILTER (WHERE bucket = 'pending'), 0) AS pending_incidents,
-               coalesce(sum(incidents) FILTER (WHERE bucket = 'pending' AND source = 'live'), 0) AS pending_live
-        FROM analytics_incident_facts""", {})
+    all_time = Filters(date_from=date(1900, 1, 1), date_to=date(2999, 12, 31))
+    pending_total = pending_review_count(db, all_time)
+    pending_live = one(db, "SELECT coalesce(sum(incidents), 0) AS n FROM analytics_incident_facts "
+                           "WHERE bucket = 'pending' AND source = 'live'", {})["n"]
     counts = {r["level"]: r["n"] for r in rows(db, "SELECT level, count(*) AS n FROM admin_areas GROUP BY level", {})}
     families = rows(db, """
         SELECT code, name_en, name_ar, sort_order, is_air_violation, counts_in_headline
@@ -137,7 +137,9 @@ def meta(db: Session) -> dict[str, Any]:
         "area_counts": counts,
         "last_refresh": max(refreshed) if refreshed else None,
         "refresh_queue": queue.get("n", 0),
-        "pending_review": {"incidents": int(pending["pending_incidents"]), "live": int(pending["pending_live"])},
+        # All-time count, for the footer only. The filter chip shows kpis.pending_review
+        # (same function, current filters) so it always equals the KPI card.
+        "pending_review": {"incidents": pending_total, "live": int(pending_live)},
         "air_conditions": {str(k): v for k, v in AIR_CONDITION_LABELS.items()},
         "air_level_conditions": {k: sorted(v) for k, v in AIR_LEVEL_CONDITIONS.items()},
     }
@@ -194,9 +196,26 @@ def incident_totals(db: Session, flt: Filters, *, pending_only: bool = False) ->
         {FROM_INCIDENTS} WHERE {where}""", params)
 
 
-def pending_incident_count(db: Session, flt: Filters) -> int:
+def pending_review_count(db: Session, flt: Filters) -> int:
+    """The one "pending review" number (filter chip, KPI card, area panel, meta, export).
+
+    Pending = not deleted, not rejected, and either ``needs_verification`` or an action in
+    a family that does not count in the headline (the unclassified family). It is the
+    ``pending`` bucket of ``status_buckets``; the date, family, condition and area
+    filters apply, the include-pending toggle does not.
+    """
     where, params = incident_where(flt, pending_only=True)
     return int(one(db, f"SELECT coalesce(SUM(f.incidents), 0) AS n {FROM_INCIDENTS} WHERE {where}", params)["n"])
+
+
+def casualty_completeness(db: Session, flt: Filters) -> dict[str, Any]:
+    """Share of incidents in the filtered set whose casualty_status is set."""
+    where, params = incident_where(flt)
+    row = one(db, f"""SELECT coalesce(SUM(f.incidents), 0) AS incidents, coalesce(SUM(f.casualty_known), 0) AS known
+                      {FROM_INCIDENTS} WHERE {where}""", params)
+    incidents, known = int(row["incidents"]), int(row["known"])
+    return {"incidents": incidents, "with_status": known,
+            "pct": round(known / incidents * 100, 1) if incidents else None}
 
 
 def air_totals_by_condition(db: Session, flt: Filters) -> dict[int, int]:
@@ -235,20 +254,75 @@ def timeline_air_series(db: Session, flt: Filters, grain: str) -> list[dict[str,
         {FROM_AIR} WHERE {where} GROUP BY 1, a.condition_id ORDER BY 1, a.condition_id""", {**params, "grain": grain})
 
 
-def ingest_coverage(db: Session, date_from: date, date_to: date) -> list[date]:
-    """Beirut days in the range with no ingested message at all (a coverage gap signal)."""
-    present = {r["day"] for r in rows(db, """
-        SELECT DISTINCT (message_datetime AT TIME ZONE 'Asia/Beirut')::date AS day FROM raw_messages
-        WHERE message_datetime >= CAST(:a AS date) AND message_datetime < CAST(:b AS date) + 1""",
-        {"a": date_from, "b": date_to})}
-    if not present:
-        return []
-    gaps, day = [], date_from
+COVERAGE_BASELINE_DAYS = 28
+
+
+def coverage_days(db: Session, date_from: date, date_to: date, low_ratio: float) -> list[dict[str, Any]]:
+    """Daily ingestion coverage from raw_messages (Beirut days), per source.
+
+    status: ``none`` (no message at all), ``low`` (fewer than ``low_ratio`` x the median
+    of the non-zero daily totals in the previous 28 days), ``ok``, or ``unknown`` for days
+    before the first message ever ingested (nothing was collected yet, so no signal).
+    """
+    start = date.fromordinal(date_from.toordinal() - COVERAGE_BASELINE_DAYS)
+    first = one(db, "SELECT min((message_datetime AT TIME ZONE 'Asia/Beirut')::date) AS d FROM raw_messages", {})
+    first_day = first.get("d")
+    counts = rows(db, """
+        SELECT (r.message_datetime AT TIME ZONE 'Asia/Beirut')::date AS day,
+               coalesce(s.name, r.source_name, 'unknown') AS source, count(*) AS n
+        FROM raw_messages r LEFT JOIN sources s ON s.id = r.source_id
+        WHERE r.message_datetime >= CAST(:a AS date) - interval '3 hours'
+          AND r.message_datetime < CAST(:b AS date) + interval '1 day'
+        GROUP BY 1, 2""", {"a": start, "b": date_to})
+    totals: dict[date, int] = {}
+    by_source: dict[date, dict[str, int]] = {}
+    for r in counts:
+        if r["day"] < start or r["day"] > date_to:
+            continue
+        totals[r["day"]] = totals.get(r["day"], 0) + int(r["n"])
+        by_source.setdefault(r["day"], {})[r["source"]] = int(r["n"])
+    out: list[dict[str, Any]] = []
+    day = date_from
     while day <= date_to:
-        if day not in present and min(present) <= day <= max(present):
-            gaps.append(day)
+        window = sorted(v for d, v in totals.items()
+                        if 0 < (day - d).days <= COVERAGE_BASELINE_DAYS and v > 0)
+        baseline = window[len(window) // 2] if window else None
+        total = totals.get(day, 0)
+        if first_day is None or day < first_day:
+            status = "unknown"
+        elif total == 0:
+            status = "none"
+        elif baseline and total < low_ratio * baseline:
+            status = "low"
+        else:
+            status = "ok"
+        out.append({"date": day, "messages": total, "baseline": baseline, "status": status,
+                    "sources": by_source.get(day, {})})
         day = date.fromordinal(day.toordinal() + 1)
-    return gaps
+    return out
+
+
+def geo_anomalies(db: Session, flt: Filters, min_incidents: int,
+                  zone_mohafazat: frozenset[str], zone_cazas: frozenset[str]) -> list[dict[str, Any]]:
+    """Villages outside the conflict zone with more than ``min_incidents`` (counted + pending)."""
+    where, params = incident_where(flt.model_copy(update={"include_pending": True}))
+    return rows(db, f"""
+        WITH v AS (
+            SELECT f.admin_village_code AS code, af.code AS family, SUM(f.incidents) AS n,
+                   MIN(f.event_date) AS first_date, MAX(f.event_date) AS last_date
+            {FROM_INCIDENTS} WHERE {where} AND f.admin_village_code IS NOT NULL
+              AND NOT (f.mohafaza_code = ANY(:zone_moh)) AND NOT (f.caza_code = ANY(:zone_caza))
+            GROUP BY 1, 2
+        ), t AS (
+            SELECT code, SUM(n) AS incidents, MIN(first_date) AS first_date, MAX(last_date) AS last_date
+            FROM v GROUP BY code HAVING SUM(n) > :min_n
+        ), dom AS (SELECT DISTINCT ON (code) code, family FROM v ORDER BY code, n DESC, family)
+        SELECT t.code, a.name_en, a.name_ar, c.name_en AS caza_en, m.name_en AS mohafaza_en,
+               t.incidents, t.first_date, t.last_date, dom.family AS dominant_family
+        FROM t JOIN dom ON dom.code = t.code JOIN admin_areas a ON a.code = t.code
+        LEFT JOIN admin_areas c ON c.code = a.caza_code LEFT JOIN admin_areas m ON m.code = a.mohafaza_code
+        ORDER BY t.incidents DESC, a.name_en""",
+        {**params, "min_n": min_incidents, "zone_moh": sorted(zone_mohafazat), "zone_caza": sorted(zone_cazas)})
 
 
 # --------------------------------------------------------------------------- rankings
@@ -276,7 +350,7 @@ def rank_incident_areas(db: Session, flt: Filters, level: str, limit: int) -> li
         FROM t JOIN dom ON dom.code = t.code JOIN admin_areas a ON a.code = t.code
         LEFT JOIN admin_areas p ON p.code = a.parent_code
         WHERE {order} > 0
-        ORDER BY {order} DESC, t.incidents DESC, t.code LIMIT :limit""", {**params, "limit": limit})
+        ORDER BY {order} DESC, a.name_en, t.code LIMIT :limit""", {**params, "limit": limit})
 
 
 def rank_air_areas(db: Session, flt: Filters, level: str, limit: int) -> list[dict[str, Any]]:
@@ -297,7 +371,7 @@ def rank_air_areas(db: Session, flt: Filters, level: str, limit: int) -> list[di
                t.breaches, t.first_date, t.last_date, dom.condition_id AS dominant_condition
         FROM t JOIN dom ON dom.code = t.code JOIN admin_areas a ON a.code = t.code
         LEFT JOIN admin_areas p ON p.code = a.parent_code
-        ORDER BY t.breaches DESC, t.code LIMIT :limit""", {**params, "limit": limit})
+        ORDER BY t.breaches DESC, a.name_en, t.code LIMIT :limit""", {**params, "limit": limit})
 
 
 # --------------------------------------------------------------------------- peaks

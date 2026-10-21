@@ -22,6 +22,7 @@ export const MatrixTable = ({ data, loading, error, onRetry, onCell }: Props) =>
   const breaks = useMemo(() => quantileBreaks((data?.rows ?? []).flatMap((r) => Object.values(r.cells))), [data]);
   if (error && !data) return <ErrorBlock message={errorMessage(error)} onRetry={onRetry} />;
   if (!data || loading && !data) return <Skeleton className="h-96" />;
+  const topRows = [...data.rows].filter((row) => row.total > 0).sort((a, b) => b.total - a.total || a.name_en.localeCompare(b.name_en)).slice(0, 7);
   return (
     <div className="overflow-auto">
       <table className="w-full border-collapse text-caption">
@@ -38,7 +39,7 @@ export const MatrixTable = ({ data, loading, error, onRetry, onCell }: Props) =>
           </tr>
         </thead>
         <tbody>
-          {data.rows.map((row) => (
+          {topRows.map((row) => (
             <tr key={row.code} className="border-t border-border">
               <th scope="row" className="sticky left-0 bg-surface-raised px-2 py-1 text-left font-medium">
                 <button type="button" onClick={() => onCell(row.code, null)} className="text-left hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">

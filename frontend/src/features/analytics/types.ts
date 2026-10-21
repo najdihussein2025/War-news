@@ -60,6 +60,7 @@ export type KpisResponse = {
   cazas_affected: Delta;
   air_breaches: Delta & { by_type: Array<{ condition_id: number; label: string; current: number; previous: number }> };
   pending_review: number;
+  casualty_completeness: CasualtyCompleteness;
   unattributed_shared_toll_incidents: number;
   escalation: { today: number; date: string; rolling_30d_daily_average: number; ratio: number | null };
   sparklines: { incidents: SeriesPoint[]; deaths: SeriesPoint[]; injuries: SeriesPoint[]; breaches: SeriesPoint[] };
@@ -72,11 +73,13 @@ export type TimelineResponse = {
   series: TimelineSeries[];
   total: SeriesPoint[];
   moving_average_7d: SeriesPoint[];
-  coverage: { available: boolean; note: string; gap_dates: string[] };
+  coverage: { available: boolean; note: string; gap_dates: string[]; flagged: CoverageFlag[] };
 };
 
 export type RankingRow = {
   code: string;
+  /** Position by the selected metric (DESC, ties by name), fixed by the API. */
+  rank: number;
   level: Level;
   name_en: string | null;
   name_ar: string | null;
@@ -94,7 +97,7 @@ export type RankingRow = {
 };
 export type RankingsResponse = { level: Level; metric: Metric; limit: number; rows: RankingRow[] };
 
-export type PeakEntry = { start: string; value: number; top_areas: Array<{ code: string; name_en: string; name_ar: string; value: number }> } | null;
+export type PeakEntry = { start: string; value: number; low_coverage_days: number; top_areas: Array<{ code: string; name_en: string; name_ar: string; value: number }> } | null;
 export type PeaksResponse = Record<"incidents" | "deaths" | "breaches", { day: PeakEntry; week: PeakEntry }>;
 
 export type MatrixResponse = {
@@ -109,6 +112,7 @@ export type AreaResponse = {
   area: { code: string; level: Level; name_en: string; name_ar: string; parent_name_en: string | null; parent_name_ar: string | null; area_km2: number | null; is_disputed: boolean; center_lat: number | null; center_lon: number | null };
   totals: Record<string, number>;
   pending_review: number;
+  casualty_completeness: CasualtyCompleteness;
   air_breaches: { total: number; by_type: Array<{ condition_id: number; label: string; value: number }> };
   families: Array<{ code: string; name_en: string; name_ar: string; incidents: number; deaths: number; injuries: number }>;
   timeline: { incidents: SeriesPoint[]; breaches: SeriesPoint[] };
@@ -133,3 +137,9 @@ export type DrilldownItem = {
   khabar_excerpt: string;
 };
 export type DrilldownResponse = { page: number; page_size: number; total: number; items: DrilldownItem[] };
+
+export type CasualtyCompleteness = { incidents: number; with_status: number; pct: number | null };
+export type CoverageStatus = "ok" | "low" | "none" | "unknown";
+export type CoverageFlag = { date: string; status: CoverageStatus; messages: number };
+export type CoverageDay = { date: string; messages: number; baseline: number | null; status: CoverageStatus; sources: Record<string, number> };
+export type CoverageResponse = { low_ratio: number; note: string; days: CoverageDay[]; low_days: number; no_coverage_days: number };

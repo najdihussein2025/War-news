@@ -75,7 +75,7 @@ def test_filter_validation_rejects_bad_values(client, data, query):
 
 def test_meta(client, data):
     body = client.get("/api/analytics/meta").json()
-    assert body["area_counts"] == {"mohafaza": 8, "caza": 26, "village": 1610}
+    assert body["area_counts"] == {"mohafaza": 8, "caza": 26, "village": 1611}
     assert body["incident_data"]["first_date"] == "2026-10-01"
     assert body["pending_review"]["incidents"] == 1
     assert len(body["families"]) == 10

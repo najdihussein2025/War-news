@@ -219,6 +219,12 @@ class Settings(BaseSettings):
     analytics_refresh_interval_seconds: int = 120
     analytics_refresh_batch_size: int = 60
     analytics_cache_ttl_seconds: int = 300
+    # Analytics coverage: a Beirut day with fewer ingested raw messages than this share of the
+    # median daily count (trailing 28 days, non-zero days) is "low coverage"; zero is "no coverage".
+    analytics_coverage_low_ratio: float = 0.3
+    # Analytics data quality: villages outside the conflict zone with more incidents than this
+    # in the selected period are listed as geo anomalies (likely wrong village matches).
+    analytics_geo_anomaly_min_incidents: int = 5
     casualty_flags_enabled: bool = False
     casualty_flag_grace_minutes: int = 120
 

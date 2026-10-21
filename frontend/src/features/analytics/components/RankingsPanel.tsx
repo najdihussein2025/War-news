@@ -35,7 +35,8 @@ export const RankingsPanel = ({ filters, familyNames, enabled, onFocusArea }: Pr
   // Rankings rank incident metrics; an area filter is dropped so the table can list the surrounding areas too.
   const metric = filters.metric === "breaches" && tab.metric === "incidents" ? "breaches" : tab.metric;
   const params = toApiParams(filters, { level: tab.level, metric, areaCode: null });
-  const query = useRankings(params, tab.level === "village" ? 20 : 30, enabled);
+  // Keep the dashboard scan-friendly; the detailed view can request the full table.
+  const query = useRankings(params, 7, enabled);
 
   const valueHeader = metric === "breaches" ? "Breaches" : tab.metric === "incidents" ? "Incidents" : tab.metric === "deaths" ? "Deaths" : "Injuries";
   const columns: Array<DataTableColumn<RankingRow>> = [

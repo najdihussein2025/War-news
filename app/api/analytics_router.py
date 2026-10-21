@@ -55,6 +55,16 @@ def matrix(flt: Filters = Depends(get_filters), db: Session = Depends(get_db), _
     return service.get_matrix(db, flt)
 
 
+@router.get("/coverage")
+def coverage(flt: Filters = Depends(get_filters), db: Session = Depends(get_db), _user: User = Depends(require_admin)):
+    return service.get_coverage(db, flt)
+
+
+@router.get("/quality")
+def quality(flt: Filters = Depends(get_filters), db: Session = Depends(get_db), _user: User = Depends(require_admin)):
+    return service.get_quality(db, flt)
+
+
 @router.get("/incidents")
 def incidents(
     page: int = Query(1, ge=1),

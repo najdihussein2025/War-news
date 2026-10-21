@@ -63,6 +63,8 @@ class AnalyticsIncidentFact(Base):
     injuries_children: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     injuries_unspecified: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     aggregate_only_incidents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # Incidents whose casualty_status is set (casualty completeness note).
+    casualty_known: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     refreshed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

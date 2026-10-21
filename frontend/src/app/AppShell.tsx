@@ -290,13 +290,13 @@ const SidebarContent = ({
   };
 
   return (
-    <div className="flex min-h-full flex-col bg-white">
-      <div className="border-b border-brand-gold px-6 py-6">
+    <div className="relative flex h-screen min-h-0 flex-col overflow-hidden bg-white">
+      <div className="border-b border-brand-gold px-5 py-4">
         <BrandMark to={`${roleBase}/dashboard`} />
       </div>
 
-      <nav className="flex-1 bg-white px-5 py-6" aria-label="Main navigation">
-        <div className="space-y-2">
+      <nav className="min-h-0 flex-1 overflow-y-auto bg-white px-5 py-4" aria-label="Main navigation">
+        <div className="space-y-1">
           {visibleItems.map((item) => {
             const Icon = item.icon;
             const to =
@@ -314,7 +314,7 @@ const SidebarContent = ({
                 onClick={onNavigate}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex min-h-11 items-center gap-3 rounded-md border-l-4 px-3 py-2 text-small font-medium",
+                  "flex min-h-10 items-center gap-3 rounded-md border-l-4 px-3 py-1.5 text-small font-medium",
                   "transition-colors duration-150 ease-out",
                   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring",
                   isActive
@@ -330,26 +330,24 @@ const SidebarContent = ({
         </div>
       </nav>
 
-      <div className="border-t border-border bg-white p-5">
-        <div className="p-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-small font-semibold text-text-primary">
-                {displayUser?.displayName || displayUser?.username || "Signed in user"}
-              </p>
-              <div className="mt-2">
-                <RoleBadge role={displayRole} />
-              </div>
+      <div className="shrink-0 border-t border-border bg-white p-3 shadow-[0_-8px_18px_rgba(8,45,111,0.06)]">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-small font-semibold text-text-primary">
+              {displayUser?.displayName || displayUser?.username || "Signed in user"}
+            </p>
+            <div className="mt-1">
+              <RoleBadge role={displayRole} />
             </div>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors duration-150 ease-out hover:bg-surface-muted hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
-              aria-label="Sign out"
-            >
-              <SignOutIcon className="h-4 w-4" />
-            </button>
           </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex h-9 shrink-0 items-center gap-2 rounded-md border border-border px-3 text-small font-semibold text-text-muted transition-colors duration-150 ease-out hover:border-danger hover:bg-red-50 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+          >
+            <SignOutIcon className="h-4 w-4" />
+            Sign out
+          </button>
         </div>
       </div>
     </div>
@@ -466,7 +464,7 @@ export const AppShell = ({ previewRole }: { previewRole?: Role }) => {
     <div className="min-h-screen overflow-x-hidden bg-surface text-text-primary">
       {toast ? <Toast>{toast}</Toast> : null}
 
-      <aside className="fixed inset-y-0 left-0 hidden w-[260px] border-r border-border bg-surface-raised shadow-[2px_0_16px_rgba(8,45,111,0.08)] lg:block">
+      <aside className="fixed inset-y-0 left-0 hidden w-[260px] overflow-hidden border-r border-border bg-surface-raised shadow-[2px_0_16px_rgba(8,45,111,0.08)] lg:block">
         <SidebarContent previewRole={previewRole} />
       </aside>
 
@@ -488,7 +486,7 @@ export const AppShell = ({ previewRole }: { previewRole?: Role }) => {
 
         <main className="min-h-screen min-w-0 overflow-x-hidden px-3 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
           <div className="mx-auto max-w-6xl">
-            <div className="relative mb-6 flex flex-col gap-4 border-b border-border pb-5 after:absolute after:-bottom-px after:left-0 after:h-1 after:w-16 after:bg-brand-gold sm:flex-row sm:items-center sm:justify-between">
+            <div className="sticky top-16 z-20 -mx-3 mb-6 flex flex-col gap-4 border-b border-border bg-surface/95 px-3 py-5 backdrop-blur after:absolute after:bottom-0 after:left-3 after:h-1 after:w-16 after:bg-brand-gold sm:-mx-6 sm:px-6 lg:top-0 lg:-mx-8 lg:px-8 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-h2 font-semibold text-brand-navy">{meta.title}</h1>
                 {titleAddon}
@@ -513,7 +511,7 @@ export const AppShell = ({ previewRole }: { previewRole?: Role }) => {
       <div
         ref={drawerRef}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-[260px] border-r border-border bg-surface-raised shadow-overlay transition-transform duration-150 ease-out lg:hidden",
+          "fixed inset-y-0 left-0 z-50 w-[260px] overflow-hidden border-r border-border bg-surface-raised shadow-overlay transition-transform duration-150 ease-out lg:hidden",
           isDrawerOpen ? "translate-x-0" : "-translate-x-full",
         )}
         role="dialog"

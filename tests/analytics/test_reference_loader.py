@@ -23,7 +23,7 @@ def test_unclassified_conditions_belong_to_non_headline_family(db):
 
 def test_area_counts_and_caza_mapping_26_to_26(db):
     levels = dict(db.execute(text("SELECT level, count(*) FROM admin_areas GROUP BY 1")).all())
-    assert levels == {"mohafaza": 8, "caza": 26, "village": 1610}
+    assert levels == {"mohafaza": 8, "caza": 26, "village": 1611}
     pairs = db.execute(text("""
         SELECT v.caza_en, a.caza_code, a.mohafaza_code, v.mohafaza_en FROM villages v
         JOIN admin_areas a ON a.code = v.admin_area_code GROUP BY 1,2,3,4""")).all()

@@ -71,3 +71,59 @@ export const textOn = (hex: string): string => {
   const b = n & 255;
   return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? "#0b2236" : "#ffffff";
 };
+
+/* ------------------------------------------------------------------ map scales (v2)
+ * Few, very unequal areas (8 mohafazat, 26 cazas): a linear scale from 0 to max, so a
+ * small value stays pale next to a large one (quantiles made ~30 look like ~280). Many
+ * villages: quantile classes, with the legend showing the real min-max of each class. */
+export type MapScale =
+  | { kind: "linear"; max: number }
+  | { kind: "quantile"; breaks: number[]; legend: LegendEntry[] };
+
+export const scaleKindFor = (level: "mohafaza" | "caza" | "village"): MapScale["kind"] =>
+  level === "village" ? "quantile" : "linear";
+
+const hexToRgb = (hex: string): [number, number, number] => {
+  const n = Number.parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+const rgbToHex = (rgb: number[]): string => `#${rgb.map((c) => Math.round(c).toString(16).padStart(2, "0")).join("")}`;
+
+/** Continuous color for t in [0, 1] along the sequential palette. */
+export const interpolateSequential = (t: number): string => {
+  const x = Math.min(1, Math.max(0, t)) * (SEQUENTIAL.length - 1);
+  const i = Math.min(SEQUENTIAL.length - 2, Math.floor(x));
+  const a = hexToRgb(SEQUENTIAL[i]);
+  const b = hexToRgb(SEQUENTIAL[i + 1]);
+  const f = x - i;
+  return rgbToHex(a.map((c, k) => c + (b[k] - c) * f));
+};
+
+/** Legend classes built from the values actually in each class (real ranges, empty classes dropped). */
+export const quantileLegend = (values: number[], breaks: number[]): LegendEntry[] => {
+  const members: number[][] = breaks.map(() => []);
+  values.forEach((v) => {
+    const i = classIndex(v, breaks);
+    if (i >= 0) members[i].push(v);
+  });
+  return members
+    .map((m, i) => (m.length ? { color: classColor(i, breaks.length), from: Math.min(...m), to: Math.max(...m) } : null))
+    .filter((e): e is LegendEntry => e !== null);
+};
+
+export const buildScale = (level: "mohafaza" | "caza" | "village", values: number[]): MapScale => {
+  const positive = values.filter((v) => Number.isFinite(v) && v > 0);
+  if (scaleKindFor(level) === "linear") return { kind: "linear", max: positive.length ? Math.max(...positive) : 0 };
+  const breaks = quantileBreaks(positive);
+  return { kind: "quantile", breaks, legend: quantileLegend(positive, breaks) };
+};
+
+export const scaleColor = (scale: MapScale, value: number): string => {
+  if (!(value > 0)) return NO_DATA_COLOR;
+  if (scale.kind === "linear") return scale.max > 0 ? interpolateSequential(value / scale.max) : NO_DATA_COLOR;
+  return colorForValue(value, scale.breaks);
+};
+
+/** Tick values for the linear legend bar: 0, the middle and the max (integers, distinct). */
+export const linearTicks = (max: number): number[] =>
+  max <= 0 ? [0] : Array.from(new Set([0, Math.round(max / 2), max]));

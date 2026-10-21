@@ -1,9 +1,10 @@
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import "../analytics.css";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { GeoCollection } from "../api";
-import { colorForValue, DISPUTED_LINE, FAMILY_COLORS, NO_DATA_COLOR } from "../colors";
-import { buildNameIndex, findBounds, LEBANON_BOUNDS, searchVillages, type SearchHit } from "../geoUtils";
+import { DISPUTED_LINE, FAMILY_COLORS, NO_DATA_COLOR, scaleColor, type MapScale } from "../colors";
+import { buildNameIndex, findBounds, LEBANON_BOUNDS, labelPoints, searchVillages, type SearchHit } from "../geoUtils";
 import { formatNumber } from "../mappers";
 import type { Level, MapValue } from "../types";
 import { MapLegend } from "./MapLegend";
@@ -14,8 +15,10 @@ type Props = {
   geo: Geo;
   level: Level;
   values: MapValue[];
-  breaks: number[];
+  scale: MapScale;
   metricLabel: string;
+  /** Extra space kept around Lebanon when fitting (e.g. under an overlay panel). */
+  fitPadding?: number;
   familyNames: Record<string, string>;
   selectedCode: string | null;
   onSelect: (code: string | null, level: Level) => void;
@@ -53,7 +56,7 @@ const BLANK_STYLE: maplibregl.StyleSpecification = {
 };
 
 export const HeatMap = ({
-  geo, level, values, breaks, metricLabel, familyNames, selectedCode, onSelect, frameLabel, loading, controls,
+  geo, level, values, scale, metricLabel, familyNames, selectedCode, onSelect, frameLabel, loading, controls, fitPadding = 24,
 }: Props) => {
   const container = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -194,10 +197,45 @@ export const HeatMap = ({
     const map = mapRef.current;
     if (!map || !ready) return;
     for (const lvl of LEVELS) map.removeFeatureState({ source: lvl });
-    for (const v of values) map.setFeatureState({ source: level, id: v.code }, { color: colorForValue(v.value, breaks) });
+    for (const v of values) map.setFeatureState({ source: level, id: v.code }, { color: scaleColor(scale, v.value) });
     shownRef.current = values.map((v) => v.code);
     if (selectedRef.current) map.setFeatureState({ source: level, id: selectedRef.current }, { selected: true });
-  }, [values, breaks, level, ready]);
+  }, [values, scale, level, ready]);
+
+  // Value labels on each polygon at mohafaza/caza level (HTML markers: the blank style has no glyphs).
+  const anchors = useMemo(() => (level === "village" ? null : labelPoints(geo[level])), [geo, level]);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !anchors) return undefined;
+    const markers = values.flatMap((v) => {
+      const at = anchors.get(v.code);
+      if (!at || !(v.value > 0)) return [];
+      const el = document.createElement("div");
+      el.className = "analytics-map-label";
+      el.textContent = formatNumber(v.value);
+      el.setAttribute("aria-hidden", "true");
+      return [new maplibregl.Marker({ element: el }).setLngLat(at).addTo(map)];
+    });
+    return () => markers.forEach((m) => m.remove());
+  }, [values, anchors, ready]);
+
+  // Keep Lebanon filling the box when the container changes size (tabs, side panel), unless an area is focused.
+  const userMovedRef = useRef(false);
+  useEffect(() => {
+    const map = mapRef.current;
+    const node = container.current;
+    if (!map || !ready || !node) return undefined;
+    const onMove = (e: { originalEvent?: unknown }) => { if (e.originalEvent) userMovedRef.current = true; };
+    map.on("movestart", onMove);
+    const fit = () => {
+      map.resize();
+      if (!userMovedRef.current && !selectedRef.current) map.fitBounds(LEBANON_BOUNDS, { padding: fitPadding, duration: 0 });
+    };
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(node);
+    return () => { observer.disconnect(); map.off("movestart", onMove); };
+  }, [ready, fitPadding]);
 
   // Selected area highlight + fit.
   useEffect(() => {
@@ -217,8 +255,9 @@ export const HeatMap = ({
   }, [selectedCode, ready, geo]);
 
   const resetView = useCallback(() => {
-    mapRef.current?.fitBounds(LEBANON_BOUNDS, { padding: 24, duration: 500 });
-  }, []);
+    userMovedRef.current = false;
+    mapRef.current?.fitBounds(LEBANON_BOUNDS, { padding: fitPadding, duration: 500 });
+  }, [fitPadding]);
 
   const pickHit = (hit: SearchHit) => {
     const map = mapRef.current;
@@ -283,7 +322,7 @@ export const HeatMap = ({
         <button type="button" onClick={resetView} className="h-9 rounded-md border border-border bg-surface-raised px-3 text-small font-medium shadow-raised hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Reset view</button>
       </div>
 
-      <div className="absolute bottom-3 left-3"><MapLegend breaks={breaks} metricLabel={metricLabel} /></div>
+      <div className="pointer-events-none absolute inset-y-3 left-3 flex flex-col justify-end"><div className="pointer-events-auto flex max-h-full min-h-0"><MapLegend scale={scale} metricLabel={metricLabel} /></div></div>
       {controls ? <div className="absolute bottom-3 left-1/2 -translate-x-1/2">{controls}</div> : null}
       {frameLabel ? (
         <div className="absolute left-3 top-3 rounded-md bg-brand-navy px-3 py-1 text-small font-semibold text-text-inverse tabular-nums shadow-raised" aria-live="polite">{frameLabel}</div>
