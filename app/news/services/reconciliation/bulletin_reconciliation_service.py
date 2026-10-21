@@ -20,6 +20,7 @@ from app.news.services.clustering.clustering_service import (
 from app.news.services.incident_details.casualty_scope_backstop import (
     validate_casualty_scope,
 )
+from app.news.services.incident_details.casualty_merge_provenance import vet_incoming_casualties
 from app.news.services.incident_details.casualty_status import merge_casualty_status
 from app.news.services.incident_details.incident_casualty_recompute import (
     recompute_incident_casualties,
@@ -186,6 +187,20 @@ class BulletinReconciliationService:
             if self._already_applied(incident, group, candidate):
                 continue
             deaths, injuries = exact_counts[incident.village_id]
+            # The later report's numbers are adopted only if its own body proves them.
+            provenance = vet_incoming_casualties(
+                candidate,
+                {"deaths": deaths, "injuries": injuries},
+                incident_village_id=incident.village_id,
+            )
+            if not provenance.clean:
+                logger.warning(
+                    "bulletin reconciliation: casualties not proven by raw_message_id=%s rejected=%s",
+                    candidate.id,
+                    provenance.rejected,
+                )
+                deaths = provenance.values.get("deaths", deaths)
+                injuries = provenance.values.get("injuries", injuries)
             if deaths is not None:
                 incident.deaths = deaths
             if injuries is not None:
@@ -299,6 +314,8 @@ class BulletinReconciliationService:
                 performed_by=None,
             )
         )
+        # Every row of the group is reviewed, not just the owner.
+        self.groups.flag_for_distribution(group)
         owner.verification_status = "needs_verification"
         owner.verification_reason = (
             "صدر خبر لاحق يحدد الأعداد لكل بلدة. تم الإبقاء على الحصيلة الإجمالية على هذا السجل، "

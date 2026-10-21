@@ -52,7 +52,10 @@ from app.news.interfaces import IncidentRepositoryInterface
 from app.news.repositories.incident_repository_listing import (
     IncidentRepositoryListQueryMixin,
 )
-from app.news.repositories.reported_casualties import has_reported_casualties_expression
+from app.news.repositories.reported_casualties import (
+    has_reported_casualties_expression,
+    reported_casualty_people_expression,
+)
 from app.news.models import (
     BulletinCasualtyGroup,
     Condition,
@@ -90,7 +93,10 @@ from app.news.services.incident_details.casualty_transition_merge import (
 from app.news.services.incident_details.casualty_transition_backstop import (
     detect_casualty_transition_backstop,
 )
-from app.news.services.incident_details.casualty_status import merge_casualty_status
+from app.news.services.incident_details.casualty_status import (
+    enforce_status_matches_numbers,
+    merge_casualty_status,
+)
 from app.news.services.incident_details.casualty_merge_guard import guard_casualty_merge
 from app.news.services.incident_details.casualty_merge_provenance import vet_incoming_casualties
 from app.news.services.incident_details.incident_casualty_recompute import (
@@ -108,6 +114,7 @@ from app.news.services.dedup.text_similarity import (
 )
 from app.news.services.materialization.verification_signals import (
     active_non_duplicate_verification_reasons,
+    apply_unclassified_review,
     extract_quality_flags,
 )
 from app.news.services.incidents.incident_change_log import (
@@ -423,9 +430,13 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                     func.count(Incident.id)
                     .filter(self._needs_verification_column())
                     .label("needs_verification_count"),
-                    func.count(Incident.id)
-                    .filter(has_reported_casualties_expression())
-                    .label("casualties_count"),
+                    # KPI = people (deaths + injuries), not incidents.
+                    func.coalesce(
+                        func.sum(reported_casualty_people_expression()).filter(
+                            has_reported_casualties_expression()
+                        ),
+                        0,
+                    ).label("casualties_count"),
                 )
             )
         ).one()
@@ -1557,20 +1568,46 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                 )
 
             old_values = self._snapshot_merge_fields(canonical)
-            for field in ("deaths", "injuries", "total_deaths", "total_injuries"):
+            duplicate_raw_message = (
+                self.db.get(RawMessage, incident.raw_message_id)
+                if incident.raw_message_id is not None
+                else None
+            )
+            incoming_casualties = {
+                field: getattr(incident, field)
+                for field in ("deaths", "injuries", "total_deaths", "total_injuries")
+            }
+            duplicate_detail = self.db.scalar(
+                select(IncidentDetail).where(IncidentDetail.incident_id == incident.id)
+            )
+            demographic_columns = ("male_d", "male_i", "female_d", "female_i", "children_d", "children_i")
+            if duplicate_detail is not None:
+                for column in demographic_columns:
+                    incoming_casualties[column] = getattr(duplicate_detail, column)
+            casualty_status_allowed = True
+            if incident.raw_message_id is not None:
+                # A message-derived number is copied only if its own body proves it
+                # (never a channel header). Manual rows have no message and are trusted.
+                provenance = vet_incoming_casualties(
+                    duplicate_raw_message,
+                    incoming_casualties,
+                    incident_village_id=canonical.village_id,
+                    raw_message_id=incident.raw_message_id,
+                )
+                incoming_casualties = {
+                    field: provenance.values.get(field, value)
+                    for field, value in incoming_casualties.items()
+                }
+                casualty_status_allowed = provenance.status_allowed
+            for field, incoming_value in incoming_casualties.items():
+                if field in demographic_columns:
+                    continue
                 setattr(
                     canonical,
                     field,
-                    self._max_preserving_empty(
-                        getattr(canonical, field), getattr(incident, field)
-                    ),
+                    self._max_preserving_empty(getattr(canonical, field), incoming_value),
                 )
-            if incident.casualty_status is not None:
-                duplicate_raw_message = (
-                    self.db.get(RawMessage, incident.raw_message_id)
-                    if incident.raw_message_id is not None
-                    else None
-                )
+            if incident.casualty_status is not None and casualty_status_allowed:
                 self._merge_casualty_status_fields(
                     canonical,
                     {
@@ -1592,9 +1629,6 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
             if canonical.source_link_2 is None:
                 canonical.source_link_2 = incident.source_link_2 or incident.source_link
 
-            duplicate_detail = self.db.scalar(
-                select(IncidentDetail).where(IncidentDetail.incident_id == incident.id)
-            )
             if duplicate_detail is not None:
                 canonical_detail = self.db.scalar(
                     select(IncidentDetail).where(
@@ -1609,12 +1643,17 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                 merge_incident_detail_fields(
                     canonical_detail,
                     {
-                        column.name: getattr(duplicate_detail, column.name)
+                        column.name: (
+                            incoming_casualties.get(column.name)
+                            if column.name in demographic_columns
+                            else getattr(duplicate_detail, column.name)
+                        )
                         for column in IncidentDetail.__table__.columns
                         if column.name not in excluded
                     },
                 )
 
+            enforce_status_matches_numbers(canonical)
             new_values = self._snapshot_merge_fields(canonical)
             new_values["merged_from"] = {
                 "raw_message_id": incident.raw_message_id,
@@ -2033,6 +2072,8 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                     performed_by=None,
                 )
             )
+        enforce_status_matches_numbers(existing)
+        apply_unclassified_review(self.db, existing)
         self.db.add(existing)
         evaluate_casualty_flags_safely(self.db, existing.id)
 
@@ -2146,6 +2187,7 @@ class IncidentRepository(IncidentRepositoryListQueryMixin, IncidentRepositoryInt
                 setattr(detail, key, value)
             self.db.add(detail)
 
+        enforce_status_matches_numbers(existing)
         new_values = self._snapshot_merge_audit(existing, detail)
         khabar = new_candidate_data.get("khabar")
         new_values = {

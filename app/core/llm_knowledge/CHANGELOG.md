@@ -19,6 +19,31 @@
 - **Rule changed:** `combined_tier1_prompt.md`, `tier1_general_prompt.md` and `relevance_filter_prompt.md`: Helicopter Hovering (38) only when the text says مروحي/مروحية/مروحيات/اباتشي/هليكوبتر/هليكوبتير (or helicopter/Apache); the hover-verb requirement is dropped, and مسيرة/مسيّرة/طيران مسير/درون/محلقة are always Surveillance Aircraft (36). `terminology/condition_labels.yaml` gained مروحي, اباتشي, أباتشي, هليكوبتير, apache (Helicopter); `CONDITION_DISTINGUISHING_TOKENS[38]` gained هليكوبتير, مروحيه, apache.
 - **Deterministic guard:** `AirViolationRepository.route_from_match` refuses a 38 label whose text has no helicopter word (reason `helicopter label without helicopter keyword`) unless the classifier reads it as another air type. A text with both a helicopter and a drone word is written as 36 and `filter_result.air_aircraft_terms` lists both term sets for review. Apache + strike still goes to incidents.
 - **Tests added:** `tests/test_red_alert_collector.py` (every helicopter spelling, drone-only text, Apache + strike) and `tests/test_air_violation_helicopter_guard.py` (LLM label 38 on drone-only text is written as 36; label 38 with no helicopter word is rejected).
+## 2026-10-21 - Channel/page headers are never casualties (single registry, strip everywhere)
+
+- **Real examples:** raw 44770 (Yater / Beit Lif shelling) and raw 37903 (Mayfadoun). Both
+  start with the page name `صفحة الإعلامي الشهيد علي شعيب`; Tier 1 read «الشهيد» in it as a
+  death (`deaths: 1`, `male_deaths: 1`, evidence span `"شهيد"`, status `exact`). The duplicate
+  merge then copied that 1 onto the casualty-free canonical incidents (raw 44767, 37888).
+- **Rules changed:** `tier1_casualty_prompt.md`, `tier1_general_prompt.md`,
+  `combined_tier1_prompt.md` and `casualty_field_rules.md`: a channel/page name that mentions a
+  martyr is not a casualty; only deaths/injuries described as part of the reported event in the
+  body count (header + «استشهاد مواطن بغارة على بلدة X» is still 1 death, from the body).
+- **Code (deterministic):** one header registry, `terminology/source_headers.yaml`
+  (adding a header is one line), read by `clean_message_text` and `strip_page_header`;
+  the duplicate list in `casualty_wording.yaml` is removed. Matching ignores diacritics,
+  ة/ه, ي/ى, أ/إ/آ, an optional «صفحة» and `|` / `-` separators and is not limited to line 1.
+  The live Tier 1/Tier 2 workers, `extract_tier1/extract_tier2_details`, the count backstop,
+  gender backstops (incl. the singular-death backstop) and condition finalization strip headers
+  first; `raw_text` is untouched. A span inside a header, or a bare `شهيد`/`الشهيد` with no event
+  context, is rejected (NULL, not 0).
+- **Merge guard:** `resolve_duplicate`, the Tier 2 root fill and bulletin reconciliation now vet
+  numbers against the linked message body (`casualty_merge_provenance`), and
+  `vet_incoming_casualties` no longer skips vetting when the message is missing: it refuses the numbers.
+- **Tests added:** `tests/test_channel_header_casualties.py` (header + shelling = no casualties for the
+  44770 and 37903 shapes; header + real body death = 1; header + 2 injured = injuries 2, deaths NULL;
+  header variants; merge with a casualty-free canonical + header-only duplicate stays NULL; merge with a
+  real body death is adopted; manual duplicate confirm).
 
 ## 2026-10-21 - Connector-linked multi-action prose recovery
 

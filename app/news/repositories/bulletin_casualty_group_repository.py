@@ -148,6 +148,52 @@ class BulletinCasualtyGroupRepository:
                 self.db.add(group)
         self.db.flush()
 
+    def flag_for_distribution(
+        self,
+        group: BulletinCasualtyGroup,
+        *,
+        reason: str | None = None,
+        skip_incident_ids: set | None = None,
+    ) -> int:
+        """Flag EVERY linked row (owner and members) so an admin distributes the toll.
+
+        Verified / rejected rows are human decisions and are left alone, as are
+        ``skip_incident_ids``. Returns the number of rows changed.
+        """
+        from app.news.services.materialization.verification_signals import (
+            SHARED_TOLL_DISTRIBUTE_REASON,
+        )
+
+        reason = reason or SHARED_TOLL_DISTRIBUTE_REASON
+        incident_ids = [
+            row
+            for row in self.db.scalars(
+                select(BulletinCasualtyGroupMember.incident_id).where(
+                    BulletinCasualtyGroupMember.group_id == group.id,
+                    BulletinCasualtyGroupMember.incident_id.is_not(None),
+                )
+            ).all()
+        ]
+        if not incident_ids:
+            return 0
+        changed = 0
+        for incident in self.db.scalars(
+            select(Incident).where(Incident.id.in_(incident_ids), Incident.is_deleted.is_(False))
+        ).all():
+            if incident.verification_status in ("verified", "rejected"):
+                continue
+            if skip_incident_ids and incident.id in skip_incident_ids:
+                continue
+            if incident.verification_status == "needs_verification" and incident.verification_reason == reason:
+                continue
+            incident.verification_status = "needs_verification"
+            incident.verification_reason = reason
+            self.db.add(incident)
+            changed += 1
+        if changed:
+            self.db.flush()
+        return changed
+
     def get_by_incident_id(self, incident_id) -> BulletinCasualtyGroup | None:
         return self.db.scalar(
             select(BulletinCasualtyGroup)

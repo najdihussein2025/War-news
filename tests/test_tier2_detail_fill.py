@@ -32,7 +32,7 @@ def test_fill_for_raw_message_merges_details_and_clears_pending() -> None:
     )
     raw_message = SimpleNamespace(
         id=7,
-        raw_text="خبر",
+        raw_text="استشهاد مسعف وإصابة 3 آخرين في غارة",
         extraction_result=extraction.model_dump(mode="json"),
         content_embedding=[0.1, 0.2],
         tier2_completed_at=None,
@@ -113,7 +113,7 @@ def test_tier2_completed_at_left_none_when_no_pending_incidents() -> None:
     )
     raw_message = SimpleNamespace(
         id=7,
-        raw_text="خبر",
+        raw_text="استشهاد مواطن في غارة",
         extraction_result=extraction.model_dump(mode="json"),
         content_embedding=[0.1, 0.2],
         tier2_completed_at=None,
@@ -282,7 +282,7 @@ def _multi_village_fill(
     village_ids = [101] if single_village else [101, 102]
     raw_message = SimpleNamespace(
         id=7,
-        raw_text="خبر",
+        raw_text="استشهاد 5 مواطنين وإصابة 3 آخرين في غارة",
         extraction_result=extraction.model_dump(mode="json"),
         content_embedding=None,
         tier2_completed_at=None,

@@ -528,7 +528,7 @@ export const IncidentsPage = () => {
           </div>
           <div className="rounded-xl border border-border bg-surface-raised p-4 shadow-[0_1px_2px_rgba(11,34,54,0.04)]">
             <p className="text-caption font-semibold uppercase text-text-muted">
-              Reported casualties
+              Reported casualties (people)
             </p>
             <p className="mt-2 text-h3 font-semibold text-text-primary">
               {casualtiesCount}
