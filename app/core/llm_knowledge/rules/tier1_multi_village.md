@@ -41,7 +41,7 @@ target is effectively per-village and does not require review.
 
 8. If the bulletin describes more than one distinct action/condition across the villages, emit one `sub_events` item per distinct action. Each item must have only that action's own `locations`, a condition-matchable `action_text`, and an `evidence_span` from that action's sentence or clause. Do not rely on one root `action_description` plus flat `village_roles` for multi-action bulletins.
 9. For multi-action bulletins, root `action_description` is a bulletin-level summary for humans only, for example "multiple actions across 2 villages". It must not be treated as the per-village condition source when `sub_events` exist or should exist.
-10. A single target village must not appear in two conflicting `sub_events` unless the text explicitly uses revision/follow-up language showing that the later action updates or supersedes the earlier one.
+10. A single target village MAY appear in two or more `sub_events` when the text states independent concurrent actions (for example shelling and sweeping at the same place). Suppress a later sub-event only when revision/follow-up language explicitly shows that it updates or supersedes the same earlier action; never suppress an independently stated action merely because it shares the village.
 
 ## Examples
 
