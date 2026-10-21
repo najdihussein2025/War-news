@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from "react";
 import { Navigate, useLocation, type RouteObject } from "react-router-dom";
 import { ROLES } from "../constants/roles";
 import { AccountsPage } from "../features/accounts/pages/AccountsPage";
@@ -15,8 +15,17 @@ import { SettingsPage } from "../features/settings/pages/SettingsPage";
 import { SourcesPage } from "../features/sources/pages/SourcesPage";
 import { IntelligenceFlowPage } from "../features/intelligenceFlow/pages/IntelligenceFlowPage";
 import { AppShell } from "./AppShell";
+
 import { useAuthStore } from "../stores/authStore";
 import { getSession } from "../features/auth/api";
+
+// Loaded on demand so maplibre-gl and echarts stay out of the main bundle.
+const AnalyticsPage = lazy(() => import("../features/analytics/pages/AnalyticsPage"));
+const analyticsElement = (
+  <Suspense fallback={<div className="p-6 text-small text-text-muted" role="status">Loading analytics…</div>}>
+    <AnalyticsPage />
+  </Suspense>
+);
 
 const RequireRole = ({ roles, children }: { roles: string[]; children: ReactNode }) => {
   const location = useLocation();
@@ -113,6 +122,7 @@ export const createRoutes = (): RouteObject[] => [
         { path: "filtered-news", element: <AllNewsPage /> },
         { path: "rejected-news", element: <RejectedNewsPage /> },
         { path: "air-violations", element: <AirViolationsPage /> },
+        { path: "analytics", element: analyticsElement },
         { path: "map", element: <Navigate to="/admin/dashboard" replace /> },
         { path: "sources", element: <SourcesPage /> },
         { path: "logs", element: <Navigate to="audit" replace /> },
@@ -132,6 +142,7 @@ export const createRoutes = (): RouteObject[] => [
         { path: "filtered-news", element: <AllNewsPage /> },
         { path: "rejected-news", element: <RejectedNewsPage /> },
         { path: "air-violations", element: <AirViolationsPage /> },
+        { path: "analytics", element: analyticsElement },
         { path: "map", element: <Navigate to="/superadmin/dashboard" replace /> },
         { path: "sources", element: <SourcesPage /> },
         { path: "logs", element: <Navigate to="audit" replace /> },
