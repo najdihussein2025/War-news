@@ -59,17 +59,29 @@ const villageList = (row: AirViolation | null) => {
 
 const displayVillages = villageList;
 
-const surveillanceRule = (row: AirViolation) => {
-  if (row.condition_id !== 36) return null;
-  if (!row.window_duration_minutes) return "Caza review required";
-  return row.window_duration_minutes === 60
-    ? "1-hour window"
-    : `${row.window_duration_minutes / 60}-hour window`;
+const DAILY_WINDOW_MINUTES = 24 * 60;
+
+const windowLabel = (minutes: number) => {
+  if (minutes === DAILY_WINDOW_MINUTES) return "Daily";
+  if (minutes % 60 === 0) return `${minutes / 60}-hour window`;
+  return `${minutes}-minute window`;
 };
 
-const isSurveillanceWindow = (row: AirViolation) => (
-  row.condition_id === 36 && row.window_duration_minutes !== null
+const windowRule = (row: AirViolation) => {
+  if (row.condition_id !== 35 && row.condition_id !== 36) return null;
+  if (!row.window_duration_minutes) {
+    return row.condition_id === 36 ? "Caza review required" : null;
+  }
+  return windowLabel(row.window_duration_minutes);
+};
+
+const isWindowedActivity = (row: AirViolation) => (
+  (row.condition_id === 35 || row.condition_id === 36) && row.window_duration_minutes != null
 );
+
+const isPerReportBreach = (row: AirViolation) => row.condition_id === 34 || row.condition_id === 38;
+
+const breachUnitLabel = (row: AirViolation) => (row.condition_id === 38 ? "villages" : "cazas");
 
 const compactWindowRange = (row: AirViolation) => {
   if (!row.window_start || !row.window_end) return null;
@@ -296,9 +308,9 @@ export const AirViolationsPage = () => {
               {offset + tableRows.indexOf(row) + 1}
             </span>
             <span className="font-semibold text-text-primary">{row.action_en}</span>
-            {surveillanceRule(row) ? (
+            {windowRule(row) ? (
               <span className="rounded-full bg-surface-muted px-2 py-0.5 text-caption font-semibold text-text-muted">
-                {surveillanceRule(row)}
+                {windowRule(row)}
               </span>
             ) : null}
           </div>
@@ -394,7 +406,7 @@ export const AirViolationsPage = () => {
               className="h-11 w-full rounded-md border border-input-border bg-input-bg px-3 text-body text-text-primary"
               value={conditionId}
               onChange={(event) => updateParam("condition_id", event.target.value)}
-            ><option value="">All actions</option><option value="35">Warplane — طيران حربي</option><option value="36">Surveillance aircraft — طيران استطلاعي</option><option value="38">Helicopter hovering — طيران مروحي</option></select>
+            ><option value="">All actions</option><option value="35">Warplane — طيران حربي</option><option value="36">Surveillance aircraft — طيران استطلاعي</option><option value="38">Helicopter hovering — طيران مروحي</option><option value="34">Spy balloon — منطاد تجسسي</option></select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="air-hours-filter">Time range</Label>
@@ -466,7 +478,7 @@ export const AirViolationsPage = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3" aria-label="Air violation totals">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Air violation totals">
           <div className="rounded-lg border border-border bg-surface-raised px-5 py-4">
             <p className="text-caption font-semibold uppercase text-text-muted">Total warplanes</p>
             <p className="mt-2 text-h3 font-semibold tabular-nums text-text-primary" aria-live="polite">
@@ -483,6 +495,12 @@ export const AirViolationsPage = () => {
             <p className="text-caption font-semibold uppercase text-text-muted">Total helicopter hovering</p>
             <p className="mt-2 text-h3 font-semibold tabular-nums text-text-primary" aria-live="polite">
               {summary.isLoading ? "Loading…" : summary.data?.helicopters ?? 0}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-surface-raised px-5 py-4">
+            <p className="text-caption font-semibold uppercase text-text-muted">Total spy balloons</p>
+            <p className="mt-2 text-h3 font-semibold tabular-nums text-text-primary" aria-live="polite">
+              {summary.isLoading ? "Loading…" : summary.data?.spy_balloons ?? 0}
             </p>
           </div>
       </div>
@@ -554,7 +572,7 @@ export const AirViolationsPage = () => {
       <DataTable
         columns={columns}
         rows={tableRows}
-        getRowKey={(row) => `air-${row.id}`}
+        getRowKey={(row) => `air-${row.window_id ?? row.id}`}
         loading={isLoading}
         error={isError}
         minWidth="680px"
@@ -580,7 +598,7 @@ export const AirViolationsPage = () => {
       {selectedViolation ? (
         <Dialog
           title={`${selectedViolation.action_en} · ${selectedViolation.caza_en || selectedViolation.caza_ar || "Unknown area"}`}
-          eyebrow={isSurveillanceWindow(selectedViolation) ? "Surveillance activity window" : "Air violation report"}
+          eyebrow={isWindowedActivity(selectedViolation) ? (selectedViolation.condition_id === 35 ? "Warplane activity window" : "Surveillance activity window") : "Air violation report"}
           onClose={() => { if (!confirmDelete) setSelectedViolation(null); }}
           size="xl"
         >
@@ -591,10 +609,11 @@ export const AirViolationsPage = () => {
             </> : null}
             <div className="rounded-md border border-border bg-surface p-3"><dt className="text-caption font-semibold uppercase text-text-muted">Reports</dt><dd className="mt-1 text-h4 font-semibold">{selectedViolation.window_violation_count ?? 1}</dd></div>
             <div className="rounded-md border border-border bg-surface p-3"><dt className="text-caption font-semibold uppercase text-text-muted">Villages</dt><dd className="mt-1 text-h4 font-semibold">{selectedWindowVillages.length}</dd></div>
-            <div className="rounded-md border border-border bg-surface p-3"><dt className="text-caption font-semibold uppercase text-text-muted">Rule</dt><dd className="mt-1 font-semibold">{surveillanceRule(selectedViolation) ?? "Individual event"}</dd></div>
+            {isPerReportBreach(selectedViolation) ? <div className="rounded-md border border-border bg-surface p-3"><dt className="text-caption font-semibold uppercase text-text-muted">Breaches</dt><dd className="mt-1 text-h4 font-semibold">{selectedViolation.breach_count ?? 1} <span className="text-small font-normal text-text-muted">({breachUnitLabel(selectedViolation)})</span></dd></div> : null}
+            <div className="rounded-md border border-border bg-surface p-3"><dt className="text-caption font-semibold uppercase text-text-muted">Rule</dt><dd className="mt-1 font-semibold">{windowRule(selectedViolation) ?? (isPerReportBreach(selectedViolation) ? "Every report counts" : "Individual event")}</dd></div>
             <div className="rounded-md border border-border bg-surface p-3"><dt className="text-caption font-semibold uppercase text-text-muted">Activity time</dt><dd className="mt-1 text-small font-semibold">{compactWindowRange(selectedViolation) ?? `${formatDate(selectedViolation.event_date)} · ${formatTime(selectedViolation.event_time)}`}</dd></div>
             <div className="sm:col-span-2 lg:col-span-4">
-              <dt className="text-caption font-semibold uppercase text-text-muted">{isSurveillanceWindow(selectedViolation) ? "Villages in this window" : "Villages in this report"}</dt>
+              <dt className="text-caption font-semibold uppercase text-text-muted">{isWindowedActivity(selectedViolation) ? "Villages in this window" : "Villages in this report"}</dt>
               <dd className="mt-2 flex flex-wrap gap-1.5">
                 {selectedWindowVillages.length ? selectedWindowVillages.map((village) => (
                   <span key={village.village_id ?? `name:${village.name}`} className="rounded border border-border bg-surface px-2 py-0.5 text-caption leading-5 text-text-primary">
@@ -832,7 +851,7 @@ export const AirViolationsPage = () => {
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2"><Label htmlFor="create-caza">District (Caza) *</Label><Select id="create-caza" name="caza_en" required defaultValue={editingViolation?.caza_en ?? ""} placeholder={areCazasLoading ? "Loading cazas..." : "Select a caza"} options={cazaOptions} disabled={areCazasLoading} searchable searchPlaceholder="Search caza in English or Arabic" className="mt-2" /></div>
-              <div className="sm:col-span-2"><Label htmlFor="create-condition">Action *</Label><select id="create-condition" name="condition_id" required defaultValue={editingViolation?.condition_id ?? 35} className="mt-2 h-11 w-full rounded-md border border-input-border bg-input-bg px-3"><option value="35">Warplane — طيران حربي</option><option value="36">Surveillance aircraft — طيران استطلاعي</option><option value="38">Helicopter hovering — طيران مروحي</option></select></div>
+              <div className="sm:col-span-2"><Label htmlFor="create-condition">Action *</Label><select id="create-condition" name="condition_id" required defaultValue={editingViolation?.condition_id ?? 35} className="mt-2 h-11 w-full rounded-md border border-input-border bg-input-bg px-3"><option value="35">Warplane — طيران حربي</option><option value="36">Surveillance aircraft — طيران استطلاعي</option><option value="38">Helicopter hovering — طيران مروحي</option><option value="34">Spy balloon — منطاد تجسسي</option></select></div>
               <div><Label htmlFor="create-date">Date *</Label><Input id="create-date" name="event_date" type="date" required className="mt-2" defaultValue={editingViolation?.event_date ?? getBeirutDate()} /></div>
               <div><Label htmlFor="create-time">Time (optional)</Label><Input id="create-time" name="event_time" type="time" className="mt-2" defaultValue={editingViolation?.event_time?.slice(0, 5) ?? ""} /></div>
             </div>

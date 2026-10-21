@@ -219,6 +219,8 @@ AIR_KEYWORDS: tuple[tuple[int, tuple[str, ...]], ...] = (
         ),
     ),
     (35, _air_keyword_phrases("Warplane")),
+    # Decoy Flares (15, "بالونات حرارية") is deliberately not in this list.
+    (34, _air_keyword_phrases("Spy balloon")),
     (
         38,
         _air_keyword_phrases("Helicopter")

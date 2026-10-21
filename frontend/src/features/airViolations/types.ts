@@ -19,6 +19,9 @@ export type AirViolation = {
   window_violation_count: number | null;
   window_duration_minutes: number | null;
   window_reports: AirViolationWindowReport[];
+  /** Villages (helicopter) or cazas (spy balloon) this report counts as; 1 for a window. */
+  breach_count?: number | null;
+  unit_type?: string | null;
   khabar: string;
   note_1: string | null;
   note_2: string | null;
@@ -60,6 +63,9 @@ export type AirViolationListResponse = {
 
 export type AirViolationWindow = {
   id: string;
+  condition_id?: number | null;
+  unit_type?: string | null;
+  window_duration_minutes?: number | null;
   caza_en: string;
   caza_ar: string | null;
   window_start: string;
@@ -92,6 +98,7 @@ export type AirViolationSummary = {
   warplanes: number;
   surveillance_aircraft: number;
   helicopters: number;
+  spy_balloons: number;
 };
 
 export type AirViolationCreateInput = {

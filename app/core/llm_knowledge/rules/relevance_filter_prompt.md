@@ -30,7 +30,7 @@ Use verdict "relevant" only when the text describes a physical event in Lebanon 
 - drone strike
 - casualties from military or security action
 - infrastructure damage from conflict
-- presence-only airspace violations: warplane overflight, surveillance aircraft or plain drone reconnaissance flight, or helicopter hovering over Lebanese territory
+- presence-only airspace violations: warplane overflight, surveillance aircraft or plain drone reconnaissance flight, helicopter hovering, or a spy balloon (منطاد تجسسي) over Lebanese territory
 
 Air-violation routing rules:
 - An air violation records aircraft presence only. Any strike, attack, casualty, or damage is an incident, never an air violation, even when a drone or helicopter performed it.

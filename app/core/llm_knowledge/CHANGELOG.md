@@ -1,5 +1,12 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-21 - Spy balloon (condition 34) becomes an air violation
+
+- **Example (synthetic — no database was available):** `منطاد تجسسي إسرائيلي يحلق فوق بنت جبيل` was extracted as the incident action `Spy Balloon` and materialized as an incident; CNRS counts it as an air violation, one breach per caza.
+- **Rules changed:** `combined_tier1_prompt.md`, `tier1_general_prompt.md`, `relevance_filter_prompt.md`: منطاد تجسسي / spy balloon is `Spy Balloon` (34), presence-only and an air violation; `بالونات حرارية` stays `Decoy Flares` (15). `terminology/condition_labels.yaml` gained منطاد, منطاد تجسسي, منطاد تجسس, بالون تجسس, بالون تجسسي, spy balloon (`Spy balloon`). 34 joined `AIR_VIOLATION_CONDITION_IDS`, `classify_condition` (`AIR_KEYWORDS`) and the non-kinetic explicit-evidence override.
+- **Existing data:** `scripts/migrate_spy_balloon_incidents_to_air_violations.py` (dry-run by default) moves live condition-34 incidents into `air_violations` and soft-deletes the incident.
+- **Tests added:** `tests/test_air_violation_spy_balloon.py` (balloon text is classified 34 and written to air violations, flares stay out of 34, migration dry-run creates nothing and reports candidates).
+
 ## 2026-10-21 - Multi-caza drone reports kept; generic Bekaa no longer West Bekaa
 
 - **Example (synthetic):** a drone alert naming Sohmor (West Bekaa) and Chiyah (Baabda) was rejected with "Surveillance locations span multiple cazas"; CNRS counts it once per caza, so it is now stored as one row with both villages. A bare `Bekaa` was resolved to West Bekaa and so received West Bekaa's 6-hour drone window; it now resolves to nothing.
