@@ -231,3 +231,27 @@ def test_manual_duplicate_confirm_copies_a_real_body_death(db):  # noqa: F811
     )
     db.refresh(canonical)
     assert (canonical.deaths, canonical.total_deaths) == (1, 1)
+
+
+def test_a_channel_word_on_another_line_does_not_reject_a_real_casualty():
+    """28917: «- القناة 12 العبرية» two lines below «ارتقى 9 شهداء» used to reject the 9."""
+    text = (
+        "ابرز الاحداث:\n- ارتكب العدو مجازر في بلدة كفررمان حيث ارتقى 9 شهداء واصابة اكثر من 13 جريح.\n"
+        "- القناة 12 العبرية: الليلة أطلق حزب الله مسيّرتين"
+    )
+    decision = vet_incoming_casualties(
+        __import__("types").SimpleNamespace(id=1, raw_text=text, match_result=None),
+        {"deaths": 9, "injuries": 13},
+        incident_village_id=None,
+    )
+    assert decision.clean and decision.values == {"deaths": 9, "injuries": 13}
+
+
+def test_memorial_word_on_the_same_line_still_rejects():
+    text = "تشييع الشهيد: ارتقى 9 شهداء"
+    decision = vet_incoming_casualties(
+        __import__("types").SimpleNamespace(id=1, raw_text=text, match_result=None),
+        {"deaths": 9},
+        incident_village_id=None,
+    )
+    assert not decision.clean

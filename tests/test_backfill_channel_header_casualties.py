@@ -194,3 +194,30 @@ def test_header_evidence_span_in_stored_extraction_does_not_ground(db):  # noqa:
     db.flush()
 
     assert {c.field for c in _plan_for(db, incident).cleared} == {"deaths", "total_deaths"}
+
+
+def test_unproven_value_with_casualty_wording_is_kept_for_review(db):  # noqa: F811
+    """31955: an obituary-style report of a real death has no count word; never auto-clear it."""
+    body = "بلدة جويا تزفّ ابنها محمد دايخ، الذي ارتقى صباح اليوم جراء غارة بمسيّرة إسرائيلية"
+    incident, _o, _l = _world(db, "جويا", body, body)
+    incident.deaths = incident.total_deaths = 1
+    incident.casualty_status = "exact"
+    db.flush()
+
+    plan = _plan_for(db, incident)
+
+    assert not plan.cleared
+    assert {c.field for c in plan.review} == {"deaths", "total_deaths"}
+    assert {c.reason for c in plan.review} == {"needs_review"}
+    assert not any(c.field == "casualty_status" for c in plan.changes)
+
+
+def test_vague_wording_only_is_cleared(db):  # noqa: F811
+    body = "عشرات الجرحى بينهم أطفال في غارات على الرمادية"
+    incident, _o, _l = _world(db, "الرمادية", body, body)
+    incident.injuries = incident.total_injuries = 10
+    db.flush()
+
+    plan = _plan_for(db, incident)
+
+    assert {c.reason for c in plan.cleared} == {"vague_quantifier"}

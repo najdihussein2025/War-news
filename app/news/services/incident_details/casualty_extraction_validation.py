@@ -62,7 +62,11 @@ def line_rejection_reason(body: str, span: str, *, check_span_tokens: bool = Tru
         normalize_arabic_text(token) for token in _DISALLOWED_EVIDENCE
         if normalize_arabic_text(token) not in prayer
     ]
-    for line in re.split(r"[\r\n]+", normalized_body):
+    # Split BEFORE normalizing: normalize_arabic_text folds newlines into spaces, which
+    # turned the whole message into one "line" and let «القناة 12» two lines below a real
+    # casualty reject it.
+    for raw_line in re.split(r"[\r\n]+", body or ""):
+        line = normalize_arabic_text(raw_line)
         if normalized_span in line and any(token in line for token in line_tokens):
             return "header_or_memorial_evidence"
     return None
