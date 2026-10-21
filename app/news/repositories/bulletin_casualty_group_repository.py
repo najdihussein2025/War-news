@@ -153,11 +153,12 @@ class BulletinCasualtyGroupRepository:
         group: BulletinCasualtyGroup,
         *,
         reason: str | None = None,
+        skip_incident_ids: set | None = None,
     ) -> int:
         """Flag EVERY linked row (owner and members) so an admin distributes the toll.
 
-        Verified / rejected rows are human decisions and are left alone. Returns the
-        number of rows changed.
+        Verified / rejected rows are human decisions and are left alone, as are
+        ``skip_incident_ids``. Returns the number of rows changed.
         """
         from app.news.services.materialization.verification_signals import (
             SHARED_TOLL_DISTRIBUTE_REASON,
@@ -180,6 +181,8 @@ class BulletinCasualtyGroupRepository:
             select(Incident).where(Incident.id.in_(incident_ids), Incident.is_deleted.is_(False))
         ).all():
             if incident.verification_status in ("verified", "rejected"):
+                continue
+            if skip_incident_ids and incident.id in skip_incident_ids:
                 continue
             if incident.verification_status == "needs_verification" and incident.verification_reason == reason:
                 continue
