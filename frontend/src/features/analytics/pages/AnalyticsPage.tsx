@@ -175,7 +175,7 @@ export const AnalyticsPage = () => {
 
       <KpiCards data={kpis.data} loading={kpis.isLoading} error={kpis.error} onRetry={() => void kpis.refetch()} />
 
-      <div ref={tlRef} className="grid gap-4 xl:grid-cols-[1fr_380px]">
+      <div ref={tlRef} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <SectionCard id="timeline" title="Timeline" subtitle={`${label} per ${grain}, stacked by ${filters.metric === "breaches" ? "air type" : "action family"}`}
           actions={(
             <div className="flex items-center gap-2">
@@ -203,7 +203,7 @@ export const AnalyticsPage = () => {
         </SectionCard>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[7fr_5fr]">
+      <div className="grid gap-4">
         <div ref={rkRef}>
           <SectionCard id="rankings" title="Rankings" subtitle="Keyboard-friendly list of the same values as the map">
             {rkSeen ? <RankingsPanel filters={queryFilters} familyNames={familyNames} enabled={rkSeen} onFocusArea={focusArea} /> : <Skeleton className="h-80" />}

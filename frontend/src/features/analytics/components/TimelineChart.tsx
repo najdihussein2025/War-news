@@ -25,12 +25,11 @@ export const TimelineChart = ({ data, grain, height = 300 }: { data: TimelineRes
     }));
     return {
       animation: false,
-      grid: { left: 44, right: 16, top: 36, bottom: 52 },
+      grid: { left: 44, right: 16, top: 48, bottom: 40 },
       tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
       legend: { top: 0, type: "scroll", textStyle: { color: "#506373", fontSize: 12 } },
       xAxis: { type: "category", data: dates, axisLabel: { color: "#506373", fontSize: 12, hideOverlap: true }, axisLine: { lineStyle: { color: "#b8c7d3" } } },
       yAxis: { type: "value", minInterval: 1, axisLabel: { color: "#506373", fontSize: 12 }, splitLine: { lineStyle: { color: "#dbe5ed" } } },
-      dataZoom: undefined,
       series: [
         ...bars,
         {
