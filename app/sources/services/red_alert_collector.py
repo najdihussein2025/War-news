@@ -303,26 +303,22 @@ DRONE_CONTEXT_KEYWORDS = (
     "فوق",
     "تحليق",
 )
+# A report is a helicopter only when the text literally says so. Matched after
+# Arabic normalization, so أباتشي/اباتشي and مروحية/مروحيه are one spelling.
 HELICOPTER_KEYWORDS = (
-    "طيران مروحي",
+    "مروحي",
     "مروحية",
+    "مروحيه",
     "مروحيات",
+    "طيران مروحي",
+    "اباتشي",
+    "أباتشي",
     "هليكوبتر",
+    "هليكوبتير",
     "helicopter",
+    "apache",
     # OCR substitution in Red Alert helicopter map headers.
     "كوترية",
-)
-HELICOPTER_FLIGHT_KEYWORDS = (
-    "تحلق",
-    "يحلق",
-    "تحليق",
-    "تحوم",
-    "تحويم",
-    "حلقت",
-    "hover",
-    "hovering",
-    "flying",
-    "flies",
 )
 
 SUPPORTED_DELIVERY_METHODS = frozenset({"public_preview", "telegram_api"})
@@ -420,6 +416,34 @@ def parse_public_preview(html: str, channel_username: str) -> list[RedAlertPost]
     return sorted(posts, key=lambda post: post.message_id, reverse=True)
 
 
+def _matched_aircraft_terms(normalized: str, terms: tuple[str, ...]) -> list[str]:
+    matched: list[str] = []
+    for term in terms:
+        folded = normalize_arabic(term)
+        if folded in normalized and folded not in matched:
+            matched.append(folded)
+    return matched
+
+
+def has_helicopter_keyword(text: str) -> bool:
+    """True when the text literally contains a helicopter word."""
+    return bool(_matched_aircraft_terms(normalize_arabic(text), HELICOPTER_KEYWORDS))
+
+
+def aircraft_term_conflict(text: str) -> dict[str, list[str]] | None:
+    """Both helicopter and drone words in one text, for admin review.
+
+    Such a report is classified as a drone (36); the matched terms of both
+    kinds are returned so the reviewer can see why.
+    """
+    normalized = normalize_arabic(text)
+    helicopter_terms = _matched_aircraft_terms(normalized, HELICOPTER_KEYWORDS)
+    drone_terms = _matched_aircraft_terms(normalized, BARE_DRONE_KEYWORDS)
+    if helicopter_terms and drone_terms and classify_condition(text) == 36:
+        return {"helicopter_terms": helicopter_terms, "drone_terms": drone_terms}
+    return None
+
+
 def classify_condition(text: str) -> int | None:
     normalized = normalize_arabic(text)
     if any(normalize_arabic(part) in normalized for part in NON_EVENT_NOTICE_PARTS):
@@ -434,16 +458,12 @@ def classify_condition(text: str) -> int | None:
             for context in DRONE_CONTEXT_KEYWORDS
         ) or any(term in normalized.split() for term in UNAMBIGUOUS_DRONE_TOKENS):
             return 36
-    has_helicopter = any(
-        normalize_arabic(term) in normalized for term in HELICOPTER_KEYWORDS
-    )
-    has_flight = any(
-        normalize_arabic(term) in normalized for term in HELICOPTER_FLIGHT_KEYWORDS
-    )
-    if has_helicopter:
-        return 38 if has_flight else None
+    # A helicopter word alone is enough: CNRS counts the report. Kinetic
+    # Apache reports are rejected upstream by air_violation_eligibility.
+    if _matched_aircraft_terms(normalized, HELICOPTER_KEYWORDS):
+        return 38
     for condition_id, keywords in AIR_KEYWORDS:
-        # Helicopter (38) is already decided above: it needs hover language.
+        # Helicopter (38) is already decided above.
         # Recon phrases must still reach 36 here; the guard below keeps the
         # bare drone words context-gated.
         if condition_id == 38:

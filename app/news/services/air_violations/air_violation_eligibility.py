@@ -39,6 +39,8 @@ DENIAL_WITH_OVERFLIGHT_REASON = "excluded_denial_with_separate_overflight"
 GENERIC_DIRECTION_REASON = "no_location_generic_direction"
 #: Rule E -- a place name is present but resolved to no village.
 UNMATCHED_LOCATION_REASON = "unmatched_location"
+# The model labelled a report as a helicopter although the text names none.
+HELICOPTER_LABEL_WITHOUT_KEYWORD_REASON = "helicopter label without helicopter keyword"
 
 _REASON_OUTCOMES: dict[str, AirViolationOutcome] = {
     "presence_only": AirViolationOutcome.eligible,
@@ -47,6 +49,7 @@ _REASON_OUTCOMES: dict[str, AirViolationOutcome] = {
     DENIAL_REASON: AirViolationOutcome.reject_no_incident,
     GENERIC_DIRECTION_REASON: AirViolationOutcome.reject_no_incident,
     UNMATCHED_LOCATION_REASON: AirViolationOutcome.hold_for_review,
+    HELICOPTER_LABEL_WITHOUT_KEYWORD_REASON: AirViolationOutcome.reject_no_incident,
 }
 
 

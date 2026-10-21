@@ -1,5 +1,12 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-21 - Helicopter needs an explicit helicopter keyword (CNRS counting methodology)
+
+- **Example (synthetic — no database was available to pull a raw message):** `مسيرة معادية تحلق فوق بنت جبيل` was at risk of being labelled Helicopter Hovering by the LLM because of the verb تحلق, and `طائرة تحلق فوق صور` (no aircraft type) could be labelled the same way.
+- **Rule changed:** `combined_tier1_prompt.md`, `tier1_general_prompt.md` and `relevance_filter_prompt.md`: Helicopter Hovering (38) only when the text says مروحي/مروحية/مروحيات/اباتشي/هليكوبتر/هليكوبتير (or helicopter/Apache); the hover-verb requirement is dropped, and مسيرة/مسيّرة/طيران مسير/درون/محلقة are always Surveillance Aircraft (36). `terminology/condition_labels.yaml` gained مروحي, اباتشي, أباتشي, هليكوبتير, apache (Helicopter); `CONDITION_DISTINGUISHING_TOKENS[38]` gained هليكوبتير, مروحيه, apache.
+- **Deterministic guard:** `AirViolationRepository.route_from_match` refuses a 38 label whose text has no helicopter word (reason `helicopter label without helicopter keyword`) unless the classifier reads it as another air type. A text with both a helicopter and a drone word is written as 36 and `filter_result.air_aircraft_terms` lists both term sets for review. Apache + strike still goes to incidents.
+- **Tests added:** `tests/test_red_alert_collector.py` (every helicopter spelling, drone-only text, Apache + strike) and `tests/test_air_violation_helicopter_guard.py` (LLM label 38 on drone-only text is written as 36; label 38 with no helicopter word is rejected).
+
 ## 2026-10-21 - Connector-linked multi-action prose recovery
 
 - **Real example:** raw message 46363: a Merkava attack on Khiam concurrent with machine-gun sweeping was previously materialized as Tank Fire only.

@@ -48,6 +48,8 @@ from app.news.services.air_violations.breach_counting_service import (
 )
 from app.news.services.air_violations.caza_alias_resolver import canonicalize_caza
 from app.news.services.air_violations.air_violation_eligibility import (
+    HELICOPTER_LABEL_WITHOUT_KEYWORD_REASON,
+    EligibilityResult,
     evaluate_air_violation_location,
     evaluate_air_violation_text,
 )
@@ -838,7 +840,11 @@ class AirViolationRepository(AirViolationRepositoryInterface):
             return False
         # Import lazily: the collector depends on this repository when it
         # persists routed messages.
-        from app.sources.services.red_alert_collector import classify_condition
+        from app.sources.services.red_alert_collector import (
+            aircraft_term_conflict,
+            classify_condition,
+            has_helicopter_keyword,
+        )
 
         # The deterministic aircraft vocabulary is authoritative over an LLM
         # label. In Lebanese Arabic, مسيّرة/مسير and محلقة mean drone/UAV and
@@ -851,6 +857,27 @@ class AirViolationRepository(AirViolationRepositoryInterface):
             result = result.model_copy(
                 update={"matched_condition_id": classified_condition_id}
             )
+        if (
+            result.matched_condition_id == AIR_VIOLATION_HELICOPTER_CONDITION_ID
+            and not has_helicopter_keyword(message.raw_text or "")
+        ):
+            # A helicopter breach needs the word itself. A label without it
+            # (and no deterministic drone/warplane reading) is not written.
+            record_air_violation_outcome(
+                message,
+                EligibilityResult(
+                    eligible=False,
+                    reason=HELICOPTER_LABEL_WITHOUT_KEYWORD_REASON,
+                    matched_terms=[],
+                ),
+                stage="air_violation_repository",
+            )
+            return False
+        conflict = aircraft_term_conflict(message.raw_text or "")
+        if conflict:
+            audit = dict(message.filter_result or {})
+            audit["air_aircraft_terms"] = conflict
+            message.filter_result = audit
         eligibility = evaluate_air_violation_text(message.raw_text)
         if not eligibility.eligible:
             # The last post-LLM boundary. Whatever the model chose, a rejected

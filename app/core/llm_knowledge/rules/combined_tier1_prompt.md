@@ -25,6 +25,7 @@ General field rules:
 - If the text is not about a security/military incident in Lebanon: is_relevant=false and set village/action_description null and casualties numeric fields null.
 - Ordinary civilian fires, car fires, traffic accidents, electrical faults, or property fires are not relevant unless the text explicitly ties the damage to Israeli/military/security action.
 - Exclude UNIFIL/UN-affiliated aircraft activity from air-violation extraction. If the only aircraft activity belongs to UNIFIL/UN, set is_relevant=false and do not emit an air-violation action.
+- Helicopter Hovering (condition 38) only when the text says مروحي/مروحية/مروحيات/اباتشي/هليكوبتر/هليكوبتير (helicopter/Apache); no hover verb is required. مسيرة/مسيّرة/طيران مسير/درون/محلقة are always Surveillance Aircraft (36), never helicopter; a plain "طائرة" or "طيران" with no helicopter word is not Helicopter Hovering.
 - Exclude aircraft route/origin wording from Palestine toward Lebanon, such as "من فلسطين باتجاه لبنان", unless the same text also states a concrete violation over a named Lebanese village or caza.
 - Preserve sector phrases such as "القطاع الشرقي", "القطاع الغربي", and "القطاع الأوسط" in village/location or action text when present; downstream caza alias resolution maps them deterministically.
 - village: array of place names mentioned, or null. Never a single string.

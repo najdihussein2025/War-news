@@ -359,6 +359,26 @@
   category: air_violation_keyword
   meaning: "Helicopter"
 
+- term: "مروحي"
+  category: air_violation_keyword
+  meaning: "Helicopter"
+
+- term: "اباتشي"
+  category: air_violation_keyword
+  meaning: "Helicopter"
+
+- term: "أباتشي"
+  category: air_violation_keyword
+  meaning: "Helicopter"
+
+- term: "هليكوبتير"
+  category: air_violation_keyword
+  meaning: "Helicopter"
+
+- term: "apache"
+  category: air_violation_keyword
+  meaning: "Helicopter"
+
 # --- Evidence-override stems (return action_en) ---
 
 - term: "دبابة"
