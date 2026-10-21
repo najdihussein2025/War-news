@@ -52,7 +52,9 @@ export const KpiCards = ({ data, loading, error, onRetry, onOpenMethodology }: {
   }
   const breachDelta: Delta = data.air_breaches;
   const esc = data.escalation;
-  const completeness = data.casualty_completeness;
+  // A rolling deployment can briefly return a cached KPI payload from before
+  // casualty completeness was added; keep the dashboard usable during that window.
+  const completeness = data.casualty_completeness ?? { incidents: 0, with_status: 0, pct: null };
   const completenessNote = completeness.pct === null
     ? "Casualty status is not available for these incidents."
     : <>Casualty figures are extracted from reports; {completeness.pct}% of incidents in this period have a casualty status. <button type="button" onClick={onOpenMethodology} className="text-brand-navy underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Methodology</button></>;

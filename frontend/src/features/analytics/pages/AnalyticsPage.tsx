@@ -197,7 +197,7 @@ export const AnalyticsPage = () => {
         <KpiCards data={kpis.data} loading={kpis.isLoading} error={kpis.error} onRetry={() => void kpis.refetch()} onOpenMethodology={() => setMethodologyOpen(true)} />
       </div>
 
-      <div ref={tlRef} className={`grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px] ${activeTab === "overview" || activeTab === "incidents" ? "" : "hidden"}`}>
+      <div ref={tlRef} className={`grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_380px] ${activeTab === "overview" || activeTab === "incidents" ? "" : "hidden"}`}>
         <SectionCard id="timeline" title="Timeline" subtitle={`${label} per ${grain}, stacked by ${filters.metric === "breaches" ? "air type" : "action family"}`}
           actions={(
             <div className="flex items-center gap-2">

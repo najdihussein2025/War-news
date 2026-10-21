@@ -26,7 +26,7 @@ export const TimelineChart = ({ data, grain, height = 300 }: { data: TimelineRes
     }));
     return {
       animation: false,
-      grid: { left: 44, right: 16, top: 48, bottom: 40 },
+      grid: { left: 44, right: 16, top: 62, bottom: 40 },
       tooltip: { trigger: "axis", axisPointer: { type: "shadow" }, formatter: (items: Array<{ axisValue: string; marker: string; seriesName: string; value: number }>) => {
         const date = items[0]?.axisValue;
         const coverage = date ? coverageByDate.get(date) : undefined;
@@ -34,7 +34,7 @@ export const TimelineChart = ({ data, grain, height = 300 }: { data: TimelineRes
         const warning = coverageWarning(coverage);
         return [`<strong>${date ?? ""}</strong>`, ...lines, warning ? `<span style="color:#506373">${warning}</span>` : ""].filter(Boolean).join("<br/>");
       } },
-      legend: { top: 0, type: "plain", width: "90%", textStyle: { color: "#506373", fontSize: 12 } },
+      legend: { top: 0, left: 0, right: 8, type: "plain", itemGap: 14, textStyle: { color: "#506373", fontSize: 12 } },
       xAxis: { type: "category", data: dates, axisLabel: { color: "#506373", fontSize: 12, hideOverlap: true }, axisLine: { lineStyle: { color: "#b8c7d3" } } },
       yAxis: { type: "value", minInterval: 1, axisLabel: { color: "#506373", fontSize: 12 }, splitLine: { lineStyle: { color: "#dbe5ed" } } },
       series: [
