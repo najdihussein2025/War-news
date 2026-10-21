@@ -512,3 +512,17 @@ The live table has 46 condition rows. ID 45 is **Air Activity - Needs Verificati
 2. The planned code-only village join cannot yet be validated or used because the required geojson layers are absent. This blocks the requested manual-fix list and geo-derived caza/mohafaza mapping.
 3. The prior assumption that condition ID 45 was an unclassified bucket is false in the live database: it is `Air Activity - Needs Verification`; the unclassified row is ID 87. Do not hard-code 45.
 
+## Agreed decisions (2026-10-21)
+
+1. Access: the Analytics page lives inside the existing admin panel, for super_admin and admin only. Routes are added to both the /admin and /superadmin trees. No public endpoint.
+2. Headline numbers ("counted"): verification_status in (verified, auto_processed). Rows in needs_verification are shown separately as "pending review" and are excluded from headline totals by default (a toggle can include them). Rejected and deleted rows are never counted. Use the real status values found in Step 4; if names differ, list the mapping.
+3. History: before the planned data reset, all incidents are copied into a Postgres incidents_archive table that keeps ids, village_id, condition_id, verification status, the shared-toll marker and all casualty fields. Excel stays a human copy only. Fact rows built from the archive are frozen and the refresh worker never rewrites them.
+4. Village join: by code only (villages.acs_code to geojson code), never by name. Duplicate acs_codes and unmatched villages go into a manual fix list. Caza and mohafaza for analytics come from the geojson codes, not from name strings (CAZA_TO_MOHAFAZA naming drift such as Hasbaya vs Hasbaiya and the stale Zahrani entry confirms names cannot be trusted).
+5. Air violations on the map follow the counting rules:
+   - mohafaza level: all air-violation types
+   - caza level: drones, spy balloons, helicopters
+   - village level: helicopters only
+   Unsupported levels are disabled in the UI with a tooltip explaining the rule. Warplane breaches are never split below mohafaza.
+6. Recompute signal: database triggers write affected dates to a dirty-dates queue; a worker rebuilds facts for those dates. The data-reset script must disable this trigger while it runs so the mass delete does not queue a full rebuild.
+7. Casualty totals: a shared bulletin toll is counted once (it sits only on the first-mentioned village's incident). Analytics shows it as "not attributed to a specific village" where relevant, never spread across villages.
+
