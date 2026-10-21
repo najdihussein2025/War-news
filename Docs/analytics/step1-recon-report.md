@@ -456,3 +456,59 @@ Note: migration `20260903_0050` imports from `incident_workbook_service`, so mig
 | Recompute signal | Postgres triggers on `incidents`, `incident_details`, `air_violations`, `air_violation_locations`, bulletin groups writing `OLD` and `NEW` `event_date` into `analytics_dirty_dates`; worker rebuilds only `source='live'` rows for those dates (air violations: date +/- 1). `updated_at` and `incident_updates` are each incomplete (item 9) |
 | Caza / mohafaza naming source of truth | `admin_areas` (HDX codes) is the single source. `villages.caza_*` / `mohafaza_*` free text and `CAZA_TO_MOHAFAZA` stay as legacy, bridged to codes through one mapping table plus `canonicalize_caza`. Fix `CAZA_TO_MOHAFAZA` (`Hasbaya`, stale `Zahrani`) when touching it. Always join on codes, never on names ("Akkar" is both a caza and a mohafaza) |
 | Other | Store `unspecified` casualties (`total` minus male/female/children). Count NULL-village incidents in national totals only. Compute national headline separately from per-area sums (air-violation double counting). Add a coordinate note: `coord_x/y` are UTM 36N, so use `utm36n_to_wgs84` rather than assuming lat/lon; the geojson already carries `center_lat/center_lon` |
+
+---
+
+## Step 1b local recon results (2026-10-21)
+
+### Backup
+
+- Created and validated custom-format backup: `backups/war_news_dev_2026-10-21.dump` (182,569,858 bytes; 174.11 MiB).
+- `pg_restore --list` succeeded and included `incidents`, `incident_details`, `incident_updates`, `villages`, `conditions`, `air_violations`, and `raw_messages`.
+- `backups/` was already ignored by `.gitignore`; no `.gitignore` change was needed.
+
+### Map files and village join
+
+`frontend/public/geo/` is absent in this checkout. `lb_mohafaza.geojson`, `lb_caza.geojson`, and `lb_village.geojson` were not available locally, so their feature counts and all village-join measurements could not be run. Consequently, matched/unmatched counts, duplicate `acs_code` rows, unmatched-code examples, random name-pair samples, caza-code mapping, and the name-plus-caza fallback measurement remain blocked until the three supplied layers are copied into that directory.
+
+### Incidents
+
+| verification_status | is_deleted | rows | deaths | injuries |
+|---|---:|---:|---:|---:|
+| auto_processed | false | 2,809 | 235 | 638 |
+| auto_processed | true | 278 | 6 | 53 |
+| needs_verification | false | 32 | 0 | 0 |
+| needs_verification | true | 439 | 0 | 26 |
+| rejected | false | 6 | 1 | 2 |
+| verified | false | 6 | 0 | 0 |
+
+- Total incidents: 3,570; live: 2,853; NULL village: 0; NULL condition: 0; event-date range: 2026-08-17 to 2026-10-21.
+- Deleted or rejected: 723 rows (`is_deleted = true` or `verification_status = 'rejected'`; overlaps counted once).
+- Shared-toll marker: `incidents.casualty_status = 'aggregate_only'`; 1 row carries it (and it is the owner-row representation described above).
+- Live casualty-status distribution: `aggregate_only` 1, `count_missing` 4, `exact` 12, `explicit_none` 5, `none_mentioned` 1,424, NULL 1,407.
+
+### Conditions and incident use
+
+The live table has 46 condition rows. ID 45 is **Air Activity - Needs Verification** and ID 87 is **Unclassified / Needs Review**; neither is the historical seed-file “Vehicle Movement” assumption. Incident counts by condition are: Artillery Shelling (5) 1,634; Bombs (46) 1,174; Sweeping Operations (18) 199; Mining & Detonation (21) 166; Unclassified / Needs Review (87) 64; Flare Bomb (9) 56; Drone Failure (3) 43; Tank Fire (6) 36; Ground Incursion (20) 23; Burning Properties (27) 21; Warplane (35) 17; Shooting (17) 15; Surveillance Aircraft (36) 10; Grenades (13) 8; Suicide Drone (4) 3; Phosphorus Bombs (7) 3; Aerial Sweep (19) 3; Installing Surveillance Devices (33) 2; Smoke Grenades (8), Cluster Bombs (11), Stationing (22), Naval Incursion (23), Cutting Trees (26), Arrest Operation (29), and Interceptor Missile (40) 1 each; every other condition, including 34, 38, and 45, has 0 incident rows.
+
+### Air violations
+
+| condition_id | rows | date range | has village | caza only | no location |
+|---:|---:|---|---:|---:|---:|
+| 35 (Warplane) | 173 | 2026-08-14 to 2026-10-21 | 9 | 150 | 14 |
+| 36 (Surveillance Aircraft) | 676 | 2026-08-20 to 2026-10-21 | 342 | 318 | 16 |
+| 38 (Helicopter Hovering) | 5 | 2026-09-14 to 2026-10-17 | 3 | 1 | 1 |
+
+- `review_status`: NULL 834; `flagged_for_review` 20.
+- 354 distinct air-violation IDs have rows in `air_violation_locations`.
+
+### Alembic
+
+`docker compose exec backend alembic heads` returned one head: `20261019_0081`.
+
+### Contradictions found during local recon
+
+1. The agreed headline status mapping is implementable with the live values (`verified` and `auto_processed`), but it currently includes 2,815 live rows, of which only 6 are `verified`; 32 live rows are pending review, 6 live rows are rejected, and 717 rows are deleted. Deleted/rejected exclusions must therefore be explicit in addition to the status filter.
+2. The planned code-only village join cannot yet be validated or used because the required geojson layers are absent. This blocks the requested manual-fix list and geo-derived caza/mohafaza mapping.
+3. The prior assumption that condition ID 45 was an unclassified bucket is false in the live database: it is `Air Activity - Needs Verification`; the unclassified row is ID 87. Do not hard-code 45.
+
