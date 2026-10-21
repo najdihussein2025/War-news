@@ -62,6 +62,11 @@ def test_artillery_and_sweeping_are_separate_source_actions() -> None:
     ]
 
 
+def test_phosphorus_wins_over_artillery_in_the_same_clause() -> None:
+    text = "قصف مدفعي فوسفوري استهدف أطراف بلدة زوطر الشرقية"
+    assert apply_condition_evidence_override(text, "Artillery Shelling") == "Phosphorus Bombs"
+
+
 def test_drone_strike_maps_to_bombs() -> None:
     assert condition_fallback_from_text("غارة من مسيرة على سيارة") == "Bombs"
     assert condition_fallback_from_text("استهدفت مسيرة آلية") == "Bombs"

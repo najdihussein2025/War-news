@@ -6,6 +6,33 @@
 
 # --- Similarity aliases (canonical action_ar → alternate phrasing) ---
 
+# Phosphorus is a munition, not a second artillery event.  The condition
+# matcher and Tier-1 prompt share these source forms from this file.
+- term: "فسفوري"
+  category: condition_alias
+  meaning: "Phosphorus Bombs"
+  notes: "condition_id=7; munition takes precedence over delivery in one clause"
+
+- term: "فوسفوري"
+  category: condition_alias
+  meaning: "Phosphorus Bombs"
+  notes: "condition_id=7; spelling variant"
+
+- term: "قذائف فسفورية"
+  category: condition_alias
+  meaning: "Phosphorus Bombs"
+  notes: "condition_id=7"
+
+- term: "قنابل فسفورية"
+  category: condition_alias
+  meaning: "Phosphorus Bombs"
+  notes: "condition_id=7"
+
+- term: "القذائف الفسفورية"
+  category: condition_alias
+  meaning: "Phosphorus Bombs"
+  notes: "condition_id=7"
+
 - term: "قصف"
   category: condition_exact_alias
   meaning: "قصف وغارات"

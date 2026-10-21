@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 
+from app.core.llm_knowledge.loader import load_terminology
 from app.core.text_normalization import normalize_arabic_text
 
 
@@ -57,6 +58,11 @@ _FLARE_BOMB = re.compile(
     r"|(?:flare|flares|illumination)",
     re.IGNORECASE,
 )
+_PHOSPHORUS_TERMS = tuple(
+    normalize_arabic_text(entry.term)
+    for entry in load_terminology("terminology/condition_labels.yaml")
+    if entry.meaning == "Phosphorus Bombs"
+)
 _STRIKE_LANGUAGE = re.compile(
     r"غار[ةه]|غارات|قصف|استهداف|استهدف|استهدفت|انفجار|شهيد|جريح|دمار|حريق"
 )
@@ -87,6 +93,9 @@ def condition_from_explicit_evidence(text: str) -> str | None:
     # label so that detonations are consistently routed to condition 21.
     if _MINING_AND_DETONATION.search(normalized):
         return "Mining & Detonation"
+    # Munition is more specific than the delivery platform in the same clause.
+    if any(term in normalized for term in _PHOSPHORUS_TERMS):
+        return "Phosphorus Bombs"
     if any(pattern.search(normalized) for pattern in _TANK_FIRE_PATTERNS):
         return "Tank Fire"
     if _WARNING_RAID.search(normalized):
