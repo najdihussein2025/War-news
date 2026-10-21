@@ -85,6 +85,7 @@ def run_tier1_extraction_for_message(raw_message_id: int) -> None:
             result,
             post_text=post_text,
             cnrs_classification=cnrs_classification,
+            raw_message_id=raw_message_id,
         )
     except Exception as exc:
         # Transport outages are a pause, not an extraction attempt.  Releasing

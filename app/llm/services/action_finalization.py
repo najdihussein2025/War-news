@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from app.llm.dtos import ExtractionResult
 from app.llm.services.cnrs_extraction_fallback import trusted_cnrs_action
 from app.news.services.matching.condition_evidence_override import (
@@ -13,6 +15,7 @@ FLARE_GUARD_REVIEW_REASON = (
     "Flare wording appears together with strike language; verify whether this "
     "message contains both a strike and flare bombs."
 )
+logger = logging.getLogger(__name__)
 
 
 def final_action_description(
@@ -37,6 +40,7 @@ def finalize_extraction_action(
     *,
     post_text: str,
     cnrs_classification: dict | None,
+    raw_message_id: int | None = None,
 ) -> ExtractionResult:
     cnrs_action = trusted_cnrs_action(cnrs_classification, post_text)
     final_action = final_action_description(
@@ -55,6 +59,8 @@ def finalize_extraction_action(
         if final_action and cnrs_action
         else result.action_source
     )
+    if action_source == "cnrs_subtype_fallback":
+        logger.info("CNRS subtype fallback used raw_message_id=%s", raw_message_id)
 
     needs_review = result.needs_review
     review_reason = result.review_reason
