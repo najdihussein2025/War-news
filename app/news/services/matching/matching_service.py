@@ -98,7 +98,7 @@ CONDITION_DISTINGUISHING_TOKENS: dict[int, tuple[str, ...]] = {
     2: _distinguishing_tokens("Warning Raid") or ("تحذيريه",),
     3: ("سقوط", "سقط", "تحطم", "تحطمت"),
     4: ("مفخخة", "مفخخه", "انتحارية", "انتحاريه"),
-    38: ("مروحي", "هليكوبتر", "اباتشي", "أباتشي"),
+    38: ("مروحي", "مروحيه", "هليكوبتر", "هليكوبتير", "اباتشي", "أباتشي", "apache"),
     39: _distinguishing_tokens("Feigned Attacks") or ("وهميه",),
 }
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 
 from app.core.llm_knowledge.loader import terms_by_category
+from app.core.llm_knowledge.source_headers import strip_source_headers
 from app.core.text_normalization import normalize_arabic_text
 from app.llm.dtos import ExtractionCasualties, ExtractionResult, ExtractionSubEvent
 
@@ -28,7 +29,7 @@ def reject_unproven_demographics(text: str, casualties: ExtractionCasualties) ->
     male.  This guard is intentionally conservative: it removes unsupported
     values instead of putting the incident in the verification queue.
     """
-    normalized = normalize_arabic_text(text or "")
+    normalized = normalize_arabic_text(strip_source_headers(text))
     values = casualties.model_dump(mode="python")
     for group, terms in _EXPLICIT_DEMOGRAPHIC_TERMS.items():
         supported = any(_standalone(re.escape(normalize_arabic_text(term))).search(normalized) for term in terms)
@@ -227,7 +228,11 @@ def infer_singular_death_count(
     text: str,
     casualties: ExtractionCasualties,
 ) -> ExtractionCasualties:
-    """Infer one death from unambiguous singular death nouns when no total exists."""
+    """Infer one death from unambiguous singular death nouns when no total exists.
+
+    Channel/page headers («الشهيد» in the page name) are never evidence.
+    """
+    text = strip_source_headers(text)
     values = casualties.model_dump(mode="python")
     if any(
         isinstance(values.get(key), int) and values.get(key) > 0
@@ -269,6 +274,7 @@ def apply_casualty_gender_backstops(
     """Apply explicit-form and occupation gender backstops to root and sub-events."""
     if not isinstance(result, ExtractionResult):
         return result
+    text = strip_source_headers(text)
     root = reject_unproven_demographics(text, apply_gendered_occupation_casualty_evidence(
         text,
         apply_explicit_arabic_gender_evidence(
@@ -278,7 +284,7 @@ def apply_casualty_gender_backstops(
     ))
     sub_events: list[ExtractionSubEvent] = []
     for sub_event in result.sub_events:
-        span = sub_event.evidence_span or text
+        span = strip_source_headers(sub_event.evidence_span) or text
         sub_events.append(
             sub_event.model_copy(
                 update={

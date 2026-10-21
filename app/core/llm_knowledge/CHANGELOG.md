@@ -1,5 +1,50 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-21 - Spy balloon (condition 34) becomes an air violation
+
+- **Example (synthetic — no database was available):** `منطاد تجسسي إسرائيلي يحلق فوق بنت جبيل` was extracted as the incident action `Spy Balloon` and materialized as an incident; CNRS counts it as an air violation, one breach per caza.
+- **Rules changed:** `combined_tier1_prompt.md`, `tier1_general_prompt.md`, `relevance_filter_prompt.md`: منطاد تجسسي / spy balloon is `Spy Balloon` (34), presence-only and an air violation; `بالونات حرارية` stays `Decoy Flares` (15). `terminology/condition_labels.yaml` gained منطاد, منطاد تجسسي, منطاد تجسس, بالون تجسس, بالون تجسسي, spy balloon (`Spy balloon`). 34 joined `AIR_VIOLATION_CONDITION_IDS`, `classify_condition` (`AIR_KEYWORDS`) and the non-kinetic explicit-evidence override.
+- **Existing data:** `scripts/migrate_spy_balloon_incidents_to_air_violations.py` (dry-run by default) moves live condition-34 incidents into `air_violations` and soft-deletes the incident.
+- **Tests added:** `tests/test_air_violation_spy_balloon.py` (balloon text is classified 34 and written to air violations, flares stay out of 34, migration dry-run creates nothing and reports candidates).
+
+## 2026-10-21 - Multi-caza drone reports kept; generic Bekaa no longer West Bekaa
+
+- **Example (synthetic):** a drone alert naming Sohmor (West Bekaa) and Chiyah (Baabda) was rejected with "Surveillance locations span multiple cazas"; CNRS counts it once per caza, so it is now stored as one row with both villages. A bare `Bekaa` was resolved to West Bekaa and so received West Bekaa's 6-hour drone window; it now resolves to nothing.
+- **Rules changed:** no LLM prompt changes (location handling is deterministic). `RedAlertAirViolationService.process` no longer rejects multi-caza drone reports (region-only drone rows are still rejected); `CANONICAL_CAZA_ALIASES` lost `bekaa`.
+- **Tests added:** `test_red_zone_keeps_surveillance_villages_from_different_cazas`, `test_surveillance_report_with_only_a_region_is_still_rejected`, `test_generic_bekaa_is_not_west_bekaa`.
+
+## 2026-10-21 - Helicopter needs an explicit helicopter keyword (CNRS counting methodology)
+
+- **Example (synthetic — no database was available to pull a raw message):** `مسيرة معادية تحلق فوق بنت جبيل` was at risk of being labelled Helicopter Hovering by the LLM because of the verb تحلق, and `طائرة تحلق فوق صور` (no aircraft type) could be labelled the same way.
+- **Rule changed:** `combined_tier1_prompt.md`, `tier1_general_prompt.md` and `relevance_filter_prompt.md`: Helicopter Hovering (38) only when the text says مروحي/مروحية/مروحيات/اباتشي/هليكوبتر/هليكوبتير (or helicopter/Apache); the hover-verb requirement is dropped, and مسيرة/مسيّرة/طيران مسير/درون/محلقة are always Surveillance Aircraft (36). `terminology/condition_labels.yaml` gained مروحي, اباتشي, أباتشي, هليكوبتير, apache (Helicopter); `CONDITION_DISTINGUISHING_TOKENS[38]` gained هليكوبتير, مروحيه, apache.
+- **Deterministic guard:** `AirViolationRepository.route_from_match` refuses a 38 label whose text has no helicopter word (reason `helicopter label without helicopter keyword`) unless the classifier reads it as another air type. A text with both a helicopter and a drone word is written as 36 and `filter_result.air_aircraft_terms` lists both term sets for review. Apache + strike still goes to incidents.
+- **Tests added:** `tests/test_red_alert_collector.py` (every helicopter spelling, drone-only text, Apache + strike) and `tests/test_air_violation_helicopter_guard.py` (LLM label 38 on drone-only text is written as 36; label 38 with no helicopter word is rejected).
+## 2026-10-21 - Channel/page headers are never casualties (single registry, strip everywhere)
+
+- **Real examples:** raw 44770 (Yater / Beit Lif shelling) and raw 37903 (Mayfadoun). Both
+  start with the page name `صفحة الإعلامي الشهيد علي شعيب`; Tier 1 read «الشهيد» in it as a
+  death (`deaths: 1`, `male_deaths: 1`, evidence span `"شهيد"`, status `exact`). The duplicate
+  merge then copied that 1 onto the casualty-free canonical incidents (raw 44767, 37888).
+- **Rules changed:** `tier1_casualty_prompt.md`, `tier1_general_prompt.md`,
+  `combined_tier1_prompt.md` and `casualty_field_rules.md`: a channel/page name that mentions a
+  martyr is not a casualty; only deaths/injuries described as part of the reported event in the
+  body count (header + «استشهاد مواطن بغارة على بلدة X» is still 1 death, from the body).
+- **Code (deterministic):** one header registry, `terminology/source_headers.yaml`
+  (adding a header is one line), read by `clean_message_text` and `strip_page_header`;
+  the duplicate list in `casualty_wording.yaml` is removed. Matching ignores diacritics,
+  ة/ه, ي/ى, أ/إ/آ, an optional «صفحة» and `|` / `-` separators and is not limited to line 1.
+  The live Tier 1/Tier 2 workers, `extract_tier1/extract_tier2_details`, the count backstop,
+  gender backstops (incl. the singular-death backstop) and condition finalization strip headers
+  first; `raw_text` is untouched. A span inside a header, or a bare `شهيد`/`الشهيد` with no event
+  context, is rejected (NULL, not 0).
+- **Merge guard:** `resolve_duplicate`, the Tier 2 root fill and bulletin reconciliation now vet
+  numbers against the linked message body (`casualty_merge_provenance`), and
+  `vet_incoming_casualties` no longer skips vetting when the message is missing: it refuses the numbers.
+- **Tests added:** `tests/test_channel_header_casualties.py` (header + shelling = no casualties for the
+  44770 and 37903 shapes; header + real body death = 1; header + 2 injured = injuries 2, deaths NULL;
+  header variants; merge with a casualty-free canonical + header-only duplicate stays NULL; merge with a
+  real body death is adopted; manual duplicate confirm).
+
 ## 2026-10-21 - Connector-linked multi-action prose recovery
 
 - **Real example:** raw message 46363: a Merkava attack on Khiam concurrent with machine-gun sweeping was previously materialized as Tank Fire only.

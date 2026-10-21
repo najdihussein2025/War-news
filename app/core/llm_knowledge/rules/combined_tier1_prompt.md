@@ -25,6 +25,8 @@ General field rules:
 - If the text is not about a security/military incident in Lebanon: is_relevant=false and set village/action_description null and casualties numeric fields null.
 - Ordinary civilian fires, car fires, traffic accidents, electrical faults, or property fires are not relevant unless the text explicitly ties the damage to Israeli/military/security action.
 - Exclude UNIFIL/UN-affiliated aircraft activity from air-violation extraction. If the only aircraft activity belongs to UNIFIL/UN, set is_relevant=false and do not emit an air-violation action.
+- Helicopter Hovering (condition 38) only when the text says مروحي/مروحية/مروحيات/اباتشي/هليكوبتر/هليكوبتير (helicopter/Apache); no hover verb is required. مسيرة/مسيّرة/طيران مسير/درون/محلقة are always Surveillance Aircraft (36), never helicopter; a plain "طائرة" or "طيران" with no helicopter word is not Helicopter Hovering.
+- منطاد تجسسي / منطاد / spy balloon is `Spy Balloon` (condition 34): a presence-only air violation counted per caza, not an incident. `بالونات حرارية` (thermal/decoy balloons) is not a spy balloon; it stays `Decoy Flares`.
 - Exclude aircraft route/origin wording from Palestine toward Lebanon, such as "من فلسطين باتجاه لبنان", unless the same text also states a concrete violation over a named Lebanese village or caza.
 - Preserve sector phrases such as "القطاع الشرقي", "القطاع الغربي", and "القطاع الأوسط" in village/location or action text when present; downstream caza alias resolution maps them deterministically.
 - village: array of place names mentioned, or null. Never a single string.
@@ -55,6 +57,7 @@ General field rules:
 - Mandatory example: «عشرات الجرحى والشهداء» or «عشرات جرحى وشهداء» does not mean 10. Set deaths, injuries, total_deaths, and total_injuries to null unless the source gives an explicit numeric count for each tally.
 - «وقوع إصابات»، «سقوط ضحايا»، «عدد من الجرحى» assert casualties without a count: leave null, never 1 or 0. Use 0 only when the text explicitly says there were none («دون تسجيل إصابات»).
 - Singular/dual Arabic forms are explicit counts: شهيد/شهيدة/قتيل = 1, شهيدان/شهيدين/شهيدتان/قتيلان = 2, جريح/جريحة = 1, جريحان/جريحين/مصابان = 2 («مصابين» is plural). Example: «شهيدان في غارة… في بلدة كفررمان» → deaths=2 with evidence_span «شهيدان». «الشهيد فلان» (definite) names a known person, not a new count.
+- A channel or page name (e.g. «صفحة الإعلامي الشهيد علي شعيب») is not news: the word «الشهيد» in it belongs to the page name, not to a casualty of this event. Never count it as a death or injury, never use it as evidence. Count only deaths/injuries described as part of the reported event in the body; if the body says «استشهاد مواطن بغارة على بلدة X», deaths=1 comes from the body, not the header.
 - A parenthesized number after a place in a strike/shelling/demolition list is a strike count, not casualties: «الغارات من الطيران الحربي: • النبطية الفوقا (١١) • حولا (٢)» gives no deaths. Dates, clock times and links are never casualty counts.
 - For every non-null casualty count, include a matching casualty_evidence item {"field":"...","evidence_span":"literal digit span from the source"}.
 - casualty_scope classifies how the message ties casualty numbers to villages:

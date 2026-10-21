@@ -15,6 +15,17 @@ TIER2_RETRY_CAP = "tier2_retry_cap"
 CASUALTY_TRANSITION_CONFLICT = "casualty_transition_conflict"
 STORY_REVISION_REVIEW = "story_revision_review"
 
+# The seeded condition «غير مصنف / بحاجة إلى مراجعة» (Unclassified / Needs Review) is found by
+# its Arabic action label, never by id.
+UNCLASSIFIED_ACTION_AR = "غير مصنف / بحاجة إلى مراجعة"
+UNCLASSIFIED_REVIEW_REASON = (
+    "Action could not be classified from the report — confirm the incident type."
+)
+SHARED_TOLL_DISTRIBUTE_REASON = (
+    "Shared casualty toll across several villages is recorded on one row — "
+    "distribute the numbers between the villages."
+)
+
 VAGUE_CASUALTY_REVIEW_REASON = "Casualties are mentioned without an exact number."
 AGGREGATE_CASUALTY_REVIEW_REASON = (
     "Aggregate casualty toll across multiple locations has no per-location breakdown."
@@ -22,6 +33,39 @@ AGGREGATE_CASUALTY_REVIEW_REASON = (
 CATEGORY_CASUALTY_REVIEW_REASON = (
     "Category casualties require manual per-village confirmation for a multi-target bulletin"
 )
+
+
+def is_unclassified_condition(db: Any, condition_id: int | None) -> bool:
+    """True when ``condition_id`` is the Unclassified / Needs Review action."""
+    if db is None or not isinstance(condition_id, int) or isinstance(condition_id, bool):
+        return False
+    from app.news.models import Condition
+
+    try:
+        # Identity-map lookup: one query per condition per session, none afterwards.
+        condition = db.get(Condition, condition_id)
+    except Exception:
+        return False
+    label = getattr(condition, "action_ar", None)
+    return isinstance(label, str) and label.strip() == UNCLASSIFIED_ACTION_AR
+
+
+def apply_unclassified_review(db: Any, incident: Any) -> bool:
+    """Merge-path twin of the ``unclassified_action`` signal; True when the row changed.
+
+    Never overrides a human decision (verified / rejected rows) and never repeats the reason.
+    """
+    if getattr(incident, "verification_status", None) in ("verified", "rejected"):
+        return False
+    if not is_unclassified_condition(db, getattr(incident, "condition_id", None)):
+        return False
+    reason = _verification_reason(None, unclassified_action=True)
+    current = getattr(incident, "verification_reason", None) or ""
+    if incident.verification_status == "needs_verification" and UNCLASSIFIED_REVIEW_REASON in current:
+        return False
+    incident.verification_status = "needs_verification"
+    incident.verification_reason = "; ".join(dict.fromkeys(filter(None, [current or None, reason])))
+    return True
 
 
 def natural_casualty_total(deaths: int | None, injuries: int | None) -> str:
@@ -333,6 +377,7 @@ def _verification_reason(
     low_confidence_village_match: bool = False,
     condition_review_reason: str | None = None,
     hard_reasons: tuple[str, ...] = (),
+    unclassified_action: bool = False,
 ) -> str | None:
     """Return all hard reasons first, followed by informational hints."""
     reasons: list[str] = []
@@ -357,6 +402,8 @@ def _verification_reason(
         reasons.append(LOW_CONFIDENCE_VILLAGE_REVIEW_REASON)
     if condition_review_reason:
         reasons.append(condition_review_reason)
+    if unclassified_action:
+        reasons.append(UNCLASSIFIED_REVIEW_REASON)
     return "; ".join(dict.fromkeys(reasons)) or None
 
 
@@ -376,7 +423,7 @@ def _verification_reason(
 # `app/core/llm_knowledge/CHANGELOG.md`).
 
 DuplicateOutcome = Literal["none", "review", "auto_link"]
-ReviewRule = Literal["duplicate", "casualty_attribution", "governance"]
+ReviewRule = Literal["duplicate", "casualty_attribution", "governance", "classification"]
 
 
 def review_quality_payload(
@@ -496,6 +543,8 @@ class VerificationSignals:
     # locally-rewritten village_match that isn't reflected in the raw
     # message's stored match_result. Forces the quality flag either way.
     low_confidence_village_override: bool = False
+    # The matched condition is «غير مصنف / بحاجة إلى مراجعة»: the admin confirms the type.
+    unclassified_action: bool = False
 
 
 def decide_verification(
@@ -538,6 +587,9 @@ def decide_verification(
     )
     if casualty_reason:
         reasons.append(casualty_reason)
+
+    if signals.unclassified_action:
+        reasons.append(UNCLASSIFIED_REVIEW_REASON)
 
     duplicate_outcome = decide_duplicate_outcome(
         signals.duplicate_similarity_score,
@@ -586,6 +638,8 @@ def decide_verification(
             review_rule = "duplicate"
         elif selected_reason in signals.governance_hard_reasons:
             review_rule = "governance"
+        elif selected_reason == UNCLASSIFIED_REVIEW_REASON:
+            review_rule = "classification"
         else:
             review_rule = "casualty_attribution"
     structured_payload = review_quality_payload(

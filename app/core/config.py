@@ -14,6 +14,9 @@ class Settings(BaseSettings):
         ),
     )
     red_alert_enabled: bool = False
+    # CNRS breach-counting windows (air violations).
+    air_violation_warplane_window_minutes: int = 10
+    air_violation_drone_long_window_hours: int = 6
     red_alert_delivery_method: str = "public_preview"
     red_alert_channel_username: str = "redlinkleb"
     red_alert_fetch_limit: int = 500

@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import logging
 
+from app.core.llm_knowledge.source_headers import header_spans, strip_source_headers
 from app.llm.dtos import CasualtyCountEvidence, ExtractionCasualties
 from app.news.services.incident_details.casualty_text import (
+    bare_token_lacks_event_context,
     field_kind,
     find_explicit_none,
     find_supporting_mention,
@@ -57,7 +59,11 @@ def apply_casualty_count_backstop(
     Dates, times, URLs, «place (n)» strike-count entries and vague quantifiers
     («وقوع إصابات»، «عشرات الجرحى») never validate a count. A count of 0 is
     kept only when the text says so explicitly («دون تسجيل إصابات»).
+
+    Channel/page headers are removed first: a span that sits inside one, or a bare
+    «شهيد» / «الشهيد» token with no event context in the body, is rejected (NULL).
     """
+    text = strip_source_headers(text)
     evidence_by_field: dict[str, CasualtyCountEvidence] = {}
     for item in evidence or []:
         field = (item.field or "").strip()
@@ -80,6 +86,9 @@ def apply_casualty_count_backstop(
             continue
 
         field_evidence = evidence_by_field.get(field)
+        if field_evidence is not None and header_spans(field_evidence.evidence_span):
+            # The model quoted the channel name: never evidence.
+            field_evidence = None
         span_is_grounded = (
             field_evidence is not None and field_evidence.evidence_span in text
         )
@@ -103,24 +112,29 @@ def apply_casualty_count_backstop(
             reason = "zero_without_explicit_none"
         elif span_is_grounded:
             if find_supporting_mention(field_evidence.evidence_span, field, value):
-                kept_evidence.append(field_evidence)
-                continue
-            # A grounded span that does not state the value stays nulled even
-            # if another clause of the message has that number.
-            reason = "digit_not_in_source detail=" + _unsupported_detail(
-                field_evidence.evidence_span, text, field
-            )
+                if not bare_token_lacks_event_context(text, field_evidence.evidence_span):
+                    kept_evidence.append(field_evidence)
+                    continue
+                reason = "bare_token_no_event_context"
+            else:
+                # A grounded span that does not state the value stays nulled even
+                # if another clause of the message has that number.
+                reason = "digit_not_in_source detail=" + _unsupported_detail(
+                    field_evidence.evidence_span, text, field
+                )
         else:
             # Missing or ungrounded span (import/LLM evidence gaps): keep the
             # value only if the source states it next to a matching noun.
             mention = find_supporting_mention(text, field, value)
-            if mention is not None:
+            if mention is not None and not bare_token_lacks_event_context(text, mention.text):
                 kept_evidence.append(
                     CasualtyCountEvidence(field=field, evidence_span=mention.text)
                 )
                 continue
             reason = (
-                "missing_evidence_span"
+                "bare_token_no_event_context"
+                if mention is not None
+                else "missing_evidence_span"
                 if field_evidence is None
                 else "digit_not_in_source"
             )

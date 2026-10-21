@@ -661,7 +661,7 @@ def test_exact_multi_village_bulletin_is_visible_only_as_bulletin_toll() -> None
     assert api_group.casualty_scope == "bulletin_aggregate"
 
 
-@pytest.mark.parametrize("condition_id", [35, 36, 38])
+@pytest.mark.parametrize("condition_id", [34, 35, 36, 38])
 def test_air_violation_condition_is_skipped(condition_id: int, caplog) -> None:
     db = _SessionStub()
     service = IncidentMaterializationService(db)  # type: ignore[arg-type]

@@ -37,12 +37,12 @@ class AirViolationService:
 
     def create(self, payload: AirViolationCreateDTO) -> AirViolationDTO:
         if payload.condition_id not in AIR_VIOLATION_CONDITION_IDS:
-            raise ValueError("Condition must be 35, 36, or 38.")
+            raise ValueError("Condition must be 34, 35, 36, or 38.")
         return self.air_violations.create(payload)
 
     def update(self, air_violation_id: int, payload: AirViolationUpdateDTO, user_id: UUID) -> AirViolationDTO:
         if payload.condition_id not in AIR_VIOLATION_CONDITION_IDS:
-            raise ValueError("Condition must be 35, 36, or 38.")
+            raise ValueError("Condition must be 34, 35, 36, or 38.")
         try:
             result = self.air_violations.update(air_violation_id, payload, user_id)
         except StaleDataError as exc:

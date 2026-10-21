@@ -66,6 +66,7 @@ _PHOSPHORUS_TERMS = tuple(
 _STRIKE_LANGUAGE = re.compile(
     r"غار[ةه]|غارات|قصف|استهداف|استهدف|استهدفت|انفجار|شهيد|جريح|دمار|حريق"
 )
+_SPY_BALLOON = re.compile(r"منطاد|بالون(?:ات)?\s+تجسس")
 _SWEEP = re.compile(r"تمشيط|مشط")
 _AERIAL_SWEEP = re.compile(
     r"(?:اباتشي|أباتشي|مروحي|هليكوبتر).{0,40}(?:تمشيط|مشط)"
@@ -93,6 +94,9 @@ def condition_from_explicit_evidence(text: str) -> str | None:
     # label so that detonations are consistently routed to condition 21.
     if _MINING_AND_DETONATION.search(normalized):
         return "Mining & Detonation"
+    # A spy balloon is an air violation (condition 34), never an incident.
+    if _SPY_BALLOON.search(normalized) and not _STRIKE_LANGUAGE.search(normalized):
+        return "Spy Balloon"
     # Munition is more specific than the delivery platform in the same clause.
     if any(term in normalized for term in _PHOSPHORUS_TERMS):
         return "Phosphorus Bombs"

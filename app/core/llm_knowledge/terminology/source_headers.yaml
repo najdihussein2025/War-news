@@ -1,3 +1,6 @@
+# Channel / page headers. A header is the name of the page that posts the news,
+# never news content: it must not produce a death, injury, status or evidence span.
+# Add a header with one line below. Matching ignores diacritics, hamza/ة/ى
+# spelling, spacing, «صفحة», and `|` / `-` separators, and is not limited to line 1.
 headers:
   - text: "صفحة الإعلامي الشهيد علي شعيب"
-    notes: "Channel/page label; it is not an event casualty statement."

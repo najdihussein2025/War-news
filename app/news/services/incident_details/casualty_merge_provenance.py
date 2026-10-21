@@ -22,6 +22,7 @@ from app.news.services.incident_details.casualty_extraction_validation import (
     line_rejection_reason,
 )
 from app.news.services.incident_details.casualty_text import (
+    bare_token_lacks_event_context,
     field_kind,
     find_count_mentions,
     strip_page_header,
@@ -98,21 +99,36 @@ def vet_incoming_casualties(
     *,
     incident_village_id: int | None,
     same_event: bool = True,
+    db: Any | None = None,
+    raw_message_id: int | None = None,
 ) -> ProvenanceDecision:
-    """Decide which incoming casualty values may be adopted from ``raw_message``."""
+    """Decide which incoming casualty values may be adopted from ``raw_message``.
+
+    A positive number needs a message body to prove it. ``raw_message`` may be
+    loaded here from ``db`` + ``raw_message_id``; when no message can be found the
+    numbers are refused (never copied unvetted).
+    """
+    if raw_message is None and db is not None and raw_message_id is not None:
+        from app.news.models import RawMessage
+
+        raw_message = db.get(RawMessage, raw_message_id)
     present = {k: incoming.get(k) for k in CASUALTY_KEYS if isinstance(incoming.get(k), int)
                and not isinstance(incoming.get(k), bool)}
-    if raw_message is None or not present:
-        # No linked message to vet, or nothing to adopt.
+    if not present:
+        # Nothing to adopt.
         return ProvenanceDecision(values={k: incoming.get(k) for k in CASUALTY_KEYS if k in incoming})
     positive_present = {k: v for k, v in present.items() if v > 0}
-    raw_id = getattr(raw_message, "id", None)
+    raw_id = getattr(raw_message, "id", None) if raw_message is not None else raw_message_id
 
     def reject_all(reason: str) -> ProvenanceDecision:
         rejected = [{"field": k, "value": v, "reason": reason, "raw_message_id": raw_id} for k, v in present.items()]
         values = {k: None for k in CASUALTY_KEYS if k in incoming}
         return ProvenanceDecision(values=values, rejected=rejected, status_allowed=False, event_mismatch=True)
 
+    if raw_message is None:
+        if not positive_present:
+            return ProvenanceDecision(values={k: incoming.get(k) for k in CASUALTY_KEYS if k in incoming})
+        return reject_all("no_linked_message")
     if not same_event:
         return reject_all("different_event")
     village_reason = village_rejection_reason(getattr(raw_message, "match_result", None), incident_village_id)
@@ -131,7 +147,9 @@ def vet_incoming_casualties(
     # "this body states casualties of this kind", not "one mention equals the value".
     valid, header_only = [], False
     for mention in find_count_mentions(body) if body else []:
-        if quote_rejection_reason(body, mention.text) is None:
+        if quote_rejection_reason(body, mention.text) is None and not bare_token_lacks_event_context(
+            body, mention.text
+        ):
             valid.append(mention)
         else:
             header_only = True
@@ -174,3 +192,32 @@ def filter_validated_claims(claims, cleaned_by_source: dict[int, str]):
         else:
             kept.append(claim)
     return kept, rejected
+
+
+_ROOT_TO_KEY = {
+    "deaths": "deaths", "injuries": "injuries",
+    "total_deaths": "total_deaths", "total_injuries": "total_injuries",
+    "male_deaths": "male_d", "male_injuries": "male_i",
+    "female_deaths": "female_d", "female_injuries": "female_i",
+    "children_deaths": "children_d", "children_injuries": "children_i",
+}
+
+
+def vet_root_casualties(raw_message: Any | None, casualties: Any, *, db: Any | None = None, raw_message_id: int | None = None):
+    """Root extraction casualties with every number the message body cannot prove set to NULL.
+
+    Returns ``(casualties, rejected)``. Used before a stored extraction fills incident rows
+    (Tier 2 root fill, bulletin reconciliation), so a number that only a channel header
+    «proved» never reaches an incident.
+    """
+    values = casualties.model_dump(mode="python")
+    incoming = {key: values.get(field) for field, key in _ROOT_TO_KEY.items() if isinstance(values.get(field), int)}
+    decision = vet_incoming_casualties(
+        raw_message, incoming, incident_village_id=None, db=db, raw_message_id=raw_message_id
+    )
+    if decision.clean:
+        return casualties, []
+    for field, key in _ROOT_TO_KEY.items():
+        if key in incoming and decision.values.get(key) is None:
+            values[field] = None
+    return casualties.__class__.model_validate(values), decision.rejected

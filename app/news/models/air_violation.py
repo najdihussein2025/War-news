@@ -20,8 +20,10 @@ if TYPE_CHECKING:
 class AirViolation(Base):
     """Air activity without casualty or damage details.
 
-    ``condition_id`` is expected to reference condition 35 (warplane),
-    36 (surveillance aircraft), or 38 (helicopter hovering).
+    ``condition_id`` is expected to reference condition 34 (spy balloon),
+    35 (warplane), 36 (surveillance aircraft), or 38 (helicopter hovering).
+    One row is stored per report; breaches are counted at read time by
+    ``breach_counting_service``. ``window_id`` is legacy and no longer read.
     """
 
     __tablename__ = "air_violations"

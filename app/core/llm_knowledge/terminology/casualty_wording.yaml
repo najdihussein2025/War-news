@@ -3,12 +3,7 @@
 # Not listed in index.yaml on purpose: these entries do not reach prompts.
 # Singular / dual / plural casualty nouns live in casualty_gender.yaml.
 
-# --- Page headers that name a past victim, not a new casualty ---
-
-- term: "صفحة الإعلامي الشهيد علي شعيب"
-  category: page_header
-  meaning: source_header
-  notes: "Seen in ~464 messages (2026-08/09). Tokens before الشهيد are optional in matching."
+# Channel/page headers live in source_headers.yaml (one registry).
 
 # --- Extra casualty terms (verbs / verbal nouns) used for number adjacency ---
 
@@ -504,6 +499,30 @@
 - term: "جرح"
   category: singular_verbal_noun
   meaning: injuries
+- term: "شخصين"
+  category: person_dual
+  meaning: none
+- term: "شخصان"
+  category: person_dual
+  meaning: none
+- term: "مواطنين"
+  category: person_dual
+  meaning: male
+- term: "مواطنان"
+  category: person_dual
+  meaning: male
+- term: "رجلين"
+  category: person_dual
+  meaning: male
+- term: "شابين"
+  category: person_dual
+  meaning: male
+- term: "امرأتين"
+  category: person_dual
+  meaning: female
+- term: "مواطنتين"
+  category: person_dual
+  meaning: female
 - term: "مواطن"
   category: person_singular
   meaning: male

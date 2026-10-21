@@ -18,6 +18,7 @@ from app.llm.services.ollama_auth_failures import coerce_ollama_auth_failure
 from app.news.models import MessageStatus
 from app.news.models.raw_message import FAILED_STAGE_EXTRACTION
 from app.core.config import settings
+from app.core.llm_knowledge.message_text import clean_message_text
 from app.core.llm_availability import LLMUnavailableError, is_llm_connection_error
 from app.news.repositories.pipeline_claim_repository import PipelineClaimRepository
 from app.news.repositories.raw_message_repository import RawMessageRepository
@@ -55,7 +56,8 @@ def run_tier1_extraction_for_message(raw_message_id: int) -> None:
         if message.status != MessageStatus.parsed:
             PipelineClaimRepository(db).release_claim(raw_message_id)
             return
-        post_text = message.raw_text or ""
+        # raw_text stays untouched in the DB; every stage reads the header-free body.
+        post_text = clean_message_text(message.raw_text)
         cnrs_classification = message.cnrs_classification
         if settings.summary_flow_mode in {"shadow", "live"}:
             try:
@@ -173,7 +175,8 @@ def run_tier2_detail_fill_for_message(raw_message_id: int) -> int:
             raise ValueError(
                 f"raw_message id={raw_message_id} has no extraction_result"
             )
-        post_text = message.raw_text or ""
+        # raw_text stays untouched in the DB; every stage reads the header-free body.
+        post_text = clean_message_text(message.raw_text)
         extraction_payload = dict(message.extraction_result)
 
     extraction = ExtractionResult.model_validate(extraction_payload)

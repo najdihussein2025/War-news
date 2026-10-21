@@ -5,6 +5,7 @@ import logging
 
 import logging
 
+from app.core.llm_knowledge.source_headers import strip_source_headers
 from app.llm.dtos import ExtractionResult
 from app.llm.services.cnrs_extraction_fallback import trusted_cnrs_action
 from app.news.services.matching.condition_evidence_override import (
@@ -29,6 +30,7 @@ def final_action_description(
     extracted_action: str | None,
     cnrs_classification: dict | None,
 ) -> str | None:
+    post_text = strip_source_headers(post_text)
     text_action = apply_condition_evidence_override(post_text, extracted_action)
     if (
         extracted_action
@@ -47,8 +49,8 @@ def finalize_extraction_action(
     post_text: str,
     cnrs_classification: dict | None,
     raw_message_id: int | None = None,
-    raw_message_id: int | None = None,
 ) -> ExtractionResult:
+    post_text = strip_source_headers(post_text)
     cnrs_action = trusted_cnrs_action(cnrs_classification, post_text)
     final_action = final_action_description(
         post_text,
@@ -68,8 +70,6 @@ def finalize_extraction_action(
     )
     if action_source == "cnrs_subtype_fallback":
         logger.info("Using cnrs_subtype_fallback raw_message_id=%s", raw_message_id)
-    if action_source == "cnrs_subtype_fallback":
-        logger.info("CNRS subtype fallback used raw_message_id=%s", raw_message_id)
 
     needs_review = result.needs_review
     review_reason = result.review_reason

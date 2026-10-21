@@ -15,6 +15,7 @@ from app.sources.services.red_alert_collector import (
     RED_ZONE_OCR_MARKER,
     RedAlertPost,
     RedAlertCollector,
+    aircraft_term_conflict,
     classify_condition,
     fetch_limit_for_hours,
     is_preview_boilerplate,
@@ -26,6 +27,7 @@ from app.sources.services.red_alert_collector import (
 from app.core.scripts.run_red_alert_collector import collector_kwargs_for_hours
 from app.news.models import MessageStatus, RawMessage, Village
 from app.news.models.air_violation import AirViolation
+from app.news.services.air_violations.air_violation_eligibility import evaluate_air_violation_text
 from app.news.repositories.air_violation_repository import AirViolationRepository
 from app.news.services.air_violations.red_alert_air_violation_service import RedAlertAirViolationService
 from app.sources.models import Source, SourceType
@@ -420,34 +422,49 @@ def test_every_drone_variant_is_surveillance(term: str) -> None:
 @pytest.mark.parametrize(
     "text",
     [
-        "مروحية تحلق فوق صور",
-        "طيران مروحي يحلق فوق الناقورة",
-        "مروحيات تحوم فوق الجنوب",
-        "هليكوبتر حلقت فوق الخيام",
-        "helicopter hovering over Tyre",
+        "مروحي إسرائيلي فوق صور",
+        "مروحية فوق صور",
+        "مروحيه فوق صور",
+        "مروحيات معادية في الجنوب",
+        "طيران مروحي في الجنوب",
+        "اباتشي تحلق فوق الناقورة",
+        "أباتشي فوق الناقورة",
+        "هليكوبتر اسرائيلية",
+        "هليكوبتير فوق الخيام",
+        "helicopter over Tyre",
+        "Apache over Naqoura",
+        "كوترية فوق صور",
     ],
 )
-def test_helicopter_requires_and_accepts_flight_language(text: str) -> None:
+def test_every_helicopter_spelling_is_helicopter_without_hover_verb(text: str) -> None:
     assert classify_condition(text) == 38
 
 
-@pytest.mark.parametrize(
-    "text",
-    [
-        "مروحية فوق صور",
-        "طيران مروحي في الجنوب",
-        "هليكوبتر اسرائيلية",
-        "helicopter over Tyre",
-        "مروحيات معادية",
-    ],
-)
-def test_helicopter_without_flight_language_is_unclassified(text: str) -> None:
-    assert classify_condition(text) is None
+def test_drone_text_with_hover_verb_is_never_helicopter() -> None:
+    assert classify_condition("مسيرة معادية تحلق فوق بنت جبيل") == 36
 
 
-def test_apache_strike_is_never_helicopter_hovering() -> None:
-    assert classify_condition("مروحية أباتشي استهدفت مبنى في ميفدون") is None
-    assert classify_condition("AH-64 attacked a building") is None
+def test_aircraft_without_a_helicopter_word_is_not_helicopter() -> None:
+    assert classify_condition("طائرة تحلق فوق صور") != 38
+
+
+def test_text_with_helicopter_and_drone_words_is_drone_with_both_term_sets_recorded() -> None:
+    text = "مروحية ومسيرة معادية تحلقان فوق صور"
+
+    assert classify_condition(text) == 36
+    conflict = aircraft_term_conflict(text)
+    assert conflict is not None
+    assert "مروحيه" in conflict["helicopter_terms"]
+    assert "مسيره" in conflict["drone_terms"]
+    assert aircraft_term_conflict("مروحية تحلق فوق صور") is None
+
+
+def test_apache_strike_is_helicopter_by_keyword_but_rejected_as_incident() -> None:
+    text = "مروحية أباتشي استهدفت مبنى في ميفدون"
+
+    assert classify_condition(text) == 38
+    assert evaluate_air_violation_text(text).eligible is False
+    assert evaluate_air_violation_text(text).belongs_in_incidents is True
 
 
 def test_ordinary_warplane_overflight_is_warplane() -> None:
@@ -683,7 +700,7 @@ def test_red_zone_canonical_name_shared_by_two_villages_is_left_unmatched() -> N
     assert message.status == MessageStatus.rejected
 
 
-def test_red_zone_rejects_surveillance_villages_from_different_cazas() -> None:
+def test_red_zone_keeps_surveillance_villages_from_different_cazas() -> None:
     repository = MagicMock()
     repository.route_from_match.return_value = True
     service = RedAlertAirViolationService(repository, lambda text: 36, match_village, match_villages)
@@ -694,9 +711,28 @@ def test_red_zone_rejects_surveillance_villages_from_different_cazas() -> None:
 
     message = _red_zone_message(109, "", "Sohmor Chiyah")
 
-    assert service.process(message, [sohmor, chiyah]) is False
+    assert service.process(message, [sohmor, chiyah]) is True
+    routed_result = repository.route_from_match.call_args.args[1]
+    # One row with both villages; breach counting gives one breach per caza.
+    assert {match.matched_village_id for match in routed_result.village_matches} == {404, 405}
+
+
+def test_surveillance_report_with_only_a_region_is_still_rejected() -> None:
+    repository = MagicMock()
+    service = RedAlertAirViolationService(repository, lambda text: 36, lambda text, villages: None)
+    message = SimpleNamespace(
+        id=110,
+        raw_text="مسيرة معادية تحلق فوق الجنوب",
+        raw_payload={},
+        filter_result=None,
+        match_result=None,
+        status=MessageStatus.pending,
+        error_message=None,
+    )
+
+    assert service.process(message, []) is False
     repository.route_from_match.assert_not_called()
-    assert message.filter_result["reasoning"] == "Surveillance locations span multiple cazas"
+    assert message.filter_result["reasoning"] == "Surveillance location is not confirmed to one caza"
 
 
 def test_red_zone_ocr_ignores_alias_outside_the_red_zone_crop() -> None:
@@ -888,3 +924,17 @@ def test_process_persists_air_violation_row_and_routed_status() -> None:
         db.close()
         transaction.rollback()
         connection.close()
+
+
+def test_helicopter_terminology_matches_collector_keywords() -> None:
+    from app.sources.services.red_alert_collector import AIR_KEYWORDS, HELICOPTER_KEYWORDS, normalize_arabic
+
+    yaml_terms = {
+        normalize_arabic(term)
+        for condition_id, terms in AIR_KEYWORDS
+        if condition_id == 38
+        for term in terms
+    }
+    expected = {normalize_arabic(term) for term in HELICOPTER_KEYWORDS}
+
+    assert expected <= yaml_terms

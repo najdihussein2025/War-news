@@ -359,6 +359,51 @@
   category: air_violation_keyword
   meaning: "Helicopter"
 
+- term: "مروحي"
+  category: air_violation_keyword
+  meaning: "Helicopter"
+
+- term: "اباتشي"
+  category: air_violation_keyword
+  meaning: "Helicopter"
+
+- term: "أباتشي"
+  category: air_violation_keyword
+  meaning: "Helicopter"
+
+- term: "هليكوبتير"
+  category: air_violation_keyword
+  meaning: "Helicopter"
+
+- term: "apache"
+  category: air_violation_keyword
+  meaning: "Helicopter"
+
+- term: "منطاد تجسسي"
+  category: air_violation_keyword
+  meaning: "Spy balloon"
+  notes: "Maps to condition id 34. Air violation counted per caza; not an incident."
+
+- term: "منطاد تجسس"
+  category: air_violation_keyword
+  meaning: "Spy balloon"
+
+- term: "منطاد"
+  category: air_violation_keyword
+  meaning: "Spy balloon"
+
+- term: "بالون تجسس"
+  category: air_violation_keyword
+  meaning: "Spy balloon"
+
+- term: "بالون تجسسي"
+  category: air_violation_keyword
+  meaning: "Spy balloon"
+
+- term: "spy balloon"
+  category: air_violation_keyword
+  meaning: "Spy balloon"
+
 # --- Evidence-override stems (return action_en) ---
 
 - term: "دبابة"

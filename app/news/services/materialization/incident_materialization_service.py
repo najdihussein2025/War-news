@@ -64,6 +64,7 @@ from app.news.services.incident_details.category_mapper import (
     suppress_category_casualties,
 )
 from app.news.services.incident_details.casualty_status import (
+    enforce_status_matches_numbers,
     status_for_incident_row,
     target_location_count_from_extraction,
 )
@@ -99,6 +100,7 @@ from app.news.services.materialization.verification_signals import (
     VerificationSignals,
     _verification_reason,
     active_non_duplicate_verification_reasons,
+    is_unclassified_condition,
     casualty_review_reason,
     decide_verification,
 )
@@ -1230,6 +1232,7 @@ class IncidentMaterializationService:
                 duplicate_same_condition=duplicate_same_condition,
                 duplicate_same_casualties=duplicate_same_casualties,
                 duplicate_event_gap_hours=duplicate_event_gap_hours,
+                unclassified_action=is_unclassified_condition(self.db, condition_id),
             ),
         )
         verification_reason = "; ".join(verification_reasons) or None
@@ -1263,6 +1266,7 @@ class IncidentMaterializationService:
             story_group_id=story_group_id,
             created_by=None,
         )
+        enforce_status_matches_numbers(incident)
 
         try:
             self.db.add(incident)
@@ -1783,6 +1787,9 @@ class IncidentMaterializationService:
                     duplicate_event_gap_hours=self._event_gap_hours(
                         duplicate_candidate, event_datetime
                     ),
+                    unclassified_action=is_unclassified_condition(
+                        self.db, village_condition_id
+                    ),
                 ),
             )
             verification_reason = "; ".join(verification_reasons) or None
@@ -1819,6 +1826,7 @@ class IncidentMaterializationService:
                 story_group_id=shared_story_group_id,
                 created_by=None,
             )
+            enforce_status_matches_numbers(incident)
 
             try:
                 self.db.add(incident)
@@ -2435,6 +2443,9 @@ class IncidentMaterializationService:
         group = self.bulletin_groups.get_by_raw_message_id(representative.id)
         if group is not None and incidents:
             self.bulletin_groups.link_incidents(group, incidents)
+            if group.casualty_scope == StoredCasualtyScope.bulletin_aggregate:
+                # Owner and members alike: an admin distributes the shared toll.
+                self.bulletin_groups.flag_for_distribution(group)
             self.db.commit()
 
     def _record_scope_downgrade(
