@@ -1,5 +1,12 @@
 # llm_knowledge CHANGELOG
 
+## 2026-10-21 - Connector-linked multi-action prose recovery
+
+- **Real example:** raw message 46363: a Merkava attack on Khiam concurrent with machine-gun sweeping was previously materialized as Tank Fire only.
+- **Rules changed:** Tier 1 now treats concurrent-action connectors as separate action clauses, permits independent same-village sub-events, and requires clause-local locations with inheritance only when the linked clause omits one.
+- **Recovery added:** deterministic connector recovery uses existing condition-label terminology and replaces model sub-events only when it adds action/location pairs. Persisted extraction provenance is `sub_events_source="connector_recovery"`.
+- **Tests added:** same-village and different-village connector cases plus non-action and single-action negatives.
+
 ## 2026-10-19 - Shared toll on the first village mentioned (Step 3)
 
 - **Real example:** `قصف على صور والنبطية وبيروت والحصيلة 10 شهداء` (shape of the
