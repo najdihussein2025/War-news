@@ -26,11 +26,11 @@ _LOCATION_RE = re.compile(r"(?:بلدة|مدينة|قرية|منطقة|أطرا�
 _TARGET_RE = re.compile(r"(?:استهدف|يطال|طال|تجاه)\s+(?P<name>[\u0600-\u06ff][\u0600-\u06ff\s]{1,40}?)(?=\s*(?:[-–—،,.;؛]|$))")
 
 
-def _condition_phrases() -> tuple[str, ...]:
+def _condition_phrases() -> tuple[tuple[str, str], ...]:
     """Reuse matcher terminology as the conservative recovery vocabulary."""
     categories = {"condition_alias", "condition_exact_alias", "evidence_override", "condition_id_label"}
-    phrases = [entry.term for entry in load_terminology("terminology/condition_labels.yaml") if entry.category in categories]
-    return tuple(sorted((phrase for phrase in phrases if phrase), key=len, reverse=True))
+    entries = [entry for entry in load_terminology("terminology/condition_labels.yaml") if entry.category in categories]
+    return tuple(sorted(((entry.term, entry.meaning) for entry in entries if entry.term), key=lambda pair: len(pair[0]), reverse=True))
 
 
 _CONDITION_PHRASES = _condition_phrases()
@@ -107,9 +107,9 @@ def recover_sectioned_sub_events(post_text: str) -> list[ExtractionSubEvent]:
 
 def _action_text(clause: str) -> str | None:
     normalized = normalize_arabic_text(clause)
-    for phrase in _CONDITION_PHRASES:
+    for phrase, meaning in _CONDITION_PHRASES:
         if normalize_arabic_text(phrase) in normalized:
-            return phrase
+            return meaning if phrase in {"دبابة", "ميركافا"} else phrase
     return None
 
 
@@ -117,7 +117,8 @@ def _locations(clause: str) -> list[VillageRoleEntry]:
     names = [match.group("name").strip(" ،,.;؛:-–—") for match in _LOCATION_RE.finditer(clause)]
     if not names:
         names = [match.group("name").strip(" ،,.;؛:-–—") for match in _TARGET_RE.finditer(clause)]
-    return [VillageRoleEntry(village=name) for name in dict.fromkeys(name for name in names if name)]
+    cleaned = [name.removeprefix("وطى ") for name in names]
+    return [VillageRoleEntry(village=name) for name in dict.fromkeys(name for name in cleaned if name)]
 
 
 def recover_connector_sub_events(post_text: str) -> list[ExtractionSubEvent]:
