@@ -50,6 +50,7 @@ from app.llm.services.split_phase_extraction import (
     extract_segment_event,
 )
 from app.llm.services.sectioned_bulletin import (
+    recover_connector_sub_events,
     recover_sectioned_sub_events,
     target_pair_count,
 )
@@ -629,14 +630,19 @@ class OllamaExtractionService(ExtractionClassifierInterface):
             raw_message_id=raw_message_id,
         )
         recovered_sections = recover_sectioned_sub_events(post_text)
-        if target_pair_count(recovered_sections) > target_pair_count(sub_events):
+        recovered_connectors = recover_connector_sub_events(post_text)
+        recovered = max((recovered_sections, recovered_connectors), key=target_pair_count)
+        sub_events_source = None
+        if target_pair_count(recovered) > target_pair_count(sub_events):
             logger.info(
-                "Recovered sectioned bulletin raw_message_id=%s model_pairs=%s recovered_pairs=%s",
+                "Recovered %s sub-events raw_message_id=%s model_pairs=%s recovered_pairs=%s",
+                "connector" if recovered is recovered_connectors else "sectioned",
                 raw_message_id,
                 target_pair_count(sub_events),
-                target_pair_count(recovered_sections),
+                target_pair_count(recovered),
             )
-            sub_events = recovered_sections
+            sub_events = recovered
+            sub_events_source = "connector_recovery" if recovered is recovered_connectors else "sectioned_recovery"
         normalized_sub_events: list[ExtractionSubEvent] = []
         for sub_event in sub_events:
             (
@@ -712,6 +718,7 @@ class OllamaExtractionService(ExtractionClassifierInterface):
                 raw_message_id=raw_message_id,
             ),
             sub_events=sub_events,
+            sub_events_source=sub_events_source,
             categories=categories,
             casualties=casualties,
             casualty_evidence=casualty_evidence,

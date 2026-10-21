@@ -12,6 +12,7 @@ from __future__ import annotations
 import re
 
 from app.core.text_normalization import normalize_arabic_text
+from app.core.llm_knowledge.loader import load_terminology
 from app.llm.dtos import ExtractionCasualties, ExtractionSubEvent, VillageRoleEntry
 
 
@@ -20,6 +21,19 @@ _BETWEEN_RE = re.compile(
     r"^بين(?:\s+بلدتي)?\s+(?P<left>.+?)\s+و(?P<right>.+?)$"
 )
 _URL_OR_FOOTER_RE = re.compile(r"(?:https?://|www\.|#\S+|المصدر\s*:)", re.IGNORECASE)
+_CONNECTOR_RE = re.compile(r"\s+(?:تزامناً\s+مع|بالتزامن\s+مع|ترافق\s+مع|مترافقاً\s+مع|وسط|إضافة\s+إلى)\s+")
+_LOCATION_RE = re.compile(r"(?:بلدة|مدينة|قرية|منطقة|أطراف(?:\s+بلدة)?|محيط(?:\s+بلدة)?|باتجاه)\s+(?P<name>[\u0600-\u06ff][\u0600-\u06ff\s]{1,40}?)(?=\s*(?:[-–—،,.;؛]|$|تزامناً|بالتزامن|ترافق|مترافقاً|وسط|إضافة))")
+_TARGET_RE = re.compile(r"(?:استهدف|يطال|طال|تجاه)\s+(?P<name>[\u0600-\u06ff][\u0600-\u06ff\s]{1,40}?)(?=\s*(?:[-–—،,.;؛]|$))")
+
+
+def _condition_phrases() -> tuple[str, ...]:
+    """Reuse matcher terminology as the conservative recovery vocabulary."""
+    categories = {"condition_alias", "condition_exact_alias", "evidence_override", "condition_id_label"}
+    phrases = [entry.term for entry in load_terminology("terminology/condition_labels.yaml") if entry.category in categories]
+    return tuple(sorted((phrase for phrase in phrases if phrase), key=len, reverse=True))
+
+
+_CONDITION_PHRASES = _condition_phrases()
 
 
 def _heading_action(line: str) -> str | None:
@@ -89,6 +103,39 @@ def recover_sectioned_sub_events(post_text: str) -> list[ExtractionSubEvent]:
         )
 
     return events if len(events) >= 2 else []
+
+
+def _action_text(clause: str) -> str | None:
+    normalized = normalize_arabic_text(clause)
+    for phrase in _CONDITION_PHRASES:
+        if normalize_arabic_text(phrase) in normalized:
+            return phrase
+    return None
+
+
+def _locations(clause: str) -> list[VillageRoleEntry]:
+    names = [match.group("name").strip(" ،,.;؛:-–—") for match in _LOCATION_RE.finditer(clause)]
+    if not names:
+        names = [match.group("name").strip(" ،,.;؛:-–—") for match in _TARGET_RE.finditer(clause)]
+    return [VillageRoleEntry(village=name) for name in dict.fromkeys(name for name in names if name)]
+
+
+def recover_connector_sub_events(post_text: str) -> list[ExtractionSubEvent]:
+    """Recover two action/location clauses joined by an explicit connector."""
+    text = (post_text or "").strip()
+    match = _CONNECTOR_RE.search(text)
+    if match is None or _URL_OR_FOOTER_RE.search(text):
+        return []
+    clauses = [text[:match.start()].strip(" ،,.;؛:-–—"), text[match.end():].strip(" ،,.;؛:-–—")]
+    actions = [_action_text(clause) for clause in clauses]
+    if not all(actions):
+        return []
+    locations = [_locations(clause) for clause in clauses]
+    if not locations[0] and not locations[1]:
+        return []
+    if not locations[0]: locations[0] = locations[1]
+    if not locations[1]: locations[1] = locations[0]
+    return [ExtractionSubEvent(locations=clause_locations, action_text=action, casualties=ExtractionCasualties(), evidence_span=clause) for clause, action, clause_locations in zip(clauses, actions, locations, strict=True)]
 
 
 def target_pair_count(events: list[ExtractionSubEvent]) -> int:

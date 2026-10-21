@@ -232,6 +232,7 @@ class ExtractionResult(BaseModel):
     source_event_subtype: str | None = None
     source_action_hint: str | None = None
     sub_events: list[ExtractionSubEvent] = Field(default_factory=list)
+    sub_events_source: str | None = None
 
     @field_validator("village", mode="before")
     @classmethod
@@ -281,7 +282,7 @@ class ExtractionResult(BaseModel):
 
     @model_serializer(mode="wrap")
     def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
-        return _drop_unset_optional_fields(handler(self), ("extraction_flow",))
+        return _drop_unset_optional_fields(handler(self), ("extraction_flow", "sub_events_source"))
 
     @model_validator(mode="before")
     @classmethod
