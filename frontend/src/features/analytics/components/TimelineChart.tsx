@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { AIR_TYPE_COLORS, FAMILY_COLORS } from "../colors";
-import { peakOf } from "../mappers";
+import { coverageWarning, peakOf } from "../mappers";
 import type { Grain, TimelineResponse } from "../types";
 import { EChart, type EChartOption } from "./EChart";
 
@@ -11,6 +11,7 @@ export const TimelineChart = ({ data, grain, height = 300 }: { data: TimelineRes
     const dates = data.total.map((p) => p.date);
     const peak = peakOf(data);
     const gaps = grain === "day" ? data.coverage.gap_dates : [];
+    const coverageByDate = new Map(data.coverage.flagged.map((flag) => [flag.date, flag.status]));
     const bars = data.series.map((s, i) => ({
       name: s.label_en,
       type: "bar" as const,
@@ -20,14 +21,20 @@ export const TimelineChart = ({ data, grain, height = 300 }: { data: TimelineRes
       emphasis: { focus: "series" as const },
       data: s.points.map((p) => p.value),
       ...(i === data.series.length - 1 && gaps.length
-        ? { markArea: { silent: true, itemStyle: { color: "rgba(140,160,175,0.18)" }, data: gaps.map((g) => [{ xAxis: g }, { xAxis: g }]) } }
+        ? { markArea: { silent: true, itemStyle: { color: "rgba(140,160,175,0.18)", decal: { symbol: "rect", dashArrayX: [1, 0], dashArrayY: [2, 3], rotation: -Math.PI / 4, color: "rgba(80,99,115,0.4)" } }, data: gaps.map((g) => [{ xAxis: g }, { xAxis: g }]) } }
         : {}),
     }));
     return {
       animation: false,
       grid: { left: 44, right: 16, top: 48, bottom: 40 },
-      tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-      legend: { top: 0, type: "scroll", textStyle: { color: "#506373", fontSize: 12 } },
+      tooltip: { trigger: "axis", axisPointer: { type: "shadow" }, formatter: (items: Array<{ axisValue: string; marker: string; seriesName: string; value: number }>) => {
+        const date = items[0]?.axisValue;
+        const coverage = date ? coverageByDate.get(date) : undefined;
+        const lines = items.map((item) => `${item.marker}${item.seriesName}: <strong>${item.value}</strong>`);
+        const warning = coverageWarning(coverage);
+        return [`<strong>${date ?? ""}</strong>`, ...lines, warning ? `<span style="color:#506373">${warning}</span>` : ""].filter(Boolean).join("<br/>");
+      } },
+      legend: { top: 0, type: "plain", width: "90%", textStyle: { color: "#506373", fontSize: 12 } },
       xAxis: { type: "category", data: dates, axisLabel: { color: "#506373", fontSize: 12, hideOverlap: true }, axisLine: { lineStyle: { color: "#b8c7d3" } } },
       yAxis: { type: "value", minInterval: 1, axisLabel: { color: "#506373", fontSize: 12 }, splitLine: { lineStyle: { color: "#dbe5ed" } } },
       series: [

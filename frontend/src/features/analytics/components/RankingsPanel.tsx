@@ -19,6 +19,9 @@ const TABS: Tab[] = [
   { id: "mohafaza", label: "By mohafaza", level: "mohafaza", metric: "incidents" },
 ];
 
+/** Default order of every ranking tab: the selected metric, highest first (ties keep the API's name order). */
+export const RANKING_SORT = { key: "value", direction: "desc" as const };
+
 type Props = {
   filters: AnalyticsFilters;
   familyNames: Record<string, string>;
@@ -36,7 +39,7 @@ export const RankingsPanel = ({ filters, familyNames, enabled, onFocusArea }: Pr
 
   const valueHeader = metric === "breaches" ? "Breaches" : tab.metric === "incidents" ? "Incidents" : tab.metric === "deaths" ? "Deaths" : "Injuries";
   const columns: Array<DataTableColumn<RankingRow>> = [
-    { key: "rank", header: "#", render: (_r, i) => <span className="tabular-nums text-text-muted">{i + 1}</span>, cellClassName: "w-10" },
+    { key: "rank", header: "#", render: (r) => <span className="tabular-nums text-text-muted">{r.rank}</span>, sortValue: (r) => r.rank, cellClassName: "w-10" },
     { key: "name", header: "Area", render: (r) => <NameCell en={r.name_en} ar={r.name_ar} sub={r.parent_name_en} />, sortValue: (r) => r.name_en ?? "" },
     { key: "value", header: valueHeader, render: (r) => <span className="font-semibold tabular-nums">{formatNumber(r.value)}</span>, sortValue: (r) => r.value, cellClassName: "text-right", headerClassName: "text-right" },
     ...(metric !== "breaches" ? [
@@ -69,6 +72,9 @@ export const RankingsPanel = ({ filters, familyNames, enabled, onFocusArea }: Pr
         onRowClick={(r) => onFocusArea(r.code, r.level)}
         density="compact"
         minWidth="640px"
+        initialSort={RANKING_SORT}
+        clientSort={false}
+        key={tab.id}
       />
       <p className="mt-2 text-caption text-text-muted">Click a row to focus the map and open the area profile.</p>
     </div>

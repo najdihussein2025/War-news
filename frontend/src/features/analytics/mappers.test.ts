@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deltaView, fillDays, formatNumber, hasArabic, mapValueIndex, peakOf, playbackFrames, sparkPath } from "./mappers";
+import { coverageWarning, deltaView, fillDays, formatNumber, hasArabic, mapValueIndex, peakOf, playbackFrames, sparkPath } from "./mappers";
 import type { TimelineResponse } from "./types";
 
 describe("analytics data mappers", () => {
@@ -39,6 +39,13 @@ describe("analytics data mappers", () => {
     const t = { total: [{ date: "a", value: 1 }, { date: "b", value: 7 }, { date: "c", value: 2 }] } as TimelineResponse;
     expect(peakOf(t)).toEqual({ index: 1, value: 7 });
     expect(peakOf({ total: [{ date: "a", value: 0 }] } as TimelineResponse)).toBeNull();
+  });
+
+  it("labels incomplete daily coverage without treating it as zero activity", () => {
+    expect(coverageWarning("low")).toContain("Low message coverage");
+    expect(coverageWarning("none")).toContain("No ingested messages");
+    expect(coverageWarning("ok")).toBeNull();
+    expect(coverageWarning("unknown")).toBeNull();
   });
 
   it("plays back daily for short ranges and weekly for long ones", () => {

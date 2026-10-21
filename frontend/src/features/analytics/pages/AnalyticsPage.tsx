@@ -16,13 +16,19 @@ import { PeaksCards } from "../components/PeaksCards";
 import { PlayControls, type Playback } from "../components/PlayControls";
 import { RankingsPanel } from "../components/RankingsPanel";
 import { TimelineChart } from "../components/TimelineChart";
-import { quantileBreaks } from "../colors";
+import { buildScale, type MapScale } from "../colors";
 import { defaultFilters, parseFilters, resolveRange, serializeFilters, toApiParams } from "../filters";
 import { useDebounced, useGeo, useKpis, useMapData, useMatrix, useMeta, usePeaks, usePrefetchMap, useTimeline } from "../hooks";
 import { playbackFrames } from "../mappers";
 import type { AnalyticsFilters, Grain, Level, MapResponse } from "../types";
 
 const IDLE: Playback = { active: false, playing: false, preparing: false, progress: 0, index: 0, labels: [] };
+const TABS = [
+  ["overview", "Overview"], ["map", "Map"], ["incidents", "Incidents"],
+  ["casualties", "Casualties"], ["air", "Air violations"], ["quality", "Data quality"],
+] as const;
+type AnalyticsTab = typeof TABS[number][0];
+const isTab = (value: string | null): value is AnalyticsTab => TABS.some(([id]) => id === value);
 
 export const AnalyticsPage = () => {
   const today = useMemo(() => getBeirutDate(), []);
@@ -37,12 +43,20 @@ export const AnalyticsPage = () => {
   const queryFilters = useDebounced(filters, 250);
   const [grainChoice, setGrainChoice] = useState<Grain | null>(null);
   const [drill, setDrill] = useState<{ title: string } | null>(null);
+  const [methodologyOpen, setMethodologyOpen] = useState(false);
+  const requestedTab = search.get("tab");
+  const activeTab: AnalyticsTab = isTab(requestedTab) ? requestedTab : "overview";
 
   const update = useCallback((patch: Partial<AnalyticsFilters>) => {
     setSearch(serializeFilters({ ...filters, ...patch }, today));
   }, [filters, setSearch, today]);
 
   const reset = () => setSearch(serializeFilters(defaultFilters(today), today));
+  const setTab = (tab: AnalyticsTab) => {
+    const next = serializeFilters(filters, today);
+    if (tab === "overview") next.delete("tab"); else next.set("tab", tab);
+    setSearch(next);
+  };
 
   // Keep the level valid for the chosen air type.
   useEffect(() => {
@@ -62,7 +76,7 @@ export const AnalyticsPage = () => {
   const prefetch = usePrefetchMap();
   const [playback, setPlayback] = useState<Playback>(IDLE);
   const framesRef = useRef<MapResponse[]>([]);
-  const frameBreaksRef = useRef<number[]>([]);
+  const frameScaleRef = useRef<MapScale>({ kind: "linear", max: 0 });
 
   const startPlayback = async () => {
     const frames = playbackFrames(queryFilters.dateFrom, queryFilters.dateTo);
@@ -85,7 +99,7 @@ export const AnalyticsPage = () => {
       return;
     }
     framesRef.current = results;
-    frameBreaksRef.current = quantileBreaks(results.flatMap((r) => r.values.map((v) => v.value)));
+    frameScaleRef.current = buildScale(queryFilters.level, results.flatMap((r) => r.values.map((v) => v.value)));
     setPlayback((s) => (s.active ? { ...s, preparing: false, playing: true, index: 0 } : s));
   };
   const stopPlayback = () => setPlayback(IDLE);
@@ -106,9 +120,9 @@ export const AnalyticsPage = () => {
 
   const framing = playback.active && !playback.preparing;
   const shownValues = framing ? framesRef.current[playback.index]?.values ?? [] : mapQuery.data?.values ?? [];
-  const breaks = useMemo(
-    () => (framing ? frameBreaksRef.current : quantileBreaks((mapQuery.data?.values ?? []).map((v) => v.value))),
-    [framing, mapQuery.data],
+  const scale = useMemo(
+    () => (framing ? frameScaleRef.current : buildScale(mapQuery.data?.level ?? filters.level, (mapQuery.data?.values ?? []).map((v) => v.value))),
+    [framing, mapQuery.data, filters.level],
   );
 
   const focusArea = useCallback((code: string, level: Level) => {
@@ -134,9 +148,14 @@ export const AnalyticsPage = () => {
   return (
     <div className="space-y-4 pb-8">
       <FilterBar filters={filters} meta={meta.data} today={today} onChange={update} onReset={reset}
-        resolveRange={(range) => resolveRange(range, ctx)} />
+        resolveRange={(range) => resolveRange(range, ctx)} pendingReview={kpis.data?.pending_review} />
 
-      <section aria-label="Heat map">
+      <nav aria-label="Analytics sections" className="sticky top-[78px] z-10 -mx-1 flex gap-1 overflow-x-auto border-b border-border bg-surface-raised/95 px-1 py-2 backdrop-blur">
+        {TABS.map(([id, label]) => <button key={id} type="button" onClick={() => setTab(id)} aria-current={activeTab === id ? "page" : undefined}
+          className={`h-9 shrink-0 rounded-md px-3 text-small font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring ${activeTab === id ? "bg-brand-navy text-text-inverse" : "text-text-muted hover:bg-surface-muted hover:text-text-primary"}`}>{label}</button>)}
+      </nav>
+
+      <section aria-label="Heat map" className={activeTab === "map" || activeTab === "overview" ? "" : "hidden"}>
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-h4 font-semibold">{label} by {filters.level}</h2>
           <p className="text-caption text-text-muted">
@@ -151,7 +170,7 @@ export const AnalyticsPage = () => {
               geo={geo.data}
               level={filters.level}
               values={shownValues}
-              breaks={breaks}
+              scale={scale}
               metricLabel={label}
               familyNames={familyNames}
               selectedCode={filters.areaCode}
@@ -165,7 +184,7 @@ export const AnalyticsPage = () => {
           ) : <Skeleton className="h-full w-full" />}
           {filters.areaCode ? (
             <AreaPanel code={filters.areaCode} filters={queryFilters} onClose={() => update({ areaCode: null })}
-              onFocusArea={focusArea} onViewIncidents={() => setDrill({ title: "Incidents in the selected area" })} />
+              onFocusArea={focusArea} onViewIncidents={() => setDrill({ title: "Incidents in the selected area" })} onOpenMethodology={() => setMethodologyOpen(true)} />
           ) : null}
         </div>
         {mapQuery.data && mapQuery.data.values.length === 0 && !mapError ? (
@@ -173,9 +192,12 @@ export const AnalyticsPage = () => {
         ) : null}
       </section>
 
-      <KpiCards data={kpis.data} loading={kpis.isLoading} error={kpis.error} onRetry={() => void kpis.refetch()} />
+      <div className={activeTab === "overview" || activeTab === "casualties" ? "" : "hidden"}>
+        {activeTab === "casualties" ? <p className="text-small text-text-muted">Reported deaths and injuries are shown below. Open an area or use the rankings to compare affected places.</p> : null}
+        <KpiCards data={kpis.data} loading={kpis.isLoading} error={kpis.error} onRetry={() => void kpis.refetch()} onOpenMethodology={() => setMethodologyOpen(true)} />
+      </div>
 
-      <div ref={tlRef} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div ref={tlRef} className={`grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px] ${activeTab === "overview" || activeTab === "incidents" ? "" : "hidden"}`}>
         <SectionCard id="timeline" title="Timeline" subtitle={`${label} per ${grain}, stacked by ${filters.metric === "breaches" ? "air type" : "action family"}`}
           actions={(
             <div className="flex items-center gap-2">
@@ -193,7 +215,7 @@ export const AnalyticsPage = () => {
               <>
                 <TimelineChart data={timeline.data} grain={grain} />
                 {timeline.data.coverage.gap_dates.length > 0 ? (
-                  <p className="mt-1 text-caption text-text-muted">Shaded days ({timeline.data.coverage.gap_dates.length}) had no ingested messages: missing data, not zero incidents.</p>
+                  <p className="mt-1 text-caption text-text-muted">Hatched days ({timeline.data.coverage.gap_dates.length}) had low or no message coverage: missing or incomplete data, not zero incidents.</p>
                 ) : null}
               </>
             ) : <Skeleton className="h-[300px]" />}
@@ -203,7 +225,7 @@ export const AnalyticsPage = () => {
         </SectionCard>
       </div>
 
-      <div className="grid gap-4">
+      <div className={`grid gap-4 ${activeTab === "overview" || activeTab === "incidents" || activeTab === "casualties" ? "" : "hidden"}`}>
         <div ref={rkRef}>
           <SectionCard id="rankings" title="Rankings" subtitle="Keyboard-friendly list of the same values as the map">
             {rkSeen ? <RankingsPanel filters={queryFilters} familyNames={familyNames} enabled={rkSeen} onFocusArea={focusArea} /> : <Skeleton className="h-80" />}
@@ -217,13 +239,24 @@ export const AnalyticsPage = () => {
         </div>
       </div>
 
-      <div ref={airRef}>
+      <div ref={airRef} className={activeTab === "air" ? "" : "hidden"}>
         <SectionCard id="air" title="Air violations" subtitle="CNRS breaches, not report counts">
           {airSeen ? <AirSection filters={queryFilters} enabled={airSeen} onFocusArea={focusArea} /> : <Skeleton className="h-72" />}
         </SectionCard>
       </div>
 
-      <FooterStrip meta={meta.data} filters={queryFilters} />
+      <section className={activeTab === "quality" ? "" : "hidden"} aria-label="Data quality">
+        <SectionCard id="quality" title="Data quality" subtitle="Coverage, pending review, and geography checks for the selected period">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-md border border-border p-3"><p className="text-caption text-text-muted">Pending review</p><p className="text-h3 font-semibold tabular-nums">{kpis.data?.pending_review ?? "—"}</p></div>
+            <div className="rounded-md border border-border p-3"><p className="text-caption text-text-muted">Casualty status</p><p className="text-h3 font-semibold tabular-nums">{kpis.data?.casualty_completeness.pct ?? "—"}{kpis.data?.casualty_completeness.pct !== null && kpis.data ? "%" : ""}</p></div>
+            <div className="rounded-md border border-border p-3"><p className="text-caption text-text-muted">Last refresh</p><p className="text-small font-semibold">{meta.data?.last_refresh ? formatDate(meta.data.last_refresh) : "—"}</p></div>
+          </div>
+          <p className="mt-3 text-small text-text-muted">Hatched timeline bands identify low or missing ingestion. Geo anomalies are exposed by the quality API for the selected period.</p>
+        </SectionCard>
+      </section>
+
+      <FooterStrip meta={meta.data} filters={queryFilters} methodologyOpen={methodologyOpen} onMethodologyOpen={() => setMethodologyOpen(true)} onMethodologyClose={() => setMethodologyOpen(false)} />
       {drill ? <DrilldownDrawer filters={queryFilters} title={drill.title} onClose={() => setDrill(null)} /> : null}
     </div>
   );

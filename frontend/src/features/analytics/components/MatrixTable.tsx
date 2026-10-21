@@ -5,6 +5,11 @@ import type { MatrixResponse } from "../types";
 import { ErrorBlock, FamilyDot, Skeleton, errorMessage } from "./common";
 import { familyColor } from "../colors";
 
+const SHORT_LABELS: Record<string, string> = {
+  airstrikes: "Airstrikes", drone_strikes: "Drones", artillery: "Artillery", flares_phosphorus: "Flares",
+  demolitions: "Demolition", gunfire: "Gunfire", incursions: "Incursions", other: "Other",
+};
+
 type Props = {
   data?: MatrixResponse;
   loading: boolean;
@@ -26,7 +31,7 @@ export const MatrixTable = ({ data, loading, error, onRetry, onCell }: Props) =>
             <th scope="col" className="sticky left-0 bg-surface-raised px-2 py-2 text-left text-text-muted">Caza</th>
             {data.columns.map((c) => (
               <th key={c.code} scope="col" className="px-1 py-2 text-center align-bottom font-medium" title={c.name_en}>
-                <span className="flex flex-col items-center gap-1"><FamilyDot color={familyColor(c.code)} /><span className="max-w-16 break-words leading-tight">{c.name_en}</span></span>
+                <span className="flex flex-col items-center gap-1"><FamilyDot color={familyColor(c.code)} /><span className="whitespace-nowrap leading-tight">{SHORT_LABELS[c.code] ?? c.name_en}</span></span>
               </th>
             ))}
             <th scope="col" className="px-2 py-2 text-right text-text-muted">Total</th>

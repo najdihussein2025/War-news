@@ -1,4 +1,11 @@
-import type { Delta, DrilldownItem, MapResponse, SeriesPoint, TimelineResponse } from "./types";
+import type { CoverageStatus, Delta, DrilldownItem, MapResponse, SeriesPoint, TimelineResponse } from "./types";
+
+/** Copy shared by chart tooltips and the visible coverage key. */
+export const coverageWarning = (status: CoverageStatus | undefined): string | null => {
+  if (status === "none") return "No ingested messages: reported values may be incomplete.";
+  if (status === "low") return "Low message coverage: reported values may be incomplete.";
+  return null;
+};
 
 export const formatNumber = (value: number | null | undefined): string =>
   value === null || value === undefined ? "–" : new Intl.NumberFormat("en-US").format(value);

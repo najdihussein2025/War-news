@@ -19,6 +19,8 @@ type Props = {
   onChange: (patch: Partial<AnalyticsFilters>) => void;
   onReset: () => void;
   resolveRange: (range: string) => { from: string; to: string };
+  /** Period-scoped value from the KPI query; never use the all-time metadata count here. */
+  pendingReview?: number;
 };
 
 const monthOptions = (meta: MetaResponse | undefined, today: string) => {
@@ -35,7 +37,7 @@ const monthOptions = (meta: MetaResponse | undefined, today: string) => {
   return options.reverse();
 };
 
-export const FilterBar = ({ filters, meta, today, onChange, onReset, resolveRange }: Props) => {
+export const FilterBar = ({ filters, meta, today, onChange, onReset, resolveRange, pendingReview }: Props) => {
   const [familiesOpen, setFamiliesOpen] = useState(false);
   const families: Family[] = meta?.families ?? [];
   const months = useMemo(() => monthOptions(meta, today), [meta, today]);
@@ -139,7 +141,7 @@ export const FilterBar = ({ filters, meta, today, onChange, onReset, resolveRang
         <label className="flex h-9 cursor-pointer items-center gap-2 text-small">
           <input type="checkbox" role="switch" checked={filters.includePending} onChange={(e) => onChange({ includePending: e.target.checked })} className="h-4 w-4" />
           Include pending review
-          <span className="rounded-full bg-brand-gold-soft px-2 py-0.5 text-caption font-semibold tabular-nums text-yellow-600">{formatNumber(meta?.pending_review.incidents ?? 0)}</span>
+          <span className="rounded-full bg-brand-gold-soft px-2 py-0.5 text-caption font-semibold tabular-nums text-yellow-600">{formatNumber(pendingReview ?? 0)}</span>
         </label>
 
         <button type="button" onClick={onReset} className="h-9 rounded-md border border-border px-3 text-small font-medium hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Reset</button>

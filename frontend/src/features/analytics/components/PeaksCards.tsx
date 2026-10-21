@@ -9,7 +9,7 @@ const Peak = ({ title, entry, unit }: { title: string; entry: PeakEntry; unit: "
     {entry ? (
       <>
         <div className="mt-1 text-h3 font-semibold leading-none tabular-nums">{formatNumber(entry.value)}</div>
-        <div className="text-caption text-text-muted">{unit === "week" ? "week of " : ""}{formatDate(entry.start)}</div>
+        <div className="text-caption text-text-muted">{unit === "week" ? "week of " : ""}{formatDate(entry.start)}{entry.low_coverage_days > 0 ? <span title={`${entry.low_coverage_days} low- or no-coverage day(s) in this peak`}> *</span> : null}</div>
         <ul className="mt-2 space-y-0.5">
           {entry.top_areas.map((a) => (
             <li key={a.code} className="flex justify-between gap-2 text-caption tabular-nums">
@@ -34,6 +34,7 @@ export const PeaksCards = ({ data, loading, error, onRetry }: { data?: PeaksResp
       <Peak title="Worst week · deaths" entry={data.deaths.week} unit="week" />
       <Peak title="Worst day · air breaches" entry={data.breaches.day} unit="day" />
       <Peak title="Worst week · air breaches" entry={data.breaches.week} unit="week" />
+      <p className="col-span-2 text-caption text-text-muted">* Includes one or more days with low or no message coverage; values may be incomplete.</p>
     </div>
   );
 };

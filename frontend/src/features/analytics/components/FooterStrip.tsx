@@ -12,7 +12,7 @@ export const MethodologyModal = ({ onClose }: { onClose: () => void }) => (
       <section><h3 className="font-semibold">Headline ("counted")</h3>
         <p>An incident counts when its verification status is <em>verified</em> or <em>auto processed</em>, it is not deleted or rejected, and its action family counts in the headline. The toggle <em>Include pending review</em> adds the pending bucket.</p></section>
       <section><h3 className="font-semibold">Pending review</h3>
-        <p>Incidents awaiting verification, plus incidents whose action is "Air Activity – Needs Verification" or "Unclassified / Needs Review". They are excluded from totals by default and shown separately.</p></section>
+        <p>Any non-deleted, non-rejected incident with status <em>needs verification</em>, plus incidents in an unclassified / needs-review action family. They are excluded from headline totals by default and shown separately.</p></section>
       <section><h3 className="font-semibold">Casualties</h3>
         <p>Totals are the incident's reported deaths and injuries. The male / female / children split comes from the incident details; the remainder is "unspecified". A shared toll from a multi-village bulletin is stored on one incident only and counted once; it is <em>not attributed to a specific village</em>.</p></section>
       <section><h3 className="font-semibold">Air violations</h3>
@@ -24,14 +24,13 @@ export const MethodologyModal = ({ onClose }: { onClose: () => void }) => (
         </ul></section>
       <section><h3 className="font-semibold">Geography and history</h3>
         <p>Villages are placed on the OCHA/HDX boundaries by code, never by name. Data from before the reset is read from a frozen archive and is never recalculated; live data excludes anything already archived.</p></section>
-      <section><h3 className="font-semibold">Quiet days</h3>
-        <p>A day with no ingested messages at all is drawn as a shaded band: it means no data arrived, which is different from zero incidents.</p></section>
+      <section><h3 className="font-semibold">Coverage</h3>
+        <p>Low and no-coverage days are shown with hatched bands and an asterisk on affected peaks. They mean too few or no messages arrived, which is different from zero incidents.</p></section>
     </div>
   </Dialog>
 );
 
-export const FooterStrip = ({ meta, filters }: { meta: MetaResponse | undefined; filters: AnalyticsFilters }) => {
-  const [open, setOpen] = useState(false);
+export const FooterStrip = ({ meta, filters, methodologyOpen, onMethodologyOpen, onMethodologyClose }: { meta: MetaResponse | undefined; filters: AnalyticsFilters; methodologyOpen: boolean; onMethodologyOpen: () => void; onMethodologyClose: () => void }) => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const refreshed = meta?.last_refresh ?? null;
@@ -63,10 +62,10 @@ export const FooterStrip = ({ meta, filters }: { meta: MetaResponse | undefined;
       </div>
       <div className="flex items-center gap-2">
         {error ? <span role="alert" className="text-caption text-danger">{error}</span> : null}
-        <button type="button" onClick={() => setOpen(true)} className="h-9 rounded-md border border-border px-3 font-medium hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Methodology</button>
+        <button type="button" onClick={onMethodologyOpen} className="h-9 rounded-md border border-border px-3 font-medium hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Methodology</button>
         <button type="button" disabled={busy} onClick={() => void exportNow()} className="h-9 rounded-md bg-brand-navy px-3 font-semibold text-text-inverse hover:bg-brand-navy-hover disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring">{busy ? "Exporting…" : "Export to Excel"}</button>
       </div>
-      {open ? <MethodologyModal onClose={() => setOpen(false)} /> : null}
+      {methodologyOpen ? <MethodologyModal onClose={onMethodologyClose} /> : null}
     </footer>
   );
 };

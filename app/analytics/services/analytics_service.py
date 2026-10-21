@@ -9,7 +9,9 @@ from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
-from app.analytics.constants import AIR_CONDITION_LABELS, AIR_LEVEL_CONDITIONS
+from app.analytics.constants import (
+    AIR_CONDITION_LABELS, AIR_LEVEL_CONDITIONS, CONFLICT_ZONE_CAZAS, CONFLICT_ZONE_MOHAFAZAT,
+)
 from app.analytics.dtos.filters import Filters, params_hash
 from app.analytics.repositories import analytics_repository as repo
 from app.core import cache
@@ -93,7 +95,7 @@ def get_kpis(db: Session, flt: Filters) -> Any:
         prev = flt.previous_period()
         cur_t, prev_t = repo.incident_totals(db, flt), repo.incident_totals(db, prev)
         cur_air, prev_air = repo.air_totals_by_condition(db, flt), repo.air_totals_by_condition(db, prev)
-        pending = repo.pending_incident_count(db, flt)
+        pending = repo.pending_review_count(db, flt)
         span = flt.model_copy(update={"date_from": flt.date_to - timedelta(days=29)})
         rolling = repo.daily_incident_series(db, span, "incidents")
         by_day = {r["date"]: int(r["value"]) for r in rolling}
@@ -120,6 +122,7 @@ def get_kpis(db: Session, flt: Filters) -> Any:
                             for c in sorted(AIR_CONDITION_LABELS)],
             },
             "pending_review": pending,
+            "casualty_completeness": repo.casualty_completeness(db, flt),
             "unattributed_shared_toll_incidents": int(cur_t["aggregate_only_incidents"]),
             "escalation": {"today": today, "date": flt.date_to, "rolling_30d_daily_average": avg,
                            "ratio": round(today / avg, 2) if avg else None},
@@ -132,6 +135,36 @@ def get_kpis(db: Session, flt: Filters) -> Any:
         }
 
     return cached("kpis", flt.cache_params(), build)
+
+
+# --------------------------------------------------------------------------- coverage
+LOW_COVERAGE = ("none", "low")
+COVERAGE_NOTE = ("Hatched days had no or low ingestion (fewer raw messages than "
+                 "{ratio:.0%} of the usual daily volume): missing data, not quiet days.")
+
+
+def coverage_or_empty(db: Session, date_from: date, date_to: date) -> list[dict[str, Any]]:
+    """Daily coverage; advisory, so a failure never breaks the section that asked for it."""
+    try:
+        return repo.coverage_days(db, date_from, date_to, settings.analytics_coverage_low_ratio)
+    except Exception:
+        db.rollback()
+        logger.warning("analytics: ingest coverage signal unavailable", exc_info=True)
+        return []
+
+
+def get_coverage(db: Session, flt: Filters) -> Any:
+    def build() -> dict[str, Any]:
+        days = coverage_or_empty(db, flt.date_from, flt.date_to)
+        return {
+            "low_ratio": settings.analytics_coverage_low_ratio,
+            "note": COVERAGE_NOTE.format(ratio=settings.analytics_coverage_low_ratio),
+            "days": days,
+            "low_days": sum(1 for d in days if d["status"] == "low"),
+            "no_coverage_days": sum(1 for d in days if d["status"] == "none"),
+        }
+
+    return cached("coverage", {"date_from": flt.date_from.isoformat(), "date_to": flt.date_to.isoformat()}, build)
 
 
 # --------------------------------------------------------------------------- timeline
@@ -179,7 +212,19 @@ def get_timeline(db: Session, flt: Filters, grain: str) -> Any:
         series: dict[str, dict[date, float]] = {}
         for r in raw:
             series.setdefault(str(r["key"]), {})[r["bucket"]] = _num(r["value"])
-        keys = sorted(series, key=lambda k: (labels.get(k, {}).get("sort", 0), k))
+        # A compact, stable legend: retain the five largest series and roll every
+        # remaining family/type into Other.  This avoids a paginated legend hiding
+        # categories while preserving every value in the stack and total.
+        ranked_keys = sorted(series, key=lambda k: (-sum(series[k].values()), labels.get(k, {}).get("label_en", k), k))
+        if len(ranked_keys) > 5:
+            other: dict[date, float] = {}
+            for key in ranked_keys[5:]:
+                for bucket, value in series[key].items():
+                    other[bucket] = other.get(bucket, 0) + value
+            series = {key: series[key] for key in ranked_keys[:5]}
+            series["other"] = other
+            labels["other"] = {"label_en": "Other", "label_ar": None, "sort": 999}
+        keys = list(series)
         total = {s: sum(series[k].get(s, 0) for k in keys) for s in starts}
         by_day = {r["date"]: float(r["value"]) for r in daily}
         ma: dict[date, float] = {}
@@ -188,14 +233,8 @@ def get_timeline(db: Session, flt: Filters, grain: str) -> Any:
             window = [by_day.get(day - timedelta(days=i), 0.0) for i in range(7)]
             ma[day] = round(sum(window) / 7, 2)
             day += timedelta(days=1)
-        gaps: list[date] = []
-        coverage_available = False
-        try:
-            gaps = repo.ingest_coverage(db, flt.date_from, flt.date_to)
-            coverage_available = True
-        except Exception:  # coverage is advisory; never fail the timeline for it
-            db.rollback()
-            logger.warning("analytics: ingest coverage signal unavailable", exc_info=True)
+        days = coverage_or_empty(db, flt.date_from, flt.date_to)
+        flagged = [d for d in days if d["status"] in LOW_COVERAGE]
         return {
             "grain": grain, "metric": flt.metric,
             "series": [{"key": k, **labels.get(k, {"label_en": k, "label_ar": None}),
@@ -204,9 +243,10 @@ def get_timeline(db: Session, flt: Filters, grain: str) -> Any:
             "total": [{"date": s, "value": total[s]} for s in starts],
             "moving_average_7d": [{"date": s, "value": ma[_bucket_end(s, grain, flt.date_to)]} for s in starts],
             "coverage": {
-                "available": coverage_available,
-                "note": "Days with no ingested message at all. A gap means no data was received, which is not the same as zero incidents.",
-                "gap_dates": gaps,
+                "available": bool(days),
+                "note": COVERAGE_NOTE.format(ratio=settings.analytics_coverage_low_ratio),
+                "gap_dates": [d["date"] for d in flagged],
+                "flagged": [{"date": d["date"], "status": d["status"], "messages": d["messages"]} for d in flagged],
             },
         }
 
@@ -226,6 +266,10 @@ def get_rankings(db: Session, flt: Filters, limit: int) -> Any:
             for row in data:
                 row["value"] = int({"incidents": row["incidents"], "deaths": row["deaths"],
                                     "injuries": row["injuries"], "casualties": row["casualties"]}[flt.metric])
+        # The query orders by the metric DESC (ties: name); the rank is fixed here so a
+        # client re-sort by another column never renumbers it.
+        for position, row in enumerate(data, start=1):
+            row["rank"] = position
         return {"level": flt.level, "metric": flt.metric, "limit": limit, "rows": data}
 
     return cached("rankings", {**flt.cache_params(), "limit": limit}, build)
@@ -234,6 +278,12 @@ def get_rankings(db: Session, flt: Filters, limit: int) -> Any:
 # --------------------------------------------------------------------------- peaks
 def get_peaks(db: Session, flt: Filters) -> Any:
     def build() -> dict[str, Any]:
+        coverage = {d["date"]: d["status"] for d in coverage_or_empty(db, flt.date_from, flt.date_to)}
+
+        def low_days(start: date, unit: str) -> int:
+            span = 7 if unit == "week" else 1
+            return sum(1 for i in range(span) if coverage.get(start + timedelta(days=i)) in LOW_COVERAGE)
+
         result: dict[str, Any] = {}
         for metric in ("incidents", "deaths", "breaches"):
             entry: dict[str, Any] = {}
@@ -241,6 +291,8 @@ def get_peaks(db: Session, flt: Filters) -> Any:
                 peak = repo.peak_periods(db, flt, unit, metric)
                 entry[unit] = None if not peak else {
                     "start": peak["start"], "value": _num(peak["value"]),
+                    # A peak next to missing data may be an artefact of ingestion; the UI stars it.
+                    "low_coverage_days": low_days(peak["start"], unit),
                     "top_areas": [{"code": a["code"], "name_en": a["name_en"], "name_ar": a["name_ar"],
                                    "value": _num(a["value"])}
                                   for a in repo.top_cazas_for_period(db, flt, peak["start"], unit, metric)],
@@ -259,7 +311,11 @@ def get_matrix(db: Session, flt: Filters) -> Any:
             columns = [f for f in families if f["is_air_violation"]]
             cells = repo.matrix_air_cells(db, flt)
         else:
-            columns = [f for f in families if (not flt.family or f["code"] in flt.family)]
+            # The incident matrix intentionally excludes air violations (shown on
+            # their own tab) and unclassified/pending incidents. Empty columns add
+            # no information and make the compact view harder to read.
+            columns = [f for f in families if f["counts_in_headline"] and not f["is_air_violation"]
+                       and (not flt.family or f["code"] in flt.family)]
             cells = repo.matrix_cells(db, flt)
         by_caza: dict[str, dict[str, int | float]] = {}
         for c in cells:
@@ -271,6 +327,10 @@ def get_matrix(db: Session, flt: Filters) -> Any:
             for k, v in vals.items():
                 col_totals[k] += v
             rows_out.append({**caza, "cells": vals, "total": sum(vals.values())})
+        columns = [column for column in columns if col_totals[column["code"]] > 0]
+        col_totals = {column["code"]: col_totals[column["code"]] for column in columns}
+        for row in rows_out:
+            row["cells"] = {column["code"]: row["cells"][column["code"]] for column in columns}
         return {"metric": flt.metric, "columns": columns, "rows": rows_out, "column_totals": col_totals,
                 "grand_total": sum(col_totals.values())}
 
@@ -294,7 +354,8 @@ def get_area(db: Session, code: str, flt: Filters) -> Any:
         return {
             "area": info,
             "totals": {k: int(v) for k, v in totals.items()},
-            "pending_review": repo.pending_incident_count(db, scoped),
+            "pending_review": repo.pending_review_count(db, scoped),
+            "casualty_completeness": repo.casualty_completeness(db, scoped),
             "air_breaches": {"total": sum(air.values()),
                              "by_type": [{"condition_id": c, "label": AIR_CONDITION_LABELS.get(c, str(c)), "value": v}
                                          for c, v in sorted(air.items())]},
@@ -321,3 +382,25 @@ def get_incidents(db: Session, flt: Filters, page: int, page_size: int) -> Any:
         return {"page": page, "page_size": page_size, "total": total, "items": data}
 
     return cached("incidents", {**flt.cache_params(), "page": page, "page_size": page_size}, build)
+
+
+# --------------------------------------------------------------------------- data quality
+def get_quality(db: Session, flt: Filters) -> Any:
+    def build() -> dict[str, Any]:
+        meta = repo.meta(db)
+        return {
+            "geo_anomalies": {
+                "min_incidents": settings.analytics_geo_anomaly_min_incidents,
+                "note": ("Villages outside the conflict zone (South, Nabatiye, Bekaa, Baalbek-Hermel, Baabda caza) "
+                         "with more incidents than the threshold in this period, counted and pending. "
+                         "Usually a wrong village match; open the incidents and check the place name."),
+                "rows": repo.geo_anomalies(db, flt, settings.analytics_geo_anomaly_min_incidents,
+                                           CONFLICT_ZONE_MOHAFAZAT, CONFLICT_ZONE_CAZAS),
+            },
+            "pending_review": repo.pending_review_count(db, flt),
+            "archive_cutoff": meta["archive"]["cutoff_date"],
+            "last_refresh": meta["last_refresh"],
+            "refresh_queue": meta["refresh_queue"],
+        }
+
+    return cached("quality", flt.cache_params(), build)

@@ -12,9 +12,10 @@ type Props = {
   onClose: () => void;
   onFocusArea: (code: string, level: Level) => void;
   onViewIncidents: (code: string) => void;
+  onOpenMethodology: () => void;
 };
 
-export const AreaPanel = ({ code, filters, onClose, onFocusArea, onViewIncidents }: Props) => {
+export const AreaPanel = ({ code, filters, onClose, onFocusArea, onViewIncidents, onOpenMethodology }: Props) => {
   const params = toApiParams(filters, { areaCode: null, metric: "incidents" });
   const query = useArea(code, params);
   const data = query.data;
@@ -44,6 +45,9 @@ export const AreaPanel = ({ code, filters, onClose, onFocusArea, onViewIncidents
                 <div key={label} className="rounded-md bg-surface-muted p-2"><dt className="text-caption text-text-muted">{label}</dt><dd className="text-h4 font-semibold tabular-nums">{formatNumber(value)}</dd></div>
               ))}
             </dl>
+            {data.casualty_completeness.pct !== null ? (
+              <p className="text-caption text-text-muted">Casualty figures are extracted from reports; {data.casualty_completeness.pct}% of incidents in this area have a casualty status. <button type="button" onClick={onOpenMethodology} className="text-brand-navy underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Methodology</button></p>
+            ) : null}
             <p className="text-caption text-text-muted tabular-nums">
               {data.air_breaches.total > 0 ? `${formatNumber(data.air_breaches.total)} air breaches (${data.air_breaches.by_type.map((t) => `${t.label} ${t.value}`).join(", ")}). ` : "No air breaches. "}
               {data.pending_review > 0 ? `${formatNumber(data.pending_review)} pending review. ` : ""}
