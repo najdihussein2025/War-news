@@ -135,8 +135,23 @@ export const HeatMap = ({
         source: "village",
         paint: { "line-color": "#bc8e38", "line-width": ["case", ["boolean", ["feature-state", "searched"], false], 3.4, 0] },
       });
+      // The box may have changed size between construction and load (tab switch, breakpoint).
+      map.resize();
       setReady(true);
     });
+
+    // Keep the WebGL canvas the size of its box; debounced so a breakpoint or drag-resize
+    // repaints once at the final size instead of on every intermediate frame.
+    // The window listener also covers a viewport crossing a breakpoint before the
+    // observer has delivered its first entry.
+    let resizeTimer: number | undefined;
+    const scheduleResize = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => map.resize(), 100);
+    };
+    const sizeObserver = new ResizeObserver(scheduleResize);
+    sizeObserver.observe(container.current);
+    window.addEventListener("resize", scheduleResize);
 
     const handleMove = (e: maplibregl.MapMouseEvent) => {
       const layer = `fill-${levelRef.current}`;
@@ -171,6 +186,9 @@ export const HeatMap = ({
     map.on("mouseout", handleLeave);
     map.on("click", handleClick);
     return () => {
+      window.clearTimeout(resizeTimer);
+      sizeObserver.disconnect();
+      window.removeEventListener("resize", scheduleResize);
       map.remove();
       mapRef.current = null;
       setReady(false);
@@ -232,9 +250,13 @@ export const HeatMap = ({
       if (!userMovedRef.current && !selectedRef.current) map.fitBounds(LEBANON_BOUNDS, { padding: fitPadding, duration: 0 });
     };
     fit();
-    const observer = new ResizeObserver(fit);
+    let fitTimer: number | undefined;
+    const observer = new ResizeObserver(() => {
+      window.clearTimeout(fitTimer);
+      fitTimer = window.setTimeout(fit, 100);
+    });
     observer.observe(node);
-    return () => { observer.disconnect(); map.off("movestart", onMove); };
+    return () => { window.clearTimeout(fitTimer); observer.disconnect(); map.off("movestart", onMove); };
   }, [ready, fitPadding]);
 
   // Selected area highlight + fit.
