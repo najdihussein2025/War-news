@@ -124,7 +124,7 @@ def test_kpis(client, data):
     assert body["air_breaches"]["current"] == 4
     assert {r["condition_id"] for r in body["air_breaches"]["by_type"]} == {34, 35, 36, 38}
     assert body["villages_affected"]["current"] == 3 and body["cazas_affected"]["current"] == 2
-    assert body["escalation"]["today"] == 1
+    assert body["escalation"]["latest"]["date"] == "2026-10-03" and body["escalation"]["latest"]["value"] == 1
 
 
 def test_timeline_series_zero_filled_with_moving_average(client, data):

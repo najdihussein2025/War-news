@@ -79,7 +79,7 @@ def test_casualty_completeness(client, world, db):  # noqa: F811
     db.commit()
     refresh_service.full_rebuild(db)
     body = client.get(f"/api/analytics/kpis?{Q}").json()["casualty_completeness"]
-    assert body == {"incidents": 4, "with_status": 2, "pct": 50.0}
+    assert body == {"incidents": 4, "with_status": 2, "pct": 50.0, "with_casualties": 1, "count_missing": 0}
     facts = db.execute(text("SELECT sum(casualty_known) FROM analytics_incident_facts")).scalar_one()
     direct = db.execute(text("SELECT count(*) FROM incidents WHERE casualty_status IS NOT NULL")).scalar_one()
     assert facts == direct

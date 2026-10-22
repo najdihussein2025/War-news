@@ -67,7 +67,7 @@ def test_air_family_is_not_an_incident(client, tab_data):
 def test_filters_are_applied(client, tab_data):
     saida = tab(client, "overview", f"{Q}&area_code=LB61")
     assert saida["kpis"]["incidents"]["current"] == 1
-    assert len(saida["map"]["values"]) > 1  # the map keeps every area visible
+    assert sum(v["value"] for v in saida["map"]["values"]) == 5  # the map ignores the area: all of Lebanon
     bombs = tab(client, "incidents", f"{Q}&family=airstrikes")
     assert bombs["matrix_caza"]["grand_total"] == 3
     assert [c["code"] for c in bombs["matrix_caza"]["columns"]] == ["airstrikes"]
