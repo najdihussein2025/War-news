@@ -108,8 +108,9 @@ export const KpiCards = ({ data, loading, error, onRetry, onOpenMethodology }: {
         <KpiCard title="Cazas affected" delta={data.cazas_affected} spark={data.sparklines.cazas} color="#56b4e9" tone="neutral" note="with ≥ 1 incident" />
         <KpiCard title="Air breaches" delta={data.air_breaches} spark={data.sparklines.breaches} color="#0072b2" note={data.air_breaches.by_type.map((t) => `${t.label.split(" ")[0]} ${t.current}`).join(" · ")} />
         <KpiCard title="Daily average" delta={data.daily_average} spark={data.sparklines.incidents} color="#082d6f" note={`incidents / day over ${data.period.days} d`} />
-        <KpiCard title="% verified" delta={verifiedDelta} suffix={verified.current === null ? "" : "%"} deltaUnit="pts" color="#009e73" tone="good-up"
-          note={`${formatNumber(verified.counted)} counted · ${formatNumber(verified.pending)} pending`} />
+        <KpiCard title="Accepted (not pending)" delta={verifiedDelta} suffix={verified.current === null ? "" : "%"} deltaUnit="pts" color="#009e73" tone="good-up"
+          info="Share of incidents counted in the headline: auto-processed or verified, excluding pending review."
+          note={`Human-verified: ${formatNumber(verified.human_verified)}`} />
         <KpiCard title="Pending review" delta={data.pending_review_delta ?? { current: data.pending_review, previous: 0, delta: 0, pct: null }} spark={data.sparklines.pending} color="#7f8c8d" tone="neutral" note="not in the headline" />
       </div>
       <p className="text-caption text-text-muted tabular-nums">

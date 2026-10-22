@@ -65,7 +65,7 @@ export type KpisResponse = {
   pending_review_delta: Delta;
   daily_average: Delta;
   /** Counted (verified or auto-processed) share of the filtered incidents, in percent. */
-  verified_pct: { current: number | null; previous: number | null; delta: number | null; counted: number; pending: number };
+  verified_pct: { current: number | null; previous: number | null; delta: number | null; counted: number; pending: number; human_verified: number };
   escalation: Escalation;
   sparklines: Record<"incidents" | "deaths" | "injuries" | "breaches" | "villages" | "cazas" | "pending", SeriesPoint[]>;
 };

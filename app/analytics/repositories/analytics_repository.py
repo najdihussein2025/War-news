@@ -601,6 +601,13 @@ def drilldown(db: Session, flt: Filters, *, offset: int, limit: int) -> tuple[in
     return int(total), data
 
 
+def human_verified_count(db: Session, flt: Filters) -> int:
+    """Human-verified incidents under the same headline filters (raw status is not in facts)."""
+    cte, where, params = raw_where(flt, metric_rows=False)
+    row = one(db, f"{cte} SELECT count(*) AS n FROM joined j WHERE {where} AND j.verification_status = 'verified'", params)
+    return int(row["n"] or 0)
+
+
 def casualty_incidents(db: Session, flt: Filters, limit: int) -> tuple[int, list[dict[str, Any]]]:
     """Incidents with a stated toll (deaths or injuries > 0), newest first, with their caza."""
     cte, where, params = raw_where(flt.model_copy(update={"metric": "casualties"}))

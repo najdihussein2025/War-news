@@ -151,6 +151,7 @@ def get_kpis(db: Session, flt: Filters) -> Any:
         affected = repo.daily_affected_series(db, flt)
         cur_verified = _share(cur_b["counted"], cur_b["counted"] + cur_b["pending"])
         prev_verified = _share(prev_b["counted"], prev_b["counted"] + prev_b["pending"])
+        human_verified = repo.human_verified_count(db, flt)
         return {
             "period": {"date_from": flt.date_from, "date_to": flt.date_to, "previous_from": prev.date_from,
                        "previous_to": prev.date_to, "days": flt.days},
@@ -179,7 +180,8 @@ def get_kpis(db: Session, flt: Filters) -> Any:
             "verified_pct": {"current": cur_verified, "previous": prev_verified,
                              "delta": round(cur_verified - prev_verified, 1)
                              if cur_verified is not None and prev_verified is not None else None,
-                             "counted": cur_b["counted"], "pending": cur_b["pending"]},
+                             "counted": cur_b["counted"], "pending": cur_b["pending"],
+                             "human_verified": human_verified},
             "escalation": escalation(db, flt),
             "sparklines": {
                 "incidents": [{"date": r["date"], "value": int(r["value"])} for r in repo.daily_incident_series(db, flt, "incidents")],
