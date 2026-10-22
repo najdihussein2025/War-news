@@ -11,6 +11,7 @@ import { formatNumber } from "../mappers";
 import type { Level, MapValue } from "../types";
 import { MapLegend } from "./MapLegend";
 import { CAZA_LABEL_ZOOM, VILLAGE_LABEL_ZOOM, labelText, polygonLabels, type LabelLanguage } from "../mapLabels";
+import { cameraPadding, constrainCenter, panBounds, visibleCountryFraction } from "../mapCamera";
 
 type Geo = Record<Level, GeoCollection>;
 
@@ -74,6 +75,25 @@ export const HeatMap = ({
 }: Props) => {
   const container = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const userMovedRef = useRef(false);
+  const paddingRef = useRef(fitPadding);
+  paddingRef.current = fitPadding;
+  const [hintDismissed, setHintDismissed] = useState(() => {
+    try { return localStorage.getItem("analytics-map-gesture-hint") === "dismissed"; } catch { return false; }
+  });
+  const dismissHint = useCallback(() => {
+    setHintDismissed(true);
+    try { localStorage.setItem("analytics-map-gesture-hint", "dismissed"); } catch { /* Storage may be disabled. */ }
+  }, []);
+  const markUserMoved = useCallback(() => { userMovedRef.current = true; dismissHint(); }, [dismissHint]);
+  const resetView = useCallback(() => {
+    userMovedRef.current = false;
+    dismissHint();
+    const map = mapRef.current;
+    if (!map) return;
+    const { clientWidth: w, clientHeight: h } = map.getContainer();
+    map.fitBounds(LEBANON_BOUNDS, { padding: cameraPadding(paddingRef.current, w, h), duration: 300 });
+  }, [dismissHint]);
   const [ready, setReady] = useState(false);
   const [rtlReady, setRTLReady] = useState(false);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; code: string } | null>(null);
@@ -116,9 +136,11 @@ export const HeatMap = ({
   }, []);
 
   useEffect(() => {
-    const id = requestAnimationFrame(() => mapRef.current?.resize());
-    return () => cancelAnimationFrame(id);
-  }, [fullScreen]);
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (fullScreen) map.cooperativeGestures.disable();
+    else map.cooperativeGestures.enable();
+  }, [fullScreen, ready]);
 
   // Map creation (once).
   useEffect(() => {
@@ -131,11 +153,13 @@ export const HeatMap = ({
       attributionControl: false,
       dragRotate: false,
       pitchWithRotate: false,
-      maxBounds: [[33.5, 32.2], [38.2, 35.6]],
-      minZoom: 6,
+      cooperativeGestures: !fullScreen,
       crossSourceCollisions: true,
     });
     map.touchZoomRotate.disableRotation();
+    map.keyboard.disableRotation();
+    map.getCanvas().setAttribute("role", "application");
+    map.getCanvas().setAttribute("aria-label", "Map of Lebanon. Arrow keys pan; plus and minus zoom. Reset view restores the country.");
     mapRef.current = map;
     map.on("zoomend", () => setVillageZoom(map.getZoom() >= VILLAGE_LABEL_ZOOM));
 
@@ -162,6 +186,7 @@ export const HeatMap = ({
       });
       map.addLayer({ id: "line-village", type: "line", source: "village", minzoom: 8.5, paint: { "line-color": "rgba(8,45,111,0.18)", "line-width": 0.4 } });
       map.addLayer({ id: "line-caza", type: "line", source: "caza", paint: { "line-color": "rgba(8,45,111,0.5)", "line-width": 0.9 } });
+      map.addLayer({ id: "country-outline", type: "line", source: "mohafaza", paint: { "line-color": "#082d6f", "line-width": 5, "line-opacity": 0.25, "line-blur": 2 } });
       map.addLayer({ id: "line-mohafaza", type: "line", source: "mohafaza", paint: { "line-color": "#082d6f", "line-width": 1.6 } });
       for (const lvl of LEVELS) {
         map.addLayer({
@@ -226,19 +251,6 @@ export const HeatMap = ({
       setReady(true);
     });
 
-    // Keep the WebGL canvas the size of its box; debounced so a breakpoint or drag-resize
-    // repaints once at the final size instead of on every intermediate frame.
-    // The window listener also covers a viewport crossing a breakpoint before the
-    // observer has delivered its first entry.
-    let resizeTimer: number | undefined;
-    const scheduleResize = () => {
-      window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(() => map.resize(), 100);
-    };
-    const sizeObserver = new ResizeObserver(scheduleResize);
-    sizeObserver.observe(container.current);
-    window.addEventListener("resize", scheduleResize);
-
     const handleMove = (e: maplibregl.MapMouseEvent) => {
       const layer = `fill-${levelRef.current}`;
       if (!map.getLayer(layer)) return;
@@ -254,7 +266,7 @@ export const HeatMap = ({
       } else {
         setTooltip(null);
       }
-      map.getCanvas().style.cursor = code ? "pointer" : "";
+      map.getCanvas().style.cursor = map.isMoving() && map.dragPan.isActive() ? "grabbing" : code ? "pointer" : "grab";
     };
     const handleLeave = () => {
       if (hoverRef.current) map.setFeatureState({ source: levelRef.current, id: hoverRef.current }, { hover: false });
@@ -271,10 +283,21 @@ export const HeatMap = ({
     map.on("mousemove", handleMove);
     map.on("mouseout", handleLeave);
     map.on("click", handleClick);
+    let resetFrame: number | undefined;
+    map.on("dblclick", (e) => {
+      if (!map.getLayer(`fill-${levelRef.current}`)) return;
+      if (!map.queryRenderedFeatures(e.point, { layers: [`fill-${levelRef.current}`] }).length) {
+        e.preventDefault();
+        // The input handler stops camera animations after dispatching this event.
+        // Start reset after that cleanup, or its animation is immediately cancelled.
+        resetFrame = requestAnimationFrame(resetView);
+      }
+    });
+    map.on("dragstart", () => { map.getCanvas().style.cursor = "grabbing"; });
+    map.on("dragend", () => { map.getCanvas().style.cursor = hoverRef.current ? "pointer" : "grab"; });
+    map.on("movestart", (e) => { if (e.originalEvent) markUserMoved(); });
     return () => {
-      window.clearTimeout(resizeTimer);
-      sizeObserver.disconnect();
-      window.removeEventListener("resize", scheduleResize);
+      if (resetFrame !== undefined) cancelAnimationFrame(resetFrame);
       map.remove();
       mapRef.current = null;
       setReady(false);
@@ -334,17 +357,34 @@ export const HeatMap = ({
     }) });
   }, [values, anchors, ready]);
 
-  // Keep Lebanon filling the box when the container changes size (tabs, side panel), unless an area is focused.
-  const userMovedRef = useRef(false);
+  // One sizing policy for embedded/fullscreen/padding changes. Never refit a user camera.
   useEffect(() => {
     const map = mapRef.current;
     const node = container.current;
     if (!map || !ready || !node) return undefined;
-    const onMove = (e: { originalEvent?: unknown }) => { if (e.originalEvent) userMovedRef.current = true; };
-    map.on("movestart", onMove);
+    let updating = false;
+    map.transformCameraUpdate = (next) => updating || !node.clientWidth || !node.clientHeight ? {} : {
+      center: constrainCenter(next.center, node.clientWidth, node.clientHeight, next.zoom),
+    };
+    const snapBack = () => {
+      if (updating || visibleCountryFraction(map) >= 0.4) return;
+      map.easeTo({ center: new maplibregl.LngLatBounds(LEBANON_BOUNDS).getCenter(), duration: 300 });
+    };
     const fit = () => {
+      if (!node.clientWidth || !node.clientHeight) return;
+      updating = true;
+      // Clear old viewport constraints before measuring a differently sized box.
+      map.setMaxBounds(null);
       map.resize();
-      if (!userMovedRef.current && !selectedRef.current) map.fitBounds(LEBANON_BOUNDS, { padding: fitPadding, duration: 0 });
+      const padding = cameraPadding(fitPadding, node.clientWidth, node.clientHeight);
+      const camera = map.cameraForBounds(LEBANON_BOUNDS, { padding });
+      if (camera?.zoom !== undefined) map.setMinZoom(Math.max(0, camera.zoom - 0.5));
+      if (!userMovedRef.current && !selectedRef.current) map.fitBounds(LEBANON_BOUNDS, { padding, duration: 0 });
+      // Hard outer bounds must accommodate the minimum zoom. A camera transform
+      // tightens pan limits at higher zoom without blocking subsequent zoom-out.
+      map.setMaxBounds(panBounds(node.clientWidth, node.clientHeight, map.getMinZoom()));
+      updating = false;
+      snapBack();
     };
     fit();
     let fitTimer: number | undefined;
@@ -353,8 +393,30 @@ export const HeatMap = ({
       fitTimer = window.setTimeout(fit, 100);
     });
     observer.observe(node);
-    return () => { window.clearTimeout(fitTimer); observer.disconnect(); map.off("movestart", onMove); };
-  }, [ready, fitPadding]);
+    map.on("moveend", snapBack);
+    return () => {
+      window.clearTimeout(fitTimer); observer.disconnect();
+      map.transformCameraUpdate = null; map.off("moveend", snapBack);
+    };
+  }, [ready, fitPadding, fullScreen]);
+
+  // WebGL paint cannot resolve CSS variables itself. Follow the existing theme tokens.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const theme = () => {
+      const css = getComputedStyle(map.getContainer());
+      map.setPaintProperty("background", "background-color", css.getPropertyValue("--color-surface-muted").trim());
+      map.setPaintProperty("country-outline", "line-color", css.getPropertyValue("--color-accent").trim());
+    };
+    theme();
+    const observer = new MutationObserver(theme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "style", "data-theme"] });
+    observer.observe(document.body, { attributes: true, attributeFilter: ["class", "style", "data-theme"] });
+    const media = matchMedia("(prefers-color-scheme: dark)");
+    media.addEventListener("change", theme);
+    return () => { observer.disconnect(); media.removeEventListener("change", theme); };
+  }, [ready]);
 
   // Selected area highlight + fit.
   useEffect(() => {
@@ -365,6 +427,7 @@ export const HeatMap = ({
     }
     selectedRef.current = selectedCode;
     if (selectedCode) {
+      userMovedRef.current = true;
       const found = findBounds(geo, selectedCode);
       if (found) {
         map.setFeatureState({ source: found.level, id: selectedCode }, { selected: true });
@@ -373,14 +436,10 @@ export const HeatMap = ({
     }
   }, [selectedCode, ready, geo]);
 
-  const resetView = useCallback(() => {
-    userMovedRef.current = false;
-    mapRef.current?.fitBounds(LEBANON_BOUNDS, { padding: fitPadding, duration: 500 });
-  }, [fitPadding]);
-
   const pickHit = (hit: SearchHit) => {
     const map = mapRef.current;
     if (!map) return;
+    markUserMoved();
     map.removeFeatureState({ source: "village" }, "searched");
     map.setFeatureState({ source: "village", id: hit.code }, { searched: true });
     const found = findBounds(geo, hit.code);
@@ -397,22 +456,23 @@ export const HeatMap = ({
     : [];
 
   return (
-    <div className={`relative h-full w-full overflow-hidden bg-surface ${fullScreen ? "" : "rounded-lg border border-card-border"}`}>
+    <div className={`analytics-map group relative h-full w-full overflow-hidden bg-surface ${fullScreen ? "" : "rounded-lg border border-card-border"}`}>
       <div
         ref={container}
         className="h-full w-full"
-        role="application"
-        aria-label="Heat map of Lebanon. Use the rankings table below for a keyboard accessible list of the same values."
       />
+      {!fullScreen && !hintDismissed ? <p className="pointer-events-none absolute bottom-56 left-3 right-3 w-fit rounded-md border border-border bg-surface-raised px-2 py-1 text-caption text-text-primary opacity-0 shadow-raised group-hover:opacity-100 group-focus-within:opacity-100">
+        Drag to move · Ctrl/⌘+scroll to zoom
+      </p> : null}
 
       {/* Lebanon's bounding box leaves the sea (top-left) and land outside Lebanon
           (bottom-right) empty, so the overlays sit there instead of over the data. */}
-      <div className="absolute bottom-3 right-3 flex flex-col items-end gap-2">
-        <div role="group" aria-label="Place-name language" className="flex overflow-hidden rounded-md border border-border bg-surface-raised shadow-raised">
+      <div className="pointer-events-none absolute bottom-3 right-3 flex flex-col items-end gap-2">
+        <div role="group" aria-label="Place-name language" className="pointer-events-auto flex overflow-hidden rounded-md border border-border bg-surface-raised shadow-raised">
           {([ ["en", "EN"], ["ar", "AR"], ["both", "Both"] ] as const).map(([value, text]) => <button key={value} type="button" aria-pressed={language === value}
             onClick={() => setLanguage(value)} className={`h-8 px-3 text-caption font-medium focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus-ring ${language === value ? "bg-brand-navy text-text-inverse" : "hover:bg-surface-muted"}`}>{text}</button>)}
         </div>
-        <div className="relative w-56">
+        <div className="pointer-events-auto relative w-56">
           <label htmlFor="map-search" className="sr-only">Search a village by Arabic or English name</label>
           <input
             id="map-search"
@@ -441,11 +501,11 @@ export const HeatMap = ({
           ) : null}
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex overflow-hidden rounded-md border border-border bg-surface-raised shadow-raised">
-            <button type="button" aria-label="Zoom in" onClick={() => mapRef.current?.zoomIn()} className="h-9 w-9 text-h4 leading-none hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus-ring">+</button>
-            <button type="button" aria-label="Zoom out" onClick={() => mapRef.current?.zoomOut()} className="h-9 w-9 border-l border-border text-h4 leading-none hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus-ring">−</button>
+          <div className="pointer-events-auto flex overflow-hidden rounded-md border border-border bg-surface-raised shadow-raised">
+            <button type="button" aria-label="Zoom in" onClick={() => { markUserMoved(); mapRef.current?.zoomIn(); }} className="h-9 w-9 text-h4 leading-none hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus-ring">+</button>
+            <button type="button" aria-label="Zoom out" onClick={() => { markUserMoved(); mapRef.current?.zoomOut(); }} className="h-9 w-9 border-l border-border text-h4 leading-none hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus-ring">−</button>
           </div>
-          <button type="button" onClick={resetView} className="h-9 rounded-md border border-border bg-surface-raised px-3 text-small font-medium shadow-raised hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Reset view</button>
+          <button type="button" onClick={resetView} className="pointer-events-auto h-9 rounded-md border border-border bg-surface-raised px-3 text-small font-medium shadow-raised hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Reset view</button>
         </div>
       </div>
 
@@ -457,7 +517,7 @@ export const HeatMap = ({
       <div className={`absolute left-3 ${fullScreen ? "top-28 sm:top-20" : "top-3"}`}><MapLegend scale={scale} metricLabel={metricLabel} /></div>
       {villageLabels.data?.missing_coordinates ? <p role="status" className="absolute bottom-3 left-3 max-w-56 rounded bg-surface-raised px-2 py-1 text-caption">{villageLabels.data.missing_coordinates} village labels skipped: no coordinates.</p> : null}
       {labelError || villageLabels.error ? <p role="alert" className="absolute left-3 top-48 max-w-64 rounded bg-surface-raised p-2 text-caption text-danger">{labelError || "Village labels could not load. Refresh to retry."}</p> : null}
-      {controls ? <div className="absolute bottom-3 left-1/2 -translate-x-1/2">{controls}</div> : null}
+      {controls ? <div onPointerDownCapture={dismissHint} className="pointer-events-none absolute bottom-52 left-3 max-w-[calc(100%-1.5rem)] [&>div]:flex-wrap [&_button]:pointer-events-auto [&_input]:pointer-events-auto [&_select]:pointer-events-auto sm:bottom-3 sm:max-w-[calc(100%-19rem)]">{controls}</div> : null}
       <div className="pointer-events-none absolute left-1/2 top-3 flex -translate-x-1/2 flex-col items-center gap-1.5">
         {frameLabel ? <div className="rounded-md bg-brand-navy px-3 py-1 text-small font-semibold text-text-inverse tabular-nums shadow-raised" aria-live="polite">{frameLabel}</div> : null}
         {loading ? <div className="rounded-md bg-surface-raised px-2 py-1 text-caption text-text-muted shadow-raised" role="status">Updating…</div> : null}

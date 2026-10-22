@@ -39,7 +39,7 @@ const TABS = [
 ] as const;
 type AnalyticsTab = typeof TABS[number][0];
 const isTab = (value: string | null): value is AnalyticsTab => TABS.some(([id]) => id === value);
-// Stable references: HeatMap refits whenever its padding prop changes identity.
+// Stable padding references; HeatMap recomputes limits without resetting a user camera.
 const FIT_DEFAULT = 16;
 const FIT_UNDER_PANEL = { top: 16, bottom: 16, left: 16, right: 368 };
 const FIT_FULL = { top: 96, bottom: 16, left: 16, right: 16 };
@@ -190,9 +190,9 @@ export const AnalyticsPage = () => {
   // Tabs not yet on their own payload still read /kpis, /timeline, /peaks, /matrix.
   const kpis = useKpis(kpiParams, false);
   const headline = activeTab === "overview" ? overview.data?.kpis : kpis.data;
-  const [tlRef, tlSeen] = useInView();
+  const [tlRef] = useInView();
   const [rkRef, rkSeen] = useInView();
-  const [mxRef, mxSeen] = useInView();
+  const [mxRef] = useInView();
   const [airRef, airSeen] = useInView();
   const timeline = useTimeline(kpiParams, grain, false);
   const peaks = usePeaks(kpiParams, false);

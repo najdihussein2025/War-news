@@ -1,3 +1,10 @@
+.analytics-map .maplibregl-canvas { cursor: grab; }
+.analytics-map .maplibregl-canvas:active { cursor: grabbing; }
+.analytics-map .maplibregl-canvas:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+}
+
 /* Value labels drawn on map polygons (mohafaza / caza level). */
 .analytics-map-label {
   pointer-events: none;

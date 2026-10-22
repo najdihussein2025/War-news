@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { EChart, type EChartOption } from "../EChart";
 import { MatrixTable } from "../MatrixTable";
-import { CsvButton, EmptyState, ErrorBlock, SectionCard, Skeleton, Toggle, errorMessage } from "../common";
+import { CsvButton, ErrorBlock, SectionCard, Skeleton, Toggle, errorMessage } from "../common";
 import { familyColor } from "../../colors";
 import { formatNumber } from "../../mappers";
 import type { Grain, IncidentsTab as IncidentsPayload } from "../../types";

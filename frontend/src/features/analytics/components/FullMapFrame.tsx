@@ -15,18 +15,24 @@ export const FullMapFrame = ({ full, onClose, toolbar, children }: {
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     // Make everything outside this branch unavailable to pointer, keyboard and AT.
-    const siblings: Array<{ element: HTMLElement; inert: boolean }> = [];
-    let branch: HTMLElement = frame.current;
-    while (branch.parentElement && branch !== document.body) {
-      for (const element of Array.from(branch.parentElement.children)) {
-        if (element !== branch && element instanceof HTMLElement) {
-          siblings.push({ element, inert: element.inert });
-          element.inert = true;
+    const siblings = new Map<HTMLElement, boolean>();
+    const isolate = () => {
+      let branch: HTMLElement = frame.current!;
+      while (branch.parentElement && branch !== document.body) {
+        for (const element of Array.from(branch.parentElement.children)) {
+          if (element !== branch && element instanceof HTMLElement) {
+            if (!siblings.has(element)) siblings.set(element, element.inert);
+            element.inert = true;
+          }
         }
+        branch = branch.parentElement;
       }
-      branch = branch.parentElement;
-    }
-    close.current?.focus();
+    };
+    isolate();
+    // Area selection can replace the background rankings with a new profile column.
+    const observer = new MutationObserver(isolate);
+    observer.observe(document.body, { childList: true, subtree: true });
+    close.current?.focus({ preventScroll: true });
     const keydown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault(); event.stopPropagation(); onCloseRef.current();
@@ -46,11 +52,12 @@ export const FullMapFrame = ({ full, onClose, toolbar, children }: {
     const node = frame.current;
     return () => {
       node.removeEventListener("keydown", keydown);
+      observer.disconnect();
       document.body.style.overflow = overflow;
-      siblings.forEach(({ element, inert }) => { element.inert = inert; });
+      siblings.forEach((inert, element) => { element.inert = inert; });
       requestAnimationFrame(() => {
-        if (previous?.isConnected) previous.focus();
-        else node.querySelector<HTMLButtonElement>('[aria-label="View full map"]')?.focus();
+        if (previous?.isConnected) previous.focus({ preventScroll: true });
+        else node.querySelector<HTMLButtonElement>('[aria-label="View full map"]')?.focus({ preventScroll: true });
       });
     };
   }, [full]);

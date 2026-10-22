@@ -43,7 +43,7 @@ fs.mkdirSync(output, { recursive: true });
     else body = {};
     return route.fulfill({ json: body });
   });
-  await page.goto('http://127.0.0.1:5180/superadmin/analytics', { waitUntil: 'networkidle' });
+  await page.goto(`${process.env.MAP_BASE_URL || 'http://127.0.0.1:5180'}/superadmin/analytics`, { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'View full map', exact: true }).waitFor();
   // Get the existing Map instance from React's ref for diagnostics, without adding a product debug API.
   await page.waitForFunction(() => {
@@ -60,6 +60,41 @@ fs.mkdirSync(output, { recursive: true });
   });
   const initialMap = await page.evaluate(() => ({ zoom: window.__verifyMap.getZoom(), layers: window.__verifyMap.getStyle().layers.map(l => l.id) }));
   console.log('INITIAL', JSON.stringify(initialMap));
+  if (process.env.MAP_RECON === '1') {
+    const recon = [];
+    for (const [width, height] of [[1280, 800], [1920, 1080]]) {
+      await page.setViewportSize({ width, height });
+      await page.locator('.maplibregl-canvas').scrollIntoViewIfNeeded();
+      await page.waitForTimeout(1200);
+      const inspect = () => page.evaluate(() => {
+        const m = window.__verifyMap, b = m.getCanvas().getBoundingClientRect();
+        const hits = [];
+        for (const x of [.2, .5, .8]) for (const y of [.2, .5, .8]) {
+          const e = document.elementFromPoint(b.x + b.width * x, b.y + b.height * y);
+          hits.push({ x, y, tag: e?.tagName, class: e?.className });
+        }
+        return { zoom: m.getZoom(), center: m.getCenter(), bounds: b.toJSON(), hits,
+          inert: document.querySelectorAll('[inert]').length, drag: m.dragPan.isEnabled(), scroll: scrollY };
+      });
+      const before = await inspect();
+      const b = before.bounds;
+      await page.mouse.move(b.x + b.width * .5, b.y + b.height * .5);
+      await page.mouse.down(); await page.mouse.move(b.x + b.width * .5 + 90, b.y + b.height * .5, { steps: 15 }); await page.mouse.up();
+      await page.waitForTimeout(1200); const dragged = await inspect();
+      await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+      await page.waitForTimeout(1200); const resized = await inspect();
+      await page.mouse.wheel(0, -350); await page.waitForTimeout(1200); const wheeled = await inspect();
+      await page.getByRole('button', { name: 'Reset view', exact: true }).click(); await page.waitForTimeout(700);
+      await page.screenshot({ path: path.join(output, `${width}-before-small.png`) });
+      await page.getByRole('button', { name: 'View full map', exact: true }).click(); await page.waitForTimeout(1200);
+      await page.screenshot({ path: path.join(output, `${width}-before-full.png`) });
+      await page.keyboard.press('Escape'); await page.waitForTimeout(1200);
+      recon.push({ width, height, before, dragged, resized, wheeled, closed: await inspect() });
+    }
+    fs.writeFileSync(path.join(output, 'recon.json'), JSON.stringify(recon, null, 2));
+    console.log('RECON', JSON.stringify(recon));
+    await browser.close(); return;
+  }
   console.log('LABEL STATUS', await page.locator('[role="alert"]').allTextContents());
   assert.equal(await page.locator('[role="alert"]').count(), 0, 'Label loading failed');
   const arabic = await page.evaluate(() => new Promise((resolve, reject) => {
@@ -76,6 +111,7 @@ fs.mkdirSync(output, { recursive: true });
   assert(/[\uFB50-\uFDFF\uFE70-\uFEFF]/.test(arabic.shaped), 'No connected Arabic presentation forms');
   assert.notEqual(arabic.visual[0], arabic.shaped, 'Arabic was not reordered right-to-left');
   const settle = () => page.waitForTimeout(1200);
+  const cameraChecks = await require('./map_camera_checks.cjs')(page, output);
   const shot = async (width, full, level, zoom) => {
     await page.evaluate(({ zoom, level }) => {
       const map = window.__verifyMap;
@@ -144,9 +180,9 @@ fs.mkdirSync(output, { recursive: true });
   await page.getByRole('dialog', { name: 'Full map of Lebanon' }).waitFor();
   await page.keyboard.press('Escape');
   assert(!new URL(page.url()).searchParams.has('map'));
-  fs.writeFileSync(path.join(output, 'verification.json'), JSON.stringify({ initialMap, arabic, metrics, errors, failed, network,
+  fs.writeFileSync(path.join(output, 'verification.json'), JSON.stringify({ initialMap, arabic, metrics, cameraChecks, errors, failed, network,
     missingCoordinates: fixtures.labels.missing_coordinates }, null, 2));
-  console.log('RESULT', JSON.stringify({ screenshots: metrics.length + 3, errors, failed, localMapRequests: network.length }));
+  console.log('RESULT', JSON.stringify({ labelScreenshots: metrics.length + 3, cameraChecks: cameraChecks.length, errors, failed, localMapRequests: network.length }));
   await browser.close();
   assert.equal(errors.length, 0, errors.join('\n'));
   assert.equal(failed.filter(x => !x.includes('ERR_ABORTED')).length, 0, failed.join('\n'));
