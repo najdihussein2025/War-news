@@ -23,8 +23,9 @@ import { TopAreasPanel } from "../components/TopAreasPanel";
 import { buildScale, type MapScale } from "../colors";
 import { defaultFilters, parseFilters, resolveRange, serializeFilters, toApiParams } from "../filters";
 import { buildNameIndex } from "../geoUtils";
+import { MapSections } from "../components/tabs/MapSections";
 import { OverviewSections } from "../components/tabs/OverviewSections";
-import { useAnalyticsOverview, useDebounced, useGeo, useKpis, useMapData, useMatrix, useMeta, usePeaks, usePrefetchMap, useTimeline } from "../hooks";
+import { useAnalyticsMap, useAnalyticsOverview, useDebounced, useGeo, useKpis, useMapData, useMatrix, useMeta, usePeaks, usePrefetchMap, useTimeline } from "../hooks";
 import { TopBarActions } from "../layout/AnalyticsLayout";
 import { playbackFrames } from "../mappers";
 import type { AnalyticsFilters, Grain, Level, MapResponse } from "../types";
@@ -100,11 +101,13 @@ export const AnalyticsPage = () => {
   // ---- tab payloads: one request per tab, only for the active tab
   const tabParams = toApiParams(queryFilters);
   const overview = useAnalyticsOverview(tabParams, grain, activeTab === "overview");
+  // The Map tab has no time grain (its trends are weekly), so its key ignores the grain toggle.
+  const mapTabData = useAnalyticsMap(tabParams, "day", activeTab === "map");
 
   // ---- map data (never filtered to the selected area, so the whole map stays visible).
-  // The Overview payload carries the map; other tabs (the full-screen map) use /map.
+  // The Overview and Map payloads carry the map; other tabs (the full-screen map) use /map.
   const mapParams = toApiParams(queryFilters, { areaCode: null });
-  const tabMapSource = activeTab === "overview" ? overview : null;
+  const tabMapSource = activeTab === "overview" ? overview : activeTab === "map" ? mapTabData : null;
   const mapFallback = useMapData(mapParams, !tabMapSource);
   const mapQuery = {
     data: tabMapSource ? tabMapSource.data?.map : mapFallback.data,
@@ -280,6 +283,11 @@ export const AnalyticsPage = () => {
             metricLabel={label} fileSuffix={fileSuffix} onViewIncidents={() => setDrill({ title: "Incidents in this period" })} />
         ) : null}
 
+        {mapTab ? (
+          <MapSections data={mapTabData.data} error={mapTabData.error} onRetry={() => void mapTabData.refetch()} familyNames={familyNames}
+            metricLabel={label} fileSuffix={fileSuffix} onFocusArea={focusArea} />
+        ) : null}
+
         <div ref={tlRef} className={cn("col-span-12 min-w-0", activeTab !== "incidents" && "hidden")}>
           <SectionCard id="timeline" title="Timeline" subtitle={`${label} per ${grain}, stacked by ${filters.metric === "breaches" ? "air type" : "action family"}, with the 7-day average`}
             actions={(
@@ -311,7 +319,7 @@ export const AnalyticsPage = () => {
           </SectionCard>
         </div>
 
-        <div ref={rkRef} className={cn("col-span-12 min-w-0", !on("map", "incidents", "casualties") && "hidden")}>
+        <div ref={rkRef} className={cn("col-span-12 min-w-0", !on("incidents", "casualties") && "hidden")}>
           <SectionCard id="rankings" title="Rankings" subtitle="The same values as the map, as a keyboard-friendly list">
             {rkSeen ? <RankingsPanel filters={queryFilters} familyNames={familyNames} enabled={rkSeen} onFocusArea={focusArea} /> : <Skeleton className="h-80" />}
           </SectionCard>

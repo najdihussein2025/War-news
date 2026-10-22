@@ -31,6 +31,8 @@ type DataTableProps<T> = {
   density?: "default" | "compact";
   actionsClassName?: string;
   stickyActions?: boolean;
+  /** Show this many rows per page (sorting still covers every row); omit for no paging. */
+  pageSize?: number;
 };
 
 const SortIcon = ({ active, direction }: { active: boolean; direction: SortDirection }) => (
@@ -94,7 +96,9 @@ export const DataTable = <T,>({
   density = "default",
   actionsClassName,
   stickyActions = false,
+  pageSize,
 }: DataTableProps<T>) => {
+  const [page, setPage] = useState(0);
   const firstSortable = columns.find((column) => column.sortValue);
   const [sort, setSort] = useState<{ key: string; direction: SortDirection } | null>(
     initialSort ?? (firstSortable ? { key: firstSortable.key, direction: "asc" } : null),
@@ -116,7 +120,12 @@ export const DataTable = <T,>({
     return sort.direction === "asc" ? result : -result;
   }) : rows;
 
+  const pageCount = pageSize ? Math.max(1, Math.ceil(sortedRows.length / pageSize)) : 1;
+  const currentPage = Math.min(page, pageCount - 1);
+  const visibleRows = pageSize ? sortedRows.slice(currentPage * pageSize, (currentPage + 1) * pageSize) : sortedRows;
+
   const handleSort = (key: string) => {
+    setPage(0);
     setSort((current) => ({
       key,
       direction: current?.key === key && current.direction === "asc" ? "desc" : "asc",
@@ -178,7 +187,7 @@ export const DataTable = <T,>({
             {loading ? (
               <LoadingRows columns={columns.length + (actions ? 1 : 0)} />
             ) : (
-              sortedRows.map((row, rowIndex) => (
+              visibleRows.map((row, rowIndex) => (
                 <tr
                   key={getRowKey(row)}
                   className={cn(
@@ -226,7 +235,7 @@ export const DataTable = <T,>({
           <div className="space-y-3 p-4">
             {Array.from({ length: 4 }).map((_, index) => <div className="h-20 animate-pulse rounded-md bg-surface-muted" key={index} />)}
           </div>
-        ) : sortedRows.map((row, rowIndex) => (
+        ) : visibleRows.map((row, rowIndex) => (
           <article className="min-w-0 space-y-4 p-4" key={getRowKey(row)}>
             {columns.map((column) => (
               <div className="grid min-w-0 grid-cols-1 gap-1 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-3" key={column.key}>
@@ -240,6 +249,20 @@ export const DataTable = <T,>({
           </article>
         ))}
       </div>
+      {pageSize && pageCount > 1 ? (
+        <nav className="flex items-center justify-between gap-3 border-t border-border px-4 py-2 text-caption text-text-muted" aria-label="Table pages">
+          <span className="tabular-nums">
+            {currentPage * pageSize + 1}–{Math.min((currentPage + 1) * pageSize, sortedRows.length)} of {sortedRows.length}
+          </span>
+          <span className="flex items-center gap-1">
+            <button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}
+              className="h-7 rounded-md border border-border px-2.5 font-medium text-text-primary hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Previous</button>
+            <span className="px-1 tabular-nums" aria-live="polite">Page {currentPage + 1} of {pageCount}</span>
+            <button type="button" disabled={currentPage >= pageCount - 1} onClick={() => setPage(currentPage + 1)}
+              className="h-7 rounded-md border border-border px-2.5 font-medium text-text-primary hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Next</button>
+          </span>
+        </nav>
+      ) : null}
     </Card>
   );
 };

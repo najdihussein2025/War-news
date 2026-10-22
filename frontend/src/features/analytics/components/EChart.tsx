@@ -1,10 +1,10 @@
 import { BarChart, LineChart, PieChart } from "echarts/charts";
-import { GridComponent, LegendComponent, MarkAreaComponent, MarkPointComponent, TitleComponent, TooltipComponent } from "echarts/components";
+import { GridComponent, LegendComponent, MarkAreaComponent, MarkLineComponent, MarkPointComponent, TitleComponent, TooltipComponent } from "echarts/components";
 import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { useEffect, useRef } from "react";
 
-echarts.use([BarChart, LineChart, PieChart, GridComponent, TooltipComponent, LegendComponent, MarkPointComponent, MarkAreaComponent, TitleComponent, CanvasRenderer]);
+echarts.use([BarChart, LineChart, PieChart, GridComponent, TooltipComponent, LegendComponent, MarkPointComponent, MarkAreaComponent, MarkLineComponent, TitleComponent, CanvasRenderer]);
 
 export type EChartOption = Parameters<echarts.ECharts["setOption"]>[0];
 
