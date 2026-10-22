@@ -195,7 +195,7 @@ export const AnalyticsPage = () => {
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-12 gap-4">
+      <div className="mt-4 grid min-w-0 grid-cols-12 gap-4 [&>*]:min-w-0">
         {on("overview", "casualties") ? (
           <div className="col-span-12">
             {activeTab === "casualties" ? <p className="mb-1.5 text-caption text-text-muted">Reported deaths and injuries. Use the rankings and the matrix below to compare affected places.</p> : null}

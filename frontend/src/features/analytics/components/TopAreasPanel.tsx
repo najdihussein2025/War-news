@@ -14,7 +14,7 @@ const ActionMix = ({ mix, familyNames }: { mix: Record<string, number>; familyNa
   if (!total) return null;
   const pct = (v: number) => `${Math.round((v / total) * 100)}%`;
   return (
-    <div className="mt-auto border-t border-border pt-2">
+    <div className="mt-auto min-w-0 border-t border-border pt-2">
       <h3 className="mb-1.5 text-caption font-semibold uppercase tracking-wide text-text-muted">Action mix</h3>
       <div className="flex h-2.5 overflow-hidden rounded-sm" role="img" aria-label={entries.map(([c, v]) => `${familyNames[c] ?? c} ${pct(v)}`).join(", ")}>
         {entries.map(([code, v]) => <span key={code} style={{ width: `${(v / total) * 100}%`, background: familyColor(code) }} title={`${familyNames[code] ?? code}: ${formatNumber(v)} (${pct(v)})`} />)}
@@ -23,8 +23,8 @@ const ActionMix = ({ mix, familyNames }: { mix: Record<string, number>; familyNa
         {entries.slice(0, 6).map(([code, v]) => (
           <li key={code} className="flex min-w-0 items-center gap-1.5">
             <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: familyColor(code) }} aria-hidden="true" />
-            <span className="truncate">{familyNames[code] ?? code}</span>
-            <span className="ml-auto text-text-muted">{pct(v)}</span>
+            <span className="min-w-0 truncate" title={familyNames[code] ?? code}>{familyNames[code] ?? code}</span>
+            <span className="ml-auto shrink-0 text-text-muted">{pct(v)}</span>
           </li>
         ))}
       </ul>
@@ -47,24 +47,24 @@ export const TopAreasPanel = ({ filters, metricLabel, onFocusArea, mix, familyNa
   const total = rows.reduce((sum, r) => sum + r.value, 0);
 
   return (
-    <section aria-labelledby="top-areas-title" className="flex h-full min-h-0 flex-col rounded-lg border border-card-border bg-card-bg p-3 shadow-raised xl:p-4">
-      <div className="mb-2">
-        <h2 id="top-areas-title" className="text-body font-semibold">Top 10 {PLURAL[filters.level]}</h2>
+    <section aria-labelledby="top-areas-title" className="flex h-full min-h-0 min-w-0 max-w-full flex-col rounded-lg border border-card-border bg-card-bg p-3 shadow-raised xl:p-4">
+      <div className="mb-2 min-w-0">
+        <h2 id="top-areas-title" className="text-body font-semibold">Top {filters.level !== "mohafaza" && rows.length > 0 ? `${Math.min(10, rows.length)} ` : ""}{PLURAL[filters.level]}</h2>
         <p className="text-caption text-text-muted">{metricLabel} in the period. Select one for its profile.</p>
       </div>
       {query.error && !query.data ? <ErrorBlock message={errorMessage(query.error)} onRetry={() => void query.refetch()} />
         : !query.data ? <Skeleton className="h-full min-h-64" />
           : rows.length === 0 ? <EmptyState>Nothing recorded for these filters.</EmptyState> : (
-            <ol className="-mx-1 min-h-0 shrink space-y-0.5 overflow-auto">
+            <ol className="min-h-0 min-w-0 shrink space-y-0.5 overflow-y-auto overflow-x-hidden">
               {rows.map((r) => (
-                <li key={r.code}>
+                <li key={r.code} className="min-w-0">
                   <button type="button" onClick={() => onFocusArea(r.code, r.level)}
                     className="grid w-full grid-cols-[1.5rem_minmax(0,1fr)_auto] items-center gap-x-2 rounded-md px-1 py-1.5 text-left hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">
                     <span className="text-caption tabular-nums text-text-muted">{r.rank}</span>
                     <span className="min-w-0">
-                      <span className="flex items-baseline gap-1.5 text-small">
-                        <span className="truncate font-medium">{r.name_en || r.name_ar || r.code}</span>
-                        {r.name_ar && r.name_en ? <span dir="rtl" lang="ar" className="truncate text-caption text-text-muted">{r.name_ar}</span> : null}
+                      <span className="flex min-w-0 items-baseline gap-1.5 text-small">
+                        <span className="min-w-0 flex-1 truncate font-medium" title={r.name_en || r.name_ar || r.code}>{r.name_en || r.name_ar || r.code}</span>
+                        {r.name_ar && r.name_en ? <span dir="rtl" lang="ar" title={r.name_ar} className="min-w-0 max-w-[50%] flex-1 truncate text-caption text-text-muted">{r.name_ar}</span> : null}
                       </span>
                       <span className="mt-1 block h-1.5 rounded-sm bg-gray-100" aria-hidden="true">
                         <span className="block h-1.5 rounded-sm" style={{ width: `${(r.value / max) * 100}%`, background: r.dominant_family ? familyColor(r.dominant_family) : "#082d6f" }} />
