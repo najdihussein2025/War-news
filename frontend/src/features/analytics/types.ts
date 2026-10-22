@@ -62,6 +62,7 @@ export type KpisResponse = {
   pending_review: number;
   casualty_completeness: CasualtyCompleteness;
   unattributed_shared_toll_incidents: number;
+  pending_review_delta: Delta;
   daily_average: Delta;
   /** Counted (verified or auto-processed) share of the filtered incidents, in percent. */
   verified_pct: { current: number | null; previous: number | null; delta: number | null; counted: number; pending: number };
@@ -77,6 +78,8 @@ export type TimelineResponse = {
   total: SeriesPoint[];
   moving_average_7d: SeriesPoint[];
   coverage: { available: boolean; note: string; gap_dates: string[]; flagged: CoverageFlag[] };
+  /** Deaths and injuries per bucket (second-axis overlay); empty for air breaches. */
+  casualties?: Array<{ date: string; deaths: number; injuries: number }>;
 };
 
 export type RankingRow = {
@@ -99,6 +102,61 @@ export type RankingRow = {
   dominant_condition_label?: string | null;
 };
 export type RankingsResponse = { level: Level; metric: Metric; limit: number; rows: RankingRow[] };
+
+// ---------------------------------------------------------------- /tab/{tab} payloads
+export type ShareRow = { key: string; label_en: string; label_ar?: string | null; value: number; share_pct: number | null };
+export type ActionTrend = {
+  grain: Grain;
+  metric: Metric;
+  series: Array<{ key: string; label_en: string; label_ar: string | null; total: number; points: SeriesPoint[] }>;
+  max_point: number;
+};
+export type PeriodComparison = {
+  level: Level;
+  metric: Metric;
+  period: { date_from: string; date_to: string };
+  previous: { date_from: string; date_to: string };
+  rows: Array<{ code: string; name_en: string; name_ar: string; current: number; previous: number; delta: number; pct: number | null }>;
+};
+export type OverviewTab = {
+  kpis: KpisResponse;
+  map: MapResponse;
+  top_areas: RankingsResponse;
+  timeline: TimelineResponse;
+  peaks: PeaksResponse;
+  action_share: { metric: Metric; total: number; rows: ShareRow[] };
+  action_trend: ActionTrend;
+  period_comparison: PeriodComparison;
+};
+
+/** A ranking row as the Map tab returns it: share of the total, activity and a weekly trend. */
+export type RankedArea = RankingRow & {
+  share_pct: number | null;
+  days_hit: number;
+  last_7d: number;
+  /** One value per week of the period (``rankings.weeks``). */
+  trend: number[];
+  dominant_condition_label?: string | null;
+};
+export type RankingView = { id: string; label: string; level: Level; metric: Metric; total: number; rows: RankedArea[] };
+export type NewlyTargetedVillage = {
+  code: string; name_en: string; name_ar: string; caza_code: string | null; caza_en: string | null; caza_ar: string | null;
+  first_date: string; incidents_since: number;
+};
+export type Pareto = {
+  metric: Metric;
+  total: number;
+  villages_hit: number;
+  summary: { top10_share_pct: number | null; villages_for_50_pct: number | null; villages_for_80_pct: number | null };
+  rows: Array<{ code: string; name_en: string; name_ar: string; value: number; rank: number; cumulative_pct: number }>;
+};
+export type MapTab = {
+  map: MapResponse;
+  rankings: { weeks: string[]; views: RankingView[] };
+  newly_targeted: { rows: NewlyTargetedVillage[]; note: string };
+  pareto: Pareto;
+};
+export type AnalyticsTabId = "overview" | "map" | "incidents" | "casualties" | "air" | "quality";
 
 export type PeakEntry = { start: string; value: number; low_coverage_days: number; top_areas: Array<{ code: string; name_en: string; name_ar: string; value: number }> } | null;
 export type PeaksResponse = Record<"incidents" | "deaths" | "breaches", { day: PeakEntry; week: PeakEntry }>;

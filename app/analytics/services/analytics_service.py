@@ -170,6 +170,7 @@ def get_kpis(db: Session, flt: Filters) -> Any:
                             for c in sorted(AIR_CONDITION_LABELS)],
             },
             "pending_review": pending,
+            "pending_review_delta": _delta(pending, repo.pending_review_count(db, prev)),
             "casualty_completeness": repo.casualty_completeness(db, flt),
             "unattributed_shared_toll_incidents": int(cur_t["aggregate_only_incidents"]),
             "daily_average": _delta(round(int(cur_t["incidents"]) / flt.days, 2),

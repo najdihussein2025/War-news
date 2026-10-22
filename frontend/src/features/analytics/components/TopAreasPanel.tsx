@@ -1,8 +1,6 @@
 import { familyColor } from "../colors";
-import { toApiParams } from "../filters";
-import { useRankings } from "../hooks";
 import { formatNumber } from "../mappers";
-import type { AnalyticsFilters, Level } from "../types";
+import type { AnalyticsFilters, Level, RankingsResponse } from "../types";
 import { EmptyState, ErrorBlock, Skeleton, errorMessage } from "./common";
 
 const PLURAL: Record<Level, string> = { mohafaza: "mohafazat", caza: "cazas", village: "villages" };
@@ -33,16 +31,20 @@ const ActionMix = ({ mix, familyNames }: { mix: Record<string, number>; familyNa
 };
 
 /** Side column next to the map: the ten areas with the highest value of the current metric. */
-export const TopAreasPanel = ({ filters, metricLabel, onFocusArea, mix, familyNames }: {
+export const TopAreasPanel = ({ filters, metricLabel, onFocusArea, mix, familyNames, data, error, onRetry }: {
   filters: AnalyticsFilters;
   metricLabel: string;
   onFocusArea: (code: string, level: Level) => void;
   /** Family totals for the period (from the map breakdown); empty for air breaches. */
   mix: Record<string, number>;
   familyNames: Record<string, string>;
+  /** ``top_areas`` of the Overview tab payload. */
+  data: RankingsResponse | undefined;
+  error: unknown;
+  onRetry: () => void;
 }) => {
-  const query = useRankings(toApiParams(filters, { areaCode: null }), 10);
-  const rows = query.data?.rows ?? [];
+  const query = { data, error, refetch: onRetry };
+  const rows = data?.rows ?? [];
   const max = Math.max(1, ...rows.map((r) => r.value));
   const total = rows.reduce((sum, r) => sum + r.value, 0);
 

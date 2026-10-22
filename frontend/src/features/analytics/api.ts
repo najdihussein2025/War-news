@@ -1,6 +1,6 @@
 import { apiClient } from "../../lib/apiClient";
 import type {
-  AreaResponse, DrilldownResponse, Grain, KpisResponse, MapResponse, MatrixResponse, MetaResponse,
+  AnalyticsTabId, AreaResponse, DrilldownResponse, Grain, KpisResponse, MapResponse, MatrixResponse, MetaResponse,
   PeaksResponse, RankingsResponse, TimelineResponse,
 } from "./types";
 
@@ -22,6 +22,12 @@ export const getRankings = (p: URLSearchParams, limit = 20) => {
   const q = new URLSearchParams(p);
   q.set("limit", String(limit));
   return get<RankingsResponse>("rankings", q);
+};
+/** Everything one tab draws, from one request (GET /analytics/tab/{tab}). */
+export const getTab = <T,>(tab: AnalyticsTabId, p: URLSearchParams, grain: Grain) => {
+  const q = new URLSearchParams(p);
+  q.set("grain", grain);
+  return get<T>(`tab/${tab}`, q);
 };
 export const getPeaks = (p: URLSearchParams) => get<PeaksResponse>("peaks", p);
 export const getMatrix = (p: URLSearchParams) => get<MatrixResponse>("matrix", p);

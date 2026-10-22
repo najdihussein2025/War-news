@@ -1,9 +1,9 @@
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import {
-  getArea, getIncidents, getKpis, getMap, getMatrix, getMeta, getPeaks, getRankings, getTimeline, loadGeo,
+  getArea, getIncidents, getKpis, getMap, getMatrix, getMeta, getPeaks, getRankings, getTab, getTimeline, loadGeo,
 } from "./api";
-import type { Grain } from "./types";
+import type { AnalyticsTabId, Grain, MapTab, OverviewTab } from "./types";
 
 const STALE = 60_000;
 
@@ -55,5 +55,21 @@ export const useMatrix = (params: URLSearchParams, enabled = true) =>
 export const useArea = (code: string | null, params: URLSearchParams) =>
   useQuery({ queryKey: ["analytics", "area", code, params.toString()], queryFn: () => getArea(code as string, params), staleTime: STALE, enabled: Boolean(code) });
 
-export const useIncidents = (params: URLSearchParams, page: number, enabled: boolean) =>
+/** One query per tab, keyed on the filters and grain; only the active tab passes ``enabled``. */
+const useTab = <T,>(tab: AnalyticsTabId, params: URLSearchParams, grain: Grain, enabled: boolean) =>
+  useQuery({
+    queryKey: ["analytics", "tab", tab, params.toString(), grain],
+    queryFn: () => getTab<T>(tab, params, grain),
+    staleTime: STALE,
+    placeholderData: keepPreviousData,
+    enabled,
+    retry: (count, error) => ((error as { response?: { status?: number } }).response?.status === 422 ? false : count < 2),
+  });
+
+export const useAnalyticsOverview = (params: URLSearchParams, grain: Grain, enabled: boolean) =>
+  useTab<OverviewTab>("overview", params, grain, enabled);
+export const useAnalyticsMap = (params: URLSearchParams, grain: Grain, enabled: boolean) =>
+  useTab<MapTab>("map", params, grain, enabled);
+
+export const useIncidents =(params: URLSearchParams, page: number, enabled: boolean) =>
   useQuery({ queryKey: ["analytics", "incidents", params.toString(), page], queryFn: () => getIncidents(params, page), staleTime: STALE, placeholderData: keepPreviousData, enabled });

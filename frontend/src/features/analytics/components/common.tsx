@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "../../../lib/cn";
 import { Card } from "../../../components/ui/Card";
+import { downloadCsv, type CsvCell } from "../csv";
 
 /** Flips to true the first time the element scrolls near the viewport (and stays true). */
 export const useInView = (rootMargin = "300px"): [React.RefObject<HTMLDivElement | null>, boolean] => {
@@ -52,6 +53,36 @@ export const SectionCard = ({
     </div>
     {children}
   </Card>
+);
+
+/** "Download CSV" for a chart or table: builds the rows only when clicked. */
+export const CsvButton = ({ filename, headers, rows, disabled }: {
+  filename: string;
+  headers: string[];
+  rows: () => CsvCell[][];
+  disabled?: boolean;
+}) => (
+  <button type="button" disabled={disabled} onClick={() => downloadCsv(filename, headers, rows())}
+    className="flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 text-caption font-medium text-text-muted hover:bg-surface-muted hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">
+    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11" /><path d="m7 10 5 5 5-5" /><path d="M5 20h14" /></svg>
+    Download CSV
+  </button>
+);
+
+/** Segmented toggle for chart options (aria-pressed buttons). */
+export const Toggle = <T extends string>({ label, value, options, onChange }: {
+  label: string;
+  value: T;
+  options: Array<[T, string]>;
+  onChange: (value: T) => void;
+}) => (
+  <div role="group" aria-label={label} className="flex overflow-hidden rounded-md border border-border">
+    {options.map(([id, text], i) => (
+      <button key={id} type="button" aria-pressed={value === id} onClick={() => onChange(id)}
+        className={cn("h-8 px-2.5 text-caption font-medium focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus-ring",
+          i > 0 && "border-l border-border", value === id ? "bg-brand-navy text-text-inverse" : "hover:bg-surface-muted")}>{text}</button>
+    ))}
+  </div>
 );
 
 /** Short, fixed-height empty state so a section with no data never leaves a large blank card. */
