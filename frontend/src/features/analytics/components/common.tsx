@@ -42,16 +42,40 @@ export const errorMessage = (error: unknown): string => {
 export const SectionCard = ({
   title, subtitle, actions, children, className, id,
 }: { title: string; subtitle?: string; actions?: ReactNode; children: ReactNode; className?: string; id?: string }) => (
-  <Card className={cn("p-4", className)} id={id} aria-labelledby={id ? `${id}-title` : undefined}>
-    <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-      <div>
-        <h2 id={id ? `${id}-title` : undefined} className="text-h4 font-semibold text-text-primary">{title}</h2>
+  <Card className={cn("p-3 xl:p-4", className)} id={id} aria-labelledby={id ? `${id}-title` : undefined}>
+    <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+      <div className="min-w-0">
+        <h2 id={id ? `${id}-title` : undefined} className="text-body font-semibold text-text-primary">{title}</h2>
         {subtitle ? <p className="text-caption text-text-muted">{subtitle}</p> : null}
       </div>
       {actions}
     </div>
     {children}
   </Card>
+);
+
+/** Short, fixed-height empty state so a section with no data never leaves a large blank card. */
+export const EmptyState = ({ children, className }: { children: ReactNode; className?: string }) => (
+  <p role="status" className={cn("flex h-20 items-center justify-center rounded-md border border-dashed border-border px-3 text-center text-small text-text-muted", className)}>{children}</p>
+);
+
+/**
+ * ⓘ button with a popover. It opens on hover and on keyboard focus, and stays open while
+ * focus is inside it, so a link in the popover is reachable from the keyboard.
+ */
+export const InfoTip = ({ label, children, align = "left" }: { label: string; children: ReactNode; align?: "left" | "right" }) => (
+  <span className="group/info relative inline-flex">
+    <button type="button" aria-label={label}
+      className="flex h-6 w-6 items-center justify-center rounded-full text-text-muted hover:bg-surface-muted hover:text-brand-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><path d="M12 7.5h.01" /></svg>
+    </button>
+    <span role="tooltip"
+      className={cn("invisible absolute top-full z-30 mt-1 w-64 rounded-md border border-border bg-surface-raised p-3 text-left text-caption font-normal leading-relaxed text-text-primary opacity-0 shadow-overlay transition-opacity duration-150",
+        "group-hover/info:visible group-hover/info:opacity-100 group-focus-within/info:visible group-focus-within/info:opacity-100",
+        align === "left" ? "left-0" : "right-0")}>
+      {children}
+    </span>
+  </span>
 );
 
 export const FamilyDot = ({ color }: { color: string }) => (

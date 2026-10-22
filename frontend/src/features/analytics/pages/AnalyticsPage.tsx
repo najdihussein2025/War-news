@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { cn } from "../../../lib/cn";
 import { getBeirutDate } from "../../../lib/localDate";
 import { formatDate } from "../../../lib/formatters";
 import { levelDisabledReason, nearestSupportedLevel, excludedAirTypes, airTypeLabel } from "../airRules";
@@ -7,8 +8,8 @@ import { AirSection } from "../components/AirSection";
 import { AreaPanel } from "../components/AreaPanel";
 import { ErrorBlock, SectionCard, Skeleton, errorMessage, useInView } from "../components/common";
 import { DrilldownDrawer } from "../components/DrilldownDrawer";
-import { FilterBar, metricLabel } from "../components/FilterBar";
-import { FooterStrip } from "../components/FooterStrip";
+import { ActiveFilterChips, FilterBar, metricLabel } from "../components/FilterBar";
+import { ArchiveNote, HeaderActions, MethodologyModal } from "../components/HeaderActions";
 import { HeatMap } from "../components/HeatMap";
 import { KpiCards } from "../components/KpiCards";
 import { MatrixTable } from "../components/MatrixTable";
@@ -16,9 +17,12 @@ import { PeaksCards } from "../components/PeaksCards";
 import { PlayControls, type Playback } from "../components/PlayControls";
 import { RankingsPanel } from "../components/RankingsPanel";
 import { TimelineChart } from "../components/TimelineChart";
+import { TopAreasPanel } from "../components/TopAreasPanel";
 import { buildScale, type MapScale } from "../colors";
 import { defaultFilters, parseFilters, resolveRange, serializeFilters, toApiParams } from "../filters";
+import { buildNameIndex } from "../geoUtils";
 import { useDebounced, useGeo, useKpis, useMapData, useMatrix, useMeta, usePeaks, usePrefetchMap, useTimeline } from "../hooks";
+import { TopBarActions } from "../layout/AnalyticsLayout";
 import { playbackFrames } from "../mappers";
 import type { AnalyticsFilters, Grain, Level, MapResponse } from "../types";
 
@@ -29,6 +33,9 @@ const TABS = [
 ] as const;
 type AnalyticsTab = typeof TABS[number][0];
 const isTab = (value: string | null): value is AnalyticsTab => TABS.some(([id]) => id === value);
+// Stable references: HeatMap refits whenever its padding prop changes identity.
+const FIT_DEFAULT = 16;
+const FIT_UNDER_PANEL = { top: 16, bottom: 16, left: 16, right: 368 };
 
 export const AnalyticsPage = () => {
   const today = useMemo(() => getBeirutDate(), []);
@@ -46,16 +53,23 @@ export const AnalyticsPage = () => {
   const [methodologyOpen, setMethodologyOpen] = useState(false);
   const requestedTab = search.get("tab");
   const activeTab: AnalyticsTab = isTab(requestedTab) ? requestedTab : "overview";
+  const on = (...tabs: AnalyticsTab[]) => tabs.includes(activeTab);
 
   const update = useCallback((patch: Partial<AnalyticsFilters>) => {
-    setSearch(serializeFilters({ ...filters, ...patch }, today));
-  }, [filters, setSearch, today]);
+    const next = serializeFilters({ ...filters, ...patch }, today);
+    if (activeTab !== "overview") next.set("tab", activeTab);
+    setSearch(next);
+  }, [filters, setSearch, today, activeTab]);
 
   const reset = () => setSearch(serializeFilters(defaultFilters(today), today));
   const setTab = (tab: AnalyticsTab) => {
     const next = serializeFilters(filters, today);
     if (tab === "overview") next.delete("tab"); else next.set("tab", tab);
     setSearch(next);
+  };
+  const setRange = (range: string) => {
+    const { from, to } = resolveRange(range, ctx);
+    update({ range, dateFrom: from, dateTo: to });
   };
 
   // Keep the level valid for the chosen air type.
@@ -69,6 +83,8 @@ export const AnalyticsPage = () => {
     () => Object.fromEntries((meta.data?.families ?? []).map((f) => [f.code, f.name_en])),
     [meta.data],
   );
+  const areaNames = useMemo(() => (geo.data ? buildNameIndex(geo.data) : null), [geo.data]);
+  const areaName = filters.areaCode ? areaNames?.get(filters.areaCode)?.name_en ?? null : null;
 
   // ---- map data (never filtered to the selected area, so the whole map stays visible)
   const mapParams = toApiParams(queryFilters, { areaCode: null });
@@ -118,6 +134,14 @@ export const AnalyticsPage = () => {
   const filterKey = toApiParams(queryFilters, { areaCode: null }).toString();
   useEffect(() => setPlayback(IDLE), [filterKey]);
 
+  const actionMix = useMemo(() => {
+    const totals: Record<string, number> = {};
+    for (const v of mapQuery.data?.values ?? []) {
+      for (const [code, n] of Object.entries(v.families ?? {})) totals[code] = (totals[code] ?? 0) + n;
+    }
+    return totals;
+  }, [mapQuery.data]);
+
   const framing = playback.active && !playback.preparing;
   const shownValues = framing ? framesRef.current[playback.index]?.values ?? [] : mapQuery.data?.values ?? [];
   const scale = useMemo(
@@ -144,121 +168,146 @@ export const AnalyticsPage = () => {
   const label = metricLabel(filters.metric);
   const mapError = mapQuery.error && !mapQuery.data ? errorMessage(mapQuery.error) : null;
   const excluded = filters.metric === "breaches" && !filters.airType ? excludedAirTypes(filters.level).map(airTypeLabel) : [];
+  const mapTab = activeTab === "map";
+  const areaProps = filters.areaCode ? {
+    code: filters.areaCode, filters: queryFilters, onClose: () => update({ areaCode: null }), onFocusArea: focusArea,
+    onViewIncidents: () => setDrill({ title: "Incidents in the selected area" }), onOpenMethodology: () => setMethodologyOpen(true),
+  } : null;
 
   return (
-    <div className="space-y-4 pb-8">
-      <FilterBar filters={filters} meta={meta.data} today={today} onChange={update} onReset={reset}
-        resolveRange={(range) => resolveRange(range, ctx)} pendingReview={kpis.data?.pending_review} />
+    <>
+      <TopBarActions><HeaderActions meta={meta.data} filters={queryFilters} onMethodologyOpen={() => setMethodologyOpen(true)} /></TopBarActions>
 
-      <nav aria-label="Analytics sections" className="sticky top-[78px] z-10 -mx-1 flex gap-1 overflow-x-auto border-b border-border bg-surface-raised/95 px-1 py-2 backdrop-blur">
-        {TABS.map(([id, label]) => <button key={id} type="button" onClick={() => setTab(id)} aria-current={activeTab === id ? "page" : undefined}
-          className={`h-9 shrink-0 rounded-md px-3 text-small font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring ${activeTab === id ? "bg-brand-navy text-text-inverse" : "text-text-muted hover:bg-surface-muted hover:text-text-primary"}`}>{label}</button>)}
-      </nav>
+      <div className="sticky top-14 z-20 -mx-4 border-b border-border bg-surface/95 px-4 backdrop-blur sm:-mx-6 sm:px-6">
+        <FilterBar filters={filters} meta={meta.data} today={today} onChange={update}
+          resolveRange={(range) => resolveRange(range, ctx)} pendingReview={kpis.data?.pending_review} />
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-border/70 py-1.5">
+          <nav aria-label="Analytics sections" className="-mx-1 flex max-w-full gap-0.5 overflow-x-auto px-1">
+            {TABS.map(([id, tabLabel]) => (
+              <button key={id} type="button" onClick={() => setTab(id)} aria-current={activeTab === id ? "page" : undefined}
+                className={cn("h-7 shrink-0 rounded-md px-3 text-small font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring",
+                  activeTab === id ? "bg-brand-navy text-text-inverse" : "text-text-muted hover:bg-surface-muted hover:text-text-primary")}>{tabLabel}</button>
+            ))}
+          </nav>
+          <div className="flex min-w-0 flex-1 justify-end">
+            <ActiveFilterChips filters={filters} meta={meta.data} areaName={areaName} onChange={update} onRemoveRange={() => setRange("30d")} onReset={reset} />
+          </div>
+        </div>
+      </div>
 
-      <section aria-label="Heat map" className={activeTab === "map" || activeTab === "overview" ? "" : "hidden"}>
-        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-h4 font-semibold">{label} by {filters.level}</h2>
-          <p className="text-caption text-text-muted">
+      <div className="mt-4 grid grid-cols-12 gap-4">
+        {on("overview", "casualties") ? (
+          <div className="col-span-12">
+            {activeTab === "casualties" ? <p className="mb-1.5 text-caption text-text-muted">Reported deaths and injuries. Use the rankings and the matrix below to compare affected places.</p> : null}
+            <KpiCards data={kpis.data} loading={kpis.isLoading} error={kpis.error} onRetry={() => void kpis.refetch()} onOpenMethodology={() => setMethodologyOpen(true)} />
+          </div>
+        ) : null}
+
+        {/* One map instance for both tabs: only its box changes, so maplibre is never re-created. */}
+        <section aria-labelledby="map-title" className={cn("col-span-12 min-w-0", activeTab === "overview" && "xl:col-span-8", !on("overview", "map") && "hidden")}>
+          <h2 id="map-title" className="sr-only">{label} by {filters.level}</h2>
+          {mapError ? <ErrorBlock message={mapError} onRetry={() => void mapQuery.refetch()} /> : null}
+          <div className={cn("relative", mapTab ? "h-[560px] lg:h-[calc(100dvh-13rem)] lg:max-h-[920px] lg:min-h-[600px]" : "h-[480px] md:h-[560px] xl:h-[640px]")}>
+            {geo.data ? (
+              <HeatMap
+                geo={geo.data}
+                level={filters.level}
+                values={shownValues}
+                scale={scale}
+                metricLabel={label}
+                fitPadding={mapTab && filters.areaCode ? FIT_UNDER_PANEL : FIT_DEFAULT}
+                familyNames={familyNames}
+                selectedCode={filters.areaCode}
+                onSelect={(code, level) => (code ? focusArea(code, level) : update({ areaCode: null }))}
+                frameLabel={framing ? playback.labels[playback.index] : null}
+                loading={mapQuery.isFetching && !framing}
+                controls={<PlayControls state={playback} setState={setPlayback} onStart={() => void startPlayback()} onStop={stopPlayback} disabled={!geo.data} />}
+              />
+            ) : geo.error ? (
+              <ErrorBlock message={errorMessage(geo.error)} onRetry={() => void geo.refetch()} />
+            ) : <Skeleton className="h-full w-full" />}
+            {mapTab && areaProps ? <AreaPanel {...areaProps} variant="overlay" /> : null}
+          </div>
+          <p className="mt-1.5 text-caption text-text-muted" role="status">
+            {mapQuery.data && mapQuery.data.values.length === 0 && !mapError ? "Nothing recorded for these filters. Try a longer period or turn on pending review. " : ""}
             {mapQuery.data?.unit_note}
             {excluded.length ? ` Not shown at ${filters.level} level: ${excluded.join(", ")}.` : ""}
           </p>
-        </div>
-        {mapError ? <ErrorBlock message={mapError} onRetry={() => void mapQuery.refetch()} /> : null}
-        <div className="relative h-[560px] min-h-[420px]">
-          {geo.data ? (
-            <HeatMap
-              geo={geo.data}
-              level={filters.level}
-              values={shownValues}
-              scale={scale}
-              metricLabel={label}
-              familyNames={familyNames}
-              selectedCode={filters.areaCode}
-              onSelect={(code, level) => (code ? focusArea(code, level) : update({ areaCode: null }))}
-              frameLabel={framing ? playback.labels[playback.index] : null}
-              loading={mapQuery.isFetching && !framing}
-              controls={<PlayControls state={playback} setState={setPlayback} onStart={() => void startPlayback()} onStop={stopPlayback} disabled={!geo.data} />}
-            />
-          ) : geo.error ? (
-            <ErrorBlock message={errorMessage(geo.error)} onRetry={() => void geo.refetch()} />
-          ) : <Skeleton className="h-full w-full" />}
-          {filters.areaCode ? (
-            <AreaPanel code={filters.areaCode} filters={queryFilters} onClose={() => update({ areaCode: null })}
-              onFocusArea={focusArea} onViewIncidents={() => setDrill({ title: "Incidents in the selected area" })} onOpenMethodology={() => setMethodologyOpen(true)} />
-          ) : null}
-        </div>
-        {mapQuery.data && mapQuery.data.values.length === 0 && !mapError ? (
-          <p className="mt-2 text-small text-text-muted" role="status">Nothing recorded for these filters. Try a longer period or turn on pending review.</p>
+        </section>
+
+        {activeTab === "overview" ? (
+          <div className="col-span-12 h-[560px] min-w-0 xl:col-span-4 xl:h-[640px]">
+            {areaProps ? <AreaPanel {...areaProps} variant="column" />
+              : <TopAreasPanel filters={queryFilters} metricLabel={label} onFocusArea={focusArea} mix={actionMix} familyNames={familyNames} />}
+          </div>
         ) : null}
-      </section>
 
-      <div className={activeTab === "overview" || activeTab === "casualties" ? "" : "hidden"}>
-        {activeTab === "casualties" ? <p className="text-small text-text-muted">Reported deaths and injuries are shown below. Open an area or use the rankings to compare affected places.</p> : null}
-        <KpiCards data={kpis.data} loading={kpis.isLoading} error={kpis.error} onRetry={() => void kpis.refetch()} onOpenMethodology={() => setMethodologyOpen(true)} />
-      </div>
-
-      <div ref={tlRef} className={`grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_380px] ${activeTab === "overview" || activeTab === "incidents" ? "" : "hidden"}`}>
-        <SectionCard id="timeline" title="Timeline" subtitle={`${label} per ${grain}, stacked by ${filters.metric === "breaches" ? "air type" : "action family"}`}
-          actions={(
-            <div className="flex items-center gap-2">
-              <div role="group" aria-label="Time grain" className="flex overflow-hidden rounded-md border border-border">
-                {(["day", "week", "month"] as Grain[]).map((g) => (
-                  <button key={g} type="button" aria-pressed={grain === g} onClick={() => setGrainChoice(g)}
-                    className={`h-8 px-3 text-small capitalize focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus-ring ${grain === g ? "bg-brand-navy text-text-inverse" : "hover:bg-surface-muted"}`}>{g}</button>
-                ))}
+        <div ref={tlRef} className={cn("col-span-12 min-w-0", !on("overview", "incidents") && "hidden")}>
+          <SectionCard id="timeline" title="Timeline" subtitle={`${label} per ${grain}, stacked by ${filters.metric === "breaches" ? "air type" : "action family"}, with the 7-day average`}
+            actions={(
+              <div className="flex items-center gap-2">
+                <div role="group" aria-label="Time grain" className="flex overflow-hidden rounded-md border border-border">
+                  {(["day", "week", "month"] as Grain[]).map((g) => (
+                    <button key={g} type="button" aria-pressed={grain === g} onClick={() => setGrainChoice(g)}
+                      className={`h-8 px-3 text-small capitalize focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus-ring ${grain === g ? "bg-brand-navy text-text-inverse" : "hover:bg-surface-muted"}`}>{g}</button>
+                  ))}
+                </div>
+                <button type="button" onClick={() => setDrill({ title: "Incidents in this period" })} className="h-8 rounded-md border border-border px-3 text-small hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">View incidents</button>
               </div>
-              <button type="button" onClick={() => setDrill({ title: "Incidents in this period" })} className="h-8 rounded-md border border-border px-3 text-small hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">View incidents</button>
-            </div>
-          )}>
-          {timeline.error && !timeline.data ? <ErrorBlock message={errorMessage(timeline.error)} onRetry={() => void timeline.refetch()} />
-            : timeline.data ? (
-              <>
-                <TimelineChart data={timeline.data} grain={grain} />
-                {timeline.data.coverage.gap_dates.length > 0 ? (
-                  <p className="mt-1 text-caption text-text-muted">Hatched days ({timeline.data.coverage.gap_dates.length}) had low or no message coverage: missing or incomplete data, not zero incidents.</p>
-                ) : null}
-              </>
-            ) : <Skeleton className="h-[300px]" />}
-        </SectionCard>
-        <SectionCard id="peaks" title="Peaks" subtitle="Worst day and week in the period">
-          <PeaksCards data={peaks.data} loading={peaks.isLoading} error={peaks.error} onRetry={() => void peaks.refetch()} />
-        </SectionCard>
-      </div>
+            )}>
+            {timeline.error && !timeline.data ? <ErrorBlock message={errorMessage(timeline.error)} onRetry={() => void timeline.refetch()} />
+              : timeline.data ? (
+                <>
+                  <TimelineChart data={timeline.data} grain={grain} height={320} />
+                  {timeline.data.coverage.gap_dates.length > 0 ? (
+                    <p className="mt-1 text-caption text-text-muted">Hatched days ({timeline.data.coverage.gap_dates.length}) had low or no message coverage: missing or incomplete data, not zero incidents.</p>
+                  ) : null}
+                </>
+              ) : <Skeleton className="h-[320px]" />}
+          </SectionCard>
+        </div>
 
-      <div className={`grid gap-4 ${activeTab === "overview" || activeTab === "incidents" || activeTab === "casualties" ? "" : "hidden"}`}>
-        <div ref={rkRef}>
-          <SectionCard id="rankings" title="Rankings" subtitle="Keyboard-friendly list of the same values as the map">
+        <div className={cn("col-span-12 min-w-0", !on("overview", "incidents") && "hidden")}>
+          <SectionCard id="peaks" title="Peaks" subtitle="Worst day and worst week in the period, with the three most affected cazas">
+            <PeaksCards data={peaks.data} loading={peaks.isLoading} error={peaks.error} onRetry={() => void peaks.refetch()} />
+          </SectionCard>
+        </div>
+
+        <div ref={rkRef} className={cn("col-span-12 min-w-0", !on("overview", "map", "incidents", "casualties") && "hidden")}>
+          <SectionCard id="rankings" title="Rankings" subtitle="The same values as the map, as a keyboard-friendly list">
             {rkSeen ? <RankingsPanel filters={queryFilters} familyNames={familyNames} enabled={rkSeen} onFocusArea={focusArea} /> : <Skeleton className="h-80" />}
           </SectionCard>
         </div>
-        <div ref={mxRef}>
+
+        <div ref={mxRef} className={cn("col-span-12 min-w-0", !on("overview", "incidents", "casualties") && "hidden")}>
           <SectionCard id="matrix" title="Action × caza" subtitle="Click a cell to filter the page to that caza and action">
             <MatrixTable data={matrix.data} loading={matrix.isLoading} error={matrix.error} onRetry={() => void matrix.refetch()}
               onCell={(caza, family) => update({ areaCode: caza, level: "caza", families: family ? [family] : [] })} />
           </SectionCard>
         </div>
+
+        <div ref={airRef} className={cn("col-span-12 min-w-0", activeTab !== "air" && "hidden")}>
+          <SectionCard id="air" title="Air violations" subtitle="CNRS breaches, not report counts">
+            {airSeen ? <AirSection filters={queryFilters} enabled={airSeen} onFocusArea={focusArea} /> : <Skeleton className="h-72" />}
+          </SectionCard>
+        </div>
+
+        <section className={cn("col-span-12 min-w-0", activeTab !== "quality" && "hidden")} aria-label="Data quality">
+          <SectionCard id="quality" title="Data quality" subtitle="Coverage, pending review and geography checks for the selected period">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-md border border-border p-3"><p className="text-caption text-text-muted">Pending review</p><p className="text-h3 font-semibold tabular-nums">{kpis.data?.pending_review ?? "—"}</p></div>
+              <div className="rounded-md border border-border p-3"><p className="text-caption text-text-muted">Casualty status</p><p className="text-h3 font-semibold tabular-nums">{kpis.data?.casualty_completeness.pct ?? "—"}{kpis.data?.casualty_completeness.pct !== null && kpis.data ? "%" : ""}</p></div>
+              <div className="rounded-md border border-border p-3"><p className="text-caption text-text-muted">Last refresh</p><p className="text-small font-semibold">{meta.data?.last_refresh ? formatDate(meta.data.last_refresh) : "—"}</p></div>
+            </div>
+          </SectionCard>
+        </section>
+
+        <div className="col-span-12"><ArchiveNote meta={meta.data} /></div>
       </div>
 
-      <div ref={airRef} className={activeTab === "air" ? "" : "hidden"}>
-        <SectionCard id="air" title="Air violations" subtitle="CNRS breaches, not report counts">
-          {airSeen ? <AirSection filters={queryFilters} enabled={airSeen} onFocusArea={focusArea} /> : <Skeleton className="h-72" />}
-        </SectionCard>
-      </div>
-
-      <section className={activeTab === "quality" ? "" : "hidden"} aria-label="Data quality">
-        <SectionCard id="quality" title="Data quality" subtitle="Coverage, pending review, and geography checks for the selected period">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-md border border-border p-3"><p className="text-caption text-text-muted">Pending review</p><p className="text-h3 font-semibold tabular-nums">{kpis.data?.pending_review ?? "—"}</p></div>
-            <div className="rounded-md border border-border p-3"><p className="text-caption text-text-muted">Casualty status</p><p className="text-h3 font-semibold tabular-nums">{kpis.data?.casualty_completeness.pct ?? "—"}{kpis.data?.casualty_completeness.pct !== null && kpis.data ? "%" : ""}</p></div>
-            <div className="rounded-md border border-border p-3"><p className="text-caption text-text-muted">Last refresh</p><p className="text-small font-semibold">{meta.data?.last_refresh ? formatDate(meta.data.last_refresh) : "—"}</p></div>
-          </div>
-          <p className="mt-3 text-small text-text-muted">Hatched timeline bands identify low or missing ingestion. Geo anomalies are exposed by the quality API for the selected period.</p>
-        </SectionCard>
-      </section>
-
-      <FooterStrip meta={meta.data} filters={queryFilters} methodologyOpen={methodologyOpen} onMethodologyOpen={() => setMethodologyOpen(true)} onMethodologyClose={() => setMethodologyOpen(false)} />
+      {methodologyOpen ? <MethodologyModal onClose={() => setMethodologyOpen(false)} /> : null}
       {drill ? <DrilldownDrawer filters={queryFilters} title={drill.title} onClose={() => setDrill(null)} /> : null}
-    </div>
+    </>
   );
 };
 

@@ -20,6 +20,8 @@ type SelectProps = {
   onChange?: (value: string) => void;
   searchable?: boolean;
   searchPlaceholder?: string;
+  /** "sm" is the compact 40px variant for dense toolbars. */
+  size?: "md" | "sm";
 };
 
 const Chevron = () => (
@@ -53,6 +55,7 @@ export const Select = ({
   onChange,
   searchable = false,
   searchPlaceholder = "Search...",
+  size = "md",
 }: SelectProps) => {
   const isControlled = value !== undefined;
   const [internalValue, setInternalValue] = useState(defaultValue ?? "");
@@ -142,7 +145,8 @@ export const Select = ({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         className={cn(
-          "flex h-11 w-full items-center justify-between gap-3 rounded-md border border-input-border bg-input-bg px-3 text-left text-body text-text-primary",
+          "flex w-full items-center justify-between gap-3 rounded-md border border-input-border bg-input-bg px-3 text-left text-text-primary",
+          size === "sm" ? "h-8 text-small" : "h-11 text-body",
           "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring",
           "disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-text-muted",
         )}

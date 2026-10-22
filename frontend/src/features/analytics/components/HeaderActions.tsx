@@ -30,12 +30,16 @@ export const MethodologyModal = ({ onClose }: { onClose: () => void }) => (
   </Dialog>
 );
 
-export const FooterStrip = ({ meta, filters, methodologyOpen, onMethodologyOpen, onMethodologyClose }: { meta: MetaResponse | undefined; filters: AnalyticsFilters; methodologyOpen: boolean; onMethodologyOpen: () => void; onMethodologyClose: () => void }) => {
+const button = "h-8 shrink-0 rounded-md px-3 text-small focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring";
+
+/** Freshness, Methodology and Export, rendered into the analytics top bar. */
+export const HeaderActions = ({ meta, filters, onMethodologyOpen }: { meta: MetaResponse | undefined; filters: AnalyticsFilters; onMethodologyOpen: () => void }) => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const refreshed = meta?.last_refresh ?? null;
   const ageMin = refreshed ? (Date.now() - new Date(refreshed).getTime()) / 60000 : null;
   const stale = ageMin !== null && ageMin > 15;
+  const queued = meta?.refresh_queue ?? 0;
 
   const exportNow = async () => {
     setBusy(true);
@@ -50,22 +54,28 @@ export const FooterStrip = ({ meta, filters, methodologyOpen, onMethodologyOpen,
   };
 
   return (
-    <footer className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-card-border bg-card-bg p-3 text-small shadow-raised">
-      <div className="space-y-0.5">
-        <p className={cn("tabular-nums", stale && "font-semibold text-warning")}>
-          Data updated {refreshed ? formatRelativeTime(refreshed) : "never"}{stale ? " (refresh is behind)" : ""}
-          {meta && meta.refresh_queue > 0 ? ` · ${meta.refresh_queue} date(s) queued` : ""}
-        </p>
-        <p className="text-caption text-text-muted">
-          {meta?.archive.cutoff_date ? `History up to ${formatDate(meta.archive.cutoff_date)} comes from the frozen archive; later dates are live.` : "No archive yet: all figures are live data."}
-        </p>
-      </div>
-      <div className="flex items-center gap-2">
-        {error ? <span role="alert" className="text-caption text-danger">{error}</span> : null}
-        <button type="button" onClick={onMethodologyOpen} className="h-9 rounded-md border border-border px-3 font-medium hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Methodology</button>
-        <button type="button" disabled={busy} onClick={() => void exportNow()} className="h-9 rounded-md bg-brand-navy px-3 font-semibold text-text-inverse hover:bg-brand-navy-hover disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring">{busy ? "Exporting…" : "Export to Excel"}</button>
-      </div>
-      {methodologyOpen ? <MethodologyModal onClose={onMethodologyClose} /> : null}
-    </footer>
+    <>
+      <p className={cn("hidden min-w-0 items-center gap-1.5 truncate text-caption tabular-nums md:flex", stale ? "font-semibold text-warning" : "text-text-muted")}
+        title={refreshed ? `Last refresh ${new Date(refreshed).toLocaleString()}` : undefined} role="status">
+        <span className={cn("inline-block h-2 w-2 shrink-0 rounded-full", stale ? "bg-warning" : "bg-success")} aria-hidden="true" />
+        <span className="truncate">
+          Updated {refreshed ? formatRelativeTime(refreshed) : "never"}
+          {queued > 0 ? ` · ${queued} date${queued === 1 ? "" : "s"} queued` : ""}
+          {stale ? <span className="sr-only"> (refresh is behind)</span> : null}
+        </span>
+      </p>
+      {error ? <span role="alert" className="shrink-0 text-caption text-danger">{error}</span> : null}
+      <button type="button" onClick={onMethodologyOpen} className={cn(button, "hidden border border-border font-medium hover:bg-surface-muted sm:block")}>Methodology</button>
+      <button type="button" disabled={busy} onClick={() => void exportNow()} aria-label="Export to Excel"
+        className={cn(button, "bg-brand-navy font-semibold text-text-inverse hover:bg-brand-navy-hover disabled:opacity-60")}>
+        {busy ? "Exporting…" : <><span className="lg:hidden">Export</span><span className="hidden lg:inline">Export to Excel</span></>}
+      </button>
+    </>
   );
 };
+
+export const ArchiveNote = ({ meta }: { meta: MetaResponse | undefined }) => (
+  <p className="text-caption text-text-muted">
+    {meta?.archive.cutoff_date ? `History up to ${formatDate(meta.archive.cutoff_date)} comes from the frozen archive; later dates are live.` : "No archive yet: all figures are live data."}
+  </p>
+);

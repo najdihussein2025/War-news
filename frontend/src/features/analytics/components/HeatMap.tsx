@@ -17,8 +17,8 @@ type Props = {
   values: MapValue[];
   scale: MapScale;
   metricLabel: string;
-  /** Extra space kept around Lebanon when fitting (e.g. under an overlay panel). */
-  fitPadding?: number;
+  /** Space kept around Lebanon when fitting (e.g. more on the right under an overlay panel). */
+  fitPadding?: number | maplibregl.PaddingOptions;
   familyNames: Record<string, string>;
   selectedCode: string | null;
   onSelect: (code: string | null, level: Level) => void;
@@ -56,7 +56,7 @@ const BLANK_STYLE: maplibregl.StyleSpecification = {
 };
 
 export const HeatMap = ({
-  geo, level, values, scale, metricLabel, familyNames, selectedCode, onSelect, frameLabel, loading, controls, fitPadding = 24,
+  geo, level, values, scale, metricLabel, familyNames, selectedCode, onSelect, frameLabel, loading, controls, fitPadding = 16,
 }: Props) => {
   const container = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -83,7 +83,7 @@ export const HeatMap = ({
       container: container.current,
       style: BLANK_STYLE,
       bounds: LEBANON_BOUNDS,
-      fitBoundsOptions: { padding: 24 },
+      fitBoundsOptions: { padding: 16 },
       attributionControl: false,
       dragRotate: false,
       pitchWithRotate: false,
@@ -286,8 +286,10 @@ export const HeatMap = ({
         aria-label="Heat map of Lebanon. Use the rankings table below for a keyboard accessible list of the same values."
       />
 
-      <div className="absolute right-3 top-3 flex flex-col items-end gap-2">
-        <div className="relative w-64">
+      {/* Lebanon's bounding box leaves the sea (top-left) and land outside Lebanon
+          (bottom-right) empty, so the overlays sit there instead of over the data. */}
+      <div className="absolute bottom-3 right-3 flex flex-col items-end gap-2">
+        <div className="relative w-56">
           <label htmlFor="map-search" className="sr-only">Search a village by Arabic or English name</label>
           <input
             id="map-search"
@@ -303,7 +305,7 @@ export const HeatMap = ({
             className="h-9 w-full rounded-md border border-input-border bg-input-bg px-3 text-small shadow-raised hover:border-input-border-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring"
           />
           {searchOpen && hits.length > 0 ? (
-            <ul role="listbox" aria-label="Matching villages" className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-md border border-border bg-surface-raised shadow-overlay">
+            <ul role="listbox" aria-label="Matching villages" className="absolute bottom-full z-30 mb-1 max-h-64 w-full overflow-auto rounded-md border border-border bg-surface-raised shadow-overlay">
               {hits.map((hit) => (
                 <li key={hit.code} role="option" aria-selected="false">
                   <button type="button" onClick={() => pickHit(hit)} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-small hover:bg-surface-muted focus-visible:bg-surface-muted focus-visible:outline-none">
@@ -315,19 +317,21 @@ export const HeatMap = ({
             </ul>
           ) : null}
         </div>
-        <div className="flex flex-col overflow-hidden rounded-md border border-border bg-surface-raised shadow-raised">
-          <button type="button" aria-label="Zoom in" onClick={() => mapRef.current?.zoomIn()} className="h-9 w-9 text-h4 leading-none hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">+</button>
-          <button type="button" aria-label="Zoom out" onClick={() => mapRef.current?.zoomOut()} className="h-9 w-9 border-t border-border text-h4 leading-none hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">−</button>
+        <div className="flex items-center gap-2">
+          <div className="flex overflow-hidden rounded-md border border-border bg-surface-raised shadow-raised">
+            <button type="button" aria-label="Zoom in" onClick={() => mapRef.current?.zoomIn()} className="h-9 w-9 text-h4 leading-none hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus-ring">+</button>
+            <button type="button" aria-label="Zoom out" onClick={() => mapRef.current?.zoomOut()} className="h-9 w-9 border-l border-border text-h4 leading-none hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus-ring">−</button>
+          </div>
+          <button type="button" onClick={resetView} className="h-9 rounded-md border border-border bg-surface-raised px-3 text-small font-medium shadow-raised hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Reset view</button>
         </div>
-        <button type="button" onClick={resetView} className="h-9 rounded-md border border-border bg-surface-raised px-3 text-small font-medium shadow-raised hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Reset view</button>
       </div>
 
-      <div className="pointer-events-none absolute inset-y-3 left-3 flex flex-col justify-end"><div className="pointer-events-auto flex max-h-full min-h-0"><MapLegend scale={scale} metricLabel={metricLabel} /></div></div>
+      <div className="absolute left-3 top-3"><MapLegend scale={scale} metricLabel={metricLabel} /></div>
       {controls ? <div className="absolute bottom-3 left-1/2 -translate-x-1/2">{controls}</div> : null}
-      {frameLabel ? (
-        <div className="absolute left-3 top-3 rounded-md bg-brand-navy px-3 py-1 text-small font-semibold text-text-inverse tabular-nums shadow-raised" aria-live="polite">{frameLabel}</div>
-      ) : null}
-      {loading ? <div className="absolute left-3 top-14 rounded-md bg-surface-raised px-2 py-1 text-caption text-text-muted shadow-raised" role="status">Updating…</div> : null}
+      <div className="pointer-events-none absolute left-1/2 top-3 flex -translate-x-1/2 flex-col items-center gap-1.5">
+        {frameLabel ? <div className="rounded-md bg-brand-navy px-3 py-1 text-small font-semibold text-text-inverse tabular-nums shadow-raised" aria-live="polite">{frameLabel}</div> : null}
+        {loading ? <div className="rounded-md bg-surface-raised px-2 py-1 text-caption text-text-muted shadow-raised" role="status">Updating…</div> : null}
+      </div>
 
       {tooltip && tip ? (
         <div

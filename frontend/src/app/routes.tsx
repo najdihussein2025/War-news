@@ -14,6 +14,7 @@ import { RejectedNewsPage } from "../features/news/pages/RejectedNewsPage";
 import { SettingsPage } from "../features/settings/pages/SettingsPage";
 import { SourcesPage } from "../features/sources/pages/SourcesPage";
 import { IntelligenceFlowPage } from "../features/intelligenceFlow/pages/IntelligenceFlowPage";
+import { AnalyticsLayout } from "../features/analytics/layout/AnalyticsLayout";
 import { AppShell } from "./AppShell";
 
 import { useAuthStore } from "../stores/authStore";
@@ -111,6 +112,18 @@ const RouteRepairRedirect = ({ fallback }: { fallback: string }) => {
 export const createRoutes = (): RouteObject[] => [
     // Role-scoped operational routes.
     { path: "/login", element: <LoginPage /> },
+    // Analytics is full width without the admin sidebar; the role guard is the same.
+    // Static paths outrank the "/admin/*" splat below, so these always win.
+    {
+      path: "/admin/analytics",
+      element: <RequireRole roles={[ROLES.ADMIN]}><AnalyticsLayout /></RequireRole>,
+      children: [{ index: true, element: analyticsElement }],
+    },
+    {
+      path: "/superadmin/analytics",
+      element: <RequireRole roles={[ROLES.SUPER_ADMIN]}><AnalyticsLayout /></RequireRole>,
+      children: [{ index: true, element: analyticsElement }],
+    },
     {
       path: "/admin",
       element: <RequireRole roles={[ROLES.ADMIN]}><AppShell previewRole={ROLES.ADMIN} /></RequireRole>,
@@ -122,7 +135,6 @@ export const createRoutes = (): RouteObject[] => [
         { path: "filtered-news", element: <AllNewsPage /> },
         { path: "rejected-news", element: <RejectedNewsPage /> },
         { path: "air-violations", element: <AirViolationsPage /> },
-        { path: "analytics", element: analyticsElement },
         { path: "map", element: <Navigate to="/admin/dashboard" replace /> },
         { path: "sources", element: <SourcesPage /> },
         { path: "logs", element: <Navigate to="audit" replace /> },
@@ -142,7 +154,6 @@ export const createRoutes = (): RouteObject[] => [
         { path: "filtered-news", element: <AllNewsPage /> },
         { path: "rejected-news", element: <RejectedNewsPage /> },
         { path: "air-violations", element: <AirViolationsPage /> },
-        { path: "analytics", element: analyticsElement },
         { path: "map", element: <Navigate to="/superadmin/dashboard" replace /> },
         { path: "sources", element: <SourcesPage /> },
         { path: "logs", element: <Navigate to="audit" replace /> },

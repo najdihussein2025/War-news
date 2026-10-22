@@ -13,16 +13,20 @@ type Props = {
   onFocusArea: (code: string, level: Level) => void;
   onViewIncidents: (code: string) => void;
   onOpenMethodology: () => void;
+  /** "overlay" floats over the map's right edge; "column" fills the side column next to it. */
+  variant?: "overlay" | "column";
 };
 
-export const AreaPanel = ({ code, filters, onClose, onFocusArea, onViewIncidents, onOpenMethodology }: Props) => {
+export const AreaPanel = ({ code, filters, onClose, onFocusArea, onViewIncidents, onOpenMethodology, variant = "overlay" }: Props) => {
   const params = toApiParams(filters, { areaCode: null, metric: "incidents" });
   const query = useArea(code, params);
   const data = query.data;
   const maxFamily = Math.max(...(data?.families.map((f) => f.incidents) ?? [1]), 1);
 
   return (
-    <aside className="absolute inset-y-3 right-3 z-20 flex w-[340px] flex-col overflow-hidden rounded-lg border border-border bg-surface-raised shadow-overlay" aria-label="Area profile">
+    <aside aria-label="Area profile" className={variant === "overlay"
+      ? "absolute inset-y-3 right-3 z-20 flex w-[340px] flex-col overflow-hidden rounded-lg border border-border bg-surface-raised shadow-overlay"
+      : "flex h-full min-h-0 w-full flex-col overflow-hidden rounded-lg border border-card-border bg-card-bg shadow-raised"}>
       <div className="flex items-start justify-between gap-2 border-b border-border p-3">
         <div className="min-w-0">
           {data ? (

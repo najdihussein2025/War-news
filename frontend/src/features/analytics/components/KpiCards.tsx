@@ -2,13 +2,27 @@ import { cn } from "../../../lib/cn";
 import type { ReactNode } from "react";
 import { deltaView, formatNumber, sparkPath } from "../mappers";
 import type { Delta, KpisResponse, SeriesPoint, Split } from "../types";
-import { ErrorBlock, Skeleton, errorMessage } from "./common";
+import { ErrorBlock, InfoTip, Skeleton, errorMessage } from "./common";
 
 const Spark = ({ points, color }: { points: SeriesPoint[]; color: string }) => (
   <svg viewBox="0 0 100 24" className="h-6 w-full" preserveAspectRatio="none" aria-hidden="true">
     <path d={sparkPath(points, 100, 24)} fill="none" stroke={color} strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
   </svg>
 );
+
+/** Male / female / children / unspecified on one line; always visible (no hover-only data). */
+const SplitLine = ({ split }: { split: Split }) => {
+  const parts: Array<[string, string, number]> = [
+    ["M", "Male", split.male], ["F", "Female", split.female], ["Ch", "Children", split.children], ["n/s", "Type not stated", split.unspecified],
+  ];
+  return (
+    <p className="truncate text-caption tabular-nums text-text-muted" title={parts.map(([, long, v]) => `${long} ${v}`).join(" · ")}>
+      {parts.map(([short, long, value], i) => (
+        <span key={short}>{i > 0 ? " · " : ""}<abbr title={long} className="no-underline">{short}</abbr> {formatNumber(value)}</span>
+      ))}
+    </p>
+  );
+};
 
 type CardProps = {
   title: string;
@@ -17,30 +31,30 @@ type CardProps = {
   color: string;
   split?: Split;
   neutral?: boolean;
-  note?: ReactNode;
+  note?: string;
+  info?: ReactNode;
 };
 
-const KpiCard = ({ title, delta, spark, color, split, neutral, note }: CardProps) => {
+const KpiCard = ({ title, delta, spark, color, split, neutral, note, info }: CardProps) => {
   const view = deltaView(delta);
   const tone = neutral || view.direction === "flat" ? "text-text-muted" : view.direction === "up" ? "text-danger" : "text-success";
   return (
-    <div className="group relative rounded-lg border border-card-border bg-card-bg p-4 shadow-raised focus-within:ring-2 focus-within:ring-focus-ring" tabIndex={split ? 0 : undefined}>
-      <div className="text-small font-medium text-text-muted">{title}</div>
-      <div className="mt-1 text-h2 font-semibold tabular-nums leading-none">{formatNumber(delta.current)}</div>
-      <div className={cn("mt-1 text-caption font-medium tabular-nums", tone)} title={view.label}>
-        <span aria-hidden="true">{view.direction === "up" ? "▲" : view.direction === "down" ? "▼" : "■"} </span>
-        <span className="sr-only">{view.label}. </span>{view.text}
+    <div className="flex h-full min-w-0 flex-col rounded-lg border border-card-border bg-card-bg p-3 shadow-raised">
+      <div className="flex min-h-6 items-center justify-between gap-1">
+        <span className="truncate text-small font-medium text-text-muted">{title}</span>
+        {info ? <InfoTip label={`About ${title.toLowerCase()}`} align="right">{info}</InfoTip> : null}
       </div>
-      {spark ? <div className="mt-2"><Spark points={spark} color={color} /></div> : null}
-      {note ? <div className="mt-1 text-caption text-text-muted">{note}</div> : null}
-      {split ? (
-        <div role="tooltip" className="invisible absolute left-3 top-full z-10 mt-1 w-52 rounded-md border border-border bg-surface-raised p-3 text-caption opacity-0 shadow-overlay transition-opacity group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100">
-          <div className="mb-1 font-semibold">Breakdown</div>
-          {([["Male", split.male], ["Female", split.female], ["Children", split.children], ["Unspecified", split.unspecified]] as const).map(([label, value]) => (
-            <div key={label} className="flex justify-between tabular-nums"><span>{label}</span><span>{formatNumber(value)}</span></div>
-          ))}
-        </div>
-      ) : null}
+      <div className="mt-0.5 flex items-baseline justify-between gap-2">
+        <span className="text-h3 font-semibold leading-none tabular-nums">{formatNumber(delta.current)}</span>
+        <span className={cn("truncate text-caption font-medium tabular-nums", tone)} title={view.label}>
+          <span aria-hidden="true">{view.direction === "up" ? "▲" : view.direction === "down" ? "▼" : "■"} </span>
+          <span className="sr-only">{view.label}. </span>{view.text}
+        </span>
+      </div>
+      <div className="mt-auto pt-2">
+        {spark ? <Spark points={spark} color={color} /> : <div className="h-6" aria-hidden="true" />}
+        {split ? <SplitLine split={split} /> : <p className="truncate text-caption text-text-muted" title={note}>{note ?? " "}</p>}
+      </div>
     </div>
   );
 };
@@ -48,25 +62,31 @@ const KpiCard = ({ title, delta, spark, color, split, neutral, note }: CardProps
 export const KpiCards = ({ data, loading, error, onRetry, onOpenMethodology }: { data?: KpisResponse; loading: boolean; error: unknown; onRetry: () => void; onOpenMethodology: () => void }) => {
   if (error && !data) return <ErrorBlock message={errorMessage(error)} onRetry={onRetry} />;
   if (!data || loading && !data) {
-    return <div className="grid grid-cols-3 gap-4 xl:grid-cols-6">{Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-32" />)}</div>;
+    return <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">{Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-[7.25rem]" />)}</div>;
   }
   const breachDelta: Delta = data.air_breaches;
   const esc = data.escalation;
   // A rolling deployment can briefly return a cached KPI payload from before
   // casualty completeness was added; keep the dashboard usable during that window.
   const completeness = data.casualty_completeness ?? { incidents: 0, with_status: 0, pct: null };
-  const completenessNote = completeness.pct === null
-    ? "Casualty status is not available for these incidents."
-    : <>Casualty figures are extracted from reports; {completeness.pct}% of incidents in this period have a casualty status. <button type="button" onClick={onOpenMethodology} className="text-brand-navy underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Methodology</button></>;
+  const casualtyInfo = (
+    <>
+      {completeness.pct === null
+        ? "Casualty status is not available for these incidents."
+        : `Casualty figures are extracted from reports; ${completeness.pct}% of incidents in this period have a casualty status.`}
+      {" "}Children are counted under children only; a toll with no type stated counts in the total only.{" "}
+      <button type="button" onClick={onOpenMethodology} className="font-semibold text-brand-navy underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Methodology</button>
+    </>
+  );
   return (
-    <section aria-label="Key figures" className="space-y-2">
-      <div className="grid grid-cols-3 gap-4 xl:grid-cols-6">
-        <KpiCard title="Incidents" delta={data.incidents} spark={data.sparklines.incidents} color="#082d6f" />
-        <KpiCard title="Deaths" delta={data.deaths} spark={data.sparklines.deaths} color="#9b2c2c" split={data.deaths} note={completenessNote} />
-        <KpiCard title="Injuries" delta={data.injuries} spark={data.sparklines.injuries} color="#bc8e38" split={data.injuries} note={completenessNote} />
-        <KpiCard title="Villages affected" delta={data.villages_affected} color="#009e73" neutral note={`${formatNumber(data.cazas_affected.current)} cazas`} />
+    <section aria-label="Key figures" className="space-y-1.5">
+      <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+        <KpiCard title="Incidents" delta={data.incidents} spark={data.sparklines.incidents} color="#082d6f" note={`vs ${formatNumber(data.incidents.previous)} in the previous ${data.period.days} days`} />
+        <KpiCard title="Deaths" delta={data.deaths} spark={data.sparklines.deaths} color="#9b2c2c" split={data.deaths} info={casualtyInfo} />
+        <KpiCard title="Injuries" delta={data.injuries} spark={data.sparklines.injuries} color="#bc8e38" split={data.injuries} info={casualtyInfo} />
+        <KpiCard title="Villages affected" delta={data.villages_affected} color="#009e73" neutral note={`${formatNumber(data.cazas_affected.current)} cazas affected`} />
         <KpiCard title="Air breaches" delta={breachDelta} spark={data.sparklines.breaches} color="#0072b2" note={data.air_breaches.by_type.map((t) => `${t.label.split(" ")[0]} ${t.current}`).join(" · ")} />
-        <KpiCard title="Pending review" delta={{ current: data.pending_review, previous: 0, delta: 0, pct: null }} color="#7f8c8d" neutral note="Not in the headline" />
+        <KpiCard title="Pending review" delta={{ current: data.pending_review, previous: 0, delta: 0, pct: null }} color="#7f8c8d" neutral note="Not in the headline figures" />
       </div>
       <p className="text-caption text-text-muted tabular-nums">
         Latest day ({esc.date}): <strong>{formatNumber(esc.today)}</strong> incidents vs a 30-day average of <strong>{esc.rolling_30d_daily_average}</strong>

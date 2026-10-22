@@ -258,7 +258,18 @@ const BrandMark = ({ to }: { to: string }) => (
   </Link>
 );
 
-const RoleBadge = ({ role }: { role: string | null }) => (
+/** Revokes the server session, clears the local one and returns to the login page. */
+export const useSignOut = () => {
+  const navigate = useNavigate();
+  const logout = useAuthStore((state) => state.logout);
+  return () => {
+    void revokeSession().catch(() => undefined);
+    logout();
+    navigate("/login", { replace: true });
+  };
+};
+
+export const RoleBadge = ({ role }: { role: string | null }) => (
   <span className="rounded-md border border-brand-gold bg-brand-gold-soft px-2 py-1 text-caption font-semibold text-brand-navy">
     {role === ROLES.SUPER_ADMIN ? "Super Admin" : "Admin"}
   </span>
@@ -272,22 +283,15 @@ const SidebarContent = ({
   previewRole?: Role;
 }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const role = useAuthStore((state) => state.role);
-  const logout = useAuthStore((state) => state.logout);
+  const handleLogout = useSignOut();
   const displayRole = role ?? previewRole ?? ROLES.ADMIN;
   const roleBase = displayRole === ROLES.SUPER_ADMIN ? "/superadmin" : "/admin";
   const displayUser = user ?? (displayRole === ROLES.SUPER_ADMIN
     ? { username: "super.admin", displayName: "Super Admin" }
     : { username: "admin", displayName: "Operations Admin" });
   const visibleItems = navItems.filter((item) => !item.hiddenFrom.includes(displayRole));
-
-  const handleLogout = () => {
-    void revokeSession().catch(() => undefined);
-    logout();
-    navigate("/login", { replace: true });
-  };
 
   return (
     <div className="relative flex h-screen min-h-0 flex-col overflow-hidden bg-white">
