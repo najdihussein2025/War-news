@@ -32,3 +32,11 @@ def test_geometry_cache_has_no_filter_key(monkeypatch):
     monkeypatch.setattr(map_labels, "cached", lambda route, params, build: calls.append((route, params)) or {})
     map_labels.village_labels(DB())
     assert calls == [("village-labels-v1", {})]
+
+
+def test_label_endpoint_requires_auth():
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    app.dependency_overrides.clear()
+    assert TestClient(app).get("/api/analytics/village-labels").status_code == 401

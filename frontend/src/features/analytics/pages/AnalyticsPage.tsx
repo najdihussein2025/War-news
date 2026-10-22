@@ -40,6 +40,8 @@ const isTab = (value: string | null): value is AnalyticsTab => TABS.some(([id]) 
 // Stable references: HeatMap refits whenever its padding prop changes identity.
 const FIT_DEFAULT = 16;
 const FIT_UNDER_PANEL = { top: 16, bottom: 16, left: 16, right: 368 };
+const FIT_FULL = { top: 96, bottom: 16, left: 16, right: 16 };
+const FIT_FULL_UNDER_PANEL = { top: 96, bottom: 16, left: 16, right: 368 };
 
 export const AnalyticsPage = () => {
   const today = useMemo(() => getBeirutDate(), []);
@@ -250,7 +252,7 @@ export const AnalyticsPage = () => {
                 incidentParams={toApiParams(queryFilters, { areaCode: null, level: "village", metric: "incidents", airType: null }).toString()}
                 fullScreen={fullMap}
                 onExpand={() => setFullMap(true)}
-                fitPadding={(mapTab || fullMap) && filters.areaCode ? FIT_UNDER_PANEL : FIT_DEFAULT}
+                fitPadding={fullMap ? (filters.areaCode ? FIT_FULL_UNDER_PANEL : FIT_FULL) : mapTab && filters.areaCode ? FIT_UNDER_PANEL : FIT_DEFAULT}
                 familyNames={familyNames}
                 selectedCode={filters.areaCode}
                 onSelect={(code, level) => (code ? focusArea(code, level) : update({ areaCode: null }))}

@@ -23,11 +23,12 @@ for (const font of ["Noto Sans Regular", "Noto Sans Bold"]) {
   )));
 }
 await mkdir(join(root, "map-rtl"), { recursive: true });
-await download("https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js",
+// MapLibre 4.7.1 expects synchronous plugin registration (0.3.x is asynchronous).
+await download("https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.2.3/mapbox-gl-rtl-text.js",
   join(root, "map-rtl", "mapbox-gl-rtl-text.js"));
-await download("https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/LICENSE.md",
+await download("https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.2.3/LICENSE.md",
   join(root, "map-rtl", "LICENSE.md"));
 await download("https://raw.githubusercontent.com/notofonts/noto-fonts/main/LICENSE",
   join(root, "map-fonts", "LICENSE"));
-await writeFile(join(root, "map-fonts", "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
+await writeFile(join(root, "map-fonts", "manifest.json"), JSON.stringify(manifest.sort((a, b) => a.file.localeCompare(b.file)), null, 2) + "\n");
 console.log(`Vendored ${manifest.length} local assets`);

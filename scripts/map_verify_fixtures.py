@@ -15,9 +15,10 @@ with SessionLocal() as db:
         current = flt.model_copy(update={"level": level})
         result["levels"][level] = {
             "overview": tab_service.get_tab(db, "overview", current, "day"),
+            "mapTab": tab_service.get_tab(db, "map", current, "day"),
             "map": service.get_map(db, current), "kpis": service.get_kpis(db, current),
             "rankings": service.get_rankings(db, current, 10),
         }
     result["labels"] = runpy.run_path("/tmp/map_labels.py")["village_labels"](db)
-    result["area"] = service.get_area(db, "LB43", flt)
+    result["area"] = service.get_area(db, "LB44", flt)
     print(json.dumps(jsonable_encoder(result), ensure_ascii=True))

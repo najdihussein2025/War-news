@@ -60,11 +60,26 @@ fs.mkdirSync(output, { recursive: true });
   });
   const initialMap = await page.evaluate(() => ({ zoom: window.__verifyMap.getZoom(), layers: window.__verifyMap.getStyle().layers.map(l => l.id) }));
   console.log('INITIAL', JSON.stringify(initialMap));
+  console.log('LABEL STATUS', await page.locator('[role="alert"]').allTextContents());
+  assert.equal(await page.locator('[role="alert"]').count(), 0, 'Label loading failed');
+  const arabic = await page.evaluate(() => new Promise((resolve, reject) => {
+    const code = `self.registerRTLTextPlugin = plugin => {
+      const logical = 'بنت جبيل'; const shaped = plugin.applyArabicShaping(logical);
+      self.postMessage({ logical, shaped, visual: plugin.processBidirectionalText(shaped, []) });
+    }; importScripts('${location.origin}/map-rtl/mapbox-gl-rtl-text.js');`;
+    const url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
+    const worker = new Worker(url);
+    worker.onmessage = e => { worker.terminate(); URL.revokeObjectURL(url); resolve(e.data); };
+    worker.onerror = e => reject(e.message);
+  }));
+  assert.notEqual(arabic.logical, arabic.shaped, 'Arabic was not shaped');
+  assert(/[\uFB50-\uFDFF\uFE70-\uFEFF]/.test(arabic.shaped), 'No connected Arabic presentation forms');
+  assert.notEqual(arabic.visual[0], arabic.shaped, 'Arabic was not reordered right-to-left');
   const settle = () => page.waitForTimeout(1200);
   const shot = async (width, full, level, zoom) => {
     await page.evaluate(({ zoom, level }) => {
       const map = window.__verifyMap;
-      if (level === 'country') map.fitBounds([[35.05, 33.03], [36.65, 34.7]], { padding: 16, duration: 0 });
+      if (level === 'country') map.fitBounds([[35.05, 33.03], [36.65, 34.7]], { padding: map.getContainer().closest('[aria-modal="true"]') ? { top: 96, bottom: 16, left: 16, right: 16 } : 16, duration: 0 });
       else map.jumpTo({ center: [35.43, 33.20], zoom });
     }, { zoom, level });
     await settle();
@@ -104,13 +119,34 @@ fs.mkdirSync(output, { recursive: true });
     assert(await trigger.evaluate(el => el === document.activeElement), 'Focus did not return');
   }
   await page.getByRole('button', { name: 'View full map', exact: true }).click();
+  await page.selectOption('#full-map-level', 'caza'); await settle();
+  assert(new URL(page.url()).searchParams.get('map') === 'full', 'Filter change dropped fullscreen');
+  // Click a real rendered polygon and verify its profile floats over the same map.
+  const click = await page.evaluate(() => {
+    window.__verifyMap.fitBounds([[35.05, 33.03], [36.65, 34.7]], { padding: 96, duration: 0 });
+    const p = window.__verifyMap.project([35.43, 33.20]); return { x: p.x, y: p.y };
+  });
+  await settle(); await page.mouse.click(click.x, click.y); await settle();
+  const fullDialog = page.getByRole('dialog', { name: 'Full map of Lebanon' });
+  await fullDialog.getByRole('complementary', { name: 'Area profile' }).waitFor();
+  assert(new URL(page.url()).searchParams.has('area'));
+  assert.equal(new URL(page.url()).searchParams.get('area'), fixtures.area.area.code);
+  await page.screenshot({ path: path.join(output, '1920-full-area-profile.png') });
+  await fullDialog.getByRole('button', { name: 'Close area profile' }).click();
+  assert(new URL(page.url()).searchParams.get('map') === 'full');
+  await page.selectOption('#full-map-level', 'mohafaza');
   await page.reload({ waitUntil: 'networkidle' });
   await page.getByRole('dialog', { name: 'Full map of Lebanon' }).waitFor();
   await page.getByRole('button', { name: 'Close full map' }).click();
   assert(!new URL(page.url()).searchParams.has('map'));
-  fs.writeFileSync(path.join(output, 'verification.json'), JSON.stringify({ initialMap, metrics, errors, failed, network,
+  await page.getByRole('button', { name: 'Map', exact: true }).click(); await settle();
+  await page.getByRole('button', { name: 'View full map', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Full map of Lebanon' }).waitFor();
+  await page.keyboard.press('Escape');
+  assert(!new URL(page.url()).searchParams.has('map'));
+  fs.writeFileSync(path.join(output, 'verification.json'), JSON.stringify({ initialMap, arabic, metrics, errors, failed, network,
     missingCoordinates: fixtures.labels.missing_coordinates }, null, 2));
-  console.log('RESULT', JSON.stringify({ screenshots: metrics.length + 2, errors, failed, localMapRequests: network.length }));
+  console.log('RESULT', JSON.stringify({ screenshots: metrics.length + 3, errors, failed, localMapRequests: network.length }));
   await browser.close();
   assert.equal(errors.length, 0, errors.join('\n'));
   assert.equal(failed.filter(x => !x.includes('ERR_ABORTED')).length, 0, failed.join('\n'));
