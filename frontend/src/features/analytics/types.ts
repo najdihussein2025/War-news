@@ -163,10 +163,32 @@ export type PeaksResponse = Record<"incidents" | "deaths" | "breaches", { day: P
 
 export type MatrixResponse = {
   metric: Metric;
+  by?: "caza" | "mohafaza";
   columns: Family[];
   rows: Array<{ code: string; name_en: string; name_ar: string; mohafaza_code: string; cells: Record<string, number>; total: number }>;
   column_totals: Record<string, number>;
   grand_total: number;
+  unplaced?: number;
+};
+
+export type IncidentsTab = {
+  timeline: TimelineResponse;
+  peaks: PeaksResponse;
+  matrix_caza: MatrixResponse;
+  matrix_mohafaza: MatrixResponse;
+  weekday: { metric: Metric; note: string; rows: Array<{ dow: number; label: string; value: number; days: number }> };
+  weekly_caza: { metric: Metric; weeks: string[]; series: Array<{ code: string; name_en: string; name_ar: string; total: number; points: Array<{ week: string; value: number; rank: number | null }> }> };
+  channels: { total: number; note: string; rows: Array<{ channel: string; platform: string | null; incidents: number; deaths: number; injuries: number; share_pct: number | null }> };
+  war_months: { data_starts: string | null; note: string; rows: Array<{ month: string; war_month: number; label: string; partial: boolean; incidents: number; deaths: number; injuries: number; villages: number; breaches: number; delta: Record<string, number | null> }> };
+};
+
+export type CasualtiesTab = {
+  kpis: KpisResponse;
+  completeness: CasualtyCompleteness;
+  series: { grain: Grain; points: Array<{ date: string; deaths: number; injuries: number }> };
+  by_caza: Array<{ code: string; name_en: string; name_ar: string; deaths: number; injuries: number; deaths_male: number; deaths_female: number; deaths_children: number; injuries_male: number; injuries_female: number; injuries_children: number }>;
+  by_family: Array<{ code: string; name_en: string; name_ar: string; deaths: number; injuries: number }>;
+  incidents: { total: number; limit: number; rows: Array<{ id: string; event_date: string; village_en: string | null; village_ar: string | null; caza_en: string | null; caza_ar: string | null; action_en: string; family: string; verification_status: string; bucket: "counted" | "pending"; deaths: number; injuries: number }> };
 };
 
 export type AreaResponse = {

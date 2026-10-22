@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   getArea, getIncidents, getKpis, getMap, getMatrix, getMeta, getPeaks, getRankings, getTab, getTimeline, loadGeo,
 } from "./api";
-import type { AnalyticsTabId, Grain, MapTab, OverviewTab } from "./types";
+import type { AnalyticsTabId, CasualtiesTab, Grain, IncidentsTab, MapTab, OverviewTab } from "./types";
 
 const STALE = 60_000;
 
@@ -70,6 +70,10 @@ export const useAnalyticsOverview = (params: URLSearchParams, grain: Grain, enab
   useTab<OverviewTab>("overview", params, grain, enabled);
 export const useAnalyticsMap = (params: URLSearchParams, grain: Grain, enabled: boolean) =>
   useTab<MapTab>("map", params, grain, enabled);
+export const useAnalyticsIncidents = (params: URLSearchParams, grain: Grain, enabled: boolean) =>
+  useTab<IncidentsTab>("incidents", params, grain, enabled);
+export const useAnalyticsCasualties = (params: URLSearchParams, grain: Grain, enabled: boolean) =>
+  useTab<CasualtiesTab>("casualties", params, grain, enabled);
 
 export const useIncidents =(params: URLSearchParams, page: number, enabled: boolean) =>
   useQuery({ queryKey: ["analytics", "incidents", params.toString(), page], queryFn: () => getIncidents(params, page), staleTime: STALE, placeholderData: keepPreviousData, enabled });

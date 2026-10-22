@@ -25,7 +25,8 @@ import { defaultFilters, parseFilters, resolveRange, serializeFilters, toApiPara
 import { buildNameIndex } from "../geoUtils";
 import { MapSections } from "../components/tabs/MapSections";
 import { OverviewSections } from "../components/tabs/OverviewSections";
-import { useAnalyticsMap, useAnalyticsOverview, useDebounced, useGeo, useKpis, useMapData, useMatrix, useMeta, usePeaks, usePrefetchMap, useTimeline } from "../hooks";
+import { IncidentsTab } from "../components/tabs/IncidentsTab";
+import { useAnalyticsIncidents, useAnalyticsMap, useAnalyticsOverview, useDebounced, useGeo, useKpis, useMapData, useMatrix, useMeta, usePeaks, usePrefetchMap, useTimeline } from "../hooks";
 import { TopBarActions } from "../layout/AnalyticsLayout";
 import { playbackFrames } from "../mappers";
 import type { AnalyticsFilters, Grain, Level, MapResponse } from "../types";
@@ -105,12 +106,13 @@ export const AnalyticsPage = () => {
   const overview = useAnalyticsOverview(tabParams, grain, activeTab === "overview");
   // The Map tab has no time grain (its trends are weekly), so its key ignores the grain toggle.
   const mapTabData = useAnalyticsMap(tabParams, "day", activeTab === "map");
+  const incidentsTabData = useAnalyticsIncidents(tabParams, grain, activeTab === "incidents");
 
   // ---- map data (never filtered to the selected area, so the whole map stays visible).
   // The Overview and Map payloads carry the map; other tabs (the full-screen map) use /map.
   const mapParams = toApiParams(queryFilters, { areaCode: null });
   const tabMapSource = activeTab === "overview" ? overview : activeTab === "map" ? mapTabData : null;
-  const mapFallback = useMapData(mapParams, !tabMapSource);
+  const mapFallback = useMapData(mapParams, false);
   const mapQuery = {
     data: tabMapSource ? tabMapSource.data?.map : mapFallback.data,
     error: tabMapSource ? tabMapSource.error : mapFallback.error,
@@ -184,15 +186,15 @@ export const AnalyticsPage = () => {
   // ---- lower sections
   const kpiParams = toApiParams(queryFilters);
   // Tabs not yet on their own payload still read /kpis, /timeline, /peaks, /matrix.
-  const kpis = useKpis(kpiParams, activeTab !== "overview");
+  const kpis = useKpis(kpiParams, false);
   const headline = activeTab === "overview" ? overview.data?.kpis : kpis.data;
   const [tlRef, tlSeen] = useInView();
   const [rkRef, rkSeen] = useInView();
   const [mxRef, mxSeen] = useInView();
   const [airRef, airSeen] = useInView();
-  const timeline = useTimeline(kpiParams, grain, tlSeen && activeTab === "incidents");
-  const peaks = usePeaks(kpiParams, tlSeen && activeTab === "incidents");
-  const matrix = useMatrix(kpiParams, mxSeen);
+  const timeline = useTimeline(kpiParams, grain, false);
+  const peaks = usePeaks(kpiParams, false);
+  const matrix = useMatrix(kpiParams, false);
   const fileSuffix = `${queryFilters.dateFrom}_${queryFilters.dateTo}`;
 
   const label = metricLabel(filters.metric);
@@ -226,12 +228,9 @@ export const AnalyticsPage = () => {
       </div>
 
       <div className="mt-4 grid min-w-0 grid-cols-12 gap-4 [&>*]:min-w-0">
-        {on("overview", "casualties") ? (
+        {on("overview") ? (
           <div className="col-span-12">
-            {activeTab === "casualties" ? <p className="mb-1.5 text-caption text-text-muted">Reported deaths and injuries. Use the rankings and the matrix below to compare affected places.</p> : null}
-            {activeTab === "overview"
-              ? <KpiCards data={overview.data?.kpis} loading={overview.isLoading} error={overview.error} onRetry={() => void overview.refetch()} onOpenMethodology={() => setMethodologyOpen(true)} />
-              : <KpiCards data={kpis.data} loading={kpis.isLoading} error={kpis.error} onRetry={() => void kpis.refetch()} onOpenMethodology={() => setMethodologyOpen(true)} />}
+            <KpiCards data={overview.data?.kpis} loading={overview.isLoading} error={overview.error} onRetry={() => void overview.refetch()} onOpenMethodology={() => setMethodologyOpen(true)} />
           </div>
         ) : null}
 
@@ -291,7 +290,10 @@ export const AnalyticsPage = () => {
             metricLabel={label} fileSuffix={fileSuffix} onFocusArea={focusArea} />
         ) : null}
 
-        <div ref={tlRef} className={cn("col-span-12 min-w-0", activeTab !== "incidents" && "hidden")}>
+        {activeTab === "incidents" ? <IncidentsTab data={incidentsTabData.data} loading={incidentsTabData.isLoading} error={incidentsTabData.error} onRetry={() => void incidentsTabData.refetch()} grain={grain} onGrain={setGrainChoice}
+          onCell={(code, level, family) => update({ areaCode: code, level, families: family ? [family] : [] })} /> : null}
+
+        <div ref={tlRef} className="hidden">
           <SectionCard id="timeline" title="Timeline" subtitle={`${label} per ${grain}, stacked by ${filters.metric === "breaches" ? "air type" : "action family"}, with the 7-day average`}
             actions={(
               <div className="flex items-center gap-2">
@@ -316,19 +318,19 @@ export const AnalyticsPage = () => {
           </SectionCard>
         </div>
 
-        <div className={cn("col-span-12 min-w-0", activeTab !== "incidents" && "hidden")}>
+        <div className="hidden">
           <SectionCard id="peaks" title="Peaks" subtitle="Worst day and worst week in the period, with the three most affected cazas">
             <PeaksCards data={peaks.data} loading={peaks.isLoading} error={peaks.error} onRetry={() => void peaks.refetch()} />
           </SectionCard>
         </div>
 
-        <div ref={rkRef} className={cn("col-span-12 min-w-0", !on("incidents", "casualties") && "hidden")}>
+        <div ref={rkRef} className="hidden">
           <SectionCard id="rankings" title="Rankings" subtitle="The same values as the map, as a keyboard-friendly list">
             {rkSeen ? <RankingsPanel filters={queryFilters} familyNames={familyNames} enabled={rkSeen} onFocusArea={focusArea} /> : <Skeleton className="h-80" />}
           </SectionCard>
         </div>
 
-        <div ref={mxRef} className={cn("col-span-12 min-w-0", !on("incidents", "casualties") && "hidden")}>
+        <div ref={mxRef} className="hidden">
           <SectionCard id="matrix" title="Action × caza" subtitle="Click a cell to filter the page to that caza and action">
             <MatrixTable data={matrix.data} loading={matrix.isLoading} error={matrix.error} onRetry={() => void matrix.refetch()}
               onCell={(caza, family) => update({ areaCode: caza, level: "caza", families: family ? [family] : [] })} />
