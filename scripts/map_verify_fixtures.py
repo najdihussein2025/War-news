@@ -20,5 +20,6 @@ with SessionLocal() as db:
             "rankings": service.get_rankings(db, current, 10),
         }
     result["labels"] = runpy.run_path("/tmp/map_labels.py")["village_labels"](db)
-    result["area"] = service.get_area(db, "LB44", flt)
+    # Bent Jbeil (the polygon containing the browser's test click).
+    result["area"] = service.get_area(db, "LB41", flt)
     print(json.dumps(jsonable_encoder(result), ensure_ascii=True))
