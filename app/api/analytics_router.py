@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.accounts.models import User
 from app.analytics.dtos.filters import Filters, get_filters
 from app.analytics.services import analytics_service as service
+from app.analytics.services import tab_service
 from app.analytics.services.export_service import build_workbook
 from app.api.deps import require_admin
 from app.core.database import get_db
@@ -72,6 +73,16 @@ def incidents(
     flt: Filters = Depends(get_filters), db: Session = Depends(get_db), _user: User = Depends(require_admin),
 ):
     return service.get_incidents(db, flt, page, page_size)
+
+
+@router.get("/tab/{tab}")
+def tab_payload(
+    tab: Literal["overview", "map", "incidents", "casualties", "air", "quality"],
+    grain: Literal["day", "week", "month"] = Query("day"),
+    flt: Filters = Depends(get_filters), db: Session = Depends(get_db), _user: User = Depends(require_admin),
+):
+    """Everything one Analytics tab draws, under the same filters (one request per tab)."""
+    return tab_service.get_tab(db, tab, flt, grain)
 
 
 @router.get("/export.xlsx")

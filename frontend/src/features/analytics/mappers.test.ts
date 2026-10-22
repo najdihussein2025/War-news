@@ -1,8 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { coverageWarning, deltaView, fillDays, formatNumber, hasArabic, mapValueIndex, peakOf, playbackFrames, sparkPath } from "./mappers";
+import { casualtyNote, coverageWarning, deltaView, fillDays, formatNumber, hasArabic, mapValueIndex, peakOf, playbackFrames, sparkPath } from "./mappers";
 import type { TimelineResponse } from "./types";
 
 describe("analytics data mappers", () => {
+  it("states how many incidents report casualties, and how many without a count", () => {
+    const base = { incidents: 1204, with_status: 1299, pct: 99 };
+    expect(casualtyNote({ ...base, with_casualties: 6, count_missing: 1 }))
+      .toBe("6 of 1,204 incidents report casualties; 1 reports casualties without a count.");
+    expect(casualtyNote({ ...base, with_casualties: 1, count_missing: 0 })).toBe("1 of 1,204 incidents reports casualties.");
+  });
+
   it("formats numbers with thousands separators", () => {
     expect(formatNumber(12345)).toBe("12,345");
     expect(formatNumber(null)).toBe("–");

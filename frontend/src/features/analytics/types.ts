@@ -62,8 +62,11 @@ export type KpisResponse = {
   pending_review: number;
   casualty_completeness: CasualtyCompleteness;
   unattributed_shared_toll_incidents: number;
-  escalation: { today: number; date: string; rolling_30d_daily_average: number; ratio: number | null };
-  sparklines: { incidents: SeriesPoint[]; deaths: SeriesPoint[]; injuries: SeriesPoint[]; breaches: SeriesPoint[] };
+  daily_average: Delta;
+  /** Counted (verified or auto-processed) share of the filtered incidents, in percent. */
+  verified_pct: { current: number | null; previous: number | null; delta: number | null; counted: number; pending: number };
+  escalation: Escalation;
+  sparklines: Record<"incidents" | "deaths" | "injuries" | "breaches" | "villages" | "cazas" | "pending", SeriesPoint[]>;
 };
 
 export type TimelineSeries = { key: string; label_en: string; label_ar: string | null; total: number; points: SeriesPoint[] };
@@ -138,7 +141,18 @@ export type DrilldownItem = {
 };
 export type DrilldownResponse = { page: number; page_size: number; total: number; items: DrilldownItem[] };
 
-export type CasualtyCompleteness = { incidents: number; with_status: number; pct: number | null };
+export type CasualtyCompleteness = {
+  incidents: number;
+  with_status: number;
+  pct: number | null;
+  /** Incidents with a stated non-zero toll. */
+  with_casualties: number;
+  /** Incidents that mention casualties without a number. */
+  count_missing: number;
+};
+export type EscalationDay = { date: string; value: number; average_30d: number; ratio: number | null; incomplete: boolean };
+/** Latest day with data (never after the last ingested day) vs the 30 days before it. */
+export type Escalation = { requested_date: string; latest: EscalationDay | null; last_complete: EscalationDay | null };
 export type CoverageStatus = "ok" | "low" | "none" | "unknown";
 export type CoverageFlag = { date: string; status: CoverageStatus; messages: number };
 export type CoverageDay = { date: string; messages: number; baseline: number | null; status: CoverageStatus; sources: Record<string, number> };

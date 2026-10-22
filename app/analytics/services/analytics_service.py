@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.analytics.constants import (
     AIR_CONDITION_LABELS, AIR_LEVEL_CONDITIONS, CONFLICT_ZONE_CAZAS, CONFLICT_ZONE_MOHAFAZAT,
 )
-from app.analytics.dtos.filters import Filters, params_hash
+from app.analytics.dtos.filters import BEIRUT, Filters, params_hash
 from app.analytics.repositories import analytics_repository as repo
 from app.core import cache
 from app.core.config import settings
@@ -85,9 +85,59 @@ def unsupported_air_levels_detail(level: str, bad: set[int]) -> str:
 
 # --------------------------------------------------------------------------- kpis
 def _delta(current: int | float, previous: int | float) -> dict[str, Any]:
-    change = current - previous
+    change = round(current - previous, 2)
     return {"current": current, "previous": previous, "delta": change,
             "pct": round(change / previous * 100, 1) if previous else None}
+
+
+ESCALATION_WINDOW = 30
+ESCALATION_LOOKBACK = 7  # how far back to look for the last complete day
+
+
+def _beirut_date(moment: Any) -> date | None:
+    return moment.astimezone(BEIRUT).date() if moment is not None else None
+
+
+def escalation(db: Session, flt: Filters) -> dict[str, Any]:
+    """Latest day with data vs the average of the 30 days before it.
+
+    ``latest`` is min(date_to, last fact date): a period ending today must not compare
+    a day that has not been ingested yet. A day is ``incomplete`` while it is still in the
+    refresh queue or on/after the day of the last refresh; ``last_complete`` is then the
+    closest earlier complete day, so the UI never shows a 0x for a day still filling up.
+    """
+    bounds = repo.incident_fact_bounds(db)
+    if bounds.get("last_date") is None:
+        return {"requested_date": flt.date_to, "latest": None, "last_complete": None}
+    latest = min(flt.date_to, bounds["last_date"])
+    queued = {r["event_date"] for r in repo.queued_dates(db, "incident")}
+    refreshed_on = _beirut_date(bounds.get("refreshed_at"))
+
+    def incomplete(day: date) -> bool:
+        return day in queued or (refreshed_on is not None and day >= refreshed_on)
+
+    first_needed = latest - timedelta(days=ESCALATION_WINDOW + ESCALATION_LOOKBACK)
+    span = flt.model_copy(update={"date_from": first_needed, "date_to": latest})
+    by_day = {r["date"]: int(r["value"]) for r in repo.daily_incident_series(db, span, "incidents")}
+
+    def entry(day: date) -> dict[str, Any]:
+        window = [by_day.get(day - timedelta(days=i), 0) for i in range(1, ESCALATION_WINDOW + 1)]
+        avg = round(sum(window) / ESCALATION_WINDOW, 2)
+        value = by_day.get(day, 0)
+        return {"date": day, "value": value, "average_30d": avg, "ratio": round(value / avg, 2) if avg else None,
+                "incomplete": incomplete(day)}
+
+    last_complete = None
+    for back in range(ESCALATION_LOOKBACK + 1):
+        day = latest - timedelta(days=back)
+        if not incomplete(day):
+            last_complete = entry(day)
+            break
+    return {"requested_date": flt.date_to, "latest": entry(latest), "last_complete": last_complete}
+
+
+def _share(part: int, whole: int) -> float | None:
+    return round(part / whole * 100, 1) if whole else None
 
 
 def get_kpis(db: Session, flt: Filters) -> Any:
@@ -95,14 +145,12 @@ def get_kpis(db: Session, flt: Filters) -> Any:
         prev = flt.previous_period()
         cur_t, prev_t = repo.incident_totals(db, flt), repo.incident_totals(db, prev)
         cur_air, prev_air = repo.air_totals_by_condition(db, flt), repo.air_totals_by_condition(db, prev)
+        cur_b, prev_b = repo.bucket_totals(db, flt), repo.bucket_totals(db, prev)
         pending = repo.pending_review_count(db, flt)
-        span = flt.model_copy(update={"date_from": flt.date_to - timedelta(days=29)})
-        rolling = repo.daily_incident_series(db, span, "incidents")
-        by_day = {r["date"]: int(r["value"]) for r in rolling}
-        total_30 = sum(by_day.values())
-        today = by_day.get(flt.date_to, 0)
-        avg = round(total_30 / 30, 2)
         breaches_total = sum(cur_air.values())
+        affected = repo.daily_affected_series(db, flt)
+        cur_verified = _share(cur_b["counted"], cur_b["counted"] + cur_b["pending"])
+        prev_verified = _share(prev_b["counted"], prev_b["counted"] + prev_b["pending"])
         return {
             "period": {"date_from": flt.date_from, "date_to": flt.date_to, "previous_from": prev.date_from,
                        "previous_to": prev.date_to, "days": flt.days},
@@ -124,13 +172,22 @@ def get_kpis(db: Session, flt: Filters) -> Any:
             "pending_review": pending,
             "casualty_completeness": repo.casualty_completeness(db, flt),
             "unattributed_shared_toll_incidents": int(cur_t["aggregate_only_incidents"]),
-            "escalation": {"today": today, "date": flt.date_to, "rolling_30d_daily_average": avg,
-                           "ratio": round(today / avg, 2) if avg else None},
+            "daily_average": _delta(round(int(cur_t["incidents"]) / flt.days, 2),
+                                    round(int(prev_t["incidents"]) / prev.days, 2)),
+            # Share of the filtered incidents that are counted (verified or auto-processed), not pending.
+            "verified_pct": {"current": cur_verified, "previous": prev_verified,
+                             "delta": round(cur_verified - prev_verified, 1)
+                             if cur_verified is not None and prev_verified is not None else None,
+                             "counted": cur_b["counted"], "pending": cur_b["pending"]},
+            "escalation": escalation(db, flt),
             "sparklines": {
                 "incidents": [{"date": r["date"], "value": int(r["value"])} for r in repo.daily_incident_series(db, flt, "incidents")],
                 "deaths": [{"date": r["date"], "value": int(r["value"])} for r in repo.daily_incident_series(db, flt, "deaths")],
                 "injuries": [{"date": r["date"], "value": int(r["value"])} for r in repo.daily_incident_series(db, flt, "injuries")],
                 "breaches": [{"date": r["date"], "value": int(r["value"])} for r in repo.daily_air_series(db, flt)],
+                "villages": [{"date": r["date"], "value": int(r["villages"])} for r in affected],
+                "cazas": [{"date": r["date"], "value": int(r["cazas"])} for r in affected],
+                "pending": [{"date": r["date"], "value": int(r["value"])} for r in repo.daily_pending_series(db, flt)],
             },
         }
 
@@ -197,21 +254,28 @@ def _bucket_end(start: date, grain: str, limit: date) -> date:
     return min(end, limit)
 
 
+def _series_by_key(db: Session, flt: Filters, grain: str) -> tuple[dict[str, dict[date, float]], dict[str, Any]]:
+    """Metric per time bucket per action family (or per air type for breaches), uncapped."""
+    if flt.metric == "breaches":
+        raw = repo.timeline_air_series(db, flt, grain)
+        labels: dict[str, Any] = {str(c): {"label_en": n, "label_ar": None} for c, n in AIR_CONDITION_LABELS.items()}
+    else:
+        raw = repo.timeline_incident_series(db, flt, grain)
+        labels = {f["code"]: {"label_en": f["name_en"], "label_ar": f["name_ar"], "sort": f["sort_order"]}
+                  for f in repo.meta(db)["families"]}
+    series: dict[str, dict[date, float]] = {}
+    for r in raw:
+        series.setdefault(str(r["key"]), {})[r["bucket"]] = _num(r["value"])
+    return series, labels
+
+
 def get_timeline(db: Session, flt: Filters, grain: str) -> Any:
     def build() -> dict[str, Any]:
         starts = _bucket_starts(flt.date_from, flt.date_to, grain)
-        if flt.metric == "breaches":
-            raw = repo.timeline_air_series(db, flt, grain)
-            labels = {str(c): {"label_en": n, "label_ar": None} for c, n in AIR_CONDITION_LABELS.items()}
-            daily = repo.daily_air_series(db, flt)
-        else:
-            raw = repo.timeline_incident_series(db, flt, grain)
-            labels = {f["code"]: {"label_en": f["name_en"], "label_ar": f["name_ar"], "sort": f["sort_order"]}
-                      for f in repo.meta(db)["families"]}
-            daily = repo.daily_incident_series(db, flt, flt.metric)
-        series: dict[str, dict[date, float]] = {}
-        for r in raw:
-            series.setdefault(str(r["key"]), {})[r["bucket"]] = _num(r["value"])
+        series, labels = _series_by_key(db, flt, grain)
+        daily = repo.daily_air_series(db, flt) if flt.metric == "breaches" \
+            else repo.daily_incident_series(db, flt, flt.metric)
+        casualties = {} if flt.metric == "breaches" else {r["bucket"]: r for r in repo.casualty_series(db, flt, grain)}
         # A compact, stable legend: retain the five largest series and roll every
         # remaining family/type into Other.  This avoids a paginated legend hiding
         # categories while preserving every value in the stack and total.
@@ -242,6 +306,10 @@ def get_timeline(db: Session, flt: Filters, grain: str) -> Any:
                         "points": [{"date": s, "value": series[k].get(s, 0)} for s in starts]} for k in keys],
             "total": [{"date": s, "value": total[s]} for s in starts],
             "moving_average_7d": [{"date": s, "value": ma[_bucket_end(s, grain, flt.date_to)]} for s in starts],
+            # Second-axis overlay (deaths and injuries per bucket); empty for air breaches.
+            "casualties": [{"date": s, "deaths": int(casualties[s]["deaths"]) if s in casualties else 0,
+                            "injuries": int(casualties[s]["injuries"]) if s in casualties else 0}
+                           for s in starts] if flt.metric != "breaches" else [],
             "coverage": {
                 "available": bool(days),
                 "note": COVERAGE_NOTE.format(ratio=settings.analytics_coverage_low_ratio),
@@ -304,25 +372,29 @@ def get_peaks(db: Session, flt: Filters) -> Any:
 
 
 # --------------------------------------------------------------------------- matrix
-def get_matrix(db: Session, flt: Filters) -> Any:
+def get_matrix(db: Session, flt: Filters, by: str = "caza") -> Any:
     def build() -> dict[str, Any]:
         families = repo.meta(db)["families"]
+        unplaced = 0
         if flt.metric == "breaches":
             columns = [f for f in families if f["is_air_violation"]]
             cells = repo.matrix_air_cells(db, flt)
         else:
-            # The incident matrix intentionally excludes air violations (shown on
-            # their own tab) and unclassified/pending incidents. Empty columns add
-            # no information and make the compact view harder to read.
-            columns = [f for f in families if f["counts_in_headline"] and not f["is_air_violation"]
+            # Air violations are not incidents (their own tab). Unclassified incidents are
+            # pending by definition, so their column only appears with "include pending".
+            # Empty columns are dropped below. With these rules the grand total plus
+            # ``unplaced`` (incidents whose village has no HDX code) equals the KPI.
+            columns = [f for f in families if not f["is_air_violation"]
+                       and (f["counts_in_headline"] or flt.include_pending)
                        and (not flt.family or f["code"] in flt.family)]
-            cells = repo.matrix_cells(db, flt)
+            cells = repo.matrix_cells(db, flt, by)
+            unplaced = repo.matrix_unplaced(db, flt, by)
         by_caza: dict[str, dict[str, int | float]] = {}
         for c in cells:
             by_caza.setdefault(c["caza"], {})[c["family"]] = _num(c["value"])
         rows_out = []
         col_totals = {c["code"]: 0 for c in columns}
-        for caza in repo.caza_rows(db):
+        for caza in repo.caza_rows(db, by):
             vals = {c["code"]: by_caza.get(caza["code"], {}).get(c["code"], 0) for c in columns}
             for k, v in vals.items():
                 col_totals[k] += v
@@ -331,10 +403,10 @@ def get_matrix(db: Session, flt: Filters) -> Any:
         col_totals = {column["code"]: col_totals[column["code"]] for column in columns}
         for row in rows_out:
             row["cells"] = {column["code"]: row["cells"][column["code"]] for column in columns}
-        return {"metric": flt.metric, "columns": columns, "rows": rows_out, "column_totals": col_totals,
-                "grand_total": sum(col_totals.values())}
+        return {"metric": flt.metric, "by": by, "columns": columns, "rows": rows_out, "column_totals": col_totals,
+                "grand_total": sum(col_totals.values()), "unplaced": unplaced}
 
-    return cached("matrix", flt.cache_params(), build)
+    return cached("matrix", {**flt.cache_params(), "by": by}, build)
 
 
 # --------------------------------------------------------------------------- area profile

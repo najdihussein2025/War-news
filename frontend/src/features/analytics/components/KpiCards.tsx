@@ -1,7 +1,8 @@
 import { cn } from "../../../lib/cn";
 import type { ReactNode } from "react";
-import { deltaView, formatNumber, sparkPath } from "../mappers";
-import type { Delta, KpisResponse, SeriesPoint, Split } from "../types";
+import { formatDate } from "../../../lib/formatters";
+import { casualtyNote, deltaView, formatNumber, sparkPath } from "../mappers";
+import type { Delta, Escalation, EscalationDay, KpisResponse, SeriesPoint, Split } from "../types";
 import { ErrorBlock, InfoTip, Skeleton, errorMessage } from "./common";
 
 const Spark = ({ points, color }: { points: SeriesPoint[]; color: string }) => (
@@ -21,6 +22,22 @@ const SplitLine = ({ split }: { split: Split }) => {
         <span key={short}>{i > 0 ? " · " : ""}<abbr title={long} className="no-underline">{short}</abbr> {formatNumber(value)}</span>
       ))}
     </p>
+  );
+};
+
+/** Latest complete day vs the 30 days before it; a day still being ingested is named, never shown as 0×. */
+const EscalationLine = ({ escalation }: { escalation: Escalation }) => {
+  const { latest, last_complete: complete } = escalation;
+  if (!latest) return <>No incident data yet.</>;
+  const day = (d: EscalationDay, label: string) => (
+    <>{label} ({formatDate(d.date)}): <strong>{formatNumber(d.value)}</strong> incidents vs a 30-day average of <strong>{d.average_30d}</strong>{d.ratio !== null ? <> ({d.ratio}×)</> : null}.</>
+  );
+  return (
+    <>
+      {complete ? day(complete, "Latest complete day") : <>No complete day in the last week.</>}
+      {latest.incomplete ? <> {formatDate(latest.date)} is still being processed ({formatNumber(latest.value)} so far).</> : null}
+      {latest.date < escalation.requested_date ? <> No data yet after {formatDate(latest.date)}.</> : null}
+    </>
   );
 };
 
@@ -65,16 +82,10 @@ export const KpiCards = ({ data, loading, error, onRetry, onOpenMethodology }: {
     return <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">{Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-[7.25rem]" />)}</div>;
   }
   const breachDelta: Delta = data.air_breaches;
-  const esc = data.escalation;
-  // A rolling deployment can briefly return a cached KPI payload from before
-  // casualty completeness was added; keep the dashboard usable during that window.
-  const completeness = data.casualty_completeness ?? { incidents: 0, with_status: 0, pct: null };
   const casualtyInfo = (
     <>
-      {completeness.pct === null
-        ? "Casualty status is not available for these incidents."
-        : `Casualty figures are extracted from reports; ${completeness.pct}% of incidents in this period have a casualty status.`}
-      {" "}Children are counted under children only; a toll with no type stated counts in the total only.{" "}
+      {casualtyNote(data.casualty_completeness)}
+      {" "}Figures are extracted from reports. Children are counted under children only; a toll with no type stated counts in the total only.{" "}
       <button type="button" onClick={onOpenMethodology} className="font-semibold text-brand-navy underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">Methodology</button>
     </>
   );
@@ -89,8 +100,7 @@ export const KpiCards = ({ data, loading, error, onRetry, onOpenMethodology }: {
         <KpiCard title="Pending review" delta={{ current: data.pending_review, previous: 0, delta: 0, pct: null }} color="#7f8c8d" neutral note="Not in the headline figures" />
       </div>
       <p className="text-caption text-text-muted tabular-nums">
-        Latest day ({esc.date}): <strong>{formatNumber(esc.today)}</strong> incidents vs a 30-day average of <strong>{esc.rolling_30d_daily_average}</strong>
-        {esc.ratio !== null ? <> ({esc.ratio}×)</> : null}.
+        <EscalationLine escalation={data.escalation} />
         {data.unattributed_shared_toll_incidents > 0 ? (
           <> {formatNumber(data.unattributed_shared_toll_incidents)} incident(s) carry a shared bulletin toll that is <em>not attributed to a specific village</em>; it is counted once.</>
         ) : null}

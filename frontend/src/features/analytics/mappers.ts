@@ -1,4 +1,4 @@
-import type { CoverageStatus, Delta, DrilldownItem, MapResponse, SeriesPoint, TimelineResponse } from "./types";
+import type { CasualtyCompleteness, CoverageStatus, Delta, DrilldownItem, MapResponse, SeriesPoint, TimelineResponse } from "./types";
 
 /** Copy shared by chart tooltips and the visible coverage key. */
 export const coverageWarning = (status: CoverageStatus | undefined): string | null => {
@@ -9,6 +9,14 @@ export const coverageWarning = (status: CoverageStatus | undefined): string | nu
 
 export const formatNumber = (value: number | null | undefined): string =>
   value === null || value === undefined ? "–" : new Intl.NumberFormat("en-US").format(value);
+
+/** "X of N incidents report casualties; Y report casualties without a count." */
+export const casualtyNote = (c: CasualtyCompleteness): string => {
+  const verb = (n: number) => (n === 1 ? "reports" : "report");
+  const head = `${formatNumber(c.with_casualties ?? 0)} of ${formatNumber(c.incidents)} incident${c.incidents === 1 ? "" : "s"} ${verb(c.with_casualties ?? 0)} casualties`;
+  const missing = c.count_missing ?? 0;
+  return missing > 0 ? `${head}; ${formatNumber(missing)} ${verb(missing)} casualties without a count.` : `${head}.`;
+};
 
 export const formatPct = (pct: number | null): string =>
   pct === null ? "n/a" : `${pct > 0 ? "+" : ""}${pct.toFixed(1)}%`;
