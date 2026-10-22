@@ -26,7 +26,8 @@ import { buildNameIndex } from "../geoUtils";
 import { MapSections } from "../components/tabs/MapSections";
 import { OverviewSections } from "../components/tabs/OverviewSections";
 import { IncidentsTab } from "../components/tabs/IncidentsTab";
-import { useAnalyticsIncidents, useAnalyticsMap, useAnalyticsOverview, useDebounced, useGeo, useKpis, useMapData, useMatrix, useMeta, usePeaks, usePrefetchMap, useTimeline } from "../hooks";
+import { CasualtiesTab } from "../components/tabs/CasualtiesTab";
+import { useAnalyticsCasualties, useAnalyticsIncidents, useAnalyticsMap, useAnalyticsOverview, useDebounced, useGeo, useKpis, useMapData, useMatrix, useMeta, usePeaks, usePrefetchMap, useTimeline } from "../hooks";
 import { TopBarActions } from "../layout/AnalyticsLayout";
 import { playbackFrames } from "../mappers";
 import type { AnalyticsFilters, Grain, Level, MapResponse } from "../types";
@@ -107,6 +108,7 @@ export const AnalyticsPage = () => {
   // The Map tab has no time grain (its trends are weekly), so its key ignores the grain toggle.
   const mapTabData = useAnalyticsMap(tabParams, "day", activeTab === "map");
   const incidentsTabData = useAnalyticsIncidents(tabParams, grain, activeTab === "incidents");
+  const casualtiesTabData = useAnalyticsCasualties(tabParams, grain, activeTab === "casualties");
 
   // ---- map data (never filtered to the selected area, so the whole map stays visible).
   // The Overview and Map payloads carry the map; other tabs (the full-screen map) use /map.
@@ -292,6 +294,7 @@ export const AnalyticsPage = () => {
 
         {activeTab === "incidents" ? <IncidentsTab data={incidentsTabData.data} loading={incidentsTabData.isLoading} error={incidentsTabData.error} onRetry={() => void incidentsTabData.refetch()} grain={grain} onGrain={setGrainChoice}
           onCell={(code, level, family) => update({ areaCode: code, level, families: family ? [family] : [] })} /> : null}
+        {activeTab === "casualties" ? <CasualtiesTab data={casualtiesTabData.data} loading={casualtiesTabData.isLoading} error={casualtiesTabData.error} onRetry={() => void casualtiesTabData.refetch()} grain={grain} onGrain={setGrainChoice} /> : null}
 
         <div ref={tlRef} className="hidden">
           <SectionCard id="timeline" title="Timeline" subtitle={`${label} per ${grain}, stacked by ${filters.metric === "breaches" ? "air type" : "action family"}, with the 7-day average`}
