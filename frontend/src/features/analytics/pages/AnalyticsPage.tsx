@@ -247,6 +247,7 @@ export const AnalyticsPage = () => {
                 values={shownValues}
                 scale={scale}
                 metricLabel={label}
+                incidentParams={toApiParams(queryFilters, { areaCode: null, level: "village", metric: "incidents", airType: null }).toString()}
                 fullScreen={fullMap}
                 onExpand={() => setFullMap(true)}
                 fitPadding={(mapTab || fullMap) && filters.areaCode ? FIT_UNDER_PANEL : FIT_DEFAULT}

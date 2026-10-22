@@ -269,12 +269,6 @@ export const useSignOut = () => {
   };
 };
 
-export const RoleBadge = ({ role }: { role: string | null }) => (
-  <span className="rounded-md border border-brand-gold bg-brand-gold-soft px-2 py-1 text-caption font-semibold text-brand-navy">
-    {role === ROLES.SUPER_ADMIN ? "Super Admin" : "Admin"}
-  </span>
-);
-
 const SidebarContent = ({
   onNavigate,
   previewRole,
@@ -340,9 +334,6 @@ const SidebarContent = ({
             <p className="truncate text-small font-semibold text-text-primary">
               {displayUser?.displayName || displayUser?.username || "Signed in user"}
             </p>
-            <div className="mt-1">
-              <RoleBadge role={displayRole} />
-            </div>
           </div>
           <button
             type="button"

@@ -2,12 +2,15 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "../analytics.css";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { GeoCollection } from "../api";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "../../../lib/apiClient";
+import { getMap, type GeoCollection } from "../api";
 import { DISPUTED_LINE, FAMILY_COLORS, NO_DATA_COLOR, scaleColor, type MapScale } from "../colors";
 import { buildNameIndex, findBounds, LEBANON_BOUNDS, labelPoints, searchVillages, type SearchHit } from "../geoUtils";
 import { formatNumber } from "../mappers";
 import type { Level, MapValue } from "../types";
 import { MapLegend } from "./MapLegend";
+import { CAZA_LABEL_ZOOM, VILLAGE_LABEL_ZOOM, labelText, polygonLabels, type LabelLanguage } from "../mapLabels";
 
 type Geo = Record<Level, GeoCollection>;
 
@@ -27,9 +30,17 @@ type Props = {
   controls?: ReactNode;
   fullScreen?: boolean;
   onExpand?: () => void;
+  incidentParams?: string;
 };
 
 const HATCH_SIZE = 8;
+let rtlPluginPromise: Promise<void> | null = null;
+const loadRTL = () => {
+  if (!rtlPluginPromise) rtlPluginPromise = maplibregl.getRTLTextPluginStatus() === "loaded"
+    ? Promise.resolve()
+    : maplibregl.setRTLTextPlugin(`${window.location.origin}/map-rtl/mapbox-gl-rtl-text.js`, false);
+  return rtlPluginPromise;
+};
 
 const makeHatch = (): { width: number; height: number; data: Uint8ClampedArray } => {
   const canvas = document.createElement("canvas");
@@ -53,19 +64,33 @@ const makeHatch = (): { width: number; height: number; data: Uint8ClampedArray }
 const LEVELS: Level[] = ["mohafaza", "caza", "village"];
 const BLANK_STYLE: maplibregl.StyleSpecification = {
   version: 8,
+  glyphs: `${window.location.origin}/map-fonts/{fontstack}/{range}.pbf`,
   sources: {},
   layers: [{ id: "background", type: "background", paint: { "background-color": "#f6f9fc" } }],
 };
 
 export const HeatMap = ({
-  geo, level, values, scale, metricLabel, familyNames, selectedCode, onSelect, frameLabel, loading, controls, fitPadding = 16, fullScreen = false, onExpand,
+  geo, level, values, scale, metricLabel, familyNames, selectedCode, onSelect, frameLabel, loading, controls, fitPadding = 16, fullScreen = false, onExpand, incidentParams,
 }: Props) => {
   const container = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [ready, setReady] = useState(false);
+  const [rtlReady, setRTLReady] = useState(false);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; code: string } | null>(null);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [language, setLanguage] = useState<LabelLanguage>("both");
+  const [villageZoom, setVillageZoom] = useState(false);
+  const [labelError, setLabelError] = useState("");
+  const villageLabels = useQuery({
+    queryKey: ["analytics", "village-labels"], staleTime: Infinity, gcTime: Infinity,
+    queryFn: async () => (await apiClient.get<GeoCollection & { missing_coordinates: number; unlinked: number }>("/analytics/village-labels")).data,
+  });
+  const villageIncidents = useQuery({
+    queryKey: ["analytics", "map", incidentParams],
+    queryFn: () => getMap(new URLSearchParams(incidentParams)),
+    enabled: villageZoom && !!incidentParams, staleTime: 60_000,
+  });
   const hoverRef = useRef<string | null>(null);
   const selectedRef = useRef<string | null>(null);
   const levelRef = useRef(level);
@@ -79,13 +104,25 @@ export const HeatMap = ({
   const hits: SearchHit[] = useMemo(() => searchVillages(geo, query), [geo, query]);
 
   useEffect(() => {
+    let active = true;
+    void loadRTL().then(() => { if (active) setRTLReady(true); }).catch(() => {
+      if (active) {
+        setLanguage("en");
+        setLabelError("Arabic labels could not load. Retry by refreshing the page.");
+        setRTLReady(true);
+      }
+    });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
     const id = requestAnimationFrame(() => mapRef.current?.resize());
     return () => cancelAnimationFrame(id);
   }, [fullScreen]);
 
   // Map creation (once).
   useEffect(() => {
-    if (!container.current) return undefined;
+    if (!container.current || !rtlReady) return undefined;
     const map = new maplibregl.Map({
       container: container.current,
       style: BLANK_STYLE,
@@ -96,9 +133,11 @@ export const HeatMap = ({
       pitchWithRotate: false,
       maxBounds: [[33.5, 32.2], [38.2, 35.6]],
       minZoom: 6,
+      crossSourceCollisions: true,
     });
     map.touchZoomRotate.disableRotation();
     mapRef.current = map;
+    map.on("zoomend", () => setVillageZoom(map.getZoom() >= VILLAGE_LABEL_ZOOM));
 
     map.on("load", () => {
       map.addImage("hatch", makeHatch(), { pixelRatio: 2 });
@@ -141,6 +180,46 @@ export const HeatMap = ({
         type: "line",
         source: "village",
         paint: { "line-color": "#bc8e38", "line-width": ["case", ["boolean", ["feature-state", "searched"], false], 3.4, 0] },
+      });
+      for (const lvl of LEVELS) {
+        map.addSource(`names-${lvl}`, { type: "geojson", data: lvl === "village"
+          ? { type: "FeatureCollection", features: [] } : polygonLabels(geo[lvl]) as never });
+        map.addLayer({
+          id: `names-${lvl}`, type: "symbol", source: `names-${lvl}`,
+          minzoom: lvl === "mohafaza" ? 0 : lvl === "caza" ? CAZA_LABEL_ZOOM : VILLAGE_LABEL_ZOOM,
+          maxzoom: lvl === "mohafaza" ? CAZA_LABEL_ZOOM : lvl === "caza" ? VILLAGE_LABEL_ZOOM : 24,
+          layout: {
+            "text-field": labelText("both"),
+            "text-font": [lvl === "mohafaza" ? "Noto Sans Bold" : "Noto Sans Regular"],
+            "text-size": lvl === "mohafaza" ? 15 : lvl === "caza" ? 13 : 11,
+            "text-line-height": 1.35, "text-max-width": 10,
+            "text-variable-anchor": ["top", "bottom", "left", "right"],
+            "text-radial-offset": 1.5, "text-padding": 4,
+            "text-allow-overlap": false, "text-ignore-placement": false,
+            "symbol-sort-key": 0,
+          },
+          paint: { "text-color": "#0b2236", "text-halo-color": "#ffffff", "text-halo-width": 1.5 },
+        });
+      }
+      // Symbols placed last have collision priority over place names. The icon's box
+      // participates too, so names cannot overlap the white value badge background.
+      const badge = document.createElement("canvas"); badge.width = 64; badge.height = 40;
+      const ctx = badge.getContext("2d")!;
+      ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "#8ca0af"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.roundRect(1, 1, 62, 38, 18); ctx.fill(); ctx.stroke();
+      map.addImage("value-badge", ctx.getImageData(0, 0, 64, 40), {
+        pixelRatio: 2, stretchX: [[20, 44]], stretchY: [[12, 28]], content: [10, 4, 54, 36],
+      });
+      map.addSource("value-labels", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({ id: "value-labels", type: "symbol", source: "value-labels",
+        layout: {
+          "text-field": ["get", "value"], "text-font": ["Noto Sans Bold"], "text-size": 13,
+          "text-padding": 4, "icon-image": "value-badge", "icon-text-fit": "both",
+          "icon-text-fit-padding": [2, 5, 2, 5], "icon-padding": 4,
+          "text-allow-overlap": false, "icon-allow-overlap": false,
+          "text-ignore-placement": false, "icon-ignore-placement": false,
+          "symbol-sort-key": ["get", "priority"],
+        }, paint: { "text-color": "#0b2236" },
       });
       // The box may have changed size between construction and load (tab switch, breakpoint).
       map.resize();
@@ -202,7 +281,7 @@ export const HeatMap = ({
     };
     // geo is stable for the page lifetime; the map is created exactly once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [rtlReady]);
 
   // Active level visibility.
   useEffect(() => {
@@ -227,21 +306,32 @@ export const HeatMap = ({
     if (selectedRef.current) map.setFeatureState({ source: level, id: selectedRef.current }, { selected: true });
   }, [values, scale, level, ready]);
 
-  // Value labels on each polygon at mohafaza/caza level (HTML markers: the blank style has no glyphs).
+  // Geometry is cached independently of filters; filter changes only update small
+  // value symbols and the sort expression, never the village point GeoJSON.
+  useEffect(() => {
+    if (!ready || !villageLabels.data) return;
+    (mapRef.current?.getSource("names-village") as maplibregl.GeoJSONSource)?.setData(villageLabels.data as never);
+  }, [ready, villageLabels.data]);
+  useEffect(() => {
+    if (!ready) return;
+    for (const lvl of LEVELS) mapRef.current?.setLayoutProperty(`names-${lvl}`, "text-field", labelText(language));
+  }, [ready, language]);
+  useEffect(() => {
+    if (!ready) return;
+    const priority = Object.fromEntries((villageIncidents.data?.values ?? []).map((v) => [v.code, -v.value]));
+    mapRef.current?.setLayoutProperty("names-village", "symbol-sort-key", ["coalesce", ["get", ["get", "code"], ["literal", priority]], 0]);
+  }, [ready, villageIncidents.data]);
+
+  // Numeric badges share the symbol collision index with names (no HTML markers).
   const anchors = useMemo(() => (level === "village" ? null : labelPoints(geo[level])), [geo, level]);
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !ready || !anchors) return undefined;
-    const markers = values.flatMap((v) => {
-      const at = anchors.get(v.code);
-      if (!at || !(v.value > 0)) return [];
-      const el = document.createElement("div");
-      el.className = "analytics-map-label";
-      el.textContent = formatNumber(v.value);
-      el.setAttribute("aria-hidden", "true");
-      return [new maplibregl.Marker({ element: el }).setLngLat(at).addTo(map)];
-    });
-    return () => markers.forEach((m) => m.remove());
+    if (!map || !ready) return;
+    (map.getSource("value-labels") as maplibregl.GeoJSONSource).setData({ type: "FeatureCollection", features: values.flatMap((v) => {
+      const at = anchors?.get(v.code);
+      return at && v.value > 0 ? [{ type: "Feature", properties: { value: formatNumber(v.value), priority: -v.value },
+        geometry: { type: "Point", coordinates: at } }] : [];
+    }) });
   }, [values, anchors, ready]);
 
   // Keep Lebanon filling the box when the container changes size (tabs, side panel), unless an area is focused.
@@ -307,7 +397,7 @@ export const HeatMap = ({
     : [];
 
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-lg border border-card-border bg-surface">
+    <div className={`relative h-full w-full overflow-hidden bg-surface ${fullScreen ? "" : "rounded-lg border border-card-border"}`}>
       <div
         ref={container}
         className="h-full w-full"
@@ -318,6 +408,10 @@ export const HeatMap = ({
       {/* Lebanon's bounding box leaves the sea (top-left) and land outside Lebanon
           (bottom-right) empty, so the overlays sit there instead of over the data. */}
       <div className="absolute bottom-3 right-3 flex flex-col items-end gap-2">
+        <div role="group" aria-label="Place-name language" className="flex overflow-hidden rounded-md border border-border bg-surface-raised shadow-raised">
+          {([ ["en", "EN"], ["ar", "AR"], ["both", "Both"] ] as const).map(([value, text]) => <button key={value} type="button" aria-pressed={language === value}
+            onClick={() => setLanguage(value)} className={`h-8 px-3 text-caption font-medium focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus-ring ${language === value ? "bg-brand-navy text-text-inverse" : "hover:bg-surface-muted"}`}>{text}</button>)}
+        </div>
         <div className="relative w-56">
           <label htmlFor="map-search" className="sr-only">Search a village by Arabic or English name</label>
           <input
@@ -361,6 +455,8 @@ export const HeatMap = ({
         View full map
       </button> : null}
       <div className={`absolute left-3 ${fullScreen ? "top-28 sm:top-20" : "top-3"}`}><MapLegend scale={scale} metricLabel={metricLabel} /></div>
+      {villageLabels.data?.missing_coordinates ? <p role="status" className="absolute bottom-3 left-3 max-w-56 rounded bg-surface-raised px-2 py-1 text-caption">{villageLabels.data.missing_coordinates} village labels skipped: no coordinates.</p> : null}
+      {labelError || villageLabels.error ? <p role="alert" className="absolute left-3 top-48 max-w-64 rounded bg-surface-raised p-2 text-caption text-danger">{labelError || "Village labels could not load. Refresh to retry."}</p> : null}
       {controls ? <div className="absolute bottom-3 left-1/2 -translate-x-1/2">{controls}</div> : null}
       <div className="pointer-events-none absolute left-1/2 top-3 flex -translate-x-1/2 flex-col items-center gap-1.5">
         {frameLabel ? <div className="rounded-md bg-brand-navy px-3 py-1 text-small font-semibold text-text-inverse tabular-nums shadow-raised" aria-live="polite">{frameLabel}</div> : null}

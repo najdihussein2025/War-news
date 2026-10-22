@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link, Outlet } from "react-router-dom";
-import { RoleBadge, useSignOut } from "../../../app/AppShell";
+import { useSignOut } from "../../../app/AppShell";
 import { ROLES } from "../../../constants/roles";
 import { useAuthStore } from "../../../stores/authStore";
 
@@ -48,7 +48,6 @@ export const AnalyticsLayout = () => {
             <div className="hidden min-w-0 text-right xl:block">
               <p className="max-w-[12rem] truncate text-caption font-semibold leading-tight">{user?.displayName || user?.username || "Signed in"}</p>
             </div>
-            <span className="hidden lg:inline"><RoleBadge role={role} /></span>
             <button type="button" onClick={signOut} aria-label="Sign out"
               className={`flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-small font-medium text-text-muted transition-colors duration-150 hover:border-danger hover:bg-red-50 hover:text-danger ${focusRing}`}>
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5" /><path d="M15 12H3" /><path d="M21 3v18" /></svg>

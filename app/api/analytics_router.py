@@ -8,6 +8,7 @@ from app.accounts.models import User
 from app.analytics.dtos.filters import Filters, get_filters
 from app.analytics.services import analytics_service as service
 from app.analytics.services import tab_service
+from app.analytics.services.map_labels import village_labels
 from app.analytics.services.export_service import build_workbook
 from app.api.deps import require_admin
 from app.core.database import get_db
@@ -23,6 +24,11 @@ def meta(db: Session = Depends(get_db), _user: User = Depends(require_admin)):
 @router.get("/map")
 def heat_map(flt: Filters = Depends(get_filters), db: Session = Depends(get_db), _user: User = Depends(require_admin)):
     return service.get_map(db, flt)
+
+
+@router.get("/village-labels")
+def map_village_labels(db: Session = Depends(get_db), _user: User = Depends(require_admin)):
+    return village_labels(db)
 
 
 @router.get("/kpis")

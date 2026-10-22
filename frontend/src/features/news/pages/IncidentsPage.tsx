@@ -413,32 +413,34 @@ export const IncidentsPage = () => {
     {
       key: "verification",
       header: "Verification",
-      headerClassName: "w-[10rem] min-w-[10rem] whitespace-nowrap",
-      cellClassName: "w-[10rem] min-w-[10rem]",
-      render: (row) => (
-        <div className="space-y-1">
-          {reviewRuleBadge(row) ? <StatusBadge {...reviewRuleBadge(row)!} /> : verificationBadge(row) ? <StatusBadge {...verificationBadge(row)!} /> : null}
-          {row.verification_reason ? (
-            <ReasonChips summaries={summarizeVerificationReasons(row.verification_reason)} />
-          ) : null}
-          {openVerificationTypes(row).includes("duplicate") && row.id ? (
-            <button
-              type="button"
-              className="text-caption font-semibold text-primary hover:underline"
-              onClick={() => navigate(`${roleBase}/incidents/${row.id}${location.search}`)}
-            >
-              Compare with match
-            </button>
-          ) : null}
-          <span
-            className={`inline-block h-2.5 w-2.5 rounded-full ${
-              row.verification_status === "needs_verification" ? "bg-danger" : "bg-success"
-            }`}
-            title={row.verification_status === "needs_verification" ? "Needs verification" : "No verification needed"}
-            aria-label={row.verification_status === "needs_verification" ? "Needs verification" : "No verification needed"}
-          />
-        </div>
-      ),
+      headerClassName: "w-[14rem] min-w-[14rem] whitespace-nowrap",
+      cellClassName: "w-[14rem] min-w-[14rem]",
+      render: (row) => {
+        const needsReview = row.verification_status === "needs_verification";
+        const statusLabel = needsReview ? "Review required" : "Verification complete";
+        const badge = reviewRuleBadge(row) ?? verificationBadge(row);
+        return (
+          <div className="flex min-w-0 flex-col items-start gap-2">
+            {badge ? <StatusBadge {...badge} /> : null}
+            {row.verification_reason ? (
+              <ReasonChips summaries={summarizeVerificationReasons(row.verification_reason)} />
+            ) : null}
+            {openVerificationTypes(row).includes("duplicate") && row.id ? (
+              <button
+                type="button"
+                className="text-caption font-semibold text-primary hover:underline"
+                onClick={() => navigate(`${roleBase}/incidents/${row.id}${location.search}`)}
+              >
+                Compare with match
+              </button>
+            ) : null}
+            <span className="inline-flex items-center gap-1.5 text-caption font-medium text-text-muted">
+              <span className={`h-2 w-2 rounded-full ${needsReview ? "bg-danger" : "bg-success"}`} aria-hidden="true" />
+              {statusLabel}
+            </span>
+          </div>
+        );
+      },
     },
   ];
 
@@ -835,6 +837,7 @@ export const IncidentsPage = () => {
                 loading={isLoading}
                 error={isError}
                 clientSort={false}
+                minWidth="1360px"
                 emptyState={
                   <EmptyState
                     title={hasFilters ? "No matching incidents" : "No incidents yet"}
