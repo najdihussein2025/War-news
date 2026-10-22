@@ -837,7 +837,7 @@ export const IncidentsPage = () => {
                 loading={isLoading}
                 error={isError}
                 clientSort={false}
-                minWidth="1360px"
+                minWidth="1420px"
                 emptyState={
                   <EmptyState
                     title={hasFilters ? "No matching incidents" : "No incidents yet"}
@@ -855,7 +855,7 @@ export const IncidentsPage = () => {
                   />
                 }
                 stickyActions
-                actionsClassName="w-[13rem] min-w-[13rem]"
+                actionsClassName="w-[17rem] min-w-[17rem]"
                 actions={(row) => (
                 <div className="flex flex-nowrap justify-end gap-2">
                 {row.id && row.verification_status === "needs_verification" ? (
