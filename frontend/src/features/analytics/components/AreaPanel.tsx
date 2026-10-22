@@ -25,7 +25,7 @@ export const AreaPanel = ({ code, filters, onClose, onFocusArea, onViewIncidents
 
   return (
     <aside aria-label="Area profile" className={variant === "overlay"
-      ? "absolute inset-y-3 right-3 z-20 flex w-[340px] flex-col overflow-hidden rounded-lg border border-border bg-surface-raised shadow-overlay"
+      ? "absolute bottom-24 right-3 top-28 z-20 flex w-[340px] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-lg border border-border bg-surface-raised shadow-overlay"
       : "flex h-full min-h-0 w-full flex-col overflow-hidden rounded-lg border border-card-border bg-card-bg shadow-raised"}>
       <div className="flex items-start justify-between gap-2 border-b border-border p-3">
         <div className="min-w-0">

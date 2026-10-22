@@ -25,6 +25,8 @@ type Props = {
   frameLabel?: string | null;
   loading?: boolean;
   controls?: ReactNode;
+  fullScreen?: boolean;
+  onExpand?: () => void;
 };
 
 const HATCH_SIZE = 8;
@@ -56,7 +58,7 @@ const BLANK_STYLE: maplibregl.StyleSpecification = {
 };
 
 export const HeatMap = ({
-  geo, level, values, scale, metricLabel, familyNames, selectedCode, onSelect, frameLabel, loading, controls, fitPadding = 16,
+  geo, level, values, scale, metricLabel, familyNames, selectedCode, onSelect, frameLabel, loading, controls, fitPadding = 16, fullScreen = false, onExpand,
 }: Props) => {
   const container = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -75,6 +77,11 @@ export const HeatMap = ({
   const names = useMemo(() => buildNameIndex(geo), [geo]);
   const valueByCode = useMemo(() => new Map(values.map((v) => [v.code, v])), [values]);
   const hits: SearchHit[] = useMemo(() => searchVillages(geo, query), [geo, query]);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => mapRef.current?.resize());
+    return () => cancelAnimationFrame(id);
+  }, [fullScreen]);
 
   // Map creation (once).
   useEffect(() => {
@@ -348,7 +355,12 @@ export const HeatMap = ({
         </div>
       </div>
 
-      <div className="absolute left-3 top-3"><MapLegend scale={scale} metricLabel={metricLabel} /></div>
+      {onExpand ? <button type="button" onClick={onExpand} aria-label="View full map" style={fullScreen ? { display: "none" } : undefined}
+        className="absolute right-3 top-3 flex h-9 items-center gap-2 rounded-md border border-border bg-surface-raised px-3 text-small font-medium shadow-raised hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus-ring">
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M3 3l6 6m12-6-6 6M3 21l6-6m12 6-6-6" /></svg>
+        View full map
+      </button> : null}
+      <div className={`absolute left-3 ${fullScreen ? "top-28 sm:top-20" : "top-3"}`}><MapLegend scale={scale} metricLabel={metricLabel} /></div>
       {controls ? <div className="absolute bottom-3 left-1/2 -translate-x-1/2">{controls}</div> : null}
       <div className="pointer-events-none absolute left-1/2 top-3 flex -translate-x-1/2 flex-col items-center gap-1.5">
         {frameLabel ? <div className="rounded-md bg-brand-navy px-3 py-1 text-small font-semibold text-text-inverse tabular-nums shadow-raised" aria-live="polite">{frameLabel}</div> : null}

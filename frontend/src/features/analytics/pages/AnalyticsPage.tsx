@@ -11,6 +11,8 @@ import { DrilldownDrawer } from "../components/DrilldownDrawer";
 import { ActiveFilterChips, FilterBar, metricLabel } from "../components/FilterBar";
 import { ArchiveNote, HeaderActions, MethodologyModal } from "../components/HeaderActions";
 import { HeatMap } from "../components/HeatMap";
+import { FullMapFrame } from "../components/FullMapFrame";
+import { FullMapToolbar } from "../components/FullMapToolbar";
 import { KpiCards } from "../components/KpiCards";
 import { MatrixTable } from "../components/MatrixTable";
 import { PeaksCards } from "../components/PeaksCards";
@@ -53,13 +55,20 @@ export const AnalyticsPage = () => {
   const [methodologyOpen, setMethodologyOpen] = useState(false);
   const requestedTab = search.get("tab");
   const activeTab: AnalyticsTab = isTab(requestedTab) ? requestedTab : "overview";
+  const fullMap = search.get("map") === "full";
+  const setFullMap = (full: boolean) => {
+    const next = new URLSearchParams(search);
+    if (full) next.set("map", "full"); else next.delete("map");
+    setSearch(next);
+  };
   const on = (...tabs: AnalyticsTab[]) => tabs.includes(activeTab);
 
   const update = useCallback((patch: Partial<AnalyticsFilters>) => {
     const next = serializeFilters({ ...filters, ...patch }, today);
     if (activeTab !== "overview") next.set("tab", activeTab);
+    if (fullMap) next.set("map", "full");
     setSearch(next);
-  }, [filters, setSearch, today, activeTab]);
+  }, [filters, setSearch, today, activeTab, fullMap]);
 
   const reset = () => setSearch(serializeFilters(defaultFilters(today), today));
   const setTab = (tab: AnalyticsTab) => {
@@ -208,6 +217,8 @@ export const AnalyticsPage = () => {
           <h2 id="map-title" className="sr-only">{label} by {filters.level}</h2>
           {mapError ? <ErrorBlock message={mapError} onRetry={() => void mapQuery.refetch()} /> : null}
           <div className={cn("relative", mapTab ? "h-[560px] lg:h-[calc(100dvh-13rem)] lg:max-h-[920px] lg:min-h-[600px]" : "h-[480px] md:h-[560px] xl:h-[640px]")}>
+            <FullMapFrame full={fullMap} onClose={() => setFullMap(false)} toolbar={<FullMapToolbar filters={filters} meta={meta.data} onChange={update}
+              play={<PlayControls state={playback} setState={setPlayback} onStart={() => void startPlayback()} onStop={stopPlayback} disabled={!geo.data} />} />}>
             {geo.data ? (
               <HeatMap
                 geo={geo.data}
@@ -215,18 +226,21 @@ export const AnalyticsPage = () => {
                 values={shownValues}
                 scale={scale}
                 metricLabel={label}
-                fitPadding={mapTab && filters.areaCode ? FIT_UNDER_PANEL : FIT_DEFAULT}
+                fullScreen={fullMap}
+                onExpand={() => setFullMap(true)}
+                fitPadding={(mapTab || fullMap) && filters.areaCode ? FIT_UNDER_PANEL : FIT_DEFAULT}
                 familyNames={familyNames}
                 selectedCode={filters.areaCode}
                 onSelect={(code, level) => (code ? focusArea(code, level) : update({ areaCode: null }))}
                 frameLabel={framing ? playback.labels[playback.index] : null}
                 loading={mapQuery.isFetching && !framing}
-                controls={<PlayControls state={playback} setState={setPlayback} onStart={() => void startPlayback()} onStop={stopPlayback} disabled={!geo.data} />}
+                controls={!fullMap ? <PlayControls state={playback} setState={setPlayback} onStart={() => void startPlayback()} onStop={stopPlayback} disabled={!geo.data} /> : null}
               />
             ) : geo.error ? (
               <ErrorBlock message={errorMessage(geo.error)} onRetry={() => void geo.refetch()} />
             ) : <Skeleton className="h-full w-full" />}
-            {mapTab && areaProps ? <AreaPanel {...areaProps} variant="overlay" /> : null}
+            {(mapTab || fullMap) && areaProps ? <AreaPanel {...areaProps} variant="overlay" /> : null}
+            </FullMapFrame>
           </div>
           <p className="mt-1.5 text-caption text-text-muted" role="status">
             {mapQuery.data && mapQuery.data.values.length === 0 && !mapError ? "Nothing recorded for these filters. Try a longer period or turn on pending review. " : ""}
